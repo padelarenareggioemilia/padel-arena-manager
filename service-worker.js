@@ -1,4 +1,4 @@
-const CACHE_NAME="padel-arena-manager-v2-1-0";
+const CACHE_NAME="padel-arena-manager-v2-1-1";
 const ASSETS=[
  "./","./index.html","./manifest.webmanifest",
  "./assets/icon-192.png","./assets/icon-512.png","./assets/apple-touch-icon.png",

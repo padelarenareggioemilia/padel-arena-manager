@@ -174,3 +174,11 @@ VERSIONE 2.1 - GRAFICA PARTITE IPHONE
 - Timer mantenuto su pannello chiaro.
 - Ottimizzazione specifica per schermi iPhone.
 - Cache PWA aggiornata alla versione 2.1.
+
+
+VERSIONE 2.1.1 - NOMI PARTITE VISIBILI
+- Corrette le classi effettivamente usate nella schermata partite.
+- Nomi delle coppie forzati in bianco e pienamente visibili.
+- VS ingrandito e reso azzurro.
+- Linee divisorie più leggibili.
+- Aggiornata la cache PWA.
