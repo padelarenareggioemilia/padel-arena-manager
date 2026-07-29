@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 2.1.2</title>
+<title>Padel Arena Manager 2.3</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -905,6 +905,19 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
   }
 }
 
+
+/* PADEL ARENA MANAGER 2.2 - LOGIN E RUOLI */
+#pamLoginOverlay{position:fixed;inset:0;z-index:99999;background:linear-gradient(180deg,#061522,#0b2940);display:flex;align-items:center;justify-content:center;padding:20px}
+.pam-login-card{width:min(440px,100%);background:#fff;border-radius:26px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.pam-login-card h1{margin:0 0 8px;color:#081523;font-size:29px;line-height:1.1}
+.pam-login-card p{color:#526273;margin:0 0 20px}
+.pam-login-card label{display:block;color:#172433;font-weight:800;margin:14px 0 7px}
+.pam-login-card input{width:100%;box-sizing:border-box;min-height:54px;border-radius:15px;border:2px solid #ccd7e2;font-size:18px;padding:0 15px;background:#fff;color:#081523}
+.pam-login-card button{width:100%;min-height:56px;margin-top:18px;border:0;border-radius:16px;background:#a8ff2e;color:#06111f;font-size:19px;font-weight:1000}
+#pamLoginError{color:#b00020;font-weight:800;min-height:22px;margin-top:12px}
+#pamRoleBadge{position:fixed;right:12px;bottom:12px;z-index:9000;border-radius:999px;padding:9px 13px;background:#071a2b;color:#fff;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.25)}
+#pamLogoutBtn{position:fixed;left:12px;bottom:12px;z-index:9000;border:0;border-radius:999px;padding:10px 14px;background:#fff;color:#06111f;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.22)}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -933,6 +946,83 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 </div>
 
 <script>
+
+const PAM_USERS={
+ "francesco":{role:"admin",hash:"cc47736201d66e885fe3d4e0e5acd0b05062a9409c76db63a2826113a1eafc12"},
+ "collaboratori":{role:"collaboratore",hash:"d586603e3c279a3676442e38adb45d66feb20c28bc5fc0adb8dee6f1c629a0a1"}
+};
+let PAM_SESSION=null;
+
+async function pamSha256(text){
+ const data=new TextEncoder().encode(text);
+ const digest=await crypto.subtle.digest("SHA-256",data);
+ return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function pamIsAdmin(){return PAM_SESSION&&PAM_SESSION.role==="admin";}
+function pamRenderLogin(){
+ document.getElementById("pamLoginOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamLoginOverlay";
+ overlay.innerHTML=`<div class="pam-login-card">
+ <h1>Padel Arena Manager</h1>
+ <p>Accedi con il tuo account.</p>
+ <form id="pamLoginForm">
+ <label>Utente</label><input id="pamUsername" autocomplete="username" autocapitalize="none">
+ <label>Password</label><input id="pamPassword" type="password" autocomplete="current-password">
+ <button type="submit">ACCEDI</button><div id="pamLoginError"></div>
+ </form></div>`;
+ document.body.appendChild(overlay);
+ document.getElementById("pamLoginForm").addEventListener("submit",pamLogin);
+}
+async function pamLogin(e){
+ e.preventDefault();
+ const username=document.getElementById("pamUsername").value.trim().toLowerCase();
+ const password=document.getElementById("pamPassword").value;
+ const rec=PAM_USERS[username];
+ const err=document.getElementById("pamLoginError");
+ if(!rec||await pamSha256(password)!==rec.hash){err.textContent="Utente o password non corretti.";return;}
+ PAM_SESSION={username,role:rec.role};
+ sessionStorage.setItem("pam_session",JSON.stringify(PAM_SESSION));
+ document.getElementById("pamLoginOverlay")?.remove();
+ pamApplyRole();
+ if(typeof route==="function")route();
+}
+function pamLogout(){
+ sessionStorage.removeItem("pam_session");
+ PAM_SESSION=null;
+ document.getElementById("pamRoleBadge")?.remove();
+ document.getElementById("pamLogoutBtn")?.remove();
+ pamRenderLogin();
+}
+function pamApplyRole(){
+ document.getElementById("pamRoleBadge")?.remove();
+ document.getElementById("pamLogoutBtn")?.remove();
+ const badge=document.createElement("div");
+ badge.id="pamRoleBadge";
+ badge.textContent=pamIsAdmin()?"ADMIN · Francesco":"COLLABORATORE · Solo risultati";
+ document.body.appendChild(badge);
+ const out=document.createElement("button");
+ out.id="pamLogoutBtn"; out.textContent="Esci"; out.onclick=pamLogout;
+ document.body.appendChild(out);
+ pamRestrictCollaboratorUI();
+}
+function pamRestrictCollaboratorUI(){
+ if(pamIsAdmin()||!PAM_SESSION)return;
+ const forbidden=["anagrafica","giocatori","gettoni","pagamenti","impostazioni","nuovo torneo","crea torneo","elimina","configurazione","importa","esporta","asta"];
+ document.querySelectorAll("button,a,[role='button']").forEach(el=>{
+   const t=(el.textContent||"").trim().toLowerCase();
+   if(forbidden.some(w=>t.includes(w)))el.style.display="none";
+ });
+}
+function pamBootAuth(){
+ try{
+  const saved=JSON.parse(sessionStorage.getItem("pam_session")||"null");
+  if(saved&&PAM_USERS[saved.username]&&PAM_USERS[saved.username].role===saved.role)PAM_SESSION=saved;
+ }catch(e){}
+ if(PAM_SESSION)pamApplyRole(); else pamRenderLogin();
+}
+
+
 const KEY="pam_v040";
 const SEEDED_PLAYERS=[
  {firstName:"Andrea",lastName:"Spina",gender:"Maschile",tokenBalance:3},
@@ -1039,7 +1129,7 @@ function printFooter(e){
 }
 
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 2.1.2 · aggiornamento iPhone</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 2.3 · abbinamenti Rodeo corretti</div>';
 }
 
 function iphoneInstallCard(){
@@ -1196,7 +1286,7 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.1.2 PWA · cache iPhone corretta</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.3 PWA · Rodeo senza coppie ripetute</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
@@ -1310,9 +1400,27 @@ function buildMatches(ids,courts,returnLeg){
  if(playerIds.length<4)throw new Error("servono almeno 4 giocatori per generare le partite");
  courts=Math.max(1,Number(courts)||1);
 
+ function makeMatch(t1,t2){
+  return{
+   id:uid("m"),round:0,leg:1,court:1,
+   t1:t1.slice(),t2:t2.slice(),
+   score1:null,score2:null,note:""
+  };
+ }
+ function pairKey(a,b){return[a,b].sort().join("|")}
+ function teamKey(team){return team.slice().sort().join("|")}
+ function matchKey(m){return[teamKey(m.t1),teamKey(m.t2)].sort().join(" VS ")}
+ function shuffle(arr){
+  const out=arr.slice();
+  for(let i=out.length-1;i>0;i--){
+   const j=Math.floor(Math.random()*(i+1));
+   [out[i],out[j]]=[out[j],out[i]];
+  }
+  return out;
+ }
+
  const candidates=[];
  const seen=new Set();
-
  for(let a=0;a<playerIds.length-3;a++){
   for(let b=a+1;b<playerIds.length-2;b++){
    for(let c=b+1;c<playerIds.length-1;c++){
@@ -1323,14 +1431,9 @@ function buildMatches(ids,courts,returnLeg){
       [[q[0],q[2]],[q[1],q[3]]],
       [[q[0],q[3]],[q[1],q[2]]]
      ].forEach(function(pairing){
-      const t1=pairing[0].slice(),t2=pairing[1].slice();
-      const key=[t1.slice().sort().join("-"),t2.slice().sort().join("-")].sort().join("|");
-      if(seen.has(key))return;
-      seen.add(key);
-      candidates.push({
-       id:uid("m"),round:0,leg:1,court:1,
-       t1:t1,t2:t2,score1:null,score2:null,note:""
-      });
+      const m=makeMatch(pairing[0],pairing[1]);
+      const key=matchKey(m);
+      if(!seen.has(key)){seen.add(key);candidates.push(m)}
      });
     }
    }
@@ -1339,41 +1442,146 @@ function buildMatches(ids,courts,returnLeg){
 
  const targetByPlayers={6:6,8:8,10:10,12:12,16:16};
  const target=Math.min(candidates.length,targetByPlayers[playerIds.length]||Math.max(4,playerIds.length));
- const appearances={};
- playerIds.forEach(function(id){appearances[id]=0});
- const selected=[];
+ let selected=[];
 
- while(selected.length<target){
-  let bestIndex=-1,bestScore=Infinity;
-  candidates.forEach(function(m,index){
-   if(m._used)return;
-   const score=m.t1.concat(m.t2).reduce(function(sum,id){return sum+appearances[id]},0);
-   if(score<bestScore){bestScore=score;bestIndex=index}
-  });
-  if(bestIndex<0)break;
-  const match=candidates[bestIndex];
-  match._used=true;
-  match.t1.concat(match.t2).forEach(function(id){appearances[id]++});
-  selected.push(match);
+ /* Regola fondamentale Rodeo:
+    mai la stessa coppia di compagni; mai lo stesso incontro completo;
+    ridurre al minimo gli stessi avversari. */
+ if(playerIds.length===6&&target>=6){
+  const p=shuffle(playerIds);
+  selected=[
+   makeMatch([p[0],p[1]],[p[2],p[3]]),
+   makeMatch([p[0],p[2]],[p[1],p[3]]),
+   makeMatch([p[0],p[4]],[p[1],p[5]]),
+   makeMatch([p[0],p[5]],[p[1],p[4]]),
+   makeMatch([p[2],p[4]],[p[3],p[5]]),
+   makeMatch([p[2],p[5]],[p[3],p[4]])
+  ];
+ }else{
+  let best=null;
+  let bestPenalty=Infinity;
+
+  for(let attempt=0;attempt<450;attempt++){
+   const pool=shuffle(candidates);
+   const chosen=[];
+   const appearances={};
+   const teammateUsed=new Set();
+   const opponentCount={};
+   const opponentTeamUsed=new Set();
+   playerIds.forEach(function(id){appearances[id]=0;opponentCount[id]={}});
+
+   while(chosen.length<target){
+    let bestCandidate=null;
+    let bestScore=Infinity;
+
+    pool.forEach(function(m){
+     if(m._picked)return;
+     const mate1=pairKey(m.t1[0],m.t1[1]);
+     const mate2=pairKey(m.t2[0],m.t2[1]);
+     if(teammateUsed.has(mate1)||teammateUsed.has(mate2))return;
+
+     const people=m.t1.concat(m.t2);
+     const balance=people.reduce(function(sum,id){return sum+appearances[id]*appearances[id]},0);
+     let repeatOpponents=0;
+     let repeatOpponentTeams=0;
+
+     m.t1.forEach(function(id){
+      m.t2.forEach(function(opp){repeatOpponents+=(opponentCount[id][opp]||0)});
+      if(opponentTeamUsed.has(id+"::"+teamKey(m.t2)))repeatOpponentTeams++;
+     });
+     m.t2.forEach(function(id){
+      m.t1.forEach(function(opp){repeatOpponents+=(opponentCount[id][opp]||0)});
+      if(opponentTeamUsed.has(id+"::"+teamKey(m.t1)))repeatOpponentTeams++;
+     });
+
+     const score=balance*10+repeatOpponents*35+repeatOpponentTeams*500+Math.random();
+     if(score<bestScore){bestScore=score;bestCandidate=m}
+    });
+
+    if(!bestCandidate)break;
+    bestCandidate._picked=true;
+    chosen.push(bestCandidate);
+
+    teammateUsed.add(pairKey(bestCandidate.t1[0],bestCandidate.t1[1]));
+    teammateUsed.add(pairKey(bestCandidate.t2[0],bestCandidate.t2[1]));
+    bestCandidate.t1.concat(bestCandidate.t2).forEach(function(id){appearances[id]++});
+
+    bestCandidate.t1.forEach(function(id){
+     bestCandidate.t2.forEach(function(opp){opponentCount[id][opp]=(opponentCount[id][opp]||0)+1});
+     opponentTeamUsed.add(id+"::"+teamKey(bestCandidate.t2));
+    });
+    bestCandidate.t2.forEach(function(id){
+     bestCandidate.t1.forEach(function(opp){opponentCount[id][opp]=(opponentCount[id][opp]||0)+1});
+     opponentTeamUsed.add(id+"::"+teamKey(bestCandidate.t1));
+    });
+   }
+
+   pool.forEach(function(m){delete m._picked});
+   if(chosen.length<target)continue;
+
+   const values=Object.values(appearances);
+   const spread=Math.max.apply(null,values)-Math.min.apply(null,values);
+   let repeatedOpp=0;
+   Object.values(opponentCount).forEach(function(map){
+    Object.values(map).forEach(function(n){if(n>1)repeatedOpp+=n-1});
+   });
+   const penalty=spread*1000+repeatedOpp;
+
+   if(penalty<bestPenalty){
+    bestPenalty=penalty;
+    best=chosen.map(function(m){return makeMatch(m.t1,m.t2)});
+    if(spread===0&&repeatedOpp===0)break;
+   }
+  }
+
+  if(best)selected=best;
  }
 
- selected.forEach(function(m,index){
-  delete m._used;
-  m.round=Math.floor(index/courts)+1;
-  m.court=(index%courts)+1;
- });
+ if(!selected.length)throw new Error("non è stato possibile generare un calendario senza ripetere le coppie");
+
+ const remaining=selected.slice();
+ const ordered=[];
+ let round=1;
+ while(remaining.length){
+  const busy=new Set();
+  let usedCourts=0;
+  for(let i=0;i<remaining.length&&usedCourts<courts;){
+   const m=remaining[i];
+   const people=m.t1.concat(m.t2);
+   const conflict=people.some(function(id){return busy.has(id)});
+   if(conflict){i++;continue}
+   people.forEach(function(id){busy.add(id)});
+   m.round=round;
+   m.court=usedCourts+1;
+   ordered.push(m);
+   remaining.splice(i,1);
+   usedCourts++;
+  }
+  if(usedCourts===0){
+   const m=remaining.shift();
+   m.round=round;
+   m.court=1;
+   ordered.push(m);
+  }
+  round++;
+ }
+ selected=ordered;
 
  if(returnLeg){
-  selected.slice().forEach(function(m,index){
+  const firstLeg=selected.slice();
+  firstLeg.forEach(function(m){
    selected.push({
-    id:uid("m"),round:m.round,leg:2,court:(index%courts)+1,
-    t1:m.t2.slice(),t2:m.t1.slice(),
+    id:uid("m"),
+    round:m.round+(round-1),
+    leg:2,
+    court:m.court,
+    t1:m.t2.slice(),
+    t2:m.t1.slice(),
     score1:null,score2:null,note:""
    });
   });
  }
 
- if(!selected.length)throw new Error("non è stato possibile generare il calendario");
  return selected;
 }
 
@@ -2449,6 +2657,14 @@ if("serviceWorker" in navigator){
   });
  });
 }
+
+
+
+const pamObserver=new MutationObserver(()=>pamRestrictCollaboratorUI());
+window.addEventListener("DOMContentLoaded",()=>{
+ pamObserver.observe(document.body,{subtree:true,childList:true});
+ setTimeout(pamBootAuth,0);
+});
 
 </script>
 </body>

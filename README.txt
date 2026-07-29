@@ -191,3 +191,31 @@ VERSIONE 2.1.2 - CORREZIONE CACHE IPHONE
 - Ricaricamento automatico dopo l'installazione dell'aggiornamento.
 - Banner in Home: “Versione attiva: 2.1.2”.
 - Nomi delle coppie mantenuti bianchi e leggibili.
+
+
+VERSIONE 2.2 - DUE ACCOUNT
+
+ACCOUNT ADMIN
+Utente: francesco
+Password: Francesco2026!
+
+ACCOUNT COLLABORATORI
+Utente: collaboratori
+Password: EdenRisultati2026!
+
+Permessi:
+- Admin: accesso completo.
+- Collaboratori: uso operativo limitato alla visualizzazione dei tornei e all'inserimento dei risultati; le principali funzioni amministrative sono nascoste.
+- Pulsante Esci in basso a sinistra.
+
+Nota: questa versione usa un accesso locale dentro la PWA. Non include ancora sincronizzazione online tra dispositivi né sicurezza server.
+
+
+VERSIONE 2.3 - REGOLA FONDAMENTALE RODEO
+- Vietata la ripetizione della stessa coppia di compagni.
+- Vietata la ripetizione dello stesso incontro completo.
+- Ridotte al minimo le ripetizioni contro gli stessi avversari.
+- Nei Rodeo da 6 giocatori viene applicato uno schema garantito:
+  ogni coppia di compagni è diversa e non si ripete la stessa coppia avversaria.
+- I turni evitano che un giocatore sia programmato contemporaneamente su due campi.
+- La regola è automatica e non opzionale.
