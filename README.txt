@@ -163,3 +163,14 @@ VERSIONE 2.0.1 - CORREZIONE PARTITE
 - Aggiunto un messaggio di errore visibile.
 - Aggiornata la cache dell'app.
 - Eliminare e rigenerare gli eventuali tornei vuoti creati in precedenza.
+
+
+VERSIONE 2.1 - GRAFICA PARTITE IPHONE
+- Nomi delle coppie bianchi, grandi e sempre leggibili.
+- VS evidenziato con linee divisorie.
+- Schede partita più pulite e professionali.
+- Campi risultato ad alto contrasto.
+- Pulsante Salva risultato più evidente.
+- Timer mantenuto su pannello chiaro.
+- Ottimizzazione specifica per schermi iPhone.
+- Cache PWA aggiornata alla versione 2.1.
