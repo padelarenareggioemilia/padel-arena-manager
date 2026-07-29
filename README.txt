@@ -182,3 +182,12 @@ VERSIONE 2.1.1 - NOMI PARTITE VISIBILI
 - VS ingrandito e reso azzurro.
 - Linee divisorie più leggibili.
 - Aggiornata la cache PWA.
+
+
+VERSIONE 2.1.2 - CORREZIONE CACHE IPHONE
+- Safari e la PWA ora cercano sempre la versione più recente di index.html.
+- Eliminazione automatica delle vecchie cache.
+- Aggiornamento immediato del service worker.
+- Ricaricamento automatico dopo l'installazione dell'aggiornamento.
+- Banner in Home: “Versione attiva: 2.1.2”.
+- Nomi delle coppie mantenuti bianchi e leggibili.

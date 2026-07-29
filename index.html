@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 2.1.1</title>
+<title>Padel Arena Manager 2.1.2</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -915,6 +915,11 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 <meta name="apple-mobile-web-app-title" content="Padel Arena">
 <meta name="mobile-web-app-capable" content="yes">
 
+
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 </head>
 <body>
 <div id="root"></div>
@@ -1031,6 +1036,10 @@ function printFooter(e){
   '<div class="footer-center">PADEL ARENA MANAGER<br><b>PROGRAMMA UFFICIALE</b></div>'+
   '<div class="footer-right">Info eventi<br><b>327 691 0287</b></div>'+
  '</footer>';
+}
+
+function iphoneVersionBanner(){
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 2.1.2 · aggiornamento iPhone</div>';
 }
 
 function iphoneInstallCard(){
@@ -1187,13 +1196,13 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.1.1 PWA · nomi partite corretti</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.1.2 PWA · cache iPhone corretta</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
 }
 function home(){
- return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneInstallCard()+
+ return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneVersionBanner()+iphoneInstallCard()+
  '<div class="card"><h2>Padel Arena Manager 1.0</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
  '<div class="grid">'+
  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
@@ -2416,8 +2425,27 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js").catch(function(err){
+  navigator.serviceWorker.register("./service-worker.js?v=2.1.2",{updateViaCache:"none"}).then(function(reg){
+   reg.update();
+   if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
+   reg.addEventListener("updatefound",function(){
+    const worker=reg.installing;
+    if(!worker)return;
+    worker.addEventListener("statechange",function(){
+     if(worker.state==="installed"&&navigator.serviceWorker.controller){
+      worker.postMessage({type:"SKIP_WAITING"});
+     }
+    });
+   });
+  }).catch(function(err){
    console.warn("Service worker non registrato:",err);
+  });
+
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){
+   if(refreshing)return;
+   refreshing=true;
+   window.location.reload();
   });
  });
 }
