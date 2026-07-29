@@ -155,3 +155,11 @@ COME INSTALLARLA SU IPHONE
 5. Aprire l'icona Padel Arena dalla schermata Home.
 
 Nota: aprire index.html direttamente dall'app File non consente l'installazione PWA.
+
+
+VERSIONE 2.0.1 - CORREZIONE PARTITE
+- Corretto il generatore del Rodeo per 6, 8, 10, 12 e 16 giocatori.
+- Impedito il salvataggio di competizioni senza partite.
+- Aggiunto un messaggio di errore visibile.
+- Aggiornata la cache dell'app.
+- Eliminare e rigenerare gli eventuali tornei vuoti creati in precedenza.
