@@ -1,0 +1,2155 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Padel Arena Manager 2.0</title>
+<style>
+:root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:980px;margin:auto;padding:18px 16px 110px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:14px;background:var(--accent);color:#07111f;display:grid;place-items:center;font-weight:1000}
+h1{font-size:20px;margin:0}h2{margin:6px 0 12px}.muted,small{color:var(--muted)}.badge{border:1px solid #648a3e;color:var(--accent);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 14px 30px rgba(0,0,0,.17)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.action{min-height:120px;border:1px solid var(--line);background:#13233b;color:#fff;border-radius:18px;padding:16px;text-align:left}.action b{display:block;margin-top:14px;font-size:17px}.action span{font-size:12px;color:var(--muted)}
+.primary,.secondary,.danger,.small,.back{border:0;border-radius:12px;font-weight:900}.primary{width:100%;padding:14px;background:var(--accent);color:#07111f}.secondary,.small,.back{background:#203754;color:#fff;padding:10px 12px}.danger{background:var(--danger);color:#240b13;padding:10px 12px}.primary:disabled{opacity:.55}
+.row{display:flex;gap:10px}.row>*{flex:1}.field{margin-bottom:13px}label{display:block;margin-bottom:6px;color:var(--muted);font-size:13px}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#091729;color:#fff;outline:none}textarea{min-height:86px;resize:vertical}
+.item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}.grow{flex:1}.rank{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#203754;font-weight:900}.pill{padding:5px 8px;border-radius:999px;background:#203754;color:var(--aqua);font-size:11px;font-weight:900}
+.tabs{display:flex;gap:6px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:#0d1a2c;color:var(--muted);padding:10px 12px;border-radius:11px;font-weight:800}.tabs .on{background:var(--accent);color:#07111f}
+.match{border:1px solid var(--line);background:#0b182a;border-radius:16px;padding:14px;margin-bottom:10px}.team{font-weight:900}.score-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.notice{padding:11px 12px;border-radius:13px;border:1px solid rgba(94,234,212,.24);background:rgba(94,234,212,.08);color:#dbfffa;margin-bottom:12px;font-size:13px}
+.error{border-color:rgba(251,113,133,.4);background:rgba(251,113,133,.12);color:#ffdbe2}.success{border-color:rgba(183,255,60,.35);background:rgba(183,255,60,.09);color:#efffd5}
+.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{font-size:11px;text-transform:uppercase;color:var(--muted)}
+.checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.check{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:11px;background:#0b182a}.check input{width:auto}
+nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px solid var(--line);backdrop-filter:blur(12px)}nav div{max-width:980px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 12px calc(8px + env(safe-area-inset-bottom))}nav button{border:0;background:transparent;color:var(--muted);font-weight:800;padding:7px}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}.row{display:block}.row>*{margin-bottom:8px}.checklist{grid-template-columns:1fr}}
+
+@media print{
+ @page{size:A4;margin:12mm}
+ :root{--text:#111827;--muted:#4b5563;--line:#cbd5e1;--panel:#fff;--panel2:#fff}
+ body{background:#fff!important;color:#111827!important;font-size:11pt}
+ .app{max-width:none;padding:0}
+ nav,.tabs,button,.print-hide,.badge{display:none!important}
+ .top{border-bottom:2px solid #111827;padding-bottom:8px;margin-bottom:14px}
+ .logo{background:#111827!important;color:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .card,.match{background:#fff!important;color:#111827!important;border:1px solid #cbd5e1!important;box-shadow:none!important;break-inside:avoid}
+ .muted,small,label{color:#4b5563!important}
+ .notice{background:#f8fafc!important;color:#111827!important;border:1px solid #cbd5e1!important}
+ .success{background:#f0fdf4!important}
+ .error{background:#fff1f2!important}
+ .table-wrap{overflow:visible!important}
+ .table{min-width:0!important;width:100%!important}
+ .table th,.table td{color:#111827!important;border-color:#cbd5e1!important;padding:6px 5px}
+ input,select,textarea{border:0!important;background:transparent!important;color:#111827!important;padding:0!important}
+ .score-row{grid-template-columns:1fr 1fr}
+ a{color:#111827!important;text-decoration:none}
+ h1{font-size:18pt}h2{font-size:14pt}
+}
+
+
+.timer-panel{
+ margin:16px 0;
+ padding:20px;
+ border:4px solid #111827;
+ border-radius:20px;
+ text-align:center;
+ background:#f8fafc;
+ box-shadow:0 10px 28px rgba(0,0,0,.22);
+}
+.timer-panel.running{
+ border-color:#f59e0b;
+ background:#fff7ed;
+}
+.timer-panel.expired{
+ border-color:#dc2626;
+ background:#fee2e2;
+ animation:timerFlash .55s infinite alternate;
+}
+.timer-title{
+ font-size:16px;
+ font-weight:900;
+ text-transform:uppercase;
+ letter-spacing:1.2px;
+}
+.timer-display{
+ display:block;
+ margin:10px 0 14px;
+ font-size:clamp(64px,12vw,120px);
+ line-height:1;
+ font-weight:1000;
+ font-variant-numeric:tabular-nums;
+ color:#111827;
+}
+.timer-panel.expired .timer-display{
+ color:#b91c1c;
+}
+.timer-alert-overlay{
+ position:fixed;
+ inset:0;
+ z-index:99999;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:24px;
+ background:rgba(185,28,28,.93);
+ animation:overlayPulse .55s infinite alternate;
+}
+.timer-alert-overlay.visible{display:flex}
+.timer-alert-box{
+ width:min(720px,94vw);
+ padding:34px 24px;
+ border:6px solid #fff;
+ border-radius:24px;
+ text-align:center;
+ background:#111827;
+ color:#fff;
+ box-shadow:0 24px 80px rgba(0,0,0,.55);
+}
+.timer-alert-box h1{
+ margin:0 0 14px;
+ font-size:clamp(44px,10vw,96px);
+ line-height:1;
+}
+.timer-alert-box p{
+ margin:0 0 24px;
+ font-size:clamp(20px,4vw,34px);
+ font-weight:800;
+}
+@keyframes timerFlash{
+ from{transform:scale(1);box-shadow:0 0 0 rgba(220,38,38,0)}
+ to{transform:scale(1.015);box-shadow:0 0 34px rgba(220,38,38,.8)}
+}
+@keyframes overlayPulse{
+ from{background:rgba(185,28,28,.88)}
+ to{background:rgba(239,68,68,.98)}
+}
+
+
+.create-event-toolbar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:16px;
+ position:sticky;
+ top:8px;
+ z-index:30;
+ border:3px solid #111827;
+ box-shadow:0 10px 28px rgba(0,0,0,.18);
+}
+.create-event-top-button{
+ min-width:220px;
+ font-size:18px;
+ padding:16px 22px;
+}
+@media(max-width:700px){
+ .create-event-toolbar{align-items:stretch;flex-direction:column}
+ .create-event-top-button{width:100%;min-width:0}
+}
+
+
+.app-brand-logo{
+ width:52px;height:52px;object-fit:contain;border-radius:14px;background:#fff;padding:4px;
+ box-shadow:0 8px 20px rgba(0,0,0,.2)
+}
+.print-event-hero,.print-event-footer{display:none}
+@media print{
+ @page{size:A4 portrait;margin:7mm}
+ body{font-size:9pt}
+ .app{padding:0!important}
+ .top{display:none!important}
+ .print-event-hero{
+  display:block!important;
+  margin:0 0 5mm;
+  border-radius:5mm;
+  overflow:hidden;
+  color:#fff;
+  background:
+   radial-gradient(circle at 82% 20%,rgba(183,255,60,.28),transparent 25%),
+   linear-gradient(125deg,#06101e 0%,#0d2946 58%,#087c7b 100%);
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;
+  box-shadow:0 2mm 6mm rgba(0,0,0,.18)
+ }
+ .print-event-main{display:flex;align-items:center;gap:5mm;padding:5mm 6mm 3.5mm}
+ .print-club-logo{
+  width:31mm;height:25mm;object-fit:contain;background:#fff;border-radius:4mm;padding:2mm
+ }
+ .print-event-copy{flex:1;min-width:0}
+ .print-kicker{font-weight:900;letter-spacing:2px;font-size:7pt;color:#b7ff3c}
+ .print-event-title{font-size:21pt;line-height:1;font-weight:1000;text-transform:uppercase;margin:1.5mm 0 3mm}
+ .print-event-meta{display:grid;grid-template-columns:1fr 1fr;gap:2mm 5mm}
+ .print-event-meta span{
+  display:grid;grid-template-columns:16mm 1fr;gap:2mm;
+  padding:1.5mm 2mm;border-radius:2mm;background:rgba(255,255,255,.11)
+ }
+ .print-event-meta b{font-size:6.5pt;letter-spacing:.7px;color:#b7ff3c}
+ .print-address{margin-top:2mm;font-size:8pt}
+ .print-organizers{
+  display:flex;align-items:center;justify-content:flex-end;gap:3mm;
+  padding:2.5mm 6mm;background:rgba(0,0,0,.24)
+ }
+ .print-organizers span{font-size:6.5pt;text-transform:uppercase;letter-spacing:1px}
+ .print-organizers img{height:9mm;max-width:30mm;object-fit:contain;background:#fff;border-radius:2mm;padding:1mm}
+ .print-event-footer{
+  display:flex!important;align-items:center;justify-content:space-between;
+  border-top:1px solid #cbd5e1;margin-top:3mm;padding-top:2mm;
+  color:#334155;font-size:7pt;break-inside:avoid
+ }
+ .footer-center{text-align:center;letter-spacing:.5px}
+ .footer-right{text-align:right}
+ .card,.match{border-radius:3mm!important;padding:3mm!important;margin-bottom:2.5mm!important}
+ .match{display:grid;grid-template-columns:24mm 1fr 20mm;align-items:center;gap:2mm}
+ .match .score-row{margin:0!important}
+ h2{font-size:12pt;margin:0 0 2mm}
+ .notice{padding:2mm!important;margin-bottom:2mm!important}
+ .table th,.table td{padding:1.6mm 1.2mm!important;font-size:7.5pt!important}
+ .item{padding:2mm 0!important}
+ body.print-tab-matches .match{break-inside:avoid}
+ body.print-tab-matches .timer-panel{display:none!important}
+ body.print-tab-matches .notice.print-hide{display:none!important}
+ body.print-tab-matches .card{break-inside:avoid}
+ body.print-tab-players .item{font-size:8pt}
+}
+
+
+.organizer-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.organizer-strip img{width:100%;height:72px;object-fit:contain;background:#fff;border-radius:12px;padding:6px}
+@media(max-width:700px){.organizer-strip{grid-template-columns:repeat(2,1fr)}}
+
+/* PDF / STAMPA - VERSIONE PULITA E CENTRATA */
+@media print{
+  @page{
+    size:A4 portrait;
+    margin:8mm;
+  }
+
+  html,body{
+    width:210mm;
+    min-height:297mm;
+    margin:0!important;
+    padding:0!important;
+    background:#fff!important;
+    color:#111827!important;
+    font-family:Arial,Helvetica,sans-serif!important;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  .app{
+    width:100%!important;
+    max-width:none!important;
+    margin:0 auto!important;
+    padding:0!important;
+  }
+
+  .print-hide,
+  nav,
+  aside,
+  .sidebar,
+  .top{
+    display:none!important;
+  }
+
+  .print-event-hero{
+    display:block!important;
+    width:100%!important;
+    margin:0 auto 5mm!important;
+    padding:0!important;
+    background:#fff!important;
+    color:#111827!important;
+    border:1.2px solid #d1d5db!important;
+    border-radius:3mm!important;
+    box-shadow:none!important;
+    overflow:hidden!important;
+    page-break-inside:avoid!important;
+  }
+
+  .print-event-main{
+    display:grid!important;
+    grid-template-columns:31mm 1fr 31mm!important;
+    align-items:center!important;
+    gap:5mm!important;
+    padding:5mm!important;
+    min-height:34mm!important;
+    background:#fff!important;
+  }
+
+  .print-club-logo{
+    width:27mm!important;
+    height:24mm!important;
+    object-fit:contain!important;
+    justify-self:center!important;
+    align-self:center!important;
+    padding:0!important;
+    background:#fff!important;
+    border:none!important;
+    border-radius:0!important;
+  }
+
+  .print-event-copy{
+    min-width:0!important;
+    text-align:center!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+
+  .print-kicker{
+    margin:0 0 1.5mm!important;
+    color:#4b5563!important;
+    font-size:7pt!important;
+    font-weight:700!important;
+    letter-spacing:1.2px!important;
+    text-transform:uppercase!important;
+    text-align:center!important;
+  }
+
+  .print-event-title{
+    width:100%!important;
+    margin:0 0 3mm!important;
+    color:#111827!important;
+    font-size:19pt!important;
+    line-height:1.05!important;
+    font-weight:900!important;
+    text-transform:uppercase!important;
+    text-align:center!important;
+    word-break:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  .print-event-meta{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:1.5mm 3mm!important;
+    margin:0 auto!important;
+  }
+
+  .print-event-meta span{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-height:11mm!important;
+    padding:1.5mm 2mm!important;
+    background:#f8fafc!important;
+    border:1px solid #e5e7eb!important;
+    border-radius:2mm!important;
+    text-align:center!important;
+    color:#111827!important;
+  }
+
+  .print-event-meta b{
+    display:block!important;
+    margin-bottom:.7mm!important;
+    color:#6b7280!important;
+    font-size:6.5pt!important;
+    letter-spacing:.7px!important;
+    text-transform:uppercase!important;
+    text-align:center!important;
+  }
+
+  .print-address{
+    width:100%!important;
+    margin-top:2.5mm!important;
+    color:#374151!important;
+    font-size:8pt!important;
+    text-align:center!important;
+  }
+
+  .print-organizers{
+    display:grid!important;
+    grid-template-columns:1fr auto auto 1fr!important;
+    align-items:center!important;
+    justify-items:center!important;
+    gap:4mm!important;
+    padding:2.5mm 5mm!important;
+    background:#f8fafc!important;
+    border-top:1px solid #e5e7eb!important;
+  }
+
+  .print-organizers span{
+    grid-column:2!important;
+    color:#6b7280!important;
+    font-size:6.5pt!important;
+    letter-spacing:.8px!important;
+    text-transform:uppercase!important;
+    white-space:nowrap!important;
+  }
+
+  .print-organizers img{
+    grid-column:auto!important;
+    height:9mm!important;
+    width:auto!important;
+    max-width:28mm!important;
+    object-fit:contain!important;
+    padding:0!important;
+    background:transparent!important;
+    border:none!important;
+    border-radius:0!important;
+  }
+
+  main,
+  .content,
+  .page,
+  .view,
+  #app{
+    width:100%!important;
+    max-width:none!important;
+    margin:0 auto!important;
+    padding:0!important;
+  }
+
+  h1,h2,h3,h4{
+    text-align:center!important;
+    color:#111827!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  h2{
+    font-size:13pt!important;
+    line-height:1.1!important;
+    margin:0 0 3mm!important;
+  }
+
+  h3{
+    font-size:11pt!important;
+    margin:0 0 2mm!important;
+  }
+
+  .card{
+    width:100%!important;
+    box-sizing:border-box!important;
+    margin:0 auto 3mm!important;
+    padding:3mm!important;
+    background:#fff!important;
+    border:1px solid #d1d5db!important;
+    border-radius:2.5mm!important;
+    box-shadow:none!important;
+    page-break-inside:avoid!important;
+  }
+
+  .notice{
+    width:100%!important;
+    box-sizing:border-box!important;
+    margin:0 auto 2.5mm!important;
+    padding:2.2mm 3mm!important;
+    text-align:center!important;
+    background:#f8fafc!important;
+    color:#374151!important;
+    border:1px solid #e5e7eb!important;
+    border-radius:2mm!important;
+  }
+
+  .match{
+    width:100%!important;
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:24mm minmax(0,1fr) 24mm!important;
+    align-items:center!important;
+    gap:3mm!important;
+    margin:0 auto 2.5mm!important;
+    padding:3mm!important;
+    background:#fff!important;
+    border:1px solid #d1d5db!important;
+    border-radius:2.5mm!important;
+    box-shadow:none!important;
+    page-break-inside:avoid!important;
+    text-align:center!important;
+  }
+
+  .match > *{
+    min-width:0!important;
+    text-align:center!important;
+  }
+
+  .match .muted,
+  .match small{
+    text-align:center!important;
+  }
+
+  .score-row{
+    display:flex!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:2mm!important;
+    margin:0!important;
+    text-align:center!important;
+  }
+
+  table,
+  .table{
+    width:100%!important;
+    border-collapse:collapse!important;
+    table-layout:fixed!important;
+    margin:0 auto!important;
+    font-size:7.5pt!important;
+  }
+
+  .table th,
+  .table td,
+  table th,
+  table td{
+    padding:1.6mm 1.3mm!important;
+    border:1px solid #d1d5db!important;
+    text-align:center!important;
+    vertical-align:middle!important;
+    overflow-wrap:anywhere!important;
+    color:#111827!important;
+    background:#fff!important;
+  }
+
+  .table th,
+  table th{
+    background:#f3f4f6!important;
+    font-weight:800!important;
+  }
+
+  .item,
+  .row,
+  .grid{
+    text-align:center!important;
+  }
+
+  .item{
+    padding:2mm 0!important;
+  }
+
+  .badge,
+  .pill,
+  .tag{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    background:#f3f4f6!important;
+    color:#111827!important;
+    border:1px solid #d1d5db!important;
+    box-shadow:none!important;
+  }
+
+  .timer-panel,
+  button,
+  input,
+  select,
+  textarea{
+    display:none!important;
+  }
+
+  .print-event-footer{
+    display:flex!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:4mm!important;
+    margin-top:3mm!important;
+    padding-top:2.5mm!important;
+    border-top:1px solid #d1d5db!important;
+    color:#4b5563!important;
+    font-size:7pt!important;
+    page-break-inside:avoid!important;
+  }
+
+  .print-event-footer > div{
+    width:33.333%!important;
+  }
+
+  .print-event-footer > div:first-child{
+    text-align:left!important;
+  }
+
+  .footer-center{
+    text-align:center!important;
+  }
+
+  .footer-right{
+    text-align:right!important;
+  }
+
+  body.print-tab-matches .match{
+    page-break-inside:avoid!important;
+  }
+
+  body.print-tab-players .item{
+    font-size:8pt!important;
+  }
+}
+
+
+.team-stack{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:3px;
+ width:100%;
+ text-align:center;
+ font-size:20px;
+ line-height:1.15;
+ font-weight:850;
+ color:#111827;
+}
+.matchup-stack{
+ width:100%;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:8px;
+ margin:12px auto;
+ text-align:center;
+}
+.vs-divider{
+ width:min(440px,82%);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:12px;
+ color:#0f3b72;
+ font-weight:900;
+}
+.vs-divider::before,
+.vs-divider::after{
+ content:"";
+ height:1px;
+ flex:1;
+ background:#94a3b8;
+}
+.vs-divider span{
+ flex:0 0 auto;
+ font-size:16px;
+ letter-spacing:1px;
+}
+@media print{
+ .match{
+  display:block!important;
+  padding:3mm 4mm!important;
+ }
+ .match > .pill{
+  display:table!important;
+  margin:0 auto 1.5mm!important;
+ }
+ .match .match-meta{
+  margin-bottom:2mm!important;
+ }
+ .matchup-stack{
+  width:100%!important;
+  gap:1.2mm!important;
+  margin:2mm auto!important;
+  page-break-inside:avoid!important;
+ }
+ .team-stack{
+  gap:.5mm!important;
+  font-size:11.5pt!important;
+  line-height:1.08!important;
+  font-weight:800!important;
+  text-align:center!important;
+ }
+ .vs-divider{
+  width:56%!important;
+  gap:2mm!important;
+  color:#1f3f68!important;
+ }
+ .vs-divider span{
+  font-size:9pt!important;
+ }
+}
+
+
+/* PADEL ARENA MANAGER 2.0 - PWA IPHONE */
+.iphone-install-card{
+ display:grid;grid-template-columns:58px 1fr;align-items:center;gap:14px;
+ border:2px solid #0b5f8a;
+}
+.iphone-install-icon{
+ width:52px;height:52px;display:flex;align-items:center;justify-content:center;
+ border-radius:15px;background:#e8f4fb;font-size:28px;
+}
+@media(max-width:760px){
+ html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+ body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+ .app{width:100%;padding:10px}
+ .top{
+  position:sticky;top:0;z-index:50;margin:-10px -10px 10px;padding:10px 12px;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(12px);
+  border-bottom:1px solid #dbe5ed;
+ }
+ .top .brand h1{font-size:17px;line-height:1.15}
+ .top .brand small{font-size:11px}
+ .app-brand-logo{width:42px;height:42px;border-radius:11px}
+ nav,.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ nav::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none}
+ button,.primary,.secondary{min-height:44px;font-size:16px}
+ input,select,textarea{min-height:44px;font-size:16px!important}
+ .row,.grid{grid-template-columns:1fr!important}
+ .card{padding:14px;border-radius:15px}
+ .match{padding:14px}
+ .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+ table,.table{min-width:680px}
+ .create-event-toolbar{top:64px}
+ .iphone-install-card{grid-template-columns:50px 1fr}
+}
+@media(display-mode:standalone){
+ .iphone-install-card{display:none}
+ body{background:#f4f7fa}
+}
+
+</style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<meta name="theme-color" content="#0b5f8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Padel Arena">
+<meta name="mobile-web-app-capable" content="yes">
+
+</head>
+<body>
+<div id="root"></div>
+
+<div id="timerAlertOverlay" class="timer-alert-overlay" role="alert" aria-live="assertive">
+ <div class="timer-alert-box">
+  <h1>STOP!</h1>
+  <p>Tempo della partita terminato</p>
+  <button class="primary" data-action="dismiss-timer-alert">HO VISTO</button>
+ </div>
+</div>
+
+<script>
+const KEY="pam_v040";
+const SEEDED_PLAYERS=[
+ {firstName:"Andrea",lastName:"Spina",gender:"Maschile",tokenBalance:3},
+ {firstName:"Antonio",lastName:"Stirparo",gender:"Maschile",tokenBalance:6},
+ {firstName:"Augusto",lastName:"Aubry",gender:"Maschile",tokenBalance:15},
+ {firstName:"Fabio",lastName:"De Chiara",gender:"Maschile",tokenBalance:13},
+ {firstName:"Davide",lastName:"Lucantoni",gender:"Maschile",tokenBalance:3},
+ {firstName:"Simone",lastName:"Daviddi",gender:"Maschile",tokenBalance:5},
+ {firstName:"Claudio",lastName:"Negretti",gender:"Maschile",tokenBalance:11},
+ {firstName:"Sergio",lastName:"Balia",gender:"Maschile",tokenBalance:35},
+ {firstName:"Ivan",lastName:"Gianferrari",gender:"Maschile",tokenBalance:36},
+ {firstName:"Ionel",lastName:"Marcel",gender:"Maschile",tokenBalance:18},
+ {firstName:"Stefano",lastName:"Fontanesi",gender:"Maschile",tokenBalance:16},
+ {firstName:"Corrado",lastName:"Verzini",gender:"Maschile",tokenBalance:13},
+ {firstName:"Francesco",lastName:"Lignola",gender:"Maschile",tokenBalance:9},
+ {firstName:"Riccardo",lastName:"Vecchi",gender:"Maschile",tokenBalance:3},
+ {firstName:"Stefano",lastName:"Neri",gender:"Maschile",tokenBalance:9},
+
+ {firstName:"Maurizia",lastName:"Casini",gender:"Femminile",tokenBalance:34},
+ {firstName:"Liliana",lastName:"Aquaro",gender:"Femminile",tokenBalance:18},
+ {firstName:"Eleonora",lastName:"Gorni",gender:"Femminile",tokenBalance:6},
+ {firstName:"Monica",lastName:"Esposito",gender:"Femminile",tokenBalance:14},
+ {firstName:"Antonella",lastName:"Oliva",gender:"Femminile",tokenBalance:6},
+ {firstName:"Monia",lastName:"Mazzi",gender:"Femminile",tokenBalance:51},
+ {firstName:"Daniela",lastName:"Mantovani",gender:"Femminile",tokenBalance:6},
+ {firstName:"Manuela",lastName:"Mariotti",gender:"Femminile",tokenBalance:9},
+ {firstName:"Arianna",lastName:"Lignola",gender:"Femminile",tokenBalance:9},
+ {firstName:"Manuela",lastName:"Fabbi",gender:"Femminile",tokenBalance:3},
+ {firstName:"Sabrina",lastName:"Lardieri",gender:"Femminile",tokenBalance:3},
+ {firstName:"Manuela",lastName:"Farò",gender:"Femminile",tokenBalance:19},
+
+ {firstName:"Fabienne",lastName:"De Cup De Saint Paul",gender:"Femminile",tokenBalance:9},
+ {firstName:"Carlotta",lastName:"Rivi",gender:"Femminile",tokenBalance:5},
+ {firstName:"Viviana",lastName:"De Magistris",gender:"Femminile",tokenBalance:10},
+ {firstName:"Stefania",lastName:"Bella",gender:"Femminile",tokenBalance:9},
+ {firstName:"Valentina",lastName:"Labattaglia",gender:"Femminile",tokenBalance:16},
+ {firstName:"Viktoriia",lastName:"Dutka",gender:"Femminile",tokenBalance:3},
+ {firstName:"Sara",lastName:"Sacco'",gender:"Femminile",tokenBalance:9},
+ {firstName:"Elisa",lastName:"Savini",gender:"Femminile",tokenBalance:11}
+];
+
+
+const CLUBS={
+ "Eden Padel Club":{
+  name:"Eden Padel Club",
+  address:"Via Giacomo Balla 6, Reggio Emilia",
+  logo:"assets/eden-padel-club.jpeg",
+  accent:"#c91624",
+  courts:["Campo Blu","Campo Verde"]
+ },
+ "Happy Time Padel":{
+  name:"Happy Time Padel",
+  address:"Via Coppi 1/B, Castellarano (RE)",
+  logo:"assets/happy-time-padel.jpeg",
+  accent:"#ef476f",
+  courts:["Campo 1","Campo 2"]
+ }
+};
+const ORGANIZERS=[
+ {name:"Padel Arena Reggio Emilia",logo:"assets/padel-arena-reggio-emilia.jpeg"},
+ {name:"AICS",logo:"assets/aics.jpeg"}
+];
+function clubInfo(name){
+ return CLUBS[name]||{name:name||"Club da definire",address:"",logo:"assets/padel-arena-reggio-emilia.jpeg",accent:"#0b5f8a",courts:[]};
+}
+function prettyDate(value){
+ if(!value)return "";
+ const d=new Date(value+"T12:00:00");
+ if(Number.isNaN(d.getTime()))return value;
+ return d.toLocaleDateString("it-IT",{weekday:"long",day:"2-digit",month:"long",year:"numeric"});
+}
+function eventPrintBranding(e){
+ if(!e)return "";
+ const c=clubInfo(e.club);
+ const courts=Number(e.courts||1);
+ return '<section class="print-event-hero">'+
+  '<div class="print-event-main">'+
+   '<img class="print-club-logo" src="'+esc(c.logo)+'" alt="'+esc(c.name)+'">'+
+   '<div class="print-event-copy"><div class="print-kicker">PROGRAMMA UFFICIALE</div>'+
+    '<div class="print-event-title">'+esc(e.name)+'</div>'+
+    '<div class="print-event-meta">'+
+     '<span><b>Giorno</b>'+esc(prettyDate(e.date))+'</span>'+
+     '<span><b>Ora</b>'+esc(e.startTime||"20:00")+'</span>'+
+     '<span><b>Centro</b>'+esc(c.name)+'</span>'+
+     '<span><b>Campi</b>'+courts+' '+(courts===1?"campo":"campi")+'</span>'+
+    '</div>'+
+    '<div class="print-address">'+esc(c.address)+'</div>'+
+   '</div>'+
+   '<div></div>'+
+  '</div>'+
+  '<div class="print-organizers"><span>Organizzato da</span>'+
+   ORGANIZERS.map(function(o){return '<img src="'+esc(o.logo)+'" alt="'+esc(o.name)+'">'}).join("")+
+  '</div>'+
+ '</section>';
+}
+function printFooter(e){
+ if(!e)return "";
+ const c=clubInfo(e.club);
+ return '<footer class="print-event-footer">'+
+  '<div><b>'+esc(c.name)+'</b><br>'+esc(c.address)+'</div>'+
+  '<div class="footer-center">PADEL ARENA MANAGER<br><b>PROGRAMMA UFFICIALE</b></div>'+
+  '<div class="footer-right">Info eventi<br><b>327 691 0287</b></div>'+
+ '</footer>';
+}
+
+function iphoneInstallCard(){
+ return '<div class="card iphone-install-card">'+
+  '<div class="iphone-install-icon">📱</div>'+
+  '<div><h2>Installa su iPhone</h2>'+
+  '<div class="muted">Dopo la pubblicazione online, apri l’app con Safari, premi <b>Condividi</b> e scegli <b>Aggiungi alla schermata Home</b>. Si aprirà a schermo intero e funzionerà anche offline.</div></div>'+
+ '</div>';
+}
+
+function uid(prefix){return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)}
+function freshState(){return{view:"home",tab:"matches",players:[],events:[],currentEventId:null,draft:{
+ name:"Rodeo a Gettoni",
+ date:new Date().toISOString().slice(0,10),
+ club:"Eden Padel Club",
+ category:"Maschile",
+ competitionType:"rodeo_tokens",
+ courts:2,
+ fee:25,
+ pairsPerGroup:4,
+ finalsOption:"top2",
+ selected:[]
+}}}
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY))||freshState()}catch(e){state=freshState()}
+if(!state.draft)state.draft=freshState().draft;
+if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
+if(state.draft.fee===undefined)state.draft.fee=25;
+if(!state.draft.pairsPerGroup)state.draft.pairsPerGroup=4;
+if(!state.draft.finalsOption)state.draft.finalsOption="top2";
+if(state.draft.returnLeg===undefined)state.draft.returnLeg=false;
+if(state.draft.eliminationReturnLeg===undefined)state.draft.eliminationReturnLeg=false;
+if(state.draft.semifinalReturnLeg===undefined)state.draft.semifinalReturnLeg=false;
+if(state.draft.finalReturnLeg===undefined)state.draft.finalReturnLeg=false;
+if(!state.draft.startTime)state.draft.startTime="20:00";
+if(!state.draft.matchMode)state.draft.matchMode="score";
+if(!state.draft.matchDuration)state.draft.matchDuration=20;
+if(state.draft.initialTimerEnabled===undefined)state.draft.initialTimerEnabled=true;
+if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerEnabled=false;
+if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
+if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false;
+(state.events||[]).forEach(function(e){
+ if(!e.competitionType)e.competitionType="rodeo_tokens";
+ if(!e.payments)e.payments={};
+ if(e.entryFee===undefined)e.entryFee=25;
+ if(e.initialTimerEnabled===undefined)e.initialTimerEnabled=true;
+ if(e.eliminationTimerEnabled===undefined)e.eliminationTimerEnabled=false;
+ if(e.semifinalTimerEnabled===undefined)e.semifinalTimerEnabled=false;
+ if(e.finalTimerEnabled===undefined)e.finalTimerEnabled=false;
+});
+(state.players||[]).forEach(function(p){
+ if(p.birthPlace===undefined)p.birthPlace="";
+ if(p.postalCode===undefined)p.postalCode="";
+ if(p.residenceTown===undefined)p.residenceTown="";
+ if(p.residenceProvince===undefined)p.residenceProvince="";
+});
+const importedRegistryNames=["Adamelli Marco", "Agosti Cinzia", "aguilar hugo", "Aguzzoli Marco", "Alice Faraboni", "Amari Valeria", "ANDREA GIROTTI", "andrea minerva", "Anigoni Andrea", "Antoine Sebastien", "Anzivino Massimiliano", "Aquaro Liliana", "Aubry Augusto", "bagni riccardo", "Battistini Gloria", "Beltrami Fulvio", "Benedetti Adorno", "Benigno Fabio", "Bertozzi Francesco", "Bia Gianpaolo", "Bianco Antonella", "Bigi Tamara", "Bonacini Daniele", "borelli maicol", "Borsari Gigi", "Savini Elisa", "Busiello Salvatore", "Calzolari Sarah", "Camellini Paolo", "Camposano Cristian", "Carbini Carlo", "Carnevali Maurizio", "Carpi Renzo", "Casini Maurizia", "Casoli Morgan", "Cattaneo Arnaldo", "Cavalchi Stefano", "Cocconcelli Daniele", "Corradini Paola", "Corrieri Massiliano", "Corsi Roberto", "Costa Alex", "D'Avico Luca", "dallasta dario", "Davi' Laura", "Davoli Alberto", "De Chiara Fabio", "De Marchi Egle", "De Pillo Alfredo", "Debbi Barbara", "Di Nobile Pasqualino", "Di salvatore Pier", "Diletto Daniele", "Duca Maurizio", "ENRICO FANTINI", "Esposito Monica", "Fabbi Manuela", "Fantesini Barbara", "Farò Manuela", "Federico Benassi", "Federico Foroni", "Ferretti Matteo", "Ferri Stefania", "Filippini Gianluca", "Fina Saverio", "Fontana Luciano", "Fontanesi Stefano", "Foroni Matteo", "Foroni Massimo", "Franceschi Glenda", "Francesco Albertini", "Franzoni Giovanni", "Frate Ciro", "Galloni Stefano", "Ghelfi Jacopo", "Gianferrari Ivan", "Gianluca Tortora", "Giovanniello Corinne", "Gorni Eleonora", "Graziano Fabrizio", "Greta Andreoli", "Grisendi Marco", "Guerriero Federico", "Guglielmi Valerio", "Iellamo Francesco", "Iori Marco", "Iori Luca", "Iori Emanuele", "Iori Alessandro", "Kosir Matteo", "Lardieri Sabrina", "Larocca Michele", "Lignola Francesco", "Lignola Giuseppe", "Lignola Loris", "Lombardi Natascia", "Lucantoni Davide", "Macrí Federico", "Magnano Federico", "Mainini Matteo", "Spadaro Veronica", "Margini Sebastian", "Margini Pietro", "Masetti Massimiliano", "Matichecchia Damiano", "Matteo Virga", "matteo melato", "Mazzi Monia", "Melioli Francesco", "Melioli Marco", "Mendola Rocco", "Menozzi Marco", "Menozzi Sara", "Menozzi Maurizio", "Mercati Domenica", "Merlo Andrea", "Milano David", "Milo Mina", "Mingardi Monia", "mirco boni", "Montagna Antonio", "Nappo Michele", "Negretti Claudio", "Neri Stefano", "Ofkuir Rafy", "Oliva Antonella", "Orlandini Davide", "Paini Sonia", "Panizza Stefano", "Pappalardo Salvatore", "Parmigiani Marco", "Patrick Zecchetti", "Pittau Fabio", "Pizzarelli Luana", "Presi Marcello", "Scarano Giancarlo", "Profetto Giorgio", "Renzo Pedrazzini", "Righi Francesca", "Rinaldi Marco", "Rivi Carlotta", "Rocca Francesco", "Sacchetti Andrea", "Salsi Fabio", "Savastano Anna", "Scarano Matteo", "Sergio Balia", "Simone Daviddi", "Spacca Tommaso", "Spina Andrea", "stefano barbieri", "stefano piccinini", "Tachino Chiara", "Tamelli Sandro", "Telani Manuel", "Tinarelli Filippo", "turri piergiulio", "Vecchi Lorenzo", "Veronesi Elena", "Verzini Corrado", "Zoboli Ilenia", "Istruttore Corrado Padel Verzini", "Pietro Carbone", "Francesco Istruttore Lignola Padel", "Filippini Maria Grazia", "Istruttore Andrea Algeri Padel", "Addari Giammarco", "Anghinetti Padel Istruttore Michele", "OPPIDO PALMO", "Giorgia Gardini", "Sara Severi", "Villa Paolo", "Boretti Nicolò", "Boretti Federico", "Ramolini Giorgia", "Righi Simone", "Giancarlo Scarano", "Caneo Nicolò", "viani marco", "Lignola Arianna", "Acerbi Erika", "Nosari Asia", "Columbu Giomaria", "Anigoni Amanda", "Roncaglia Silvia", "Tamagnini Andrea", "Cristofori Lucrezia", "Emily D' Avico", "Marco Vecchi Marco", "Rosati Donald", "Crasti Anna", "Giacalone Dario", "Vignoli Elisa", "Tonelli Lia", "Camellini Alessandro", "Gabbi Claudio", "Veronese Elisa", "Stefania Malenchini", "Demiri Astrit", "Albertini Pietro", "D'Apice Giuseppe", "Petronella Angelo", "Gibertini Andrea", "Mossina Simone", "Mattia Schirone", "Franceschini cristian", "Labbate Antonino", "Vecchi Claudio", "Roberto Valgimigli", "Lucrezia Merlo", "Andrea Rabacchi", "Tedeschi Marcello", "Sardo Claudio", "Alice Iori", "Tascedda Stefano", "Battistoni Tommaso", "Gabriella Motta", "Leoni Federica", "Giulio Soliani", "TODARO ALBERTO", "POLI MAURO", "Lorenzo Maccari", "Baroni Andrea", "Piccinini Stefano", "Saccani Vittoria", "Tommaso Portioli", "Sepe Matteo", "LAPOMARDA NICOLA", "Augusto Iorio", "Mario Conte", "Violi Simone", "Fiumano' Francesco", "Emanuele Capizzi", "Scarano Pasquale", "Alessia Gilioli", "GATTI GIULIANO", "Caprino Giuseppe", "Campana Nicholas", "Nesci Emilio", "Devis Catellani", "Guardalupi Filippo", "Nunziato Marco", "Celentano Raffaele", "Eric Twum", "Luisa Pia Scialoia", "caselli luca", "Capretta Nicolò", "Vanessa Lolli", "Margot Lolli", "Viola Scano", "Julia Bonacini", "Elena Mori", "Morini Sara", "Greta Rampini", "Soprani Alberto", "Allegra Bergonzi", "Andrea Battaglini", "D' Apice Leonardo", "Spaggiari Lara", "Milena Mahadeo", "Antonio Mereu", "liccese grazia", "Mereu Michelle", "Mereu Luigia", "Tommaso Ferrarini", "Iacovelli Alberto", "Delmonte Federico", "Montruccoli Luca", "Jonathan Parisi", "Gianluca Di Guida", "Tania Leoni", "Rogato Manuel", "Cattani Arianna", "Baldoni Leonardo", "Torraco Daniele", "Niklas Frewel", "Rosa Emanuele", "Ascolese Emilio", "Luca Donini", "Bicchieri Luca", "Alex Maffeo", "di franco andrea", "Giosuè Ilardo", "Chiara Genna", "sorce rosario", "Rossella Barilli", "Fontana Lorenzo", "Milena Delpogetto", "Luigi Iori", "benigno nicolò", "bologna alessandro", "Carpi Giovanni", "Michele Lari", "Ionel Diana", "Ionel Marcel", "Davide Capriello", "Ionel Alexandro", "Clara Fontanili", "Sara Sacco’", "Ionel Anastasia", "Geti DAVIDE", "Morini Mauro", "Rosario Sarcone", "Alessandro Augelli", "Borghi Nadia", "Cottafavi Omar", "Viktoriia Dutka", "Alessia Quaranta", "Carmen Rossella", "Maria Diletto", "Zingaro Valentina", "Manduano Carlotta", "Filippo D’ Apice", "Alberto Munao'", "Diego Munao'", "Giovanni Borza", "Stirparo Antonio", "Daniela Murciano", "Carubbi Alberto", "Daniele Carubbi", "Giovanardi Mirco", "Monticelli Arianna", "Mouad Tawgui", "Amine Lafif", "Turrà piergiulio", "Elia Giovannini", "Ruggieri Marco", "vaccari tommaso", "Virgilli Francesco", "iori cristiano", "Filippo Burani", "Aidoo Evans", "Rovighi Giulia", "Valentina Dichirico", "Silvia Tomei", "Biliardi Beatrice", "avanzi sara", "francesca baldelli", "hajmi youssef", "Meligeni Mario", "Roberto Doro", "Pedrini Christian", "Bersanetti Emanuele", "Beneventi Luca", "Barbara Bedocchi", "Arianna Cubeddu", "Giuseppe Todisco", "Federico Romani", "Cirlini Andrea", "Brunello Filippo", "Faccia Martina", "Montanari Aurora", "Baccarini Gabriele", "Pattacini Fabio", "cosmi davide", "Cattabiani Massimo", "Shahinaj Klajdi", "Cocca Giulia", "Olmi Alessandro", "Rotteglia Pietro", "Ferri Simone", "Crotti Valentina", "Masucci Alessandro", "Salvatore Soro", "Vecchi Riccardo", "Mariotti Manuela", "Daniela Mantovani", "Rinaldini Matteo", "Iodice Gabriele", "Iodice Alessandro", "Pioppi giorgia", "Branchi Giulia", "Bianchi Alessio", "Alberto Benassi", "Cimino Alessandro", "Valentina Labattaglia", "Stefania Bella", "Viviana De Magistris", "calzolari massimo", "Fabienne De Cup De Saint Paul", "corradini alberto", "zattera gabriele", "simonazzi dario", "Baita Andrea", "Mariano Peralta", "vega maurizio"];
+function registryTokenKey(value){
+ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/).filter(Boolean).sort().join("|");
+}
+const existingRegistryKeys=new Set((state.players||[]).map(function(p){return registryTokenKey(playerName(p))}));
+importedRegistryNames.forEach(function(fullName){
+ const key=registryTokenKey(fullName);
+ if(!key||existingRegistryKeys.has(key))return;
+ state.players.push({
+  id:uid("p"),
+  firstName:fullName,
+  lastName:"",
+  phone:"",
+  email:"",
+  birth:"",
+  birthPlace:"",
+  postalCode:"",
+  residenceTown:"",
+  residenceProvince:"",
+  level:"",
+  notes:"Importato da Gestione Clienti - Anagrafica",
+  gender:"",
+  tokenBalance:0
+ });
+ existingRegistryKeys.add(key);
+});
+save();
+
+function normalizeName(s){return String(s||"").trim().toLocaleLowerCase("it-IT").replace(/\s+/g," ")}
+function seedParticipants(){
+ if(!Array.isArray(state.players))state.players=[];
+ SEEDED_PLAYERS.forEach(function(seed){
+  const full=normalizeName(seed.firstName+" "+seed.lastName);
+  let p=state.players.find(function(x){return normalizeName((x.firstName||"")+" "+(x.lastName||""))===full});
+  if(!p){
+   p={id:uid("p"),firstName:seed.firstName,lastName:seed.lastName,phone:"",email:"",birth:"",birthPlace:"",postalCode:"",residenceTown:"",residenceProvince:"",level:"",notes:"Partecipante CUPRA Rodeo Circuit 2026",gender:seed.gender,tokenBalance:seed.tokenBalance};
+   state.players.push(p);
+  }else{
+   if(!p.gender)p.gender=seed.gender;
+   if(p.tokenBalance===undefined||p.tokenBalance===null)p.tokenBalance=seed.tokenBalance;
+  }
+ });
+ save();
+}
+seedParticipants();
+
+function applyMaleTokenBalancesTappa2(){
+ const balances={
+  "Corrado Verzini":13,
+  "Ivan Gianferrari":36,
+  "Claudio Negretti":11,
+  "Augusto Aubry":15,
+  "Sergio Balia":35,
+  "Francesco Lignola":9,
+  "Ionel Marcel":18,
+  "Stefano Neri":9,
+  "Stefano Fontanesi":16,
+  "Riccardo Vecchi":3
+ };
+ Object.keys(balances).forEach(function(fullName){
+  const key=registryTokenKey(fullName);
+  const matches=(state.players||[]).filter(function(p){
+   return registryTokenKey(playerName(p))===key;
+  });
+  if(matches.length){
+   matches.forEach(function(p){p.tokenBalance=balances[fullName]});
+  }else{
+   const parts=fullName.split(" ");
+   state.players.push({
+    id:uid("p"),
+    firstName:parts.shift(),
+    lastName:parts.join(" "),
+    phone:"",
+    email:"",
+    birth:"",
+    birthPlace:"",
+    postalCode:"",
+    residenceTown:"",
+    residenceProvince:"",
+    level:"",
+    notes:"Saldo gettoni maschile aggiornato dopo Tappa 2",
+    gender:"Maschile",
+    tokenBalance:balances[fullName]
+   });
+  }
+ });
+ state.migrations=state.migrations||{};
+ state.migrations.maleTokensTappa2="2026-07-29-v2";
+ save();
+}
+applyMaleTokenBalancesTappa2();
+
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
+function playerName(p){return (p.firstName+" "+p.lastName).trim()}
+function currentEvent(){return state.events.find(function(e){return e.id===state.currentEventId})||null}
+function setView(v){state.view=v;save();render()}
+function setTab(v){state.tab=v;save();render()}
+function header(title,sub){
+ const e=state.view==="event"?currentEvent():null;
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.0 PWA iPhone</span></div></div>';
+}
+function nav(){
+ return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
+}
+function home(){
+ return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneInstallCard()+
+ '<div class="card"><h2>Padel Arena Manager 1.0</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
+ '<div class="grid">'+
+ '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
+ '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Seleziona giocatori già esistenti</span></button>'+
+ '<button class="action" data-view="events">📂<b>Competizioni salvate</b><span>Riapri risultati e classifiche</span></button>'+
+ '</div>';
+}
+function playersView(){
+ const orderedPlayers=state.players.slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const rows=orderedPlayers.length?orderedPlayers.map(function(p,i){
+  const searchText=[playerName(p),p.phone,p.email,p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
+  return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><div class="rank">'+(i+1)+'</div><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
+  '<div class="muted">'+
+  (p.birthPlace?'Nato/a a '+esc(p.birthPlace):'Luogo di nascita non compilato')+
+  ' · '+(p.postalCode?'CAP '+esc(p.postalCode):'CAP non compilato')+
+  ' · '+(p.residenceTown?esc(p.residenceTown):'Comune non compilato')+
+  (p.residenceProvince?' ('+esc(p.residenceProvince)+')':' · Provincia non compilata')+
+  '</div></div><button class="small" data-edit-player="'+p.id+'">Modifica</button></div>'
+ }).join(""):'<div class="muted">Nessun cliente presente.</div>';
+ return header("Anagrafica clienti","Crea una volta, riutilizza sempre")+
+ '<div class="card"><h2>Nuovo cliente / giocatore</h2><div id="playerMessage"></div>'+
+ '<div class="row"><div class="field"><label>Nome</label><input id="pFirst"></div><div class="field"><label>Cognome</label><input id="pLast"></div></div>'+
+ '<div class="row"><div class="field"><label>Telefono</label><input id="pPhone"></div><div class="field"><label>Email</label><input id="pEmail" type="email"></div></div>'+
+ '<div class="row"><div class="field"><label>Data di nascita</label><input id="pBirth" type="date"></div><div class="field"><label>Luogo di nascita</label><input id="pBirthPlace"></div></div>'+
+ '<div class="row"><div class="field"><label>CAP</label><input id="pPostalCode" inputmode="numeric" maxlength="5"></div><div class="field"><label>Comune di residenza</label><input id="pResidenceTown"></div><div class="field"><label>Provincia</label><input id="pResidenceProvince" maxlength="2" placeholder="Es. RE"></div></div>'+
+ '<div class="row"><div class="field"><label>Livello / categoria</label><input id="pLevel" placeholder="Es. NC, 4ª, principiante"></div><div class="field"><label>Categoria circuito</label><select id="pGender"><option>Maschile</option><option>Femminile</option></select></div><div class="field"><label>Saldo gettoni attuale</label><input id="pTokens" type="number" min="0" value="0"></div></div>'+
+ '<div class="field"><label>Note</label><textarea id="pNotes"></textarea></div>'+
+ '<button class="primary" data-action="save-player">Salva anagrafica</button></div>'+
+ '<div class="card"><h2>Clienti esistenti ('+state.players.length+')</h2>'+
+ '<div class="field print-hide"><label>Cerca giocatore o giocatrice</label><input id="playerSearchInput" type="search" placeholder="Scrivi nome, cognome, telefono, comune..." autocomplete="off"></div>'+
+ '<div id="playerSearchCount" class="muted print-hide">'+state.players.length+' nominativi visualizzati</div>'+
+ '<div id="playerSearchRows">'+rows+'</div></div>';
+}
+function savePlayer(){
+ const msg=document.getElementById("playerMessage");
+ try{
+  const first=document.getElementById("pFirst").value.trim();
+  const last=document.getElementById("pLast").value.trim();
+  if(!first||!last)throw new Error("nome e cognome sono obbligatori");
+  const p={id:uid("p"),firstName:first,lastName:last,phone:document.getElementById("pPhone").value.trim(),email:document.getElementById("pEmail").value.trim(),birth:document.getElementById("pBirth").value,birthPlace:document.getElementById("pBirthPlace").value.trim(),postalCode:document.getElementById("pPostalCode").value.trim(),residenceTown:document.getElementById("pResidenceTown").value.trim(),residenceProvince:document.getElementById("pResidenceProvince").value.trim().toUpperCase(),level:document.getElementById("pLevel").value.trim(),notes:document.getElementById("pNotes").value.trim(),gender:document.getElementById("pGender").value,tokenBalance:Math.max(0,Number(document.getElementById("pTokens").value)||0)};
+  state.players.push(p);save();render();
+ }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
+}
+function editPlayer(id){
+ const p=state.players.find(function(x){return x.id===id});if(!p)return;
+ const first=prompt("Nome",p.firstName);if(first===null)return;
+ const last=prompt("Cognome",p.lastName);if(last===null)return;
+ const phone=prompt("Telefono",p.phone||"");if(phone===null)return;
+ const email=prompt("Email",p.email||"");if(email===null)return;
+ const birthPlace=prompt("Luogo di nascita",p.birthPlace||"");if(birthPlace===null)return;
+ const postalCode=prompt("CAP",p.postalCode||"");if(postalCode===null)return;
+ const residenceTown=prompt("Comune di residenza",p.residenceTown||"");if(residenceTown===null)return;
+ const residenceProvince=prompt("Provincia",p.residenceProvince||"");if(residenceProvince===null)return;
+ p.firstName=first.trim();p.lastName=last.trim();p.phone=phone.trim();p.email=email.trim();
+ p.birthPlace=birthPlace.trim();p.postalCode=postalCode.trim();p.residenceTown=residenceTown.trim();p.residenceProvince=residenceProvince.trim().toUpperCase();
+ save();render();
+}
+function competitionTypeLabel(v){
+ return v==="rodeo_simple"?"Rodeo semplice":v==="fixed_pairs"?"Coppie fisse":"Rodeo a gettoni";
+}
+function newEventView(){
+ const d=state.draft;
+ const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return Number(b.tokenBalance||0)-Number(a.tokenBalance||0)||playerName(a).localeCompare(playerName(b),"it")});
+ const checks=eligible.length?eligible.map(function(p){
+  const checked=d.selected.includes(p.id)?"checked":"";
+  return '<label class="check event-player-search-row" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
+   d.competitionType==="rodeo_tokens"?"Saldo aggiornato: "+Number(p.tokenBalance||0)+" gettoni":"Giocatore registrato"
+  )+(p.level?" · "+esc(p.level):"")+'</small></span></label>';
+ }).join(""):'<div class="notice error">Prima crea almeno 4 giocatori nell’anagrafica.</div>';
+ const fixedOptions=d.competitionType==="fixed_pairs"?
+  '<div class="row"><div class="field"><label>Coppie per girone</label><select id="ePairsPerGroup">'+[3,4,5,6].map(function(x){return'<option '+(Number(d.pairsPerGroup)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div>'+
+  '<div class="field"><label>Qualificazione fasi finali</label><select id="eFinalsOption"><option value="top1" '+(d.finalsOption==="top1"?"selected":"")+'>Solo prime</option><option value="top2" '+(d.finalsOption==="top2"?"selected":"")+'>Prime due</option></select></div></div>'+
+  '<div class="notice">Le coppie verranno formate seguendo l’ordine di selezione: 1°+2°, 3°+4° e così via. Dopo la creazione potrai controllarle nella sezione “Coppie”.</div>':'';
+ return header("Nuova competizione","Scegli il formato e seleziona i partecipanti")+
+ '<div class="card"><div class="row"><div class="field"><label>Formato competizione</label><select id="eCompetitionType" data-action="change-type">'+
+ '<option value="rodeo_tokens" '+(d.competitionType==="rodeo_tokens"?"selected":"")+'>Rodeo a gettoni (minimo 6)</option>'+
+ '<option value="rodeo_simple" '+(d.competitionType==="rodeo_simple"?"selected":"")+'>Rodeo semplice</option>'+
+ '<option value="fixed_pairs" '+(d.competitionType==="fixed_pairs"?"selected":"")+'>Torneo a coppie fisse</option></select></div>'+
+ '<div class="field"><label>Quota individuale (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Nome competizione</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Data</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(function(x){return'<option value="'+esc(x)+'" '+(x===d.club?"selected":"")+'>'+esc(x)+' - '+esc(CLUBS[x].address)+'</option>'}).join("")+'</select></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(function(x){return'<option '+(x===d.category?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div><div class="field"><label>Campi</label><select id="eCourts">'+[1,2,3,4].map(function(x){return'<option '+(Number(d.courts)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div></div>'+
+ '<div class="row"><div class="field"><label>Orario di inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||"20:00")+'"></div>'+
+ '<div class="field"><label>Durata timer (minuti)</label><input id="eMatchDuration" type="number" min="1" value="'+Number(d.matchDuration||20)+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Timer fase iniziale</label><select id="eInitialTimer"><option value="yes" '+(d.initialTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.initialTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
+ '<div class="field"><label>Timer eliminatorie</label><select id="eEliminationTimer"><option value="yes" '+(d.eliminationTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.eliminationTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
+ '<div class="field"><label>Timer semifinali</label><select id="eSemifinalTimer"><option value="yes" '+(d.semifinalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.semifinalTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
+ '<div class="field"><label>Timer finale</label><select id="eFinalTimer"><option value="yes" '+(d.finalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.finalTimerEnabled?"selected":"")+'>Disattivo</option></select></div></div>'+
+ '<div class="row"><div class="field"><label>Gironi / fase iniziale</label><select id="eReturnLeg"><option value="no" '+(!d.returnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.returnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
+ '<div class="field"><label>Eliminatorie</label><select id="eEliminationReturnLeg"><option value="no" '+(!d.eliminationReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.eliminationReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
+ '<div class="field"><label>Semifinali</label><select id="eSemifinalReturnLeg"><option value="no" '+(!d.semifinalReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.semifinalReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
+ '<div class="field"><label>Finale</label><select id="eFinalReturnLeg"><option value="no" '+(!d.finalReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.finalReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div></div>'+fixedOptions+'</div>'+
+ '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Genera la competizione senza dover scorrere tutto l’elenco.</div></div><button class="primary create-event-top-button" data-action="create-event">Genera competizione</button></div>'+
+ '<div id="eventMessage"></div>'+
+ '<div class="card"><h2>Seleziona partecipanti</h2>'+
+ '<div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
+ '<div class="checklist">'+checks+'</div></div>'+
+ '<button class="primary" data-action="create-event">Genera competizione</button>';
+}
+function buildMatches(ids,courts,returnLeg){
+ const matches=[];const rounds=Math.max(3,Math.ceil(ids.length/2));
+ for(let r=0;r<rounds;r++){
+  const rotated=ids.map(function(_,i){return ids[(i+r)%ids.length]});
+  for(let i=0;i+3<rotated.length;i+=4){
+   matches.push({id:uid("m"),round:r+1,leg:1,court:(matches.length%courts)+1,t1:[rotated[i],rotated[i+1]],t2:[rotated[i+2],rotated[i+3]],score1:null,score2:null,note:""});
+  }
+ }
+ if(returnLeg){
+  const firstLeg=matches.slice();
+  firstLeg.forEach(function(m){
+   matches.push({id:uid("m"),round:m.round,leg:2,court:(matches.length%courts)+1,t1:m.t2.slice(),t2:m.t1.slice(),score1:null,score2:null,note:""});
+  });
+ }
+ return matches;
+}
+
+function buildFixedPairs(ids,pairsPerGroup,courts,returnLeg){
+ const pairs=[];
+ for(let i=0;i+1<ids.length;i+=2)pairs.push({id:uid("pair"),players:[ids[i],ids[i+1]],name:"Coppia "+(pairs.length+1),group:null});
+ const groupCount=Math.max(1,Math.ceil(pairs.length/Math.max(2,pairsPerGroup)));
+ pairs.forEach(function(pair,i){pair.group=String.fromCharCode(65+(i%groupCount))});
+ const matches=[];
+ const groups={};
+ pairs.forEach(function(p){(groups[p.group]||(groups[p.group]=[])).push(p)});
+ Object.keys(groups).forEach(function(g){
+  const gp=groups[g];
+  for(let i=0;i<gp.length;i++){
+   for(let j=i+1;j<gp.length;j++){
+    matches.push({id:uid("m"),round:g,leg:1,court:(matches.length%courts)+1,pair1:gp[i].id,pair2:gp[j].id,score1:null,score2:null,note:"",group:g});
+   }
+  }
+ });
+ if(returnLeg){
+  const firstLeg=matches.slice();
+  firstLeg.forEach(function(m){
+   matches.push({id:uid("m"),round:m.round,leg:2,court:(matches.length%courts)+1,pair1:m.pair2,pair2:m.pair1,score1:null,score2:null,note:"",group:m.group});
+  });
+ }
+ return {pairs:pairs,matches:matches};
+}
+function defaultPayments(ids,fee){
+ const out={};
+ ids.forEach(function(id){out[id]={fee:Number(fee)||0,paid:false,method:"",notes:""}});
+ return out;
+}
+function createEvent(){
+ const msg=document.getElementById("eventMessage");
+ try{
+  state.draft.name=document.getElementById("eName").value.trim();
+  state.draft.date=document.getElementById("eDate").value;
+  state.draft.club=document.getElementById("eClub").value.trim();
+  state.draft.category=document.getElementById("eCategory").value;
+  state.draft.competitionType=document.getElementById("eCompetitionType").value;
+  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
+  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
+  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
+  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
+  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
+  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
+  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
+  state.draft.matchMode="timed";
+  state.draft.matchDuration=Math.max(1,Number(document.getElementById("eMatchDuration").value)||20);
+  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
+  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
+  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
+  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
+  if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
+  if(state.draft.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(state.draft.selected.length))throw new Error("per il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori");
+  if(state.draft.competitionType!=="rodeo_tokens"&&state.draft.selected.length<4)throw new Error("seleziona almeno 4 giocatori");
+  if(state.draft.competitionType==="fixed_pairs"&&state.draft.selected.length%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
+  const event={
+   id:uid("e"),
+   name:state.draft.name||"Nuova competizione",
+   date:state.draft.date,
+   club:state.draft.club,
+   category:state.draft.category,
+   competitionType:state.draft.competitionType,
+   courts:state.draft.courts,
+   entryFee:state.draft.fee,
+   returnLeg:state.draft.returnLeg,
+   eliminationReturnLeg:state.draft.eliminationReturnLeg,
+   semifinalReturnLeg:state.draft.semifinalReturnLeg,
+   finalReturnLeg:state.draft.finalReturnLeg,
+   startTime:state.draft.startTime,
+   matchMode:"timed",
+   matchDuration:state.draft.matchDuration,
+   initialTimerEnabled:state.draft.initialTimerEnabled,
+   eliminationTimerEnabled:state.draft.eliminationTimerEnabled,
+   semifinalTimerEnabled:state.draft.semifinalTimerEnabled,
+   finalTimerEnabled:state.draft.finalTimerEnabled,
+   timers:{},
+   playerIds:state.draft.selected.slice(),
+   payments:defaultPayments(state.draft.selected.slice(),state.draft.fee),
+   matches:[],
+   ledger:{},
+   finalStages:{
+    elimination:{teamA:[],teamB:[],score1:null,score2:null},
+    auction1:{spending:{}},
+    semifinals:[
+     {id:"semi1",teamA:[],teamB:[],score1:null,score2:null},
+     {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
+    ],
+    auction2:{spending:{}},
+    final:{teamA:[],teamB:[],score1:null,score2:null}
+   }
+  };
+  if(event.competitionType==="fixed_pairs"){
+   const built=buildFixedPairs(event.playerIds,state.draft.pairsPerGroup,event.courts,event.returnLeg);
+   event.pairs=built.pairs;
+   event.matches=built.matches;
+   event.pairsPerGroup=state.draft.pairsPerGroup;
+   event.finalsOption=state.draft.finalsOption;
+   event.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
+  }else{
+   event.matches=buildMatches(event.playerIds,event.courts,event.returnLeg);
+  }
+  event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
+  state.events.unshift(event);state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();
+ }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
+}
+function eventsView(){
+ const rows=state.events.length?state.events.map(function(e){
+  const done=e.matches.filter(function(m){return m.score1!==null&&m.score2!==null}).length;
+  return '<div class="item"><div class="rank">🏆</div><div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"Solo andata")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div><button class="small" data-open-event="'+e.id+'">Apri</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button></div>'
+ }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
+ const reset=state.events.length?
+  '<div class="card print-hide"><h2>Pulizia tornei di prova</h2><div class="notice error">Questa funzione cancella tutte le competizioni salvate, ma mantiene intatti anagrafica giocatori e saldi gettoni.</div><button class="danger" data-action="delete-all-events">Cancella tutti i tornei</button></div>':'';
+ return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>'+reset;
+}
+function playerById(id){return state.players.find(function(p){return p.id===id})}
+function names(ids){return ids.map(function(id){const p=playerById(id);return p?playerName(p):"Giocatore"}).join(" / ")}
+function teamStackHtml(ids){
+ return '<div class="team-stack">'+ids.map(function(id){
+  const p=playerById(id);
+  return '<div>'+esc(p?playerName(p):"Giocatore")+'</div>';
+ }).join("")+'</div>';
+}
+function pairStackHtml(e,pairId){
+ const p=pairById(e,pairId);
+ return p?teamStackHtml(p.players):'<div class="team-stack"><div>Coppia</div></div>';
+}
+function simplePairStackHtml(e,pairId){
+ const p=simplePairById(e,pairId);
+ return p?teamStackHtml(p.players):'<div class="team-stack"><div>Coppia</div></div>';
+}
+function matchupStackHtml(teamA,teamB){
+ return '<div class="matchup-stack">'+teamA+'<div class="vs-divider"><span>VS</span></div>'+teamB+'</div>';
+}
+function eventView(){
+ const e=currentEvent();if(!e)return eventsView();
+ let tabDefs;
+ if(e.competitionType==="rodeo_tokens"){
+  const n=e.playerIds.length;
+  if(n===6){
+   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Eliminatoria"],["auction1","Asta e finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  }else if(n===8){
+   tabDefs=[["matches","Partite"],["standings","Classifica"],["auction1","Fasi finali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  }else if(n===10||n===12){
+   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Eliminatoria"],["auction1","Fasi finali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  }else if(n===16){
+   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Quarti di finale"],["auction1","Semifinali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  }else{
+   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Fasi finali"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  }
+ }else if(e.competitionType==="rodeo_simple"){
+  tabDefs=[["matches","Partite"],["standings","Classifica"],["simplefinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];
+ }else{
+  tabDefs=[["matches","Partite"],["pairstandings","Classifiche gironi"],["pairs","Coppie"],["fixedfinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];
+ }
+ const tabs=tabDefs.map(function(t){return'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'">'+t[1]+'</button>'}).join("");
+ let body=
+  state.tab==="standings"?standingsView(e):
+  state.tab==="elimination"?eliminationView(e):
+  state.tab==="auction1"?auction1View(e):
+  state.tab==="auction2"?auction2View(e):
+  state.tab==="tokens"?tokensView(e):
+  state.tab==="payments"?paymentsView(e):
+  state.tab==="simplefinals"?simpleFinalsView(e):
+  state.tab==="pairstandings"?pairStandingsView(e):
+  state.tab==="pairs"?pairsView(e):
+  state.tab==="fixedfinals"?fixedFinalsView(e):
+  state.tab==="players"?eventPlayersView(e):
+  matchesView(e);
+ return header(e.name,e.date+" · "+e.club+" · "+competitionTypeLabel(e.competitionType))+
+ '<div class="notice print-hide"><b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+' · timer '+Number(e.matchDuration||20)+' minuti<br>Fase iniziale: '+(e.initialTimerEnabled?"timer attivo":"timer disattivo")+' · Eliminatorie: '+(e.eliminationTimerEnabled?"attivo":"disattivo")+' · Semifinali: '+(e.semifinalTimerEnabled?"attivo":"disattivo")+' · Finale: '+(e.finalTimerEnabled?"attivo":"disattivo")+'</div>'+
+ '<div class="notice print-hide"><b>PDF condivisibile:</b> apri la sezione desiderata e premi “PDF pagina”.</div>'+
+ '<div class="tabs">'+tabs+'</div>'+body+printFooter(e);
+}
+
+function phaseFormula(e,phase){
+ if(phase==="Eliminatoria")return e.eliminationReturnLeg?"Andata e ritorno":"Solo andata";
+ if(phase.indexOf("Semifinale")===0)return e.semifinalReturnLeg?"Andata e ritorno":"Solo andata";
+ if(phase==="Finale")return e.finalReturnLeg?"Andata e ritorno":"Solo andata";
+ return e.returnLeg?"Andata e ritorno":"Solo andata";
+}
+function scheduleInfo(e,index,phase,court){
+ const dateText=e.date||new Date().toISOString().slice(0,10);
+ const timeText=e.startTime||"20:00";
+ const parts=timeText.split(":");
+ const base=new Date(dateText+"T"+timeText+":00");
+ const duration=Math.max(1,Number(e.matchDuration)||20);
+ const slot=Math.floor(index/Math.max(1,Number(e.courts)||1));
+ base.setMinutes(base.getMinutes()+slot*duration);
+ const day=base.toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
+ const hour=base.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
+ return {day:day,hour:hour,court:court||((index%Math.max(1,Number(e.courts)||1))+1),phase:phase};
+}
+function matchMetaHtml(e,index,phase,court){
+ const s=scheduleInfo(e,index,phase,court);
+ return '<div class="notice"><b>'+esc(s.phase)+'</b> · '+esc(s.day)+' · ore '+esc(s.hour)+' · Campo '+s.court+' · '+phaseFormula(e,phase)+'</div>';
+}
+function timerEnabledForPhase(e,phase){
+ if(phase==="initial")return e.initialTimerEnabled!==false;
+ if(phase==="elimination")return !!e.eliminationTimerEnabled;
+ if(phase==="semifinal")return !!e.semifinalTimerEnabled;
+ if(phase==="final")return !!e.finalTimerEnabled;
+ return false;
+}
+function timerHtml(e,key,phase){
+ if(!timerEnabledForPhase(e,phase))return "";
+ e.timers=e.timers||{};
+ const t=e.timers[key]||{};
+ const remaining=t.endAt?Math.max(0,t.endAt-Date.now()):(Number(e.matchDuration)||20)*60000;
+ const status=t.endAt?(remaining<=0?"expired":"running"):"";
+ return '<div class="timer-panel '+status+'" data-timer-panel="'+esc(key)+'">'+
+  '<div class="timer-title">'+(remaining<=0&&t.endAt?"TEMPO TERMINATO":"CONTO ALLA ROVESCIA")+'</div>'+
+  '<span class="timer-display" data-timer-display="'+esc(key)+'">'+formatRemaining(remaining)+'</span>'+
+  '<button class="primary" data-action="start-timer" data-timer-key="'+esc(key)+'">'+(t.endAt?"Ricomincia partita":"Inizia partita")+'</button> '+
+  '<button class="secondary" data-action="reset-timer" data-timer-key="'+esc(key)+'">Azzera timer</button>'+
+  '</div>';
+}function formatRemaining(ms){
+ const total=Math.max(0,Math.ceil(ms/1000));
+ const min=Math.floor(total/60),sec=total%60;
+ return String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+
+let timerAudioContext=null;
+function playTimerAlarm(){
+ try{
+  timerAudioContext=timerAudioContext||new (window.AudioContext||window.webkitAudioContext)();
+  const ctx=timerAudioContext;
+  const now=ctx.currentTime;
+  [0,0.35,0.7,1.05,1.4].forEach(function(offset){
+   const osc=ctx.createOscillator();
+   const gain=ctx.createGain();
+   osc.type="square";
+   osc.frequency.setValueAtTime(offset%0.7===0?880:660,now+offset);
+   gain.gain.setValueAtTime(0.0001,now+offset);
+   gain.gain.exponentialRampToValueAtTime(0.35,now+offset+0.02);
+   gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.28);
+   osc.connect(gain);gain.connect(ctx.destination);
+   osc.start(now+offset);osc.stop(now+offset+0.3);
+  });
+ }catch(err){}
+ try{if(navigator.vibrate)navigator.vibrate([500,200,500,200,900])}catch(err){}
+}
+function showTimerAlert(key){
+ const overlay=document.getElementById("timerAlertOverlay");
+ if(overlay){overlay.classList.add("visible");overlay.setAttribute("data-expired-key",key)}
+ playTimerAlarm();
+}
+function dismissTimerAlert(){
+ const overlay=document.getElementById("timerAlertOverlay");
+ if(overlay)overlay.classList.remove("visible");
+}
+function startTimer(key){
+ const e=currentEvent();e.timers=e.timers||{};
+ e.timers[key]={endAt:Date.now()+Math.max(1,Number(e.matchDuration)||20)*60000,alerted:false};
+ dismissTimerAlert();
+ save();render();
+}
+function resetTimer(key){
+ const e=currentEvent();e.timers=e.timers||{};delete e.timers[key];dismissTimerAlert();save();render();
+}
+function updateTimers(){
+ const e=currentEvent();if(!e)return;
+ e.timers=e.timers||{};
+ let changed=false;
+ document.querySelectorAll("[data-timer-display]").forEach(function(el){
+  const key=el.getAttribute("data-timer-display");
+  const t=e.timers[key];
+  const panel=document.querySelector('[data-timer-panel="'+CSS.escape(key)+'"]');
+  const ms=t&&t.endAt?Math.max(0,t.endAt-Date.now()):Math.max(1,Number(e.matchDuration)||20)*60000;
+  el.textContent=ms<=0&&t&&t.endAt?"00:00":formatRemaining(ms);
+  if(panel){
+   panel.classList.toggle("running",!!(t&&t.endAt&&ms>0));
+   panel.classList.toggle("expired",!!(t&&t.endAt&&ms<=0));
+   const title=panel.querySelector(".timer-title");
+   if(title)title.textContent=t&&t.endAt&&ms<=0?"TEMPO TERMINATO":"CONTO ALLA ROVESCIA";
+  }
+  if(t&&t.endAt&&ms<=0&&!t.alerted){
+   t.alerted=true;
+   changed=true;
+   showTimerAlert(key);
+  }
+ });
+ if(changed)save();
+}
+setInterval(updateTimers,1000);
+function pairById(e,id){return (e.pairs||[]).find(function(p){return p.id===id})}
+function pairName(e,id){const p=pairById(e,id);return p?names(p.players):"Coppia"}
+function matchesView(e){
+ const html=e.matches.map(function(m,i){
+  const saved=m.score1!==null&&m.score2!==null;
+  const a=e.competitionType==="fixed_pairs"?pairName(e,m.pair1):names(m.t1);
+  const b=e.competitionType==="fixed_pairs"?pairName(e,m.pair2):names(m.t2);
+  const legLabel=(m.leg===2?" · Ritorno":" · Andata");
+  const roundLabel=(e.competitionType==="fixed_pairs"?"Girone "+m.group:"Turno "+m.round)+legLabel;
+  return '<div class="match" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
+  matchMetaHtml(e,i,roundLabel,m.court)+timerHtml(e,"match-"+m.id,"initial")+
+  (e.competitionType==="fixed_pairs"?matchupStackHtml(pairStackHtml(e,m.pair1),pairStackHtml(e,m.pair2)):matchupStackHtml(teamStackHtml(m.t1),teamStackHtml(m.t2)))+
+  (saved?'<div class="notice success">Risultato salvato: <b>'+m.score1+' - '+m.score2+'</b></div><button class="secondary" data-action="edit-result" data-match-id="'+m.id+'">Modifica risultato</button>':
+  '<div class="score-row"><input data-score-a type="number" min="0" step="1" inputmode="numeric" placeholder="Game coppia A"><input data-score-b type="number" min="0" step="1" inputmode="numeric" placeholder="Game coppia B"></div><input data-note placeholder="Nota facoltativa"><div class="match-message"></div><button class="primary" style="margin-top:10px" data-action="save-result" data-match-id="'+m.id+'">Salva risultato</button>')+
+  '</div>';
+ }).join("");
+ return '<div class="notice">Ogni risultato viene salvato nella memoria del dispositivo e resta disponibile riaprendo la competizione.</div>'+html;
+}
+function saveResult(button){
+ const e=currentEvent();const id=button.getAttribute("data-match-id");const card=button.closest("[data-match-card]");const msg=card.querySelector(".match-message");
+ try{
+  const m=e.matches.find(function(x){return x.id===id});if(!m)throw new Error("partita non trovata");
+  const a=card.querySelector("[data-score-a]").value;const b=card.querySelector("[data-score-b]").value;
+  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
+  const na=Number(a),nb=Number(b);if(!Number.isFinite(na)||!Number.isFinite(nb)||na<0||nb<0)throw new Error("punteggio non valido");
+  m.score1=na;m.score2=nb;m.note=card.querySelector("[data-note]").value||"";
+  save();render();
+ }catch(err){msg.className="notice error";msg.textContent="Errore: "+err.message}
+}
+function editResult(id){const e=currentEvent();const m=e.matches.find(function(x){return x.id===id});if(m){m.score1=null;m.score2=null;save();render()}}
+function standings(e){
+ const r={};e.playerIds.forEach(function(id){r[id]={id:id,played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
+ e.matches.forEach(function(m){
+  if(m.score1===null||m.score2===null)return;
+  m.t1.concat(m.t2).forEach(function(id){r[id].played++});
+  m.t1.forEach(function(id){r[id].gf+=m.score1;r[id].gs+=m.score2});
+  m.t2.forEach(function(id){r[id].gf+=m.score2;r[id].gs+=m.score1});
+  if(m.score1===m.score2){m.t1.concat(m.t2).forEach(function(id){r[id].points+=1;r[id].d++})}
+  else{const win=m.score1>m.score2?m.t1:m.t2;const lose=m.score1>m.score2?m.t2:m.t1;win.forEach(function(id){r[id].points+=3;r[id].w++});lose.forEach(function(id){r[id].l++})}
+ });
+ Object.values(r).forEach(function(x){x.diff=x.gf-x.gs;x.bonus=Math.max(0,Math.floor(x.diff/3));const l=e.ledger[x.id]||{carried:0,spent:0,podium:0};x.balance=3+(Number(l.carried)||0)+x.points+x.bonus-(Number(l.spent)||0)+(Number(l.podium)||0)});
+ return Object.values(r).sort(function(a,b){return b.points-a.points||b.diff-a.diff||b.gf-a.gf||playerName(playerById(a.id)).localeCompare(playerName(playerById(b.id)))});
+}
+function standingsView(e){
+ const rows=standings(e).map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+esc(playerName(playerById(r.id)))+'</b></td><td>'+r.played+'</td><td>'+r.points+'</td><td>'+r.gf+'</td><td>'+r.gs+'</td><td>'+(r.diff>=0?"+":"")+r.diff+'</td><td>'+r.bonus+'</td></tr>'}).join("");
+ return '<div class="card table-wrap"><table class="table"><thead><tr><th>Pos.</th><th>Giocatore</th><th>PG</th><th>Punti</th><th>GF</th><th>GS</th><th>Diff.</th><th>Bonus</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function tokensView(e){
+ const rows=standings(e).map(function(r){
+  const l=e.ledger[r.id]||{carried:0,spent:0,podium:0};
+  return '<tr><td><b>'+esc(playerName(playerById(r.id)))+'</b></td><td>3</td><td><input type="number" min="0" value="'+(l.carried||0)+'" data-ledger="'+r.id+'" data-field="carried"></td><td>'+r.points+'</td><td>'+r.bonus+'</td><td><input type="number" min="0" value="'+(l.spent||0)+'" data-ledger="'+r.id+'" data-field="spent"></td><td><select data-ledger="'+r.id+'" data-field="podium">'+[0,5,10].map(function(x){return'<option '+((Number(l.podium)||0)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></td><td><b>'+r.balance+'</b></td></tr>'
+ }).join("");
+ return '<div class="notice">Calcolo: saldo precedente + 3 gettoni di benvenuto + punti + bonus differenza game − spesi + bonus podio.</div><div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Benvenuto</th><th>Saldo precedente</th><th>Punti</th><th>Bonus diff.</th><th>Spesi</th><th>Podio</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table></div><button class="primary" data-action="commit-balances">Salva i saldi nell’anagrafica per la prossima tappa</button>';
+}
+
+
+function paymentsView(e){
+ if(!e.payments)e.payments=defaultPayments(e.playerIds,e.entryFee||0);
+ const rows=e.playerIds.slice().sort(function(a,b){return playerName(playerById(a)).localeCompare(playerName(playerById(b)),"it")}).map(function(id,i){
+  const p=playerById(id),x=e.payments[id]||(e.payments[id]={fee:Number(e.entryFee)||0,paid:false,method:"",notes:""});
+  return '<tr><td>'+(i+1)+'</td><td><b>'+esc(playerName(p))+'</b></td><td><input type="number" min="0" step="0.50" value="'+Number(x.fee||0)+'" data-payment="'+id+'" data-pay-field="fee"></td><td><input type="checkbox" '+(x.paid?"checked":"")+' data-payment="'+id+'" data-pay-field="paid"></td><td><select data-payment="'+id+'" data-pay-field="method"><option value=""></option>'+["Contanti","Carta","Bonifico","Satispay","Altro"].map(function(v){return'<option '+(x.method===v?"selected":"")+'>'+v+'</option>'}).join("")+'</select></td><td><input value="'+esc(x.notes||"")+'" data-payment="'+id+'" data-pay-field="notes"></td></tr>';
+ }).join("");
+ const expected=Object.values(e.payments).reduce(function(s,x){return s+(Number(x.fee)||0)},0);
+ const collected=Object.values(e.payments).reduce(function(s,x){return s+(x.paid?(Number(x.fee)||0):0)},0);
+ return '<div class="notice"><b>Foglio reception:</b> stampa questa pagina in PDF. La reception può segnare pagamento, modalità e note.</div>'+
+ '<div class="card"><div class="row"><div><b>Totale previsto:</b> '+expected.toLocaleString("it-IT",{style:"currency",currency:"EUR"})+'</div><div><b>Totale segnato come pagato:</b> '+collected.toLocaleString("it-IT",{style:"currency",currency:"EUR"})+'</div></div></div>'+
+ '<div class="card table-wrap"><table class="table"><thead><tr><th>N.</th><th>Giocatore</th><th>Quota €</th><th>Pagato</th><th>Modalità</th><th>Note</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function ensureSimpleFinals(e){
+ if(!e.simpleFinals)e.simpleFinals={
+  pairs:[],
+  semifinals:[
+   {id:"sf1",pair1:null,pair2:null,score1:null,score2:null},
+   {id:"sf2",pair1:null,pair2:null,score1:null,score2:null}
+  ],
+  final:{id:"sff",pair1:null,pair2:null,score1:null,score2:null}
+ };
+ return e.simpleFinals;
+}
+function initSimplePairs(e){
+ const sf=ensureSimpleFinals(e),rank=standings(e);
+ if(rank.length<8)return false;
+ if(!sf.pairs.length){
+  sf.pairs=[
+   {id:"sp1",players:[rank[0].id,rank[7].id]},
+   {id:"sp2",players:[rank[1].id,rank[6].id]},
+   {id:"sp3",players:[rank[2].id,rank[5].id]},
+   {id:"sp4",players:[rank[3].id,rank[4].id]}
+  ];
+  sf.semifinals[0].pair1="sp1";sf.semifinals[0].pair2="sp4";
+  sf.semifinals[1].pair1="sp2";sf.semifinals[1].pair2="sp3";
+  save();
+ }
+ return true;
+}
+function simplePairById(e,id){return ensureSimpleFinals(e).pairs.find(function(p){return p.id===id})}
+function simplePairName(e,id){const p=simplePairById(e,id);return p?names(p.players):"Coppia"}
+function simpleWinners(e){
+ const sf=ensureSimpleFinals(e);
+ return sf.semifinals.map(function(m){
+  if(m.score1===null||m.score2===null||m.score1===m.score2)return null;
+  return m.score1>m.score2?m.pair1:m.pair2;
+ });
+}
+function ensureSixKnockout(e,type){
+ const key=type==="tokens"?"sixTokenKnockout":"sixSimpleKnockout";
+ const rank=standings(e);
+ if(!e[key])e[key]={rankingSnapshot:[],elimination:{teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},final:{teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null}};
+ const k=e[key],snapshot=rank.map(function(x){return x.id}).join("|");
+ if(rank.length===6&&(k.rankingSnapshot.join("|")!==snapshot||k.elimination.teamA.length!==2)){
+  k.rankingSnapshot=rank.map(function(x){return x.id});
+  k.elimination={teamA:[rank[2].id,rank[5].id],teamB:[rank[3].id,rank[4].id],score1:null,score2:null,score1R:null,score2R:null};
+  k.final={teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null};
+  save();
+ }
+ return k;
+}
+function sixWinner(e,type){
+ const k=ensureSixKnockout(e,type);
+ return stageWinnerTeam(e,"elimination",k.elimination);
+}
+function prepareSixFinal(e,type){
+ const k=ensureSixKnockout(e,type),rank=standings(e),w=sixWinner(e,type);
+ if(w.length!==2)return false;
+ const pos={};rank.forEach(function(r,i){pos[r.id]=i});
+ w.sort(function(a,b){return pos[a]-pos[b]});
+ const a=[rank[0].id,w[0]],b=[rank[1].id,w[1]];
+ if(k.final.teamA.join("|")!==a.join("|")||k.final.teamB.join("|")!==b.join("|")){
+  k.final.teamA=a;k.final.teamB=b;k.final.score1=null;k.final.score2=null;k.final.score1R=null;k.final.score2R=null;save();
+ }
+ return true;
+}
+function sixKnockoutView(e,type){
+ const k=ensureSixKnockout(e,type),rank=standings(e),base=(e.matches||[]).length;
+ if(rank.length!==6)return '<div class="notice error">Questo formato richiede esattamente 6 giocatori.</div>';
+ const elimCards=stageLegCard(e,"elimination",k.elimination,"Eliminatoria",1,base,1,"elimination")+
+  (e.eliminationReturnLeg?stageLegCard(e,"elimination",k.elimination,"Eliminatoria",2,base+1,1,"elimination"):"");
+ const et=stageAggregate(e,"elimination",k.elimination);
+ const es=et?(et.a===et.b?'<div class="notice error">Totale eliminatoria in parità: <b>'+et.a+' - '+et.b+'</b>.</div>':'<div class="notice success">Totale eliminatoria: <b>'+et.a+' - '+et.b+'</b><br>Coppia vincente: <b>'+esc(names(sixWinner(e,type)))+'</b></div>'):"";
+ let finalHtml='<div class="notice">Completa l’eliminatoria per generare la finale.</div>';
+ if(prepareSixFinal(e,type)){
+  const finalCards=stageLegCard(e,"final",k.final,"Finale",1,base+(e.eliminationReturnLeg?2:1),1,"final")+
+   (e.finalReturnLeg?stageLegCard(e,"final",k.final,"Finale",2,base+(e.eliminationReturnLeg?3:2),1,"final"):"");
+  const ft=stageAggregate(e,"final",k.final);
+  let fs="";
+  if(ft){
+   if(ft.a===ft.b)fs='<div class="notice error">Totale finale in parità: <b>'+ft.a+' - '+ft.b+'</b>.</div>';
+   else{
+    const winners=ft.a>ft.b?k.final.teamA:k.final.teamB,seconds=ft.a>ft.b?k.final.teamB:k.final.teamA;
+    if(type==="tokens"){
+     e.playerIds.forEach(function(id){e.ledger[id].podium=0});
+     winners.forEach(function(id){e.ledger[id].podium=10});
+     seconds.forEach(function(id){e.ledger[id].podium=5});
+     save();
+    }
+    fs='<div class="notice success">Totale finale: <b>'+ft.a+' - '+ft.b+'</b><br>Vincitori: <b>'+esc(names(winners))+'</b>'+(type==="tokens"?'<br>Secondi: <b>'+esc(names(seconds))+'</b>':"")+'</div>';
+   }
+  }
+  finalHtml='<div class="notice"><b>Finale:</b> il 1° prende il giocatore meglio piazzato tra i vincitori dell’eliminatoria; il 2° prende l’altro.</div>'+finalCards+fs;
+ }
+ return '<div class="notice"><b>Rodeo a 6:</b> eliminatoria 3°+6° contro 4°+5°.</div>'+elimCards+es+finalHtml;
+}
+function simpleFinalsView(e){
+ if(e.playerIds.length===6)return sixKnockoutView(e,"simple");
+ if(!initSimplePairs(e))return '<div class="notice error">Per questo formato servono 6 oppure almeno 8 giocatori.</div>';
+ const sf=ensureSimpleFinals(e),wins=simpleWinners(e);
+ if(wins[0]&&wins[1]){sf.final.pair1=wins[0];sf.final.pair2=wins[1]}
+ const pairCards=sf.pairs.map(function(p,i){return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(names(p.players))+'</b><div class="muted">Incrocio '+(i+1)+'</div></div></div>'}).join("");
+ const semis=sf.semifinals.map(function(m,i){return simpleStageCard(e,m,"Semifinale "+(i+1))}).join("");
+ const finalCard=wins[0]&&wins[1]?simpleStageCard(e,sf.final,"Finale"):'<div class="notice">Completa entrambe le semifinali per generare la finale.</div>';
+ return '<div class="notice"><b>Incroci automatici:</b> 1°+8°, 2°+7°, 3°+6°, 4°+5°.</div><div class="card"><h2>Coppie qualificate</h2>'+pairCards+'</div>'+semis+finalCard;
+}
+function simpleStageCard(e,m,label){
+ const saved=m.score1!==null&&m.score2!==null;
+ const baseIndex=(e.matches||[]).length+(label.indexOf("Semifinale")===0?Number(label.replace(/\D/g,""))-1:2);
+ return '<div class="match" data-simple-stage="'+m.id+'"><span class="pill">'+label+'</span>'+matchMetaHtml(e,baseIndex,label,((baseIndex)%Math.max(1,e.courts))+1)+timerHtml(e,"simple-"+m.id,label.indexOf("Semifinale")===0?"semifinal":"final")+matchupStackHtml(simplePairStackHtml(e,m.pair1),simplePairStackHtml(e,m.pair2))+
+ (saved?'<div class="notice success">Risultato: <b>'+m.score1+' - '+m.score2+'</b></div><button class="secondary" data-action="edit-simple-result" data-simple-id="'+m.id+'">Modifica risultato</button>':
+ '<div class="score-row"><input data-simple-a type="number" min="0" placeholder="Game A"><input data-simple-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-action="save-simple-result" data-simple-id="'+m.id+'">Salva risultato</button>')+'</div>';
+}
+function saveSimpleResult(button){
+ const e=currentEvent(),sf=ensureSimpleFinals(e),id=button.getAttribute("data-simple-id");
+ const m=sf.semifinals.concat([sf.final]).find(function(x){return x.id===id}),card=button.closest("[data-simple-stage]"),msg=card.querySelector(".match-message");
+ try{
+  const a=card.querySelector("[data-simple-a]").value,b=card.querySelector("[data-simple-b]").value;
+  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
+  if(Number(a)===Number(b))throw new Error("nelle fasi finali non è previsto il pareggio");
+  m.score1=Number(a);m.score2=Number(b);save();render();
+ }catch(err){msg.className="notice error";msg.textContent="Errore: "+err.message}
+}
+function editSimpleResult(id){
+ const e=currentEvent(),sf=ensureSimpleFinals(e),m=sf.semifinals.concat([sf.final]).find(function(x){return x.id===id});
+ if(m){m.score1=null;m.score2=null;if(id!=="sff"){sf.final.score1=null;sf.final.score2=null;sf.final.pair1=null;sf.final.pair2=null}save();render()}
+}
+function pairStandings(e){
+ const rows={};
+ (e.pairs||[]).forEach(function(p){rows[p.id]={id:p.id,group:p.group,played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
+ e.matches.forEach(function(m){
+  if(m.score1===null||m.score2===null)return;
+  const a=rows[m.pair1],b=rows[m.pair2];a.played++;b.played++;a.gf+=m.score1;a.gs+=m.score2;b.gf+=m.score2;b.gs+=m.score1;
+  if(m.score1===m.score2){a.points++;b.points++;a.d++;b.d++}
+  else if(m.score1>m.score2){a.points+=3;a.w++;b.l++}else{b.points+=3;b.w++;a.l++}
+ });
+ Object.values(rows).forEach(function(x){x.diff=x.gf-x.gs});
+ return Object.values(rows).sort(function(a,b){return a.group.localeCompare(b.group)||b.points-a.points||b.diff-a.diff||b.gf-a.gf});
+}
+function pairStandingsView(e){
+ const groups={};pairStandings(e).forEach(function(r){(groups[r.group]||(groups[r.group]=[])).push(r)});
+ return Object.keys(groups).map(function(g){
+  const rows=groups[g].map(function(r,i){return'<tr><td>'+(i+1)+'</td><td><b>'+esc(pairName(e,r.id))+'</b></td><td>'+r.played+'</td><td>'+r.points+'</td><td>'+r.gf+'</td><td>'+r.gs+'</td><td>'+(r.diff>=0?"+":"")+r.diff+'</td></tr>'}).join("");
+  return '<div class="card table-wrap"><h2>Girone '+g+'</h2><table class="table"><thead><tr><th>Pos.</th><th>Coppia</th><th>PG</th><th>Pt</th><th>GF</th><th>GS</th><th>Diff.</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ }).join("");
+}
+function pairsView(e){
+ return '<div class="notice">Le coppie sono state formate seguendo l’ordine di selezione dei giocatori.</div><div class="card">'+(e.pairs||[]).map(function(p,i){return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(names(p.players))+'</b><div class="muted">Girone '+p.group+'</div></div></div>'}).join("")+'</div>';
+}
+function fixedFinalsView(e){
+ const table=pairStandings(e),groups={};table.forEach(function(r){(groups[r.group]||(groups[r.group]=[])).push(r)});
+ const qualified=[];
+ Object.keys(groups).forEach(function(g){qualified.push(groups[g][0]);if(e.finalsOption!=="top1"&&groups[g][1])qualified.push(groups[g][1])});
+ return '<div class="notice"><b>Qualificate:</b> '+(e.finalsOption==="top1"?"solo le prime di ogni girone":"le prime due di ogni girone")+'.</div>'+
+ '<div class="card">'+(qualified.length?qualified.map(function(r,i){return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(pairName(e,r.id))+'</b><div class="muted">Girone '+r.group+' · '+r.points+' punti · diff. '+(r.diff>=0?"+":"")+r.diff+'</div></div></div>'}).join(""):'<div class="muted">Inserisci i risultati dei gironi per vedere le qualificate.</div>')+'</div>'+
+ '<div class="notice">La gestione avanzata Gold/Silver, quarti, semifinali e incroci configurabili sarà il prossimo sviluppo del modulo coppie fisse.</div>';
+}
+function ensureFinalStages(e){
+ if(!e.finalStages){
+  e.finalStages={
+   elimination:{teamA:[],teamB:[],score1:null,score2:null},
+   auction1:{spending:{}},
+   semifinals:[
+    {id:"semi1",teamA:[],teamB:[],score1:null,score2:null},
+    {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
+   ],
+   auction2:{spending:{}},
+   final:{teamA:[],teamB:[],score1:null,score2:null},
+   elimination12:[
+    {id:"elim12_1",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
+    {id:"elim12_2",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null}
+   ],
+   quarterfinals:[
+    {id:"qf1",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
+    {id:"qf2",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
+    {id:"qf3",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
+    {id:"qf4",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null}
+   ]
+  };
+ }
+ if(!e.finalStages.auction1)e.finalStages.auction1={spending:{}};
+ if(!e.finalStages.auction1.spending)e.finalStages.auction1.spending={};
+ if(!e.finalStages.auction2)e.finalStages.auction2={spending:{}};
+ if(!e.finalStages.auction2.spending)e.finalStages.auction2.spending={};
+ if(!Array.isArray(e.finalStages.elimination12)||e.finalStages.elimination12.length!==2){
+  e.finalStages.elimination12=[
+   {id:"elim12_1",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
+   {id:"elim12_2",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null}
+  ];
+ }
+ if(!Array.isArray(e.finalStages.quarterfinals)||e.finalStages.quarterfinals.length!==4){
+  e.finalStages.quarterfinals=[1,2,3,4].map(function(i){return{id:"qf"+i,teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null}});
+ }
+ if(!Array.isArray(e.finalStages.semifinals)||e.finalStages.semifinals.length!==2){
+  e.finalStages.semifinals=[
+   {id:"semi1",teamA:[],teamB:[],score1:null,score2:null},
+   {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
+  ];
+ }
+ return e.finalStages;
+}
+
+function stageNeedsReturn(e,stage){
+ if(stage==="elimination")return !!e.eliminationReturnLeg;
+ if(stage==="semi1"||stage==="semi2")return !!e.semifinalReturnLeg;
+ if(stage==="final")return !!e.finalReturnLeg;
+ return false;
+}
+function stageLegComplete(m,leg){
+ if(leg===2)return m.score1R!==null&&m.score1R!==undefined&&m.score2R!==null&&m.score2R!==undefined;
+ return m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined;
+}
+function stageAggregate(e,stage,m){
+ if(!stageLegComplete(m,1))return null;
+ if(stageNeedsReturn(e,stage)&&!stageLegComplete(m,2))return null;
+ return {
+  a:Number(m.score1||0)+(stageNeedsReturn(e,stage)?Number(m.score1R||0):0),
+  b:Number(m.score2||0)+(stageNeedsReturn(e,stage)?Number(m.score2R||0):0)
+ };
+}
+function stageWinnerTeam(e,stage,m){
+ const t=stageAggregate(e,stage,m);
+ if(!t||t.a===t.b)return [];
+ return t.a>t.b?m.teamA.slice():m.teamB.slice();
+}
+function stageLegCard(e,stage,m,label,leg,index,court,phase){
+ const ret=leg===2;
+ const a=ret?m.score1R:m.score1,b=ret?m.score2R:m.score2;
+ const saved=a!==null&&a!==undefined&&b!==null&&b!==undefined;
+ return '<div class="match" data-stage-card="'+stage+'" data-stage-leg="'+leg+'">'+
+ '<span class="pill">'+label+' · '+(ret?"Ritorno":"Andata")+'</span>'+
+ matchMetaHtml(e,index,label+(ret?" - Ritorno":" - Andata"),court)+timerHtml(e,"stage-"+stage+"-"+leg,phase)+
+ matchupStackHtml(teamStackHtml(m.teamA),teamStackHtml(m.teamB))+
+ (saved?'<div class="notice success">Risultato: <b>'+a+' - '+b+'</b></div><button class="secondary" data-action="edit-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Modifica risultato</button>':
+ '<div class="score-row"><input data-stage-score-a type="number" min="0" placeholder="Game A"><input data-stage-score-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-action="save-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Salva risultato</button>')+
+ '</div>';
+}
+function stagePlayerOptions(ids,selected){
+ return '<option value="">-- seleziona --</option>'+ids.map(function(id){
+  return '<option value="'+id+'" '+(id===selected?"selected":"")+'>'+esc(playerName(playerById(id)))+'</option>';
+ }).join("");
+}
+function initEliminationFromRanking(e){
+ const fs=ensureFinalStages(e);
+ const rank=standings(e);
+ if(rank.length<10)return false;
+ if(fs.elimination.teamA.length===0&&fs.elimination.teamB.length===0){
+  fs.elimination.teamA=[rank[6].id,rank[9].id];
+  fs.elimination.teamB=[rank[7].id,rank[8].id];
+  save();
+ }
+ return true;
+}
+
+function initElimination12(e){
+ const fs=ensureFinalStages(e),rank=standings(e);
+ if(rank.length!==12)return false;
+ const wanted=[
+  {teamA:[rank[4].id,rank[11].id],teamB:[rank[7].id,rank[8].id]},
+  {teamA:[rank[5].id,rank[10].id],teamB:[rank[6].id,rank[9].id]}
+ ];
+ fs.elimination12.forEach(function(m,i){
+  if(m.teamA.join("|")!==wanted[i].teamA.join("|")||m.teamB.join("|")!==wanted[i].teamB.join("|")){
+   m.teamA=wanted[i].teamA.slice();m.teamB=wanted[i].teamB.slice();
+   m.score1=null;m.score2=null;m.score1R=null;m.score2R=null;
+  }
+ });
+ save();return true;
+}
+function elimination12Winners(e){
+ const fs=ensureFinalStages(e),out=[];
+ fs.elimination12.forEach(function(m,i){
+  const w=stageWinnerTeam(e,"elim12_"+(i+1),m);
+  if(w.length===2)out.push.apply(out,w);
+ });
+ return out;
+}
+function initQuarterfinals16(e){
+ const fs=ensureFinalStages(e),rank=standings(e);
+ if(rank.length!==16)return false;
+ const pairs=[
+  [rank[0].id,rank[15].id],[rank[7].id,rank[8].id],
+  [rank[3].id,rank[12].id],[rank[4].id,rank[11].id],
+  [rank[1].id,rank[14].id],[rank[6].id,rank[9].id],
+  [rank[2].id,rank[13].id],[rank[5].id,rank[10].id]
+ ];
+ const wanted=[
+  {teamA:pairs[0],teamB:pairs[1]},
+  {teamA:pairs[2],teamB:pairs[3]},
+  {teamA:pairs[4],teamB:pairs[5]},
+  {teamA:pairs[6],teamB:pairs[7]}
+ ];
+ fs.quarterfinals.forEach(function(m,i){
+  if(m.teamA.join("|")!==wanted[i].teamA.join("|")||m.teamB.join("|")!==wanted[i].teamB.join("|")){
+   m.teamA=wanted[i].teamA.slice();m.teamB=wanted[i].teamB.slice();
+   m.score1=null;m.score2=null;m.score1R=null;m.score2R=null;
+  }
+ });
+ save();return true;
+}
+function quarterfinalWinners(e){
+ const fs=ensureFinalStages(e),out=[];
+ fs.quarterfinals.forEach(function(m,i){
+  const w=stageWinnerTeam(e,"qf"+(i+1),m);
+  if(w.length===2)out.push.apply(out,w);
+ });
+ return out;
+}
+
+function eliminationWinners(e){
+ return stageWinnerTeam(e,"elimination",ensureFinalStages(e).elimination);
+}
+function eliminationView(e){
+ const fs=ensureFinalStages(e),rank=standings(e),n=rank.length,base=(e.matches||[]).length;
+ if(n===6){
+  return sixKnockoutView(e,e.competitionType==="rodeo_simple"?"simple":"tokens");
+ }
+ if(n===8){
+  return '<div class="notice success"><b>8 giocatori:</b> nessuna eliminatoria. Tutti accedono direttamente alle fasi finali.</div>';
+ }
+ if(n===10){
+  initEliminationFromRanking(e);
+  const m=fs.elimination;
+  const cards=stageLegCard(e,"elimination",m,"Eliminatoria",1,base,1,"elimination")+
+   (e.eliminationReturnLeg?stageLegCard(e,"elimination",m,"Eliminatoria",2,base+1,1,"elimination"):"");
+  const t=stageAggregate(e,"elimination",m),w=stageWinnerTeam(e,"elimination",m);
+  const summary=t?(t.a===t.b?'<div class="notice error">Totale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>':'<div class="notice success">Qualificati: <b>'+esc(names(w))+'</b></div>'):"";
+  return '<div class="notice"><b>10 giocatori:</b> 7°+10° contro 8°+9°. I vincitori raggiungono i primi 6.</div>'+cards+summary;
+ }
+ if(n===12){
+  initElimination12(e);
+  const cards=fs.elimination12.map(function(m,i){
+   const stage="elim12_"+(i+1),idx=base+i*(e.eliminationReturnLeg?2:1);
+   const c=stageLegCard(e,stage,m,"Eliminatoria "+(i+1),1,idx,i+1,"elimination")+
+    (e.eliminationReturnLeg?stageLegCard(e,stage,m,"Eliminatoria "+(i+1),2,idx+1,i+1,"elimination"):"");
+   const t=stageAggregate(e,stage,m),w=stageWinnerTeam(e,stage,m);
+   return c+(t?(t.a===t.b?'<div class="notice error">Totale in parità.</div>':'<div class="notice success">Qualificati: <b>'+esc(names(w))+'</b></div>'):"");
+  }).join("");
+  return '<div class="notice"><b>12 giocatori:</b> i primi 4 passano direttamente. Dal 5° al 12° disputano due eliminatorie per completare gli 8 finalisti.</div>'+cards;
+ }
+ if(n===16){
+  initQuarterfinals16(e);
+  const cards=fs.quarterfinals.map(function(m,i){
+   const stage="qf"+(i+1),idx=base+i*(e.eliminationReturnLeg?2:1);
+   const c=stageLegCard(e,stage,m,"Quarto di finale "+(i+1),1,idx,(i%Math.max(1,e.courts))+1,"elimination")+
+    (e.eliminationReturnLeg?stageLegCard(e,stage,m,"Quarto di finale "+(i+1),2,idx+1,(i%Math.max(1,e.courts))+1,"elimination"):"");
+   const t=stageAggregate(e,stage,m),w=stageWinnerTeam(e,stage,m);
+   return c+(t?(t.a===t.b?'<div class="notice error">Totale in parità.</div>':'<div class="notice success">Qualificati: <b>'+esc(names(w))+'</b></div>'):"");
+  }).join("");
+  return '<div class="notice success"><b>16 giocatori:</b> nessuna fase eliminatoria preliminare. Si parte direttamente dai quarti di finale.</div>'+cards;
+ }
+ return '<div class="notice error">Formati automatici disponibili con 6, 8, 10, 12 oppure 16 giocatori.</div>';
+}
+function semifinalQualified(e){
+ const rank=standings(e),n=rank.length;
+ if(n===8)return rank.map(function(x){return x.id});
+ if(n===10)return rank.slice(0,6).map(function(x){return x.id}).concat(eliminationWinners(e));
+ if(n===12)return rank.slice(0,4).map(function(x){return x.id}).concat(elimination12Winners(e));
+ if(n===16)return quarterfinalWinners(e);
+ return [];
+}
+function auctionBalanceBefore(e,id){
+ const row=standings(e).find(function(x){return x.id===id});
+ return row?row.balance:0;
+}
+function auction1View(e){
+ if(e.playerIds.length===6){
+  const fs=ensureFinalStages(e),qualified=standings(e).map(function(x){return x.id});
+  const spendRows=qualified.map(function(id){
+   const available=auctionBalanceBefore(e,id)+(Number(fs.auction1.spending[id])||0);
+   const spent=Number(fs.auction1.spending[id])||0;
+   return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+spent+'" data-auction1-spend="'+id+'"></td><td><b>'+(available-spent)+'</b></td></tr>';
+  }).join("");
+  return '<div class="notice"><b>Rodeo a 6:</b> asta unica, eliminatoria 3°+6° contro 4°+5°, poi finale automatica.</div>'+
+   '<div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+spendRows+'</tbody></table></div>'+
+   '<button class="primary" data-action="save-auction1">Salva asta</button><div style="height:12px"></div>'+sixKnockoutView(e,"tokens");
+ }
+ const fs=ensureFinalStages(e),qualified=semifinalQualified(e);
+ if(qualified.length!==8){
+  const n=e.playerIds.length;
+  const msg=n===16?"Prima completa tutti i quarti di finale.":(n===8?"Impossibile caricare gli 8 finalisti.":"Prima completa l’eliminatoria.");
+  return '<div class="notice error">'+msg+'</div>';
+ }
+ const spendRows=qualified.map(function(id){
+  const available=auctionBalanceBefore(e,id)+(Number(fs.auction1.spending[id])||0),spent=Number(fs.auction1.spending[id])||0;
+  return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+spent+'" data-auction1-spend="'+id+'"></td><td><b>'+(available-spent)+'</b></td></tr>';
+ }).join("");
+ const semis=fs.semifinals.map(function(m,index){
+  const stage="semi"+(index+1),base=(e.matches||[]).length+1+index*(e.semifinalReturnLeg?2:1);
+  const selectors='<div class="row"><div class="field"><label>Coppia A - giocatore 1</label><select data-team-stage="'+stage+'" data-side="A" data-pos="0">'+stagePlayerOptions(qualified,m.teamA[0])+'</select></div><div class="field"><label>Coppia A - giocatore 2</label><select data-team-stage="'+stage+'" data-side="A" data-pos="1">'+stagePlayerOptions(qualified,m.teamA[1])+'</select></div></div>'+
+  '<div class="row"><div class="field"><label>Coppia B - giocatore 1</label><select data-team-stage="'+stage+'" data-side="B" data-pos="0">'+stagePlayerOptions(qualified,m.teamB[0])+'</select></div><div class="field"><label>Coppia B - giocatore 2</label><select data-team-stage="'+stage+'" data-side="B" data-pos="1">'+stagePlayerOptions(qualified,m.teamB[1])+'</select></div></div>';
+  const cards=stageLegCard(e,stage,m,"Semifinale "+(index+1),1,base,index+1,"semifinal")+
+   (e.semifinalReturnLeg?stageLegCard(e,stage,m,"Semifinale "+(index+1),2,base+1,index+1,"semifinal"):"");
+  const t=stageAggregate(e,stage,m),w=stageWinnerTeam(e,stage,m);
+  const summary=t?(t.a===t.b?'<div class="notice error">Totale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>':'<div class="notice success">Totale semifinale: <b>'+t.a+' - '+t.b+'</b><br>Finalisti: <b>'+esc(names(w))+'</b></div>'):"";
+  return '<div class="card"><h2>Composizione semifinale '+(index+1)+'</h2>'+selectors+'</div>'+cards+summary;
+ }).join("");
+ return '<div class="notice"><b>Prima asta:</b> inserisci i gettoni spesi e componi le semifinali.</div>'+
+ '<div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+spendRows+'</tbody></table></div>'+
+ '<button class="primary" data-action="save-auction1">Salva prima asta</button><div style="height:12px"></div>'+semis;
+}
+function semifinalWinners(e){
+ const fs=ensureFinalStages(e),out=[];
+ fs.semifinals.forEach(function(m,i){
+  const w=stageWinnerTeam(e,"semi"+(i+1),m);
+  if(w.length===2)out.push.apply(out,w);
+ });
+ return out;
+}
+function auction2View(e){
+ const fs=ensureFinalStages(e),finalists=semifinalWinners(e);
+ if(finalists.length!==4)return '<div class="notice error">Prima completa entrambe le semifinali.</div>';
+ const spendRows=finalists.map(function(id){
+  const row=standings(e).find(function(x){return x.id===id}),current=row?row.balance:0,old2=Number(fs.auction2.spending[id])||0,available=current+old2;
+  return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+old2+'" data-auction2-spend="'+id+'"></td><td><b>'+(available-old2)+'</b></td></tr>';
+ }).join("");
+ const m=fs.final,base=(e.matches||[]).length+3+(e.semifinalReturnLeg?2:0);
+ const selectors='<div class="row"><div class="field"><label>Coppia A - giocatore 1</label><select data-team-stage="final" data-side="A" data-pos="0">'+stagePlayerOptions(finalists,m.teamA[0])+'</select></div><div class="field"><label>Coppia A - giocatore 2</label><select data-team-stage="final" data-side="A" data-pos="1">'+stagePlayerOptions(finalists,m.teamA[1])+'</select></div></div>'+
+ '<div class="row"><div class="field"><label>Coppia B - giocatore 1</label><select data-team-stage="final" data-side="B" data-pos="0">'+stagePlayerOptions(finalists,m.teamB[0])+'</select></div><div class="field"><label>Coppia B - giocatore 2</label><select data-team-stage="final" data-side="B" data-pos="1">'+stagePlayerOptions(finalists,m.teamB[1])+'</select></div></div>';
+ const cards=stageLegCard(e,"final",m,"Finale",1,base,1,"final")+
+  (e.finalReturnLeg?stageLegCard(e,"final",m,"Finale",2,base+1,1,"final"):"");
+ const t=stageAggregate(e,"final",m);
+ let summary="";
+ if(t){
+  if(t.a===t.b)summary='<div class="notice error">Totale finale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>';
+  else{
+   const winners=t.a>t.b?m.teamA:m.teamB,seconds=t.a>t.b?m.teamB:m.teamA;
+   e.playerIds.forEach(function(id){e.ledger[id].podium=0});
+   winners.forEach(function(id){e.ledger[id].podium=10});
+   seconds.forEach(function(id){e.ledger[id].podium=5});
+   save();
+   summary='<div class="notice success">Totale finale: <b>'+t.a+' - '+t.b+'</b><br>Vincitori: <b>'+esc(names(winners))+'</b><br>Secondi: <b>'+esc(names(seconds))+'</b></div>';
+  }
+ }
+ return '<div class="notice"><b>Seconda asta:</b> inserisci i gettoni spesi e componi la finale.</div>'+
+ '<div class="card table-wrap"><table class="table"><thead><tr><th>Finalista</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+spendRows+'</tbody></table></div>'+
+ '<button class="primary" data-action="save-auction2">Salva seconda asta</button>'+
+ '<div class="card"><h2>Composizione finale</h2>'+selectors+'</div>'+cards+summary;
+}
+function stageMatch(e,stage){
+ if(e.playerIds&&e.playerIds.length===6&&(stage==="elimination"||stage==="final")){
+  const type=e.competitionType==="rodeo_simple"?"simple":"tokens";
+  const k=ensureSixKnockout(e,type);
+  return stage==="elimination"?k.elimination:k.final;
+ }
+ const fs=ensureFinalStages(e);
+ if(stage==="elimination")return fs.elimination;
+ if(stage.indexOf("elim12_")===0)return fs.elimination12[Number(stage.split("_")[1])-1];
+ if(stage.indexOf("qf")===0)return fs.quarterfinals[Number(stage.replace("qf",""))-1];
+ if(stage==="semi1")return fs.semifinals[0];
+ if(stage==="semi2")return fs.semifinals[1];
+ if(stage==="final")return fs.final;
+ return null;
+}
+function validateStageTeams(m){
+ if(!m||m.teamA.length!==2||m.teamB.length!==2)return false;
+ const all=m.teamA.concat(m.teamB);
+ return all.every(Boolean)&&new Set(all).size===4;
+}
+function saveStageResult(button){
+ const e=currentEvent(),stage=button.getAttribute("data-stage"),leg=Number(button.getAttribute("data-leg")||1),m=stageMatch(e,stage),card=button.closest("[data-stage-card]"),msg=card.querySelector(".match-message");
+ try{
+  if(stage!=="elimination"&&!validateStageTeams(m))throw new Error("seleziona quattro giocatori diversi");
+  const a=card.querySelector("[data-stage-score-a]").value,b=card.querySelector("[data-stage-score-b]").value;
+  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
+  if(leg===2){m.score1R=Number(a);m.score2R=Number(b)}else{m.score1=Number(a);m.score2=Number(b)}
+  if(stage==="final"&&e.competitionType==="rodeo_tokens"){
+   e.playerIds.forEach(function(id){e.ledger[id].podium=0});
+   const t=stageAggregate(e,"final",m);
+   if(t&&t.a!==t.b){
+    const w=t.a>t.b?m.teamA:m.teamB,s=t.a>t.b?m.teamB:m.teamA;
+    w.forEach(function(id){e.ledger[id].podium=10});s.forEach(function(id){e.ledger[id].podium=5});
+   }
+  }
+  save();render();
+ }catch(err){if(msg){msg.className="notice error";msg.textContent="Errore: "+err.message}}
+}
+function editStageResult(stage,leg){
+ const e=currentEvent(),m=stageMatch(e,stage),n=Number(leg||1);
+ if(!m)return;
+ if(n===2){m.score1R=null;m.score2R=null}else{m.score1=null;m.score2=null}
+ if(stage==="final")e.playerIds.forEach(function(id){e.ledger[id].podium=0});
+ save();render();
+}
+function saveAuction(which){
+ const e=currentEvent(),fs=ensureFinalStages(e);
+ const selector=which===1?"[data-auction1-spend]":"[data-auction2-spend]";
+ const inputs=Array.from(document.querySelectorAll(selector));
+ const target=which===1?fs.auction1.spending:fs.auction2.spending;
+ inputs.forEach(function(input){target[input.getAttribute(which===1?"data-auction1-spend":"data-auction2-spend")]=Math.max(0,Number(input.value)||0)});
+ e.playerIds.forEach(function(id){
+  e.ledger[id].spent=(Number(fs.auction1.spending[id])||0)+(Number(fs.auction2.spending[id])||0);
+ });
+ save();alert((which===1?"Prima":"Seconda")+" asta salvata.");render();
+}
+function updateStageTeam(select){
+ const e=currentEvent(),stage=select.getAttribute("data-team-stage"),side=select.getAttribute("data-side"),pos=Number(select.getAttribute("data-pos")),m=stageMatch(e,stage);
+ if(!m)return;
+ const key=side==="A"?"teamA":"teamB";
+ while(m[key].length<2)m[key].push("");
+ m[key][pos]=select.value;
+ save();
+}
+function eventPlayersView(e){
+ return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
+}
+function commitBalances(){
+ const e=currentEvent();if(!e)return;
+ const rows=standings(e);
+ rows.forEach(function(r){
+  const p=playerById(r.id);
+  if(p)p.tokenBalance=Math.max(0,Number(r.balance)||0);
+ });
+ save();
+ alert("Saldi gettoni aggiornati nell’anagrafica.");
+ render();
+}
+
+function printCurrentPage(){
+ const oldTitle=document.title;
+ const e=currentEvent();
+ const sectionNames={
+  matches:"Partite",
+  standings:"Classifica",
+  elimination:"Eliminatoria",
+  auction1:"Asta 1 e semifinali",
+  auction2:"Asta 2 e finale",
+  tokens:"Situazione gettoni",
+  players:"Partecipanti",payments:"Pagamenti reception",simplefinals:"Fasi finali",pairstandings:"Classifiche gironi",pairs:"Coppie",fixedfinals:"Fasi finali"
+ };
+ if(state.view==="event"&&e){
+  document.title=(e.name+" - "+(sectionNames[state.tab]||"Riepilogo")).replace(/[\\/:*?"<>|]/g,"-");
+ }else{
+  document.title=("Padel Arena Manager - "+state.view).replace(/[\\/:*?"<>|]/g,"-");
+ }
+ const printClass="print-tab-"+(state.tab||state.view||"page");
+ document.body.classList.add(printClass);
+ window.print();
+ setTimeout(function(){
+  document.title=oldTitle;
+  document.body.classList.remove(printClass);
+ },500);
+}
+function deleteEvent(id){
+ const e=state.events.find(function(x){return x.id===id});
+ if(!e)return;
+ if(!confirm('Eliminare definitivamente il torneo "'+e.name+'"?\\n\\nAnagrafica e saldi gettoni non verranno modificati.'))return;
+ state.events=state.events.filter(function(x){return x.id!==id});
+ if(state.currentEventId===id)state.currentEventId=null;
+ save();render();
+}
+function deleteAllEvents(){
+ if(!state.events.length)return;
+ const first=confirm("Vuoi cancellare tutte le "+state.events.length+" competizioni di prova?\\n\\nI giocatori e i loro saldi gettoni resteranno salvati.");
+ if(!first)return;
+ const second=confirm("Conferma definitiva: tutti i tornei, risultati, aste e fasi finali verranno eliminati. Procedere?");
+ if(!second)return;
+ state.events=[];
+ state.currentEventId=null;
+ state.view="events";
+ state.tab="matches";
+ save();render();
+ alert("Tutti i tornei sono stati cancellati. Anagrafica e saldi gettoni sono rimasti invariati.");
+}
+document.addEventListener("click",function(ev){
+ const viewBtn=ev.target.closest("[data-view]");if(viewBtn){setView(viewBtn.getAttribute("data-view"));return}
+ const tabBtn=ev.target.closest("[data-tab]");if(tabBtn){setTab(tabBtn.getAttribute("data-tab"));return}
+ const action=ev.target.closest("[data-action]");if(action){
+  const a=action.getAttribute("data-action");
+  if(a==="dismiss-timer-alert")dismissTimerAlert();
+  if(a==="start-timer")startTimer(action.getAttribute("data-timer-key"));
+  if(a==="reset-timer")resetTimer(action.getAttribute("data-timer-key"));
+  if(a==="save-player")savePlayer();
+  if(a==="create-event")createEvent();
+  if(a==="save-result")saveResult(action);
+  if(a==="edit-result")editResult(action.getAttribute("data-match-id"));
+  if(a==="commit-balances")commitBalances();
+  if(a==="save-stage-result")saveStageResult(action);
+  if(a==="edit-stage-result")editStageResult(action.getAttribute("data-stage"),action.getAttribute("data-leg"));
+  if(a==="save-auction1")saveAuction(1);
+  if(a==="save-auction2")saveAuction(2);
+  if(a==="print-pdf")printCurrentPage();
+  if(a==="delete-all-events")deleteAllEvents();
+  if(a==="save-simple-result")saveSimpleResult(action);
+  if(a==="edit-simple-result")editSimpleResult(action.getAttribute("data-simple-id"));
+  if(a==="save-six-result")saveSixResult(action);
+  if(a==="edit-six-result")editSixResult(action.getAttribute("data-six-id"),action.getAttribute("data-six-type"));
+  return;
+ }
+ const open=ev.target.closest("[data-open-event]");if(open){state.currentEventId=open.getAttribute("data-open-event");state.view="event";state.tab="matches";save();render();return}
+ const del=ev.target.closest("[data-delete-event]");if(del){deleteEvent(del.getAttribute("data-delete-event"));return}
+ const edit=ev.target.closest("[data-edit-player]");if(edit){editPlayer(edit.getAttribute("data-edit-player"));return}
+});
+
+document.addEventListener("input",function(ev){
+ if(ev.target.id==="playerSearchInput"){
+  const query=ev.target.value.trim().toLowerCase();
+  let visible=0;
+  document.querySelectorAll(".player-search-row").forEach(function(row){
+   const show=!query||String(row.getAttribute("data-player-search")||"").includes(query);
+   row.style.display=show?"":"none";
+   if(show)visible++;
+  });
+  const count=document.getElementById("playerSearchCount");
+  if(count)count.textContent=visible+" nominativi visualizzati";
+ }
+ if(ev.target.id==="eventPlayerSearchInput"){
+  const query=ev.target.value.trim().toLowerCase();
+  document.querySelectorAll(".event-player-search-row").forEach(function(row){
+   const show=!query||String(row.getAttribute("data-event-player-search")||"").includes(query);
+   row.style.display=show?"":"none";
+  });
+ }
+});
+document.addEventListener("change",function(ev){
+ if(ev.target.matches("[data-team-stage]")){
+  updateStageTeam(ev.target);return;
+ }
+ if(ev.target.matches('[data-action="change-type"]')){
+  state.draft.name=document.getElementById("eName").value;
+  state.draft.date=document.getElementById("eDate").value;
+  state.draft.club=document.getElementById("eClub").value;
+  state.draft.category=document.getElementById("eCategory").value;
+  state.draft.competitionType=ev.target.value;
+  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
+  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
+  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
+  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
+  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
+  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
+  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
+  state.draft.matchMode="timed";
+  state.draft.matchDuration=Math.max(1,Number(document.getElementById("eMatchDuration").value)||20);
+  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
+  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
+  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
+  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  if(ev.target.value==="rodeo_tokens")state.draft.name="Rodeo a Gettoni";
+  if(ev.target.value==="rodeo_simple")state.draft.name="Rodeo semplice";
+  if(ev.target.value==="fixed_pairs")state.draft.name="Torneo a coppie fisse";
+  save();render();return;
+ }
+ if(ev.target.matches('[data-action="change-category"]')){
+  state.draft.name=document.getElementById("eName").value;
+  state.draft.date=document.getElementById("eDate").value;
+  state.draft.club=document.getElementById("eClub").value;
+  state.draft.category=ev.target.value;
+  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
+  state.draft.competitionType=document.getElementById("eCompetitionType").value;
+  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
+  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
+  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
+  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
+  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
+  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
+  state.draft.matchMode="timed";
+  state.draft.matchDuration=Math.max(1,Number(document.getElementById("eMatchDuration").value)||20);
+  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
+  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
+  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
+  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
+  if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
+  state.draft.selected=[];
+  save();render();return;
+ }
+ if(ev.target.matches("[data-select-player]")){
+  const id=ev.target.getAttribute("data-select-player");
+  if(ev.target.checked&&!state.draft.selected.includes(id))state.draft.selected.push(id);
+  if(!ev.target.checked)state.draft.selected=state.draft.selected.filter(function(x){return x!==id});
+  const count=document.getElementById("selectedPlayersCount");
+  if(count)count.textContent=state.draft.selected.length;
+  save();
+ }
+ if(ev.target.matches("[data-payment]")){
+  const e=currentEvent(),id=ev.target.getAttribute("data-payment"),field=ev.target.getAttribute("data-pay-field");
+  e.payments=e.payments||defaultPayments(e.playerIds,e.entryFee||0);
+  e.payments[id]=e.payments[id]||{fee:Number(e.entryFee)||0,paid:false,method:"",notes:""};
+  e.payments[id][field]=field==="paid"?ev.target.checked:field==="fee"?Math.max(0,Number(ev.target.value)||0):ev.target.value;
+  save();render();return;
+ }
+ if(ev.target.matches("[data-ledger]")){
+  const e=currentEvent();const id=ev.target.getAttribute("data-ledger");const field=ev.target.getAttribute("data-field");
+  e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};e.ledger[id][field]=Math.max(0,Number(ev.target.value)||0);save();render();
+ }
+});
+function render(){
+ let body=state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
+}
+render();
+
+if("serviceWorker" in navigator){
+ window.addEventListener("load",function(){
+  navigator.serviceWorker.register("./service-worker.js").catch(function(err){
+   console.warn("Service worker non registrato:",err);
+  });
+ });
+}
+
+</script>
+</body>
+</html>
