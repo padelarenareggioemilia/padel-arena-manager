@@ -182,3 +182,22 @@ VERSIONE 4.3.1 - RICHIESTE DI ISCRIZIONE
 - Nuove richieste in lista d’attesa quando la capienza è raggiunta.
 - Il visitatore non può modificare alcun dato del gestionale.
 - Eseguire esclusivamente SUPABASE_ISCRIZIONI_PUBBLICHE_431.sql.
+
+VERSIONE 5.1 - SQUADRE UFFICIALI E PORTALE CAPITANI
+- Importate 29 iscrizioni ufficiali dall'ultimo file AICS PADEL CHAMPIONSHIP 2027(1).xlsx.
+- Dati di squadra, club, campo di casa e capitano già precompilati.
+- Ricerca e filtro per Serie A, B e C.
+- Scheda completa per ogni squadra.
+- Abilitazione o disabilitazione individuale dell'accesso del capitano.
+- Link personale condivisibile per ogni squadra.
+- Il capitano crea un account con l'email già registrata e vede soltanto la propria squadra.
+- Nuova pagina captain-portal.html.
+- Nuovo script SUPABASE_AICS_2027_CAPITANI.sql con tabelle, inviti, ruoli e policy RLS.
+- Le rose restano chiuse fino all'attivazione decisa dall'amministratore.
+
+ATTIVAZIONE ONLINE DEL PORTALE CAPITANI
+1. Eseguire SUPABASE_AICS_2027_CAPITANI.sql nel SQL Editor di Supabase.
+2. Pubblicare tutti i file della cartella, compreso captain-portal.html.
+3. Accedere come Admin.
+4. Aprire Campionato, scegliere una squadra e attivare ACCESSO CAPITANO.
+5. Usare COPIA / CONDIVIDI LINK PERSONALE.
