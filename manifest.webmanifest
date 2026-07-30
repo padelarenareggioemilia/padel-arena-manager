@@ -1,8 +1,8 @@
 {
-  "name": "Padel Arena Manager 2.0",
+  "name": "Padel Arena Manager 3.1",
   "short_name": "Padel Arena",
   "description": "Gestione tornei, giocatori, risultati, gettoni, aste e PDF.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",

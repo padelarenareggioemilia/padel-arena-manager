@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 2.3</title>
+<title>Padel Arena Manager 3.1</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -918,6 +918,17 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 #pamRoleBadge{position:fixed;right:12px;bottom:12px;z-index:9000;border-radius:999px;padding:9px 13px;background:#071a2b;color:#fff;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.25)}
 #pamLogoutBtn{position:fixed;left:12px;bottom:12px;z-index:9000;border:0;border-radius:999px;padding:10px 14px;background:#fff;color:#06111f;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.22)}
 
+
+.pam-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:100000;max-width:min(560px,92vw);padding:13px 17px;border-radius:14px;background:#10243d;color:#fff;font-weight:900;box-shadow:0 12px 35px rgba(0,0,0,.35)}
+.pam-toast.success{background:#244b20}.pam-toast.error{background:#7f1d1d}
+.event-online-tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.event-online-tools button,.event-online-tools label{flex:1;min-width:150px}
+.upload-button{display:flex;align-items:center;justify-content:center;background:#203754;color:#fff;padding:10px 12px;border-radius:12px;font-weight:900;cursor:pointer}
+.upload-button input{display:none}
+.event-logo-preview{width:100%;max-height:180px;object-fit:contain;background:#fff;border-radius:16px;padding:8px;margin-bottom:12px}
+.player-avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#fff;border:2px solid #b7ff3c}
+.player-photo-control{min-width:120px}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -933,6 +944,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -947,79 +959,113 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 
 <script>
 
-const PAM_USERS={
- "francesco":{role:"admin",hash:"cc47736201d66e885fe3d4e0e5acd0b05062a9409c76db63a2826113a1eafc12"},
- "collaboratori":{role:"collaboratore",hash:"d586603e3c279a3676442e38adb45d66feb20c28bc5fc0adb8dee6f1c629a0a1"}
-};
-let PAM_SESSION=null;
 
-async function pamSha256(text){
- const data=new TextEncoder().encode(text);
- const digest=await crypto.subtle.digest("SHA-256",data);
- return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
+ auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+let PAM_SESSION=null;
+let PAM_PROFILE=null;
+let pamCloudReady=false;
+let pamSyncTimer=null;
+let pamRealtimeChannel=null;
+let pamRemoteRefreshTimer=null;
+let pamUploading=false;
+
+function pamIsAdmin(){
+ return PAM_PROFILE&&PAM_PROFILE.role==="admin";
 }
-function pamIsAdmin(){return PAM_SESSION&&PAM_SESSION.role==="admin";}
-function pamRenderLogin(){
+function pamRoleLabel(){
+ return pamIsAdmin()?"ADMIN · Francesco":"COLLABORATORE · Solo risultati";
+}
+function pamRenderLogin(message=""){
  document.getElementById("pamLoginOverlay")?.remove();
  const overlay=document.createElement("div");
  overlay.id="pamLoginOverlay";
  overlay.innerHTML=`<div class="pam-login-card">
- <h1>Padel Arena Manager</h1>
- <p>Accedi con il tuo account.</p>
- <form id="pamLoginForm">
- <label>Utente</label><input id="pamUsername" autocomplete="username" autocapitalize="none">
- <label>Password</label><input id="pamPassword" type="password" autocomplete="current-password">
- <button type="submit">ACCEDI</button><div id="pamLoginError"></div>
- </form></div>`;
+  <h1>Padel Arena Manager</h1>
+  <p>Accedi all'archivio online condiviso.</p>
+  <form id="pamLoginForm">
+   <label>Email</label>
+   <input id="pamUsername" type="email" autocomplete="username" autocapitalize="none" placeholder="nome@dominio.it">
+   <label>Password</label>
+   <input id="pamPassword" type="password" autocomplete="current-password">
+   <button type="submit">ACCEDI</button>
+   <div id="pamLoginError">${message}</div>
+  </form>
+ </div>`;
  document.body.appendChild(overlay);
  document.getElementById("pamLoginForm").addEventListener("submit",pamLogin);
 }
 async function pamLogin(e){
  e.preventDefault();
- const username=document.getElementById("pamUsername").value.trim().toLowerCase();
+ const email=document.getElementById("pamUsername").value.trim().toLowerCase();
  const password=document.getElementById("pamPassword").value;
- const rec=PAM_USERS[username];
  const err=document.getElementById("pamLoginError");
- if(!rec||await pamSha256(password)!==rec.hash){err.textContent="Utente o password non corretti.";return;}
- PAM_SESSION={username,role:rec.role};
- sessionStorage.setItem("pam_session",JSON.stringify(PAM_SESSION));
- document.getElementById("pamLoginOverlay")?.remove();
- pamApplyRole();
- if(typeof route==="function")route();
+ err.textContent="Accesso in corso...";
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ if(error||!data.session){
+  err.textContent="Accesso non riuscito: "+(error?.message||"controlla email e password.");
+  return;
+ }
+ await pamStartSession(data.session);
 }
-function pamLogout(){
- sessionStorage.removeItem("pam_session");
- PAM_SESSION=null;
+async function pamLogout(){
+ await sb.auth.signOut();
+ PAM_SESSION=null;PAM_PROFILE=null;pamCloudReady=false;
+ if(pamRealtimeChannel){await sb.removeChannel(pamRealtimeChannel);pamRealtimeChannel=null}
  document.getElementById("pamRoleBadge")?.remove();
  document.getElementById("pamLogoutBtn")?.remove();
  pamRenderLogin();
+}
+async function pamGetProfile(user){
+ const {data,error}=await sb.from("profiles").select("id,email,role,display_name").eq("id",user.id).maybeSingle();
+ if(error)throw error;
+ return data||{id:user.id,email:user.email,role:user.email.toLowerCase()==="padelarenareggioemilia@gmail.com"?"admin":"collaborator",display_name:user.email};
 }
 function pamApplyRole(){
  document.getElementById("pamRoleBadge")?.remove();
  document.getElementById("pamLogoutBtn")?.remove();
  const badge=document.createElement("div");
  badge.id="pamRoleBadge";
- badge.textContent=pamIsAdmin()?"ADMIN · Francesco":"COLLABORATORE · Solo risultati";
+ badge.textContent=pamRoleLabel()+" · CONNESSO";
  document.body.appendChild(badge);
  const out=document.createElement("button");
- out.id="pamLogoutBtn"; out.textContent="Esci"; out.onclick=pamLogout;
+ out.id="pamLogoutBtn";out.textContent="Esci";out.onclick=pamLogout;
  document.body.appendChild(out);
  pamRestrictCollaboratorUI();
 }
 function pamRestrictCollaboratorUI(){
  if(pamIsAdmin()||!PAM_SESSION)return;
- const forbidden=["anagrafica","giocatori","gettoni","pagamenti","impostazioni","nuovo torneo","crea torneo","elimina","configurazione","importa","esporta","asta"];
+ const forbidden=["anagrafica","gettoni","pagamenti","impostazioni","nuova competizione","crea torneo","genera competizione","elimina","configurazione","importa","esporta","asta","duplica","modifica torneo","carica logo"];
  document.querySelectorAll("button,a,[role='button']").forEach(el=>{
-   const t=(el.textContent||"").trim().toLowerCase();
-   if(forbidden.some(w=>t.includes(w)))el.style.display="none";
+  const t=(el.textContent||"").trim().toLowerCase();
+  if(forbidden.some(w=>t.includes(w)))el.style.display="none";
  });
 }
-function pamBootAuth(){
+async function pamStartSession(session){
+ PAM_SESSION=session;
  try{
-  const saved=JSON.parse(sessionStorage.getItem("pam_session")||"null");
-  if(saved&&PAM_USERS[saved.username]&&PAM_USERS[saved.username].role===saved.role)PAM_SESSION=saved;
- }catch(e){}
- if(PAM_SESSION)pamApplyRole(); else pamRenderLogin();
+  PAM_PROFILE=await pamGetProfile(session.user);
+  document.getElementById("pamLoginOverlay")?.remove();
+  pamApplyRole();
+  await pamCloudLoad(true);
+  pamSubscribeRealtime();
+  pamOpenSharedTournamentFromUrl();
+ }catch(err){
+  console.error(err);
+  await sb.auth.signOut();
+  pamRenderLogin("Configurazione account incompleta: "+err.message);
+ }
+}
+async function pamBootAuth(){
+ const {data}=await sb.auth.getSession();
+ if(data.session)await pamStartSession(data.session);
+ else pamRenderLogin();
+ sb.auth.onAuthStateChange(function(event,session){
+  if(event==="SIGNED_OUT"&&!session)pamRenderLogin();
+ });
 }
 
 
@@ -1100,7 +1146,7 @@ function eventPrintBranding(e){
  const courts=Number(e.courts||1);
  return '<section class="print-event-hero">'+
   '<div class="print-event-main">'+
-   '<img class="print-club-logo" src="'+esc(c.logo)+'" alt="'+esc(c.name)+'">'+
+   '<img class="print-club-logo" src="'+esc(e.logoUrl||c.logo)+'" alt="'+esc(e.name)+'">'+
    '<div class="print-event-copy"><div class="print-kicker">PROGRAMMA UFFICIALE</div>'+
     '<div class="print-event-title">'+esc(e.name)+'</div>'+
     '<div class="print-event-meta">'+
@@ -1129,7 +1175,7 @@ function printFooter(e){
 }
 
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 2.3 · abbinamenti Rodeo corretti</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 3.1 · sincronizzazione collaboratori</div>';
 }
 
 function iphoneInstallCard(){
@@ -1278,15 +1324,221 @@ function applyMaleTokenBalancesTappa2(){
 }
 applyMaleTokenBalancesTappa2();
 
-function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function save(){
+ localStorage.setItem(KEY,JSON.stringify(state));
+ if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
+}
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
 function playerName(p){return (p.firstName+" "+p.lastName).trim()}
 function currentEvent(){return state.events.find(function(e){return e.id===state.currentEventId})||null}
+
+function pamEventRow(e){
+ const row={
+  id:e.id,
+  name:e.name||"Torneo",
+  event_date:e.date||null,
+  club:e.club||null,
+  category:e.category||null,
+  competition_type:e.competitionType||null,
+  logo_url:e.logoUrl||null,
+  status:e.status||"active",
+  data:e
+ };
+ if(e.shareToken)row.share_token=e.shareToken;
+ return row;
+}
+function pamPlayerRow(p){
+ return{id:p.id,data:p,photo_url:p.photoUrl||null};
+}
+function pamScheduleCloudSync(){
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(pamCloudSyncAll,650);
+}
+async function pamCloudSyncAll(){
+ if(!pamCloudReady||!PAM_SESSION||pamUploading)return;
+ pamUploading=true;
+ try{
+  if(pamIsAdmin()){
+   if(state.players.length){
+    const pr=await sb.from("players").upsert(state.players.map(pamPlayerRow),{onConflict:"id"}).select("id");
+    if(pr.error)throw pr.error;
+   }
+   if(state.events.length){
+    const er=await sb.from("tournaments").upsert(state.events.map(pamEventRow),{onConflict:"id"}).select("id,share_token");
+    if(er.error)throw er.error;
+    (er.data||[]).forEach(function(row){
+     const e=state.events.find(function(x){return x.id===row.id});
+     if(e)e.shareToken=row.share_token;
+    });
+   }
+  }else{
+   // Il collaboratore sincronizza soltanto il torneo aperto.
+   const e=currentEvent();
+   if(e){
+    const er=await sb.from("tournaments")
+      .update({data:e,status:e.status||"active"})
+      .eq("id",e.id)
+      .select("id,share_token")
+      .maybeSingle();
+    if(er.error)throw er.error;
+    if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+   }
+  }
+  localStorage.setItem(KEY,JSON.stringify(state));
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione Supabase:",err);
+  pamSetConnectionState(false);
+  pamToast("Sincronizzazione non riuscita: "+err.message,"error");
+ }finally{
+  pamUploading=false;
+ }
+}
+
+function pamSetConnectionState(ok){
+ const badge=document.getElementById("pamRoleBadge");
+ if(!badge)return;
+ badge.textContent=pamRoleLabel()+(ok?" · CONNESSO":" · OFFLINE");
+ badge.style.background=ok?"#071a2b":"#7f1d1d";
+}
+window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
+window.addEventListener("offline",function(){pamSetConnectionState(false)});
+
+async function pamCloudLoad(initial){
+ const [playersRes,eventsRes]=await Promise.all([
+  sb.from("players").select("id,data,photo_url").order("updated_at",{ascending:true}),
+  sb.from("tournaments").select("id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at").order("event_date",{ascending:false})
+ ]);
+ if(playersRes.error)throw playersRes.error;
+ if(eventsRes.error)throw eventsRes.error;
+ const remotePlayers=(playersRes.data||[]).map(function(r){return Object.assign({},r.data||{},{id:r.id,photoUrl:r.photo_url||((r.data||{}).photoUrl)||""})});
+ const remoteEvents=(eventsRes.data||[]).map(function(r){
+  return Object.assign({},r.data||{},{
+   id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
+   club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
+   competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+   logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
+  });
+ });
+ if(remotePlayers.length)state.players=remotePlayers;
+ if(remoteEvents.length)state.events=remoteEvents;
+ if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
+  pamCloudReady=true;
+  await pamCloudSyncAll();
+ }else{
+  pamCloudReady=true;
+ }
+ if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
+ localStorage.setItem(KEY,JSON.stringify(state));
+ render();
+ pamApplyRole();
+}
+function pamSubscribeRealtime(){
+ if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
+ pamRealtimeChannel=sb.channel("padel-arena-tournaments")
+  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},function(){
+   clearTimeout(pamRemoteRefreshTimer);
+   pamRemoteRefreshTimer=setTimeout(function(){if(!pamUploading)pamCloudLoad(false)},450);
+  }).subscribe();
+}
+function pamToast(message,type){
+ const n=document.createElement("div");
+ n.className="pam-toast "+(type||"");
+ n.textContent=message;
+ document.body.appendChild(n);
+ setTimeout(function(){n.remove()},3500);
+}
+function pamShareUrl(e){
+ if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
+ return location.href.split("?")[0].split("#")[0]+"?tournament="+encodeURIComponent(e.shareToken);
+}
+async function pamShareEvent(id){
+ const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ if(!e.shareToken){await pamCloudSyncAll()}
+ const url=pamShareUrl(e);
+ try{
+  if(navigator.share)await navigator.share({title:e.name,text:"Apri il torneo e inserisci i risultati",url:url});
+  else{await navigator.clipboard.writeText(url);pamToast("Link del torneo copiato","success")}
+ }catch(err){
+  if(err.name!=="AbortError")prompt("Copia il link del torneo",url);
+ }
+}
+function pamResetCopiedResults(obj){
+ if(!obj||typeof obj!=="object")return;
+ if(Array.isArray(obj)){obj.forEach(pamResetCopiedResults);return}
+ Object.keys(obj).forEach(function(k){
+  if(["score1","score2"].includes(k))obj[k]=null;
+  else if(k==="paid")obj[k]=false;
+  else if(k==="method"||k==="note"||k==="notes")obj[k]="";
+  else if(k==="spent"||k==="podium")obj[k]=0;
+  else if(k==="endAt"||k==="expiredNotified")delete obj[k];
+  else pamResetCopiedResults(obj[k]);
+ });
+}
+function pamDuplicateEvent(id){
+ if(!pamIsAdmin())return;
+ const original=state.events.find(function(x){return x.id===id});if(!original)return;
+ const copy=JSON.parse(JSON.stringify(original));
+ copy.id=uid("e");
+ copy.name=original.name+" - Copia";
+ copy.shareToken=null;
+ copy.status="draft";
+ copy.createdAt=new Date().toISOString();
+ copy.timers={};
+ pamResetCopiedResults(copy);
+ state.events.unshift(copy);
+ state.currentEventId=copy.id;
+ state.view="event";state.tab="matches";
+ save();render();
+ pamToast("Torneo duplicato: la copia è indipendente e modificabile","success");
+}
+function pamEditEvent(id){
+ if(!pamIsAdmin())return;
+ const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ const name=prompt("Nome torneo",e.name);if(name===null)return;
+ const date=prompt("Data (AAAA-MM-GG)",e.date||"");if(date===null)return;
+ const club=prompt("Circolo",e.club||"");if(club===null)return;
+ const category=prompt("Categoria",e.category||"");if(category===null)return;
+ e.name=name.trim()||e.name;e.date=date.trim();e.club=club.trim();e.category=category.trim();
+ save();render();
+}
+async function pamUploadTournamentLogo(id,file){
+ if(!pamIsAdmin()||!file)return;
+ const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+ const path="tournaments/"+id+"-"+Date.now()+"."+ext;
+ pamToast("Caricamento logo in corso...");
+ const up=await sb.storage.from("padel-arena-images").upload(path,file,{upsert:true,contentType:file.type||undefined});
+ if(up.error){pamToast("Errore caricamento: "+up.error.message,"error");return}
+ e.logoUrl=sb.storage.from("padel-arena-images").getPublicUrl(path).data.publicUrl;
+ save();render();
+ pamToast("Logo del torneo aggiornato","success");
+}
+async function pamUploadPlayerPhoto(id,file){
+ if(!pamIsAdmin()||!file)return;
+ const p=state.players.find(function(x){return x.id===id});if(!p)return;
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+ const path="players/"+id+"-"+Date.now()+"."+ext;
+ const up=await sb.storage.from("padel-arena-images").upload(path,file,{upsert:true,contentType:file.type||undefined});
+ if(up.error){pamToast("Errore caricamento: "+up.error.message,"error");return}
+ p.photoUrl=sb.storage.from("padel-arena-images").getPublicUrl(path).data.publicUrl;
+ save();render();pamToast("Foto giocatore aggiornata","success");
+}
+function pamPlayerPhoto(p){
+ return p&&p.photoUrl?p.photoUrl:"assets/padel-arena-reggio-emilia.jpeg";
+}
+function pamOpenSharedTournamentFromUrl(){
+ const token=new URLSearchParams(location.search).get("tournament");
+ if(!token)return;
+ const e=state.events.find(function(x){return x.shareToken===token});
+ if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";localStorage.setItem(KEY,JSON.stringify(state));render();pamApplyRole()}
+}
+
 function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v2.3 PWA · Rodeo senza coppie ripetute</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.1 · Supabase online</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
@@ -1304,13 +1556,13 @@ function playersView(){
  const orderedPlayers=state.players.slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
  const rows=orderedPlayers.length?orderedPlayers.map(function(p,i){
   const searchText=[playerName(p),p.phone,p.email,p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
-  return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><div class="rank">'+(i+1)+'</div><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
+  return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><img class="player-avatar" src="'+esc(pamPlayerPhoto(p))+'" alt="'+esc(playerName(p))+'"><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
   '<div class="muted">'+
   (p.birthPlace?'Nato/a a '+esc(p.birthPlace):'Luogo di nascita non compilato')+
   ' · '+(p.postalCode?'CAP '+esc(p.postalCode):'CAP non compilato')+
   ' · '+(p.residenceTown?esc(p.residenceTown):'Comune non compilato')+
   (p.residenceProvince?' ('+esc(p.residenceProvince)+')':' · Provincia non compilata')+
-  '</div></div><button class="small" data-edit-player="'+p.id+'">Modifica</button></div>'
+  '</div></div><label class="upload-button player-photo-control">Foto<input type="file" accept="image/*" data-player-photo="'+p.id+'"></label><button class="small" data-edit-player="'+p.id+'">Modifica</button></div>'
  }).join(""):'<div class="muted">Nessun cliente presente.</div>';
  return header("Anagrafica clienti","Crea una volta, riutilizza sempre")+
  '<div class="card"><h2>Nuovo cliente / giocatore</h2><div id="playerMessage"></div>'+
@@ -1694,7 +1946,13 @@ function createEvent(){
 function eventsView(){
  const rows=state.events.length?state.events.map(function(e){
   const done=e.matches.filter(function(m){return m.score1!==null&&m.score2!==null}).length;
-  return '<div class="item"><div class="rank">🏆</div><div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"Solo andata")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div><button class="small" data-open-event="'+e.id+'">Apri</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button></div>'
+  return '<div class="item">'+
+  '<img class="player-avatar" src="'+esc(e.logoUrl||"assets/padel-arena-reggio-emilia.jpeg")+'" alt="">'+
+  '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"Solo andata")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
+  '<button class="small" data-open-event="'+e.id+'">Apri</button>'+
+  '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
+  (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
+  '</div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
  const reset=state.events.length?
   '<div class="card print-hide"><h2>Pulizia tornei di prova</h2><div class="notice error">Questa funzione cancella tutte le competizioni salvate, ma mantiene intatti anagrafica giocatori e saldi gettoni.</div><button class="danger" data-action="delete-all-events">Cancella tutti i tornei</button></div>':'';
@@ -1755,6 +2013,13 @@ function eventView(){
   state.tab==="players"?eventPlayersView(e):
   matchesView(e);
  return header(e.name,e.date+" · "+e.club+" · "+competitionTypeLabel(e.competitionType))+
+ (e.logoUrl?'<img class="event-logo-preview print-hide" src="'+esc(e.logoUrl)+'" alt="'+esc(e.name)+'">':'')+
+ '<div class="event-online-tools print-hide">'+
+  '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button><button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
+  (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica torneo</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+ '</div>'+
+ '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
+ (!pamIsAdmin()?'<div class="notice print-hide"><b>Modalità collaboratore:</b> puoi inserire o correggere esclusivamente i risultati delle partite.</div>':'')+
  '<div class="notice print-hide"><b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+' · timer '+Number(e.matchDuration||20)+' minuti<br>Fase iniziale: '+(e.initialTimerEnabled?"timer attivo":"timer disattivo")+' · Eliminatorie: '+(e.eliminationTimerEnabled?"attivo":"disattivo")+' · Semifinali: '+(e.semifinalTimerEnabled?"attivo":"disattivo")+' · Finale: '+(e.finalTimerEnabled?"attivo":"disattivo")+'</div>'+
  '<div class="notice print-hide"><b>PDF condivisibile:</b> apri la sezione desiderata e premi “PDF pagina”.</div>'+
  '<div class="tabs">'+tabs+'</div>'+body+printFooter(e);
@@ -2504,6 +2769,12 @@ function deleteAllEvents(){
  alert("Tutti i tornei sono stati cancellati. Anagrafica e saldi gettoni sono rimasti invariati.");
 }
 document.addEventListener("click",function(ev){
+ const refreshCloud=ev.target.closest("[data-refresh-cloud]");
+ if(refreshCloud){pamCloudLoad(false).then(function(){pamToast("Dati aggiornati","success")}).catch(function(err){pamToast(err.message,"error")});return}
+ const share=ev.target.closest("[data-share-event]");if(share){pamShareEvent(share.getAttribute("data-share-event"));return}
+ const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
+ const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
+
  const viewBtn=ev.target.closest("[data-view]");if(viewBtn){setView(viewBtn.getAttribute("data-view"));return}
  const tabBtn=ev.target.closest("[data-tab]");if(tabBtn){setTab(tabBtn.getAttribute("data-tab"));return}
  const action=ev.target.closest("[data-action]");if(action){
@@ -2554,6 +2825,9 @@ document.addEventListener("input",function(ev){
  }
 });
 document.addEventListener("change",function(ev){
+ if(ev.target.matches("[data-tournament-logo]")){pamUploadTournamentLogo(ev.target.getAttribute("data-tournament-logo"),ev.target.files&&ev.target.files[0]);return}
+ if(ev.target.matches("[data-player-photo]")){pamUploadPlayerPhoto(ev.target.getAttribute("data-player-photo"),ev.target.files&&ev.target.files[0]);return}
+
  if(ev.target.matches("[data-team-stage]")){
   updateStageTeam(ev.target);return;
  }
@@ -2629,11 +2903,17 @@ function render(){
  let body=state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
 }
+const pamOriginalRender=render;
+render=function(){
+ pamOriginalRender();
+ setTimeout(pamRestrictCollaboratorUI,0);
+};
+
 render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=2.1.2",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=3.1.0",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
