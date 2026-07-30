@@ -1116,6 +1116,28 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 .pam-pair-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
 .pam-pair-reg-label{color:var(--club-accent);font-size:12px;letter-spacing:.04em}
 @media(max-width:700px){.pam-pair-choice-grid{grid-template-columns:1fr}}
+
+/* VERSIONE 4.1.1 - STRUMENTI SELEZIONE GIOCATORI */
+.pam-player-selection-tools{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ align-items:center;
+ margin:12px 0;
+ padding:10px;
+ border:1px solid color-mix(in srgb,var(--club-accent2) 35%,#2B4267);
+ border-radius:14px;
+ background:#09182A;
+}
+.pam-player-selection-tools button{flex:1;min-width:190px}
+.pam-player-selection-tools .pill{margin-left:auto}
+.pam-hidden-unselected{display:none!important}
+@media(max-width:700px){
+ .pam-player-selection-tools{display:grid;grid-template-columns:1fr}
+ .pam-player-selection-tools button{width:100%;min-width:0}
+ .pam-player-selection-tools .pill{margin:0;justify-self:center}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1408,7 +1430,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 4.1 · indirizzi e iscrizioni a coppie</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 4.1.1 · filtri selezione giocatori</div>';
 }
 
 function iphoneInstallCard(){
@@ -1457,6 +1479,7 @@ if(!state.draft.timerDuration)state.draft.timerDuration=Number(state.draft.match
 if(!state.draft.slotDuration)state.draft.slotDuration=Number(state.draft.matchDuration)||20;
 if(state.draft.customAddress===undefined)state.draft.customAddress="";
 if(!state.draft.fixedPairRegistrations)state.draft.fixedPairRegistrations={};
+if(state.draft.showSelectedOnly===undefined)state.draft.showSelectedOnly=false;
 if(state.draft.initialTimerEnabled===undefined)state.draft.initialTimerEnabled=true;
 if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerEnabled=false;
 if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
@@ -1986,7 +2009,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.1 · Supabase online</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.1.1 · Supabase online</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2209,7 +2232,7 @@ function newEventView(){
  const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return Number(b.tokenBalance||0)-Number(a.tokenBalance||0)||playerName(a).localeCompare(playerName(b),"it")});
  const checks=eligible.length?eligible.map(function(p){
   const checked=d.selected.includes(p.id)?"checked":"";
-  return '<div class="check event-player-search-row pam-select-player-row" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'">'+
+  return '<div class="check event-player-search-row pam-select-player-row '+(d.showSelectedOnly&&!checked?"pam-hidden-unselected":"")+'" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'">'+
    '<label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
    d.competitionType==="rodeo_tokens"?"Saldo aggiornato: "+Number(p.tokenBalance||0)+" gettoni":"Giocatore registrato"
   )+(p.level?" · "+esc(p.level):"")+
@@ -2249,7 +2272,12 @@ function newEventView(){
  '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
  '<button class="primary" data-quick-player-new-event>➕ Nuova anagrafica e inserisci</button></div>'+
  '<div class="notice">Per un partecipante già selezionato puoi usare <b>Sostituisci</b> e scegliere un giocatore esistente oppure crearne uno nuovo.</div>'+
- '<div class="checklist">'+checks+'</div></div>'+
+ '<div class="pam-player-selection-tools">'+
+  '<button type="button" class="secondary" data-deselect-all-players>DESELEZIONA TUTTI</button>'+
+  '<button type="button" class="secondary" data-toggle-selected-only aria-pressed="'+(d.showSelectedOnly?"true":"false")+'">'+(d.showSelectedOnly?"MOSTRA TUTTI I GIOCATORI":"MOSTRA SOLO SELEZIONATI")+'</button>'+
+  '<span class="pill" id="pamSelectedPlayersBadge">'+d.selected.length+' SELEZIONATI</span>'+
+ '</div>'+
+ '<div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
  '<button class="primary" data-action="create-event">Genera competizione</button>';
 }
 function buildMatches(ids,courts,returnLeg){
@@ -3509,6 +3537,21 @@ document.addEventListener("click",function(ev){
  const closePlayers=ev.target.closest("[data-close-tournament-players]");if(closePlayers){document.getElementById("pamTournamentPlayersOverlay")?.remove();return}
  const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
  const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
+ const deselectAllPlayers=ev.target.closest("[data-deselect-all-players]");if(deselectAllPlayers){
+  if(!state.draft.selected.length){pamToast("Non ci sono giocatori selezionati.","error");return}
+  if(!confirm("Deselezionare tutti i giocatori inseriti in questo torneo?"))return;
+  state.draft.selected=[];
+  state.draft.fixedPairRegistrations={};
+  state.draft.showSelectedOnly=false;
+  save();render();
+  pamToast("Tutti i giocatori sono stati deselezionati.","success");
+  return
+ }
+ const toggleSelectedOnly=ev.target.closest("[data-toggle-selected-only]");if(toggleSelectedOnly){
+  state.draft.showSelectedOnly=!state.draft.showSelectedOnly;
+  save();render();
+  return
+ }
  const quickNewEvent=ev.target.closest("[data-quick-player-new-event]");if(quickNewEvent){pamOpenQuickPlayer({mode:"new-event",category:state.draft.category});return}
  const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){
   const eventId=quickExisting.getAttribute("data-quick-player-existing-event");
@@ -3740,7 +3783,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=4.1.0",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=4.1.1",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

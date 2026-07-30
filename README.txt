@@ -131,3 +131,11 @@ VERSIONE 4.1
 - Nei tornei a coppie ogni giocatore viene iscritto singolarmente o in coppia.
 - Il partner può essere scelto dall'anagrafica o creato al momento.
 - Le coppie dichiarate vengono mantenute nella generazione.
+
+
+VERSIONE 4.1.1
+- Aggiunto pulsante DESELEZIONA TUTTI nella scelta dei partecipanti.
+- Aggiunto pulsante MOSTRA SOLO SELEZIONATI.
+- Quando il filtro è attivo, il pulsante diventa MOSTRA TUTTI I GIOCATORI.
+- Aggiunto conteggio sempre visibile dei giocatori selezionati.
+- Deseleziona tutti azzera anche le registrazioni singole/coppia dei tornei a coppie.
