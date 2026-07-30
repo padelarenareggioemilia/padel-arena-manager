@@ -73,3 +73,12 @@ VERSIONE 3.3
 - Controllo qualità abbinamenti visibile nella sezione Partite.
 - Nomi bianchi ad alto contrasto nell'app.
 - Nomi neri ad alto contrasto nel PDF.
+
+
+VERSIONE 3.3.1
+- Corretto errore eTimerDuration durante la generazione dei tornei.
+- Visualizzati correttamente i due campi:
+  1. durata effettiva partita / timer;
+  2. intervallo tra gli inizi delle partite.
+- Corretti anche i cambi di formato e categoria.
+- Aggiunta compatibilità di sicurezza con eventuali dati in cache.
