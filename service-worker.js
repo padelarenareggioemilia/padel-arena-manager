@@ -1,7 +1,7 @@
-const CACHE_NAME="padel-arena-manager-v4-2-0";
+const CACHE_NAME="padel-arena-manager-v4-3-1";
 const CORE=[
  "./",
- "./index.html",
+ "./index.html","./public-registration.html",
  "./manifest.webmanifest",
  "./assets/icon-192.png",
  "./assets/icon-512.png","./assets/padel-arena-manager-logo.jpg",
@@ -38,9 +38,9 @@ self.addEventListener("fetch",event=>{
   event.respondWith(
    fetch(event.request,{cache:"no-store"}).then(response=>{
     const copy=response.clone();
-    caches.open(CACHE_NAME).then(cache=>cache.put("./index.html",copy));
+    caches.open(CACHE_NAME).then(cache=>cache.put("./index.html","./public-registration.html",copy));
     return response;
-   }).catch(()=>caches.match("./index.html"))
+   }).catch(()=>caches.match("./index.html","./public-registration.html"))
   );
   return;
  }

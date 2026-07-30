@@ -153,3 +153,32 @@ VERSIONE 4.2 - FASI FINALI AVANZATE COPPIE FISSE
 - Inserimento, modifica e propagazione automatica dei risultati.
 - Visualizzazione dei vincitori di ciascun tabellone.
 - Possibilità di azzerare e rigenerare le fasi finali.
+
+
+VERSIONE 4.3 - ISCRIZIONI PUBBLICHE SENZA PASSWORD
+- Nuovo link pubblico per iscriversi senza account.
+- Ricerca giocatore digitando anche solo una parte di nome o cognome.
+- Il visitatore vede esclusivamente nome e cognome dei risultati trovati.
+- Nuova registrazione autonoma con campi obbligatori:
+  nome, cognome, data e luogo di nascita, CAP, comune e provincia di residenza,
+  telefono ed email.
+- Sesso, livello e note restano facoltativi.
+- Iscrizione individuale oppure con partner.
+- Anche il partner può essere cercato in anagrafica oppure registrato da zero.
+- Il cliente non può modificare torneo, giocatori, risultati o altre iscrizioni.
+- Nuova sezione amministrativa “Iscrizioni ricevute”.
+- Possibilità di importare gli iscritti nel torneo.
+- Per attivare il sistema eseguire SUPABASE_ISCRIZIONI_PUBBLICHE.sql nel SQL Editor di Supabase.
+
+
+VERSIONE 4.3.1 - RICHIESTE DI ISCRIZIONE
+- Script Supabase corretto per ID TEXT.
+- Richieste da valutare prima dell’inserimento nel torneo.
+- Azioni amministratore: ACCETTA, RIFIUTA, LISTA D’ATTESA.
+- Creazione dei nuovi giocatori soltanto quando la richiesta viene accettata.
+- Inserimento automatico dei giocatori accettati tra i partecipanti.
+- Memorizzazione automatica della coppia nei tornei a coppie fisse.
+- Capienza configurabile per ogni torneo.
+- Nuove richieste in lista d’attesa quando la capienza è raggiunta.
+- Il visitatore non può modificare alcun dato del gestionale.
+- Eseguire esclusivamente SUPABASE_ISCRIZIONI_PUBBLICHE_431.sql.

@@ -1159,6 +1159,27 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
  .pam-tier-title h2{font-size:21px}
 }
 
+
+/* VERSIONE 4.3 - ISCRIZIONI PUBBLICHE */
+.pam-registrations-card{max-width:850px}
+.pam-registration-summary{
+ padding:10px 14px;margin:10px 0;border-radius:12px;
+ background:color-mix(in srgb,var(--club-accent) 17%,#07111f);
+ font-weight:900
+}
+.pam-registration-row{align-items:center}
+
+
+/* VERSIONE 4.3.1 - RICHIESTE ISCRIZIONE */
+.pam-capacity-row{padding:12px;border-radius:13px;background:#09182a;border:1px solid #294262;margin:10px 0}
+.pam-request-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pam-request-actions button{min-width:105px}
+.pam-status-new{background:#6b4f00}
+.pam-status-accepted,.pam-status-imported{background:#14532d}
+.pam-status-rejected{background:#7f1d1d}
+.pam-status-waitlist{background:#1e3a8a}
+@media(max-width:700px){.pam-request-actions{width:100%;display:grid;grid-template-columns:1fr}.pam-registration-row{align-items:stretch}}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1451,7 +1472,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 4.2 · fasi finali avanzate coppie</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 4.3.1 · richieste iscrizione</div>';
 }
 
 function iphoneInstallCard(){
@@ -1821,6 +1842,29 @@ function pamShareUrl(e){
  if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
  return location.href.split("?")[0].split("#")[0]+"?tournament="+encodeURIComponent(e.shareToken);
 }
+function pamRegistrationUrl(e){
+ const base=location.href.split("?")[0].split("#")[0].replace(/index\.html$/i,"");
+ return base+"public-registration.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
+async function pamShareRegistration(id){
+ const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ if(!e.shareToken){await pamCloudSyncAll()}
+ const url=pamRegistrationUrl(e);
+ try{
+  if(navigator.share)await navigator.share({
+   title:"Iscrizione · "+e.name,
+   text:"Apri il link e iscriviti al torneo senza password.",
+   url:url
+  });
+  else{
+   await navigator.clipboard.writeText(url);
+   pamToast("Link iscrizioni copiato","success");
+  }
+ }catch(err){
+  if(err.name!=="AbortError")prompt("Copia il link per le iscrizioni",url);
+ }
+}
+
 async function pamShareEvent(id){
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  if(!e.shareToken){await pamCloudSyncAll()}
@@ -1986,6 +2030,118 @@ function pamRegenerateTournament(id){
  pamToast("Partecipanti aggiornati e partite rigenerate.","success");
 }
 
+
+
+function pamRegistrationPersonName(person){
+ if(!person)return "Giocatore";
+ if(person.kind==="existing")return person.name||"Giocatore già presente";
+ const d=person.data||{};
+ return ((d.firstName||"")+" "+(d.lastName||"")).trim()||"Nuovo giocatore";
+}
+function pamRegistrationStatusLabel(status){
+ return {
+  new:"DA VALUTARE",
+  accepted:"ACCETTATA",
+  rejected:"RIFIUTATA",
+  waitlist:"LISTA D'ATTESA",
+  imported:"IMPORTATA"
+ }[status]||String(status||"").toUpperCase();
+}
+async function pamOpenRegistrations(id){
+ const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ document.getElementById("pamRegistrationsOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamRegistrationsOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card pam-registrations-card">'+
+  '<div class="pam-modal-head"><div><h2>Richieste di iscrizione</h2><div class="muted">'+esc(e.name)+'</div></div>'+
+  '<button class="secondary" data-close-registrations>Chiudi</button></div>'+
+  '<div class="pam-capacity-row"><b>Capienza iscrizioni:</b> '+(e.registrationCapacity?esc(e.registrationCapacity):"NESSUN LIMITE")+
+  ' <button class="secondary" data-set-registration-capacity="'+e.id+'">IMPOSTA</button></div>'+
+  '<div id="pamRegistrationsBody"><div class="notice">Caricamento richieste...</div></div>'+
+ '</div>';
+ document.body.appendChild(overlay);
+
+ const res=await sb.from("public_registrations")
+  .select("id,mode,status,primary_payload,partner_payload,created_at")
+  .eq("tournament_id",String(e.id))
+  .order("created_at",{ascending:true});
+
+ const body=document.getElementById("pamRegistrationsBody");
+ if(!body)return;
+ if(res.error){
+  body.innerHTML='<div class="notice error">Esegui il file <b>SUPABASE_ISCRIZIONI_PUBBLICHE_431.sql</b> nel SQL Editor di Supabase.<br>'+esc(res.error.message)+'</div>';
+  return;
+ }
+ const rows=res.data||[];
+ if(!rows.length){
+  body.innerHTML='<div class="notice">Non è ancora arrivata nessuna richiesta.</div>';
+  return;
+ }
+ const counts=rows.reduce(function(a,r){a[r.status]=(a[r.status]||0)+1;return a},{});
+ body.innerHTML=
+  '<div class="pam-registration-summary">'+rows.length+' richieste · '+
+  (counts.new||0)+' da valutare · '+(counts.accepted||0)+' accettate · '+(counts.waitlist||0)+' in attesa</div>'+
+  rows.map(function(r){
+   const first=pamRegistrationPersonName(r.primary_payload);
+   const partner=r.mode==="pair"?pamRegistrationPersonName(r.partner_payload):"";
+   const pending=r.status==="new"||r.status==="waitlist";
+   return '<div class="item pam-registration-row">'+
+    '<div class="grow"><b>'+esc(first)+(partner?' / '+esc(partner):'')+'</b>'+
+    '<div class="muted">'+(r.mode==="pair"?"ISCRIZIONE IN COPPIA":"ISCRIZIONE INDIVIDUALE")+
+    ' · '+new Date(r.created_at).toLocaleString("it-IT")+'</div>'+
+    '<span class="pill pam-status-'+esc(r.status)+'">'+esc(pamRegistrationStatusLabel(r.status))+'</span></div>'+
+    (pending?'<div class="pam-request-actions">'+
+      '<button class="primary" data-process-registration="'+r.id+'" data-action="accepted" data-event-id="'+e.id+'">ACCETTA</button>'+
+      '<button class="secondary" data-process-registration="'+r.id+'" data-action="waitlist" data-event-id="'+e.id+'">LISTA D’ATTESA</button>'+
+      '<button class="danger" data-process-registration="'+r.id+'" data-action="rejected" data-event-id="'+e.id+'">RIFIUTA</button>'+
+     '</div>':'')+
+   '</div>';
+  }).join("");
+}
+async function pamSetRegistrationCapacity(eventId){
+ const e=state.events.find(function(x){return x.id===eventId});if(!e)return;
+ const current=e.registrationCapacity||"";
+ const value=prompt("Numero massimo di giocatori/coppie ammessi. Lascia vuoto per nessun limite.",current);
+ if(value===null)return;
+ if(value.trim()==="")delete e.registrationCapacity;
+ else{
+  const n=Number(value);
+  if(!Number.isInteger(n)||n<1){pamToast("Inserisci un numero intero maggiore di zero.","error");return}
+  e.registrationCapacity=n;
+ }
+ save();
+ await pamCloudSyncAll();
+ pamOpenRegistrations(eventId);
+}
+async function pamProcessRegistration(registrationId,action,eventId){
+ const e=state.events.find(function(x){return x.id===eventId});if(!e)return;
+ if(action==="rejected"&&!confirm("Rifiutare questa richiesta?"))return;
+ const res=await sb.rpc("admin_process_public_registration",{
+  p_registration_id:String(registrationId),
+  p_action:String(action)
+ });
+ if(res.error){pamToast(res.error.message,"error");return}
+ if(action==="accepted"){
+  await pamCloudLoad(false);
+  const result=res.data||{};
+  const ids=[result.primary_player_id,result.partner_player_id].filter(Boolean).map(String);
+  ids.forEach(function(id){if(!e.playerIds.includes(id))e.playerIds.push(id)});
+  if(e.competitionType==="fixed_pairs"&&ids.length===2){
+   e.fixedPairRegistrations=e.fixedPairRegistrations||{};
+   e.fixedPairRegistrations[ids[0]]={mode:"pair",partnerId:ids[1]};
+   e.fixedPairRegistrations[ids[1]]={mode:"pair",partnerId:ids[0]};
+  }
+  save();
+  pamToast("Richiesta accettata. Rigenera gironi e partite quando sei pronto.","success");
+ }else if(action==="waitlist"){
+  pamToast("Richiesta inserita in lista d’attesa.","success");
+ }else{
+  pamToast("Richiesta rifiutata.","success");
+ }
+ pamOpenRegistrations(eventId);
+}
+
 async function pamUploadTournamentLogo(id,file){
  if(!pamIsAdmin()||!file)return;
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
@@ -2030,7 +2186,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.2 · Supabase online</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.3.1 · Supabase online</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2721,6 +2877,7 @@ function eventsView(){
   '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"SOLO ANDATA")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
   '<button class="small" data-open-event="'+e.id+'">Apri</button>'+
   '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
+  '<button class="small" data-share-registration="'+e.id+'">Link iscrizioni</button>'+
   (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
   '</div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
@@ -2785,8 +2942,10 @@ function eventView(){
  return header(e.name,e.date+" · "+e.club+" · "+competitionTypeLabel(e.competitionType))+
  (e.logoUrl?'<img class="event-logo-preview print-hide" src="'+esc(e.logoUrl)+'" alt="'+esc(e.name)+'">':'')+
  '<div class="event-online-tools print-hide">'+
-  '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button><button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
-  (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+  '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
+  '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
+  '<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
+  (pamIsAdmin()?'<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div>'+
  '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice print-hide"><b>Modalità collaboratore:</b> puoi inserire o correggere esclusivamente i risultati delle partite.</div>':'')+
@@ -3813,6 +3972,12 @@ document.addEventListener("click",function(ev){
  const refreshCloud=ev.target.closest("[data-refresh-cloud]");
  if(refreshCloud){pamCloudLoad(false).then(function(){pamToast("Dati aggiornati","success")}).catch(function(err){pamToast(err.message,"error")});return}
  const share=ev.target.closest("[data-share-event]");if(share){pamShareEvent(share.getAttribute("data-share-event"));return}
+ const shareRegistration=ev.target.closest("[data-share-registration]");if(shareRegistration){pamShareRegistration(shareRegistration.getAttribute("data-share-registration"));return}
+ const openRegistrations=ev.target.closest("[data-open-registrations]");if(openRegistrations){pamOpenRegistrations(openRegistrations.getAttribute("data-open-registrations"));return}
+ const closeRegistrations=ev.target.closest("[data-close-registrations]");if(closeRegistrations){document.getElementById("pamRegistrationsOverlay")?.remove();return}
+ const setCapacity=ev.target.closest("[data-set-registration-capacity]");if(setCapacity){pamSetRegistrationCapacity(setCapacity.getAttribute("data-set-registration-capacity"));return}
+ const processRegistration=ev.target.closest("[data-process-registration]");if(processRegistration){pamProcessRegistration(processRegistration.getAttribute("data-process-registration"),processRegistration.getAttribute("data-action"),processRegistration.getAttribute("data-event-id"));return}
+
  const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
  const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
  const managePlayers=ev.target.closest("[data-manage-tournament-players]");if(managePlayers){pamTournamentPlayersModal(managePlayers.getAttribute("data-manage-tournament-players"));return}
@@ -4077,7 +4242,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=4.2.0",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=4.3.1",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
