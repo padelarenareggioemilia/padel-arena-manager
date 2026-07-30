@@ -139,3 +139,17 @@ VERSIONE 4.1.1
 - Quando il filtro è attivo, il pulsante diventa MOSTRA TUTTI I GIOCATORI.
 - Aggiunto conteggio sempre visibile dei giocatori selezionati.
 - Deseleziona tutti azzera anche le registrazioni singole/coppia dei tornei a coppie.
+
+
+VERSIONE 4.2 - FASI FINALI AVANZATE COPPIE FISSE
+- Scelta tra classifica generale e classifica divisa per gironi.
+- Qualificazione di 2, 4, 8, 16 oppure tutte le coppie.
+- Preliminari automatici quando il numero delle qualificate non è una potenza di due.
+- Modalità CLASSICHE.
+- Modalità GOLD E SILVER.
+- Modalità GOLD, SILVER E BRONZE.
+- Incroci automatici per teste di serie: prima contro ultima, seconda contro penultima.
+- Generazione automatica di ottavi, quarti, semifinali e finale.
+- Inserimento, modifica e propagazione automatica dei risultati.
+- Visualizzazione dei vincitori di ciascun tabellone.
+- Possibilità di azzerare e rigenerare le fasi finali.

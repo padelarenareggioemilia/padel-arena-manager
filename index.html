@@ -1138,6 +1138,27 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
  .pam-player-selection-tools .pill{margin:0;justify-self:center}
 }
 
+
+/* VERSIONE 4.2 - FASI FINALI AVANZATE COPPIE */
+.pam-finals-config{border:1px solid color-mix(in srgb,var(--club-accent) 55%,#294262)}
+.pam-final-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.pam-tier-block{margin:20px 0;padding:14px;border-radius:20px;background:rgba(6,16,29,.72);border:1px solid #294262}
+.pam-tier-title{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:15px;margin-bottom:12px}
+.pam-tier-title h2{margin:0;font-size:25px}
+.pam-tier-title span{font-weight:900}
+.pam-tier-gold .pam-tier-title{background:linear-gradient(135deg,#5f4500,#d6aa20);color:white}
+.pam-tier-silver .pam-tier-title{background:linear-gradient(135deg,#4b5563,#cbd5e1);color:#07111f}
+.pam-tier-bronze .pam-tier-title{background:linear-gradient(135deg,#6d351d,#c27645);color:white}
+.pam-bracket-round{margin:12px 0}
+.pam-bracket-round>h2{font-size:18px;letter-spacing:.06em}
+.pam-bracket-match{border-left:4px solid var(--club-accent)}
+.pam-waiting-team{opacity:.55;font-style:italic}
+.pam-champion{text-align:center;font-size:18px;padding:16px}
+@media(max-width:700px){
+ .pam-final-actions{display:grid}
+ .pam-tier-title h2{font-size:21px}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1430,7 +1451,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 4.1.1 · filtri selezione giocatori</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 4.2 · fasi finali avanzate coppie</div>';
 }
 
 function iphoneInstallCard(){
@@ -2009,7 +2030,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.1.1 · Supabase online</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.2 · Supabase online</span></div>'+
  '</div>';
 }
 function nav(){
@@ -3107,14 +3128,275 @@ function pairStandingsView(e){
 function pairsView(e){
  return '<div class="notice">Le coppie sono state formate seguendo l’ordine di selezione dei giocatori.</div><div class="card">'+(e.pairs||[]).map(function(p,i){return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(names(p.players))+'</b><div class="muted">Girone '+p.group+'</div></div></div>'}).join("")+'</div>';
 }
-function fixedFinalsView(e){
- const table=pairStandings(e),groups={};table.forEach(function(r){(groups[r.group]||(groups[r.group]=[])).push(r)});
- const qualified=[];
- Object.keys(groups).forEach(function(g){qualified.push(groups[g][0]);if(e.finalsOption!=="top1"&&groups[g][1])qualified.push(groups[g][1])});
- return '<div class="notice"><b>Qualificate:</b> '+(e.finalsOption==="top1"?"solo le prime di ogni girone":"le prime due di ogni girone")+'.</div>'+
- '<div class="card">'+(qualified.length?qualified.map(function(r,i){return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(pairName(e,r.id))+'</b><div class="muted">Girone '+r.group+' · '+r.points+' punti · diff. '+(r.diff>=0?"+":"")+r.diff+'</div></div></div>'}).join(""):'<div class="muted">Inserisci i risultati dei gironi per vedere le qualificate.</div>')+'</div>'+
- '<div class="notice">La gestione avanzata Gold/Silver, quarti, semifinali e incroci configurabili sarà il prossimo sviluppo del modulo coppie fisse.</div>';
+
+function pamFixedGeneralRanking(e){
+ return pairStandings(e).slice().sort(function(a,b){
+  return b.points-a.points||b.diff-a.diff||b.gf-a.gf||a.group.localeCompare(b.group);
+ });
 }
+function pamFixedGroupRanking(e){
+ const grouped={};
+ pairStandings(e).forEach(function(r){(grouped[r.group]||(grouped[r.group]=[])).push(r)});
+ Object.keys(grouped).forEach(function(g){
+  grouped[g].sort(function(a,b){return b.points-a.points||b.diff-a.diff||b.gf-a.gf});
+ });
+ const out=[];
+ const max=Math.max(0,...Object.values(grouped).map(function(rows){return rows.length}));
+ for(let pos=0;pos<max;pos++){
+  const band=[];
+  Object.keys(grouped).sort().forEach(function(g){
+   if(grouped[g][pos])band.push(grouped[g][pos]);
+  });
+  band.sort(function(a,b){return b.points-a.points||b.diff-a.diff||b.gf-a.gf});
+  out.push.apply(out,band);
+ }
+ return out;
+}
+function pamFixedRanking(e,source){
+ return source==="groups"?pamFixedGroupRanking(e):pamFixedGeneralRanking(e);
+}
+function pamHighestPowerOfTwo(n){
+ let p=1;
+ while(p*2<=n)p*=2;
+ return p;
+}
+function pamRoundName(size){
+ if(size===2)return "FINALE";
+ if(size===4)return "SEMIFINALI";
+ if(size===8)return "QUARTI DI FINALE";
+ if(size===16)return "OTTAVI DI FINALE";
+ if(size===32)return "SEDICESIMI DI FINALE";
+ return "TURNO A "+size;
+}
+function pamSeedPairings(ids){
+ const arr=ids.slice(),out=[];
+ while(arr.length>1){
+  out.push([arr.shift(),arr.pop()]);
+ }
+ return out;
+}
+function pamFixedWinner(bracket,matchId){
+ const result=(bracket.results||{})[matchId];
+ if(!result||result.a===null||result.b===null||Number(result.a)===Number(result.b))return null;
+ const match=(bracket.matchIndex||{})[matchId];
+ if(!match)return null;
+ return Number(result.a)>Number(result.b)?match.pair1:match.pair2;
+}
+function pamBuildTierBracket(tier,oldResults){
+ const entrants=tier.entrants.slice();
+ const n=entrants.length;
+ const target=pamHighestPowerOfTwo(n);
+ const prelimCount=n-target;
+ const byeCount=target-prelimCount;
+ const prelimPlayers=entrants.slice(byeCount);
+ const byes=entrants.slice(0,byeCount);
+ const bracket={
+  name:tier.name,
+  entrants:entrants,
+  results:oldResults||{},
+  rounds:[],
+  matchIndex:{},
+  target:target
+ };
+ let mainEntrants=byes.slice();
+
+ if(prelimCount>0){
+  const prelimMatches=[];
+  for(let i=0;i<prelimCount;i++){
+   const pair1=prelimPlayers[i];
+   const pair2=prelimPlayers[prelimPlayers.length-1-i];
+   const id=tier.key+"_pre_"+(i+1);
+   const m={id:id,label:"PRELIMINARE "+(i+1),pair1:pair1,pair2:pair2,round:"PRELIMINARI"};
+   prelimMatches.push(m);bracket.matchIndex[id]=m;
+  }
+  bracket.rounds.push({name:"PRELIMINARI",matches:prelimMatches});
+  prelimMatches.forEach(function(m){mainEntrants.push(pamFixedWinner(bracket,m.id))});
+ }else{
+  mainEntrants=entrants.slice();
+ }
+
+ if(target>=2){
+  let current=pamSeedPairings(mainEntrants);
+  let size=target;
+  let roundNo=0;
+  while(size>=2){
+   const roundName=pamRoundName(size);
+   const matches=current.map(function(pair,i){
+    const id=tier.key+"_r"+roundNo+"_"+(i+1);
+    const m={id:id,label:roundName+" "+(i+1),pair1:pair[0]||null,pair2:pair[1]||null,round:roundName};
+    bracket.matchIndex[id]=m;
+    return m;
+   });
+   bracket.rounds.push({name:roundName,matches:matches});
+   if(size===2)break;
+   const next=[];
+   for(let i=0;i<matches.length;i+=2){
+    next.push([pamFixedWinner(bracket,matches[i].id),pamFixedWinner(bracket,matches[i+1].id)]);
+   }
+   current=next;size=size/2;roundNo++;
+  }
+ }
+ return bracket;
+}
+function pamTierSplit(rows,mode){
+ const ids=rows.map(function(r){return r.id});
+ if(mode==="classic")return[{key:"gold",name:"TABELLONE CLASSICO",entrants:ids}];
+ if(mode==="gold_silver"){
+  const goldCount=Math.ceil(ids.length/2);
+  return[
+   {key:"gold",name:"GOLD",entrants:ids.slice(0,goldCount)},
+   {key:"silver",name:"SILVER",entrants:ids.slice(goldCount)}
+  ].filter(function(t){return t.entrants.length>=2});
+ }
+ const goldCount=Math.ceil(ids.length/3);
+ const remaining=ids.length-goldCount;
+ const silverCount=Math.ceil(remaining/2);
+ return[
+  {key:"gold",name:"GOLD",entrants:ids.slice(0,goldCount)},
+  {key:"silver",name:"SILVER",entrants:ids.slice(goldCount,goldCount+silverCount)},
+  {key:"bronze",name:"BRONZE",entrants:ids.slice(goldCount+silverCount)}
+ ].filter(function(t){return t.entrants.length>=2});
+}
+function pamGenerateFixedFinals(e){
+ const source=document.getElementById("pamFinalRankingSource").value;
+ const countValue=document.getElementById("pamFinalQualifiedCount").value;
+ const mode=document.getElementById("pamFinalMode").value;
+ const ranking=pamFixedRanking(e,source);
+ let count=countValue==="all"?ranking.length:Number(countValue);
+ count=Math.min(count,ranking.length);
+ if(count<2)throw new Error("Servono almeno 2 coppie qualificate.");
+ const selected=ranking.slice(0,count);
+ const old=(e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.brackets)||{};
+ const tiers=pamTierSplit(selected,mode);
+ e.fixedFinalsAdvanced={
+  config:{source:source,count:countValue,mode:mode},
+  ranking:selected.map(function(r){return r.id}),
+  brackets:{}
+ };
+ tiers.forEach(function(tier){
+  const oldResults=old[tier.key]&&old[tier.key].results?old[tier.key].results:{};
+  e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(tier,oldResults);
+ });
+ save();render();
+}
+function pamRefreshFixedFinals(e){
+ if(!e.fixedFinalsAdvanced)return;
+ const cfg=e.fixedFinalsAdvanced.config;
+ const ranking=pamFixedRanking(e,cfg.source);
+ let count=cfg.count==="all"?ranking.length:Number(cfg.count);
+ count=Math.min(count,ranking.length);
+ const selected=ranking.slice(0,count);
+ const tiers=pamTierSplit(selected,cfg.mode);
+ const old=e.fixedFinalsAdvanced.brackets||{};
+ e.fixedFinalsAdvanced.ranking=selected.map(function(r){return r.id});
+ e.fixedFinalsAdvanced.brackets={};
+ tiers.forEach(function(tier){
+  e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(
+   tier,
+   old[tier.key]&&old[tier.key].results?old[tier.key].results:{}
+  );
+ });
+}
+function pamFixedMatchTeam(e,id){
+ return id?pairStackHtml(e,id):'<div class="team-stack pam-waiting-team"><div>IN ATTESA</div></div>';
+}
+function pamFixedBracketMatchCard(e,bracket,m,index){
+ const res=(bracket.results||{})[m.id]||{a:null,b:null};
+ const ready=!!(m.pair1&&m.pair2);
+ const saved=res.a!==null&&res.b!==null;
+ return '<div class="match pam-bracket-match" data-fixed-final-match="'+esc(m.id)+'" data-fixed-tier="'+esc(bracket.name)+'">'+
+  '<span class="pill">'+esc(m.label)+'</span>'+
+  matchMetaHtml(e,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1)+
+  matchupStackHtml(pamFixedMatchTeam(e,m.pair1),pamFixedMatchTeam(e,m.pair2))+
+  (!ready?'<div class="notice">Completa il turno precedente per conoscere le coppie.</div>':
+   saved?'<div class="notice success">Risultato: <b>'+res.a+' - '+res.b+'</b></div><button class="secondary" data-edit-fixed-final="'+esc(m.id)+'">MODIFICA RISULTATO</button>':
+   '<div class="score-row"><input data-fixed-score-a type="number" min="0" placeholder="Game A"><input data-fixed-score-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-save-fixed-final="'+esc(m.id)+'">SALVA RISULTATO</button>')+
+ '</div>';
+}
+function pamFixedTierView(e,key,bracket){
+ let idx=0;
+ const rounds=bracket.rounds.map(function(round){
+  const cards=round.matches.map(function(m){return pamFixedBracketMatchCard(e,bracket,m,idx++)}).join("");
+  return '<section class="card pam-bracket-round"><h2>'+esc(round.name)+'</h2>'+cards+'</section>';
+ }).join("");
+ const finalRound=bracket.rounds[bracket.rounds.length-1];
+ let champion="";
+ if(finalRound&&finalRound.matches.length===1){
+  const winner=pamFixedWinner(bracket,finalRound.matches[0].id);
+  if(winner)champion='<div class="notice success pam-champion"><b>VINCITORI '+esc(bracket.name)+':</b><br>'+esc(pairName(e,winner))+'</div>';
+ }
+ return '<section class="pam-tier-block pam-tier-'+key+'"><div class="pam-tier-title"><h2>'+esc(bracket.name)+'</h2><span>'+bracket.entrants.length+' coppie</span></div>'+champion+rounds+'</section>';
+}
+function pamFixedFinalsConfigView(e){
+ const cfg=e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config||{source:"general",count:"all",mode:"classic"};
+ const total=(e.pairs||[]).length;
+ return '<div class="card pam-finals-config">'+
+  '<h2>CONFIGURAZIONE FASI FINALI</h2>'+
+  '<div class="notice">Puoi rigenerare il tabellone in qualsiasi momento. La classifica generale ordina tutte le coppie insieme; la classifica per gironi prende prima tutte le prime, poi tutte le seconde e così via.</div>'+
+  '<div class="row">'+
+   '<div class="field"><label>Classifica per gli incroci</label><select id="pamFinalRankingSource">'+
+    '<option value="general" '+(cfg.source==="general"?"selected":"")+'>CLASSIFICA GENERALE</option>'+
+    '<option value="groups" '+(cfg.source==="groups"?"selected":"")+'>CLASSIFICA DIVISA PER GIRONI</option>'+
+   '</select></div>'+
+   '<div class="field"><label>Coppie qualificate</label><select id="pamFinalQualifiedCount">'+
+    '<option value="all" '+(cfg.count==="all"?"selected":"")+'>TUTTE LE COPPIE</option>'+
+    [2,4,8,16].filter(function(n){return n<=total}).map(function(n){return'<option value="'+n+'" '+(String(cfg.count)===String(n)?"selected":"")+'>'+n+' COPPIE</option>'}).join("")+
+   '</select></div>'+
+   '<div class="field"><label>Modalità fasi finali</label><select id="pamFinalMode">'+
+    '<option value="classic" '+(cfg.mode==="classic"?"selected":"")+'>CLASSICHE</option>'+
+    '<option value="gold_silver" '+(cfg.mode==="gold_silver"?"selected":"")+'>GOLD E SILVER</option>'+
+    '<option value="gold_silver_bronze" '+(cfg.mode==="gold_silver_bronze"?"selected":"")+'>GOLD, SILVER E BRONZE</option>'+
+   '</select></div>'+
+  '</div>'+
+  '<div class="pam-final-actions"><button class="primary" data-generate-fixed-finals>GENERA FASI FINALI</button>'+
+  (e.fixedFinalsAdvanced?'<button class="secondary" data-reset-fixed-finals>AZZERA FASI FINALI</button>':'')+'</div>'+
+ '</div>';
+}
+function fixedFinalsView(e){
+ const table=pairStandings(e);
+ const played=(e.matches||[]).filter(function(m){return m.score1!==null&&m.score2!==null}).length;
+ const total=(e.matches||[]).length;
+ let html=pamFixedFinalsConfigView(e);
+ html+='<div class="notice '+(played===total?"success":"")+'"><b>Risultati gironi:</b> '+played+' di '+total+' partite completate.</div>';
+ if(!e.fixedFinalsAdvanced)return html+'<div class="notice">Scegli le opzioni e premi <b>GENERA FASI FINALI</b>.</div>';
+ pamRefreshFixedFinals(e);
+ const keys=["gold","silver","bronze"];
+ html+=keys.filter(function(k){return e.fixedFinalsAdvanced.brackets[k]}).map(function(k){
+  return pamFixedTierView(e,k,e.fixedFinalsAdvanced.brackets[k]);
+ }).join("");
+ return html;
+}
+function pamFindFixedFinalMatch(e,id){
+ if(!e.fixedFinalsAdvanced)return null;
+ const brackets=e.fixedFinalsAdvanced.brackets||{};
+ for(const key of Object.keys(brackets)){
+  const b=brackets[key];
+  if(b.matchIndex&&b.matchIndex[id])return{bracket:b,match:b.matchIndex[id],key:key};
+ }
+ return null;
+}
+function pamSaveFixedFinalResult(button){
+ const e=currentEvent(),id=button.getAttribute("data-save-fixed-final");
+ const found=pamFindFixedFinalMatch(e,id);if(!found)return;
+ const card=button.closest("[data-fixed-final-match]");
+ const a=card.querySelector("[data-fixed-score-a]").value;
+ const b=card.querySelector("[data-fixed-score-b]").value;
+ const msg=card.querySelector(".match-message");
+ try{
+  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
+  if(Number(a)===Number(b))throw new Error("nelle fasi finali non è previsto il pareggio");
+  found.bracket.results[id]={a:Number(a),b:Number(b)};
+  save();render();
+ }catch(err){
+  msg.className="notice error";msg.textContent="Errore: "+err.message;
+ }
+}
+function pamEditFixedFinalResult(id){
+ const e=currentEvent(),found=pamFindFixedFinalMatch(e,id);if(!found)return;
+ delete found.bracket.results[id];
+ save();render();
+}
+
 function ensureFinalStages(e){
  if(!e.finalStages){
   e.finalStages={
@@ -3537,6 +3819,18 @@ document.addEventListener("click",function(ev){
  const closePlayers=ev.target.closest("[data-close-tournament-players]");if(closePlayers){document.getElementById("pamTournamentPlayersOverlay")?.remove();return}
  const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
  const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
+ const generateFixedFinals=ev.target.closest("[data-generate-fixed-finals]");if(generateFixedFinals){
+  try{pamGenerateFixedFinals(currentEvent())}catch(err){pamToast(err.message,"error")}
+  return
+ }
+ const resetFixedFinals=ev.target.closest("[data-reset-fixed-finals]");if(resetFixedFinals){
+  if(confirm("Azzerare tabelloni e risultati delle fasi finali?")){
+   delete currentEvent().fixedFinalsAdvanced;save();render();
+  }
+  return
+ }
+ const saveFixedFinal=ev.target.closest("[data-save-fixed-final]");if(saveFixedFinal){pamSaveFixedFinalResult(saveFixedFinal);return}
+ const editFixedFinal=ev.target.closest("[data-edit-fixed-final]");if(editFixedFinal){pamEditFixedFinalResult(editFixedFinal.getAttribute("data-edit-fixed-final"));return}
  const deselectAllPlayers=ev.target.closest("[data-deselect-all-players]");if(deselectAllPlayers){
   if(!state.draft.selected.length){pamToast("Non ci sono giocatori selezionati.","error");return}
   if(!confirm("Deselezionare tutti i giocatori inseriti in questo torneo?"))return;
@@ -3783,7 +4077,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=4.1.1",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=4.2.0",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

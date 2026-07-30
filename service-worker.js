@@ -1,4 +1,4 @@
-const CACHE_NAME="padel-arena-manager-v4-1-1";
+const CACHE_NAME="padel-arena-manager-v4-2-0";
 const CORE=[
  "./",
  "./index.html",
