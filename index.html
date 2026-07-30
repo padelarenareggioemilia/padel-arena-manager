@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 3.4.1</title>
+<title>Padel Arena Manager 3.4.1.1</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1282,7 +1282,7 @@ function printFooter(e){
 }
 
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 3.4 · anagrafica rapida e sostituzioni</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 3.4.1 · correzione partecipanti</div>';
 }
 
 function iphoneInstallCard(){
@@ -1726,7 +1726,7 @@ function pamTournamentPlayersModal(id){
    '</div></div>';
  }).join("");
  overlay.innerHTML='<div class="pam-modal-card">'+
-  '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Aggiungi, togli o rinomina i giocatori. Poi rigenera le partite.</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
+  '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Aggiungi, togli o sostituisci i giocatori. Poi rigenera le partite.</div><div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
   '<div class="notice error"><b>Attenzione:</b> rigenerando le partite verranno cancellati risultati, timer e fasi finali già compilate. I saldi generali dei giocatori non vengono cancellati.</div>'+
   '<div class="pam-inline-create"><div class="field"><label>Cerca giocatore</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome o cognome"></div>'+
   '<button class="primary" data-quick-player-existing-event="'+id+'">➕ Nuova anagrafica e inserisci</button></div>'+
@@ -1739,6 +1739,13 @@ function pamTournamentPlayersModal(id){
   const q=normalizeName(search.value);
   overlay.querySelectorAll(".pam-player-choice").forEach(function(row){
    row.style.display=!q||normalizeName(row.textContent).includes(q)?"grid":"none";
+  });
+ });
+ overlay.querySelectorAll("[data-tournament-player]").forEach(function(cb){
+  cb.addEventListener("change",function(){
+   const count=overlay.querySelectorAll("[data-tournament-player]:checked").length;
+   const badge=overlay.querySelector("#pamTournamentSelectedCount");
+   if(badge)badge.textContent=count+" selezionati";
   });
  });
 }
@@ -1776,7 +1783,7 @@ function pamRegenerateTournament(id){
  const overlay=document.getElementById("pamTournamentPlayersOverlay");
  const ids=Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
  if(e.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(ids.length)){
-  pamToast("Per il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori.","error");return;
+  pamToast("Hai selezionato "+ids.length+" giocatori. Per il Rodeo a gettoni sono ammessi 6, 8, 10, 12 oppure 16 giocatori.","error");return;
  }
  if(e.competitionType!=="rodeo_tokens"&&ids.length<4){
   pamToast("Seleziona almeno 4 giocatori.","error");return;
@@ -1840,14 +1847,14 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.4 · Supabase online</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.4.1 · Supabase online</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
 }
 function home(){
  return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneVersionBanner()+iphoneInstallCard()+
- '<div class="card"><h2>Padel Arena Manager 3.4</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
+ '<div class="card"><h2>Padel Arena Manager 3.4.1</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
  '<div class="grid">'+
  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
  '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Seleziona giocatori già esistenti</span></button>'+
@@ -1896,6 +1903,14 @@ function savePlayer(){
 }
 
 let pamQuickPlayerContext=null;
+
+
+function pamCurrentModalSelectedIds(){
+ const overlay=document.getElementById("pamTournamentPlayersOverlay");
+ if(!overlay)return null;
+ return Array.from(overlay.querySelectorAll("[data-tournament-player]:checked"))
+  .map(function(x){return x.getAttribute("data-tournament-player")});
+}
 
 function pamOpenQuickPlayer(context){
  if(!pamIsAdmin())return;
@@ -1955,9 +1970,10 @@ function pamSaveQuickPlayer(){
  }else if(ctx.mode==="existing-event"){
   const e=state.events.find(function(x){return x.id===ctx.eventId});
   if(e){
-   e.playerIds=e.playerIds||[];
-   if(ctx.replaceId)e.playerIds=e.playerIds.filter(function(id){return id!==ctx.replaceId});
-   if(!e.playerIds.includes(p.id))e.playerIds.push(p.id);
+   let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
+   if(ctx.replaceId)base=base.filter(function(id){return id!==ctx.replaceId});
+   if(!base.includes(p.id))base.push(p.id);
+   e.playerIds=Array.from(new Set(base));
    save();
   }
   document.getElementById("pamQuickPlayerOverlay")?.remove();
@@ -2008,8 +2024,9 @@ function pamApplyReplacement(newId){
   save();overlay.remove();render();
  }else if(ctx.mode==="existing-event"){
   const e=state.events.find(function(x){return x.id===ctx.eventId});if(!e)return;
-  e.playerIds=(e.playerIds||[]).map(function(id){return id===ctx.replaceId?newId:id});
-  e.playerIds=Array.from(new Set(e.playerIds));
+  let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
+  base=base.map(function(id){return id===ctx.replaceId?newId:id});
+  e.playerIds=Array.from(new Set(base));
   save();overlay.remove();pamTournamentPlayersModal(e.id);
  }
  pamToast("Giocatore sostituito. Ricorda di rigenerare le partite.","success");
@@ -3254,9 +3271,27 @@ document.addEventListener("click",function(ev){
  const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
  const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
  const quickNewEvent=ev.target.closest("[data-quick-player-new-event]");if(quickNewEvent){pamOpenQuickPlayer({mode:"new-event",category:state.draft.category});return}
- const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){const eventId=quickExisting.getAttribute("data-quick-player-existing-event");const e=state.events.find(function(x){return x.id===eventId});pamOpenQuickPlayer({mode:"existing-event",eventId:eventId,category:e&&e.category});return}
+ const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){
+  const eventId=quickExisting.getAttribute("data-quick-player-existing-event");
+  const e=state.events.find(function(x){return x.id===eventId});
+  pamOpenQuickPlayer({
+   mode:"existing-event",
+   eventId:eventId,
+   category:e&&e.category,
+   selectedIds:pamCurrentModalSelectedIds()||((e&&e.playerIds)||[]).slice()
+  });
+  return
+ }
  const replaceNewEvent=ev.target.closest("[data-replace-new-event-player]");if(replaceNewEvent){pamOpenReplacePlayer({mode:"new-event",replaceId:replaceNewEvent.getAttribute("data-replace-new-event-player"),category:state.draft.category});return}
- const replaceExisting=ev.target.closest("[data-replace-existing-event-player]");if(replaceExisting){pamOpenReplacePlayer({mode:"existing-event",eventId:replaceExisting.getAttribute("data-event-id"),replaceId:replaceExisting.getAttribute("data-replace-existing-event-player")});return}
+ const replaceExisting=ev.target.closest("[data-replace-existing-event-player]");if(replaceExisting){
+  pamOpenReplacePlayer({
+   mode:"existing-event",
+   eventId:replaceExisting.getAttribute("data-event-id"),
+   replaceId:replaceExisting.getAttribute("data-replace-existing-event-player"),
+   selectedIds:pamCurrentModalSelectedIds()
+  });
+  return
+ }
  const closeQuick=ev.target.closest("[data-close-quick-player]");if(closeQuick){document.getElementById("pamQuickPlayerOverlay")?.remove();return}
  const saveQuick=ev.target.closest("[data-save-quick-player]");if(saveQuick){pamSaveQuickPlayer();return}
  const closeReplace=ev.target.closest("[data-close-replace-player]");if(closeReplace){document.getElementById("pamReplacePlayerOverlay")?.remove();return}
@@ -3421,7 +3456,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=3.4.0",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=3.4.1",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

@@ -103,3 +103,12 @@ VERSIONE 3.4
 - Controllo duplicati per nome e cognome.
 - Nei tornei esistenti, dopo la sostituzione occorre confermare la rigenerazione
   delle partite per applicare il nuovo elenco partecipanti.
+
+
+VERSIONE 3.4.1
+- Corretto il caso: togli un giocatore, poi crei una nuova anagrafica.
+- La selezione corrente viene ora salvata prima di aprire la nuova anagrafica.
+- Il giocatore deselezionato non ricompare più automaticamente.
+- Corretta la sostituzione con giocatore esistente o nuovo.
+- Aggiunto conteggio live dei partecipanti selezionati nel modal.
+- Messaggio di errore più chiaro quando il numero di partecipanti non è valido.
