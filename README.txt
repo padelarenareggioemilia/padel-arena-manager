@@ -201,3 +201,13 @@ ATTIVAZIONE ONLINE DEL PORTALE CAPITANI
 3. Accedere come Admin.
 4. Aprire Campionato, scegliere una squadra e attivare ACCESSO CAPITANO.
 5. Usare COPIA / CONDIVIDI LINK PERSONALE.
+
+VERSIONE 5.2 - ROSA GIOCATORI E LINK DI SQUADRA
+- L'amministratore può aprire o chiudere la raccolta della rosa per ogni squadra.
+- Amministratore e capitano possono inserire direttamente un giocatore.
+- Ogni squadra possiede un link giocatori diverso.
+- Il link può essere condiviso con messaggio e istruzioni già pronte.
+- Il giocatore compila in autonomia dati, foto, privacy e accettazione regolamento.
+- La richiesta entra con stato "pending" e deve essere approvata.
+- Limite massimo impostato a 20 giocatori per squadra.
+- Per attivare le nuove funzioni rieseguire SUPABASE_AICS_2027_CAPITANI.sql nel SQL Editor.

@@ -2348,7 +2348,7 @@ function championshipTeamView(){
  f("Nome e cognome","captainName")+f("Email di accesso","captainEmail","email")+f("Telefono","captainPhone")+f("Data di nascita","captainBirthDate","date")+
  f("Luogo di nascita","captainBirthPlace")+f("Comune di residenza","captainResidence")+
  '</div><button class="primary" data-save-champ-team="'+t.id+'">Salva eventuali correzioni</button></section>'+
- '<section class="card"><div class="pam-v5-section-title"><h2>Rosa giocatori</h2><small>Il modulo verrà aperto nell’ultima settimana di agosto.</small></div><div class="pam-roster-placeholder"><div><b>0 / 20</b><small>Giocatori inseriti</small></div><div><b>0</b><small>In attesa di approvazione</small></div><div><b>0</b><small>Schierabili</small></div></div></section>'+
+ '<section class="card"><div class="pam-v5-section-title"><h2>Rosa giocatori</h2><small>Puoi inserire direttamente i giocatori oppure inviare il link personale della squadra.</small></div><div class="pam-roster-placeholder"><div><b>0 / 20</b><small>Giocatori inseriti</small></div><div><b>0</b><small>In attesa di approvazione</small></div><div><b>0</b><small>Schierabili</small></div></div><div class="pam-final-actions"><button class="primary" style="width:auto" data-add-team-player="'+team.id+'">Inserisci giocatore</button><button class="secondary" data-toggle-roster="'+team.id+'">Apri / chiudi raccolta rosa</button><button class="secondary" data-share-player-link="'+team.id+'">Invia link ai giocatori</button><button class="secondary" data-copy-player-link="'+team.id+'">Copia link squadra</button></div><div class="notice"><b>Istruzioni incluse nel messaggio:</b> il giocatore apre il link, compila i propri dati, carica la foto e invia la richiesta. La registrazione resta in attesa finché capitano o organizzazione non la approvano.</div></section>'+
  '</div>';
 }
 async function pamToggleTeamAccess(id,forced){
@@ -4478,6 +4478,48 @@ window.addEventListener("DOMContentLoaded",()=>{
  setTimeout(pamBootAuth,0);
 });
 
+
+
+
+async function pamToggleRoster(team){
+ const next=!team.rosterOpen;
+ try{
+  if(typeof supabaseClient!=='undefined'){
+   const {error}=await supabaseClient.from('championship_teams').update({roster_open:next,player_self_registration_enabled:next}).eq('id',team.id);
+   if(error)throw error;
+  } else if(typeof sb!=='undefined'){
+   const {error}=await sb.from('championship_teams').update({roster_open:next,player_self_registration_enabled:next}).eq('id',team.id);
+   if(error)throw error;
+  }
+  team.rosterOpen=next; team.playerSelfRegistrationEnabled=next;
+  alert(next?'Raccolta rosa aperta: capitano e giocatori possono inserire dati.':'Raccolta rosa chiusa: i link non accettano nuove richieste.');
+ }catch(e){alert('Non è stato possibile cambiare lo stato: '+(e.message||e))}
+}
+function pamPlayerRegistrationUrl(team){
+ const token=(team.playerInviteToken||team.player_invite_token||team.inviteToken+'player');
+ return new URL('player-registration.html?team='+encodeURIComponent(token),location.href).href;
+}
+function pamPlayerInstructions(team){
+ const link=pamPlayerRegistrationUrl(team);
+ return `Ciao! Sei stato invitato a inserirti nella rosa di ${team.teamName} per l’AICS Padel Championship 2027.\n\nApri questo link personale della squadra:\n${link}\n\nCosa devi fare:\n1. Compila i tuoi dati anagrafici e di contatto.\n2. Carica una foto riconoscibile.\n3. Accetta privacy e regolamento.\n4. Invia la richiesta.\n\nLa tua iscrizione resterà in attesa di approvazione da parte del capitano e dell’organizzazione. Tessera AICS e certificato medico potranno essere completati successivamente.`;
+}
+async function pamShareText(title,text){
+ try{if(navigator.share){await navigator.share({title,text});return} await navigator.clipboard.writeText(text);alert('Messaggio e link copiati. Ora puoi incollarli su WhatsApp o email.')}catch(e){if(e.name!=='AbortError') prompt('Copia questo messaggio:',text)}
+}
+document.addEventListener('click',e=>{
+ const a=e.target.closest('[data-add-team-player]');
+ const sh=e.target.closest('[data-share-player-link]');
+ const cp=e.target.closest('[data-copy-player-link]');
+ const tg=e.target.closest('[data-toggle-roster]');
+ const id=(a||sh||cp||tg)?.getAttribute(a?'data-add-team-player':sh?'data-share-player-link':cp?'data-copy-player-link':'data-toggle-roster');
+ if(!id)return;
+ const team=(typeof PAM_CHAMPIONSHIP_TEAMS!=='undefined'?PAM_CHAMPIONSHIP_TEAMS:[]).find(t=>t.id===id) || (typeof DEMO_TEAMS!=='undefined'?DEMO_TEAMS.find(t=>t.id===id):null);
+ if(!team)return alert('Squadra non trovata.');
+ if(tg){pamToggleRoster(team);return}
+ if(a){location.href=pamPlayerRegistrationUrl(team)+'&mode=admin';return}
+ if(sh){pamShareText('Invito rosa '+team.teamName,pamPlayerInstructions(team));return}
+ navigator.clipboard?.writeText(pamPlayerRegistrationUrl(team)); alert('Link della squadra copiato.');
+});
 </script>
 </body>
 </html>

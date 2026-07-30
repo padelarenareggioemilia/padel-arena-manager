@@ -196,3 +196,73 @@ on conflict (id) do update set
 -- update public.championship_teams set access_enabled=true where id='aics2027_01';
 -- e aprire la rosa con:
 -- update public.championship_teams set roster_open=true where id='aics2027_01';
+
+-- VERSIONE 5.2 - LINK GIOCATORI DISTINTO PER OGNI SQUADRA
+alter table public.championship_teams add column if not exists player_invite_token text unique;
+alter table public.championship_teams add column if not exists player_self_registration_enabled boolean not null default false;
+alter table public.championship_roster_players add column if not exists registration_source text not null default 'captain';
+alter table public.championship_roster_players add column if not exists privacy_accepted boolean not null default false;
+alter table public.championship_roster_players add column if not exists regulation_accepted boolean not null default false;
+
+update public.championship_teams
+set player_invite_token=coalesce(player_invite_token, invite_token || 'player');
+
+create unique index if not exists championship_teams_player_invite_token_idx
+on public.championship_teams(player_invite_token);
+
+create or replace function public.public_championship_team_for_roster(p_token text)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare t public.championship_teams;
+begin
+ select * into t from public.championship_teams where player_invite_token=p_token;
+ if t.id is null then raise exception 'Link squadra non valido'; end if;
+ if not t.roster_open or not t.player_self_registration_enabled then
+   raise exception 'La raccolta della rosa non è ancora stata abilitata dall organizzazione';
+ end if;
+ return jsonb_build_object('id',t.id,'team_name',t.team_name,'club_legal_name',t.club_legal_name,'series',t.series);
+end;
+$$;
+
+grant execute on function public.public_championship_team_for_roster(text) to anon, authenticated;
+
+create or replace function public.submit_public_championship_roster_player(p_token text,p_player jsonb)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare t public.championship_teams; new_id uuid;
+begin
+ select * into t from public.championship_teams where player_invite_token=p_token;
+ if t.id is null then raise exception 'Link squadra non valido'; end if;
+ if not t.roster_open or not t.player_self_registration_enabled then
+   raise exception 'La raccolta della rosa non è ancora aperta';
+ end if;
+ if (select count(*) from public.championship_roster_players where team_id=t.id) >= 20 then
+   raise exception 'La rosa ha già raggiunto il limite di 20 giocatori';
+ end if;
+ if coalesce(trim(p_player->>'first_name'),'')='' or coalesce(trim(p_player->>'last_name'),'')='' or
+    coalesce(trim(p_player->>'email'),'')='' or coalesce(trim(p_player->>'phone'),'')='' then
+   raise exception 'Compila tutti i campi obbligatori';
+ end if;
+ if exists(select 1 from public.championship_roster_players where team_id=t.id and lower(email)=lower(p_player->>'email')) then
+   raise exception 'Esiste già una richiesta con questa email per la squadra';
+ end if;
+ insert into public.championship_roster_players(
+   team_id,first_name,last_name,birth_date,birth_place,postal_code,residence_town,residence_province,
+   phone,email,photo_url,approval_status,registration_source,privacy_accepted,regulation_accepted
+ ) values(
+   t.id,trim(p_player->>'first_name'),trim(p_player->>'last_name'),nullif(p_player->>'birth_date','')::date,
+   trim(p_player->>'birth_place'),trim(p_player->>'postal_code'),trim(p_player->>'residence_town'),
+   upper(trim(p_player->>'residence_province')),trim(p_player->>'phone'),lower(trim(p_player->>'email')),
+   nullif(p_player->>'photo_data',''),'pending','player_link',true,true
+ ) returning id into new_id;
+ return jsonb_build_object('ok',true,'id',new_id,'team_id',t.id,'status','pending');
+end;
+$$;
+
+grant execute on function public.submit_public_championship_roster_player(text,jsonb) to anon, authenticated;
+
+-- Per aprire una squadra dall'app, impostare entrambi i campi a true.
+-- Esempio:
+-- update public.championship_teams set roster_open=true, player_self_registration_enabled=true where id='aics2027_01';
