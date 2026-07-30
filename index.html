@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 3.3.1.1</title>
+<title>Padel Arena Manager 3.3.2.1</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1254,7 +1254,7 @@ function printFooter(e){
 }
 
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 3.3.1 · correzione generazione tornei</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 3.3.2 · correzione sincronizzazione</div>';
 }
 
 function iphoneInstallCard(){
@@ -1266,6 +1266,13 @@ function iphoneInstallCard(){
 }
 
 function uid(prefix){return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,8)}
+function pamUuid(){
+ if(window.crypto&&typeof window.crypto.randomUUID==="function")return window.crypto.randomUUID();
+ return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
+  const r=Math.random()*16|0,v=c==="x"?r:(r&3|8);
+  return v.toString(16);
+ });
+}
 function freshState(){return{view:"home",tab:"matches",players:[],events:[],currentEventId:null,draft:{
  name:"Rodeo a Gettoni",
  date:new Date().toISOString().slice(0,10),
@@ -1299,6 +1306,7 @@ if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerE
 if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
 if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false;
 (state.events||[]).forEach(function(e){
+ if(!e.shareToken)e.shareToken=pamUuid();
  if(!e.competitionType)e.competitionType="rodeo_tokens";
  if(!e.payments)e.payments={};
  if(e.entryFee===undefined)e.entryFee=25;
@@ -1417,7 +1425,8 @@ function playerName(p){return (p.firstName+" "+p.lastName).trim()}
 function currentEvent(){return state.events.find(function(e){return e.id===state.currentEventId})||null}
 
 function pamEventRow(e){
- const row={
+ if(!e.shareToken)e.shareToken=pamUuid();
+ return{
   id:e.id,
   name:e.name||"Torneo",
   event_date:e.date||null,
@@ -1425,11 +1434,10 @@ function pamEventRow(e){
   category:e.category||null,
   competition_type:e.competitionType||null,
   logo_url:e.logoUrl||null,
+  share_token:e.shareToken,
   status:e.status||"active",
   data:e
  };
- if(e.shareToken)row.share_token=e.shareToken;
- return row;
 }
 function pamPlayerRow(p){
  return{id:p.id,data:p,photo_url:p.photoUrl||null};
@@ -1448,7 +1456,7 @@ async function pamCloudSyncAll(){
     if(pr.error)throw pr.error;
    }
    if(state.events.length){
-    const er=await sb.from("tournaments").upsert(state.events.map(pamEventRow),{onConflict:"id"}).select("id,share_token");
+    const er=await sb.from("tournaments").upsert(state.events.map(pamEventRow),{onConflict:"id",defaultToNull:false}).select("id,share_token");
     if(er.error)throw er.error;
     (er.data||[]).forEach(function(row){
      const e=state.events.find(function(x){return x.id===row.id});
@@ -1482,7 +1490,7 @@ async function pamCloudSyncAll(){
 function pamSetConnectionState(ok){
  const badge=document.getElementById("pamRoleBadge");
  if(!badge)return;
- badge.textContent=pamRoleLabel()+(ok?" · CONNESSO":" · OFFLINE");
+ badge.textContent=pamRoleLabel()+(ok?" · CONNESSO":" · NON SINCRONIZZATO");
  badge.style.background=ok?"#071a2b":"#7f1d1d";
 }
 window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
@@ -1640,7 +1648,7 @@ function pamDuplicateEvent(id){
  const copy=JSON.parse(JSON.stringify(original));
  copy.id=uid("e");
  copy.name=original.name+" - Copia";
- copy.shareToken=null;
+ copy.shareToken=pamUuid();
  copy.status="draft";
  copy.createdAt=new Date().toISOString();
  copy.timers={};
@@ -1802,14 +1810,14 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.3.1 · Supabase online</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.3.2 · Supabase online</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
 }
 function home(){
  return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneVersionBanner()+iphoneInstallCard()+
- '<div class="card"><h2>Padel Arena Manager 3.3.1</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
+ '<div class="card"><h2>Padel Arena Manager 3.3.2</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
  '<div class="grid">'+
  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
  '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Seleziona giocatori già esistenti</span></button>'+
@@ -3242,7 +3250,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=3.3.1",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=3.3.2",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

@@ -82,3 +82,12 @@ VERSIONE 3.3.1
   2. intervallo tra gli inizi delle partite.
 - Corretti anche i cambi di formato e categoria.
 - Aggiunta compatibilità di sicurezza con eventuali dati in cache.
+
+
+VERSIONE 3.3.2
+- Corretto errore Supabase: share_token nullo durante la sincronizzazione.
+- Ogni torneo riceve subito un codice di condivisione UUID valido.
+- Corretta la migrazione dei tornei creati nelle versioni precedenti.
+- Corretta la duplicazione: ogni copia riceve un link diverso.
+- Upsert Supabase configurato per non trasformare campi mancanti in NULL.
+- La dicitura OFFLINE diventa NON SINCRONIZZATO quando il database non risponde.
