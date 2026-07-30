@@ -123,3 +123,11 @@ VERSIONE 4.0 - IDENTITÀ DINAMICA
 - Quando si apre o si crea un torneo, l'interfaccia riprende il colore del club/ente.
 - PDF con logo Padel Arena Manager dominante e logo del club ospitante secondario.
 - Home riprogettata con identità software professionale.
+
+
+VERSIONE 4.1
+- Indirizzo libero per AICS, Padel Arena e CUPRA.
+- Format visualizzati in maiuscolo e senza parentesi.
+- Nei tornei a coppie ogni giocatore viene iscritto singolarmente o in coppia.
+- Il partner può essere scelto dall'anagrafica o creato al momento.
+- Le coppie dichiarate vengono mantenute nella generazione.

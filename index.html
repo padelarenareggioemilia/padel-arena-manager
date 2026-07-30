@@ -1111,6 +1111,11 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
  .print-event-footer{border-top:3px solid var(--event-accent)!important}
 }
 
+
+.hidden{display:none!important}
+.pam-pair-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.pam-pair-reg-label{color:var(--club-accent);font-size:12px;letter-spacing:.04em}
+@media(max-width:700px){.pam-pair-choice-grid{grid-template-columns:1fr}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1354,6 +1359,15 @@ const ORGANIZERS=[
  {name:"Padel Arena Reggio Emilia",logo:"assets/padel-arena-reggio-emilia.jpeg"},
  {name:"AICS",logo:"assets/aics.jpeg"}
 ];
+
+function pamClubAllowsCustomAddress(name){
+ return ["AICS","Padel Arena","CUPRA"].includes(name);
+}
+function pamEventAddress(e){
+ if(!e)return "";
+ const c=clubInfo(e.club);
+ return pamClubAllowsCustomAddress(e.club)&&e.customAddress?e.customAddress:c.address;
+}
 function clubInfo(name){
  return CLUBS[name]||{name:name||"Club o ente da definire",address:"",logo:"assets/padel-arena-manager-logo.jpg",accent:"#9DFF25",accent2:"#16A8FF",background:"#07111F",courts:[]};
 }
@@ -1379,7 +1393,7 @@ function eventPrintBranding(e){
      '<span><b>Centro</b>'+esc(c.name)+'</span>'+
      '<span><b>Campi</b>'+courts+' '+(courts===1?"campo":"campi")+'</span>'+
     '</div>'+
-    '<div class="print-address">'+esc(c.address)+'</div>'+
+    '<div class="print-address">'+esc(pamEventAddress(e))+'</div>'+
    '</div>'+
   '</div>'+
  '</section>';
@@ -1389,12 +1403,12 @@ function printFooter(e){
  const c=clubInfo(e.club);
  return '<footer class="print-event-footer" style="border-top-color:'+esc(c.accent)+'">'+
   '<div class="footer-master"><img src="assets/padel-arena-manager-logo.jpg"><span><b>PADEL ARENA MANAGER</b><br>Programma ufficiale</span></div>'+
-  '<div><b>'+esc(c.name)+'</b><br>'+esc(c.address)+'</div>'+
+  '<div><b>'+esc(c.name)+'</b><br>'+esc(pamEventAddress(e))+'</div>'+
   '<div class="footer-right">Info eventi<br><b>327 691 0287</b></div>'+
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 4.0 · identità dinamica</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 4.1 · indirizzi e iscrizioni a coppie</div>';
 }
 
 function iphoneInstallCard(){
@@ -1441,6 +1455,8 @@ if(!state.draft.matchMode)state.draft.matchMode="score";
 if(!state.draft.matchDuration)state.draft.matchDuration=20;
 if(!state.draft.timerDuration)state.draft.timerDuration=Number(state.draft.matchDuration)||15;
 if(!state.draft.slotDuration)state.draft.slotDuration=Number(state.draft.matchDuration)||20;
+if(state.draft.customAddress===undefined)state.draft.customAddress="";
+if(!state.draft.fixedPairRegistrations)state.draft.fixedPairRegistrations={};
 if(state.draft.initialTimerEnabled===undefined)state.draft.initialTimerEnabled=true;
 if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerEnabled=false;
 if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
@@ -1456,6 +1472,8 @@ if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false
  if(e.finalTimerEnabled===undefined)e.finalTimerEnabled=false;
  if(!e.timerDuration)e.timerDuration=Number(e.matchDuration)||15;
  if(!e.slotDuration)e.slotDuration=Number(e.matchDuration)||20;
+ if(e.customAddress===undefined)e.customAddress="";
+ if(!e.fixedPairRegistrations)e.fixedPairRegistrations={};
 });
 
 (state.players||[]).forEach(function(p){
@@ -1812,6 +1830,7 @@ function pamEditEvent(id){
  e.name=name.trim()||e.name;
  e.date=date.trim();
  e.club=club.trim();
+ e.customAddress=customAddress;
  e.category=category.trim();
  e.startTime=startTime.trim()||"20:00";
  e.timerDuration=Math.max(1,Number(timerDuration)||15);
@@ -1967,7 +1986,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.0 · Supabase online</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.1 · Supabase online</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2099,6 +2118,10 @@ function pamSaveQuickPlayer(){
   if(ctx.replaceId)state.draft.selected=state.draft.selected.filter(function(id){return id!==ctx.replaceId});
   if(!state.draft.selected.includes(p.id))state.draft.selected.push(p.id);
   save();document.getElementById("pamQuickPlayerOverlay")?.remove();render();
+ }else if(ctx.mode==="pair-partner"){
+  if(!state.draft.selected.includes(p.id))state.draft.selected.push(p.id);
+  pamAssignPartner(ctx.primaryPlayerId,p.id);
+  document.getElementById("pamQuickPlayerOverlay")?.remove();
  }else if(ctx.mode==="existing-event"){
   const e=state.events.find(function(x){return x.id===ctx.eventId});
   if(e){
@@ -2179,7 +2202,7 @@ function editPlayer(id){
  save();render();
 }
 function competitionTypeLabel(v){
- return v==="rodeo_simple"?"Rodeo semplice":v==="fixed_pairs"?"Coppie fisse":"Rodeo a gettoni";
+ return v==="rodeo_simple"?"RODEO SEMPLICE":v==="fixed_pairs"?"Coppie fisse":"Rodeo a gettoni";
 }
 function newEventView(){
  const d=state.draft;
@@ -2189,22 +2212,25 @@ function newEventView(){
   return '<div class="check event-player-search-row pam-select-player-row" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'">'+
    '<label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
    d.competitionType==="rodeo_tokens"?"Saldo aggiornato: "+Number(p.tokenBalance||0)+" gettoni":"Giocatore registrato"
-  )+(p.level?" · "+esc(p.level):"")+'</small></span></label>'+
+  )+(p.level?" · "+esc(p.level):"")+
+  (d.competitionType==="fixed_pairs"&&checked?'<br><b class="pam-pair-reg-label">'+esc(pamPairRegistrationLabel(p.id)||"DA DEFINIRE")+'</b>':'')+
+  '</small></span></label>'+
    (checked?'<button type="button" class="small pam-replace-inline" data-replace-new-event-player="'+p.id+'">Sostituisci</button>':'')+
   '</div>';
  }).join(""):'<div class="notice error">Prima crea almeno 4 giocatori nell’anagrafica.</div>';
  const fixedOptions=d.competitionType==="fixed_pairs"?
   '<div class="row"><div class="field"><label>Coppie per girone</label><select id="ePairsPerGroup">'+[3,4,5,6].map(function(x){return'<option '+(Number(d.pairsPerGroup)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div>'+
   '<div class="field"><label>Qualificazione fasi finali</label><select id="eFinalsOption"><option value="top1" '+(d.finalsOption==="top1"?"selected":"")+'>Solo prime</option><option value="top2" '+(d.finalsOption==="top2"?"selected":"")+'>Prime due</option></select></div></div>'+
-  '<div class="notice">Le coppie verranno formate seguendo l’ordine di selezione: 1°+2°, 3°+4° e così via. Dopo la creazione potrai controllarle nella sezione “Coppie”.</div>':'';
+  '<div class="notice">Per ogni giocatore selezionato indica se l’iscrizione è singola oppure in coppia. Le iscrizioni in coppia resteranno unite; le singole verranno abbinate tra loro.</div>':'';
  return header("Nuova competizione","Scegli il formato e seleziona i partecipanti")+
  '<div class="card"><div class="row"><div class="field"><label>Formato competizione</label><select id="eCompetitionType" data-action="change-type">'+
- '<option value="rodeo_tokens" '+(d.competitionType==="rodeo_tokens"?"selected":"")+'>Rodeo a gettoni (minimo 6)</option>'+
- '<option value="rodeo_simple" '+(d.competitionType==="rodeo_simple"?"selected":"")+'>Rodeo semplice</option>'+
- '<option value="fixed_pairs" '+(d.competitionType==="fixed_pairs"?"selected":"")+'>Torneo a coppie fisse</option></select></div>'+
+ '<option value="rodeo_tokens" '+(d.competitionType==="rodeo_tokens"?"selected":"")+'>RODEO A GETTONI</option>'+
+ '<option value="rodeo_simple" '+(d.competitionType==="rodeo_simple"?"selected":"")+'>RODEO SEMPLICE</option>'+
+ '<option value="fixed_pairs" '+(d.competitionType==="fixed_pairs"?"selected":"")+'>COPPIE FISSE</option></select></div>'+
  '<div class="field"><label>Quota individuale (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div>'+
  '<div class="row"><div class="field"><label>Nome competizione</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Data</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div></div>'+
  '<div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(function(x){return'<option value="'+esc(x)+'" '+(x===d.club?"selected":"")+'>'+esc(x)+' - '+esc(CLUBS[x].address)+'</option>'}).join("")+'</select></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(function(x){return'<option '+(x===d.category?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div><div class="field"><label>Campi</label><select id="eCourts">'+[1,2,3,4].map(function(x){return'<option '+(Number(d.courts)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div></div>'+
+ '<div id="pamCustomAddressWrap" class="field '+(pamClubAllowsCustomAddress(d.club)?"":"hidden")+'"><label>Indirizzo completo dell’evento</label><input id="eCustomAddress" value="'+esc(d.customAddress||"")+'" placeholder="Via, numero civico, città e provincia"></div>'+
  '<div class="row"><div class="field"><label>Orario di inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||"20:00")+'"></div>'+
  '<div class="field"><label>Durata effettiva partita / timer (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||d.matchDuration||15)+'"></div>'+
  '<div class="field"><label>Intervallo tra gli inizi delle partite (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||d.matchDuration||20)+'"></div></div>'+
@@ -2213,10 +2239,10 @@ function newEventView(){
  '<div class="field"><label>Timer eliminatorie</label><select id="eEliminationTimer"><option value="yes" '+(d.eliminationTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.eliminationTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
  '<div class="field"><label>Timer semifinali</label><select id="eSemifinalTimer"><option value="yes" '+(d.semifinalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.semifinalTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
  '<div class="field"><label>Timer finale</label><select id="eFinalTimer"><option value="yes" '+(d.finalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.finalTimerEnabled?"selected":"")+'>Disattivo</option></select></div></div>'+
- '<div class="row"><div class="field"><label>Gironi / fase iniziale</label><select id="eReturnLeg"><option value="no" '+(!d.returnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.returnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
- '<div class="field"><label>Eliminatorie</label><select id="eEliminationReturnLeg"><option value="no" '+(!d.eliminationReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.eliminationReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
- '<div class="field"><label>Semifinali</label><select id="eSemifinalReturnLeg"><option value="no" '+(!d.semifinalReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.semifinalReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div>'+
- '<div class="field"><label>Finale</label><select id="eFinalReturnLeg"><option value="no" '+(!d.finalReturnLeg?"selected":"")+'>Solo andata</option><option value="yes" '+(d.finalReturnLeg?"selected":"")+'>Andata e ritorno</option></select></div></div>'+fixedOptions+'</div>'+
+ '<div class="row"><div class="field"><label>Gironi / fase iniziale</label><select id="eReturnLeg"><option value="no" '+(!d.returnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.returnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
+ '<div class="field"><label>Eliminatorie</label><select id="eEliminationReturnLeg"><option value="no" '+(!d.eliminationReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.eliminationReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
+ '<div class="field"><label>Semifinali</label><select id="eSemifinalReturnLeg"><option value="no" '+(!d.semifinalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.semifinalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
+ '<div class="field"><label>Finale</label><select id="eFinalReturnLeg"><option value="no" '+(!d.finalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.finalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div></div>'+fixedOptions+'</div>'+
  '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Genera la competizione senza dover scorrere tutto l’elenco.</div></div><button class="primary create-event-top-button" data-action="create-event">Genera competizione</button></div>'+
  '<div id="eventMessage"></div>'+
  '<div class="card"><h2>Seleziona partecipanti</h2>'+
@@ -2445,6 +2471,79 @@ function pamRodeoQuality(e){
  return{repeatedTeams:repeatedTeams,repeatedOpponents:repeatedOpponents};
 }
 
+
+function pamIsFixedPairsDraft(){
+ return state.draft&&state.draft.competitionType==="fixed_pairs";
+}
+function pamPairRegistrationLabel(playerId){
+ const reg=(state.draft.fixedPairRegistrations||{})[playerId];
+ if(!reg)return "";
+ if(reg.mode==="single")return "ISCRIZIONE SINGOLA";
+ if(reg.mode==="pair"&&reg.partnerId){
+  const partner=playerById(reg.partnerId);
+  return "IN COPPIA CON "+(partner?playerName(partner):"PARTNER");
+ }
+ return "";
+}
+function pamRemovePairRegistration(playerId){
+ const regs=state.draft.fixedPairRegistrations||{};
+ const reg=regs[playerId];
+ if(reg&&reg.partnerId&&regs[reg.partnerId]&&regs[reg.partnerId].partnerId===playerId)delete regs[reg.partnerId];
+ delete regs[playerId];
+}
+function pamAskFixedPairRegistration(playerId){
+ if(!pamIsFixedPairsDraft()||!state.draft.selected.includes(playerId))return;
+ const p=playerById(playerId);if(!p)return;
+ document.getElementById("pamPairChoiceOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamPairChoiceOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+esc(playerName(p))+'</h2><div class="muted">Come vuoi iscrivere questo giocatore?</div></div><button class="secondary" data-close-pair-choice>Chiudi</button></div>'+
+ '<div class="pam-pair-choice-grid"><button class="primary" data-pair-single="'+playerId+'">ISCRIZIONE SINGOLA</button><button class="secondary" data-pair-together="'+playerId+'">ISCRIZIONE IN COPPIA</button></div></div>';
+ document.body.appendChild(overlay);
+}
+function pamSetPairSingle(playerId){
+ state.draft.fixedPairRegistrations[playerId]={mode:"single"};
+ save();document.getElementById("pamPairChoiceOverlay")?.remove();render();
+}
+function pamOpenPartnerPicker(playerId){
+ const p=playerById(playerId);if(!p)return;
+ document.getElementById("pamPairChoiceOverlay")?.remove();
+ const rows=state.players.filter(function(x){return x.id!==playerId}).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).map(function(x){
+  return '<button class="pam-replacement-row" data-pair-partner="'+x.id+'" data-pair-primary="'+playerId+'"><img src="'+esc(pamPlayerPhoto(x))+'"><span><b>'+esc(playerName(x))+'</b><small>'+esc(x.gender||"")+'</small></span></button>';
+ }).join("");
+ const overlay=document.createElement("div");
+ overlay.id="pamPairPartnerOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Partner di '+esc(playerName(p))+'</h2><div class="muted">Seleziona un giocatore esistente oppure inseriscine uno nuovo.</div></div><button class="secondary" data-close-pair-partner>Chiudi</button></div>'+
+ '<button class="primary" data-new-pair-partner="'+playerId+'">➕ NUOVO GIOCATORE</button><div class="field"><label>Cerca partner</label><input id="pamPairPartnerSearch" type="search"></div><div class="pam-replacement-list">'+rows+'</div></div>';
+ document.body.appendChild(overlay);
+ overlay.querySelector("#pamPairPartnerSearch").addEventListener("input",function(ev){
+  const q=normalizeName(ev.target.value);
+  overlay.querySelectorAll(".pam-replacement-row").forEach(function(row){row.style.display=!q||normalizeName(row.textContent).includes(q)?"grid":"none"});
+ });
+}
+function pamAssignPartner(playerId,partnerId){
+ const regs=state.draft.fixedPairRegistrations||{};
+ regs[playerId]={mode:"pair",partnerId:partnerId};
+ regs[partnerId]={mode:"pair",partnerId:playerId};
+ if(!state.draft.selected.includes(partnerId))state.draft.selected.push(partnerId);
+ save();document.getElementById("pamPairPartnerOverlay")?.remove();render();
+}
+function pamOrderedFixedPairIds(ids){
+ const regs=state.draft.fixedPairRegistrations||{};
+ const pairs=[],singles=[],used=new Set();
+ ids.forEach(function(id){
+  if(used.has(id))return;
+  const reg=regs[id];
+  if(reg&&reg.mode==="pair"&&reg.partnerId&&ids.includes(reg.partnerId)){
+   pairs.push([id,reg.partnerId]);used.add(id);used.add(reg.partnerId);
+  }else{singles.push(id);used.add(id)}
+ });
+ if(singles.length%2!==0)throw new Error("Le iscrizioni singole devono essere in numero pari.");
+ const ordered=[];
+ pairs.forEach(function(pair){ordered.push(pair[0],pair[1])});
+ for(let i=0;i<singles.length;i+=2)ordered.push(singles[i],singles[i+1]);
+ return ordered;
+}
 function buildFixedPairs(ids,pairsPerGroup,courts,returnLeg){
  const pairs=[];
  for(let i=0;i+1<ids.length;i+=2)pairs.push({id:uid("pair"),players:[ids[i],ids[i+1]],name:"Coppia "+(pairs.length+1),group:null});
@@ -2480,6 +2579,7 @@ function createEvent(){
   state.draft.name=document.getElementById("eName").value.trim();
   state.draft.date=document.getElementById("eDate").value;
   state.draft.club=document.getElementById("eClub").value.trim();
+  state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
   state.draft.category=document.getElementById("eCategory").value;
   state.draft.competitionType=document.getElementById("eCompetitionType").value;
   state.draft.courts=Number(document.getElementById("eCourts").value)||1;
@@ -2503,12 +2603,17 @@ function createEvent(){
   if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
   if(state.draft.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(state.draft.selected.length))throw new Error("per il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori");
   if(state.draft.competitionType!=="rodeo_tokens"&&state.draft.selected.length<4)throw new Error("seleziona almeno 4 giocatori");
-  if(state.draft.competitionType==="fixed_pairs"&&state.draft.selected.length%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
+  if(state.draft.competitionType==="fixed_pairs"){
+   if(state.draft.selected.length%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
+   const missing=state.draft.selected.filter(function(id){return !(state.draft.fixedPairRegistrations||{})[id]});
+   if(missing.length)throw new Error("indica per ogni giocatore se l’iscrizione è singola oppure in coppia");
+  }
   const event={
    id:uid("e"),
    name:state.draft.name||"Nuova competizione",
    date:state.draft.date,
    club:state.draft.club,
+   customAddress:state.draft.customAddress||"",
    category:state.draft.category,
    competitionType:state.draft.competitionType,
    courts:state.draft.courts,
@@ -2529,6 +2634,7 @@ function createEvent(){
    timers:{},
    playerIds:state.draft.selected.slice(),
    payments:defaultPayments(state.draft.selected.slice(),state.draft.fee),
+   fixedPairRegistrations:JSON.parse(JSON.stringify(state.draft.fixedPairRegistrations||{})),
    matches:[],
    ledger:{},
    finalStages:{
@@ -2543,6 +2649,7 @@ function createEvent(){
    }
   };
   if(event.competitionType==="fixed_pairs"){
+   event.playerIds=pamOrderedFixedPairIds(event.playerIds);
    const built=buildFixedPairs(event.playerIds,state.draft.pairsPerGroup,event.courts,event.returnLeg);
    event.pairs=built.pairs;
    event.matches=built.matches;
@@ -2562,7 +2669,7 @@ function eventsView(){
   const done=e.matches.filter(function(m){return m.score1!==null&&m.score2!==null}).length;
   return '<div class="item">'+
   '<img class="player-avatar" src="'+esc(e.logoUrl||"assets/padel-arena-reggio-emilia.jpeg")+'" alt="">'+
-  '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"Solo andata")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
+  '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"SOLO ANDATA")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
   '<button class="small" data-open-event="'+e.id+'">Apri</button>'+
   '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
   (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
@@ -2643,10 +2750,10 @@ function eventView(){
 }
 
 function phaseFormula(e,phase){
- if(phase==="Eliminatoria")return e.eliminationReturnLeg?"Andata e ritorno":"Solo andata";
- if(phase.indexOf("Semifinale")===0)return e.semifinalReturnLeg?"Andata e ritorno":"Solo andata";
- if(phase==="Finale")return e.finalReturnLeg?"Andata e ritorno":"Solo andata";
- return e.returnLeg?"Andata e ritorno":"Solo andata";
+ if(phase==="Eliminatoria")return e.eliminationReturnLeg?"ANDATA E RITORNO":"SOLO ANDATA";
+ if(phase.indexOf("Semifinale")===0)return e.semifinalReturnLeg?"ANDATA E RITORNO":"SOLO ANDATA";
+ if(phase==="Finale")return e.finalReturnLeg?"ANDATA E RITORNO":"SOLO ANDATA";
+ return e.returnLeg?"ANDATA E RITORNO":"SOLO ANDATA";
 }
 function scheduleInfo(e,index,phase,court){
  const dateText=e.date||new Date().toISOString().slice(0,10);
@@ -3424,6 +3531,16 @@ document.addEventListener("click",function(ev){
   });
   return
  }
+ const closePairChoice=ev.target.closest("[data-close-pair-choice]");if(closePairChoice){document.getElementById("pamPairChoiceOverlay")?.remove();return}
+ const pairSingle=ev.target.closest("[data-pair-single]");if(pairSingle){pamSetPairSingle(pairSingle.getAttribute("data-pair-single"));return}
+ const pairTogether=ev.target.closest("[data-pair-together]");if(pairTogether){pamOpenPartnerPicker(pairTogether.getAttribute("data-pair-together"));return}
+ const closePairPartner=ev.target.closest("[data-close-pair-partner]");if(closePairPartner){document.getElementById("pamPairPartnerOverlay")?.remove();return}
+ const pairPartner=ev.target.closest("[data-pair-partner]");if(pairPartner){pamAssignPartner(pairPartner.getAttribute("data-pair-primary"),pairPartner.getAttribute("data-pair-partner"));return}
+ const newPairPartner=ev.target.closest("[data-new-pair-partner]");if(newPairPartner){
+  document.getElementById("pamPairPartnerOverlay")?.remove();
+  pamOpenQuickPlayer({mode:"pair-partner",primaryPlayerId:newPairPartner.getAttribute("data-new-pair-partner"),category:state.draft.category});
+  return
+ }
  const closeQuick=ev.target.closest("[data-close-quick-player]");if(closeQuick){document.getElementById("pamQuickPlayerOverlay")?.remove();return}
  const saveQuick=ev.target.closest("[data-save-quick-player]");if(saveQuick){pamSaveQuickPlayer();return}
  const closeReplace=ev.target.closest("[data-close-replace-player]");if(closeReplace){document.getElementById("pamReplacePlayerOverlay")?.remove();return}
@@ -3496,6 +3613,11 @@ document.addEventListener("input",function(ev){
  }
 });
 document.addEventListener("change",function(ev){
+ if(ev.target.id==="eClub"){
+  const wrap=document.getElementById("pamCustomAddressWrap");
+  if(wrap)wrap.classList.toggle("hidden",!pamClubAllowsCustomAddress(ev.target.value));
+ }
+
  if(ev.target.matches("[data-tournament-logo]")){pamUploadTournamentLogo(ev.target.getAttribute("data-tournament-logo"),ev.target.files&&ev.target.files[0]);return}
  if(ev.target.matches("[data-player-photo]")){pamUploadPlayerPhoto(ev.target.getAttribute("data-player-photo"),ev.target.files&&ev.target.files[0]);return}
 
@@ -3506,8 +3628,10 @@ document.addEventListener("change",function(ev){
   state.draft.name=document.getElementById("eName").value;
   state.draft.date=document.getElementById("eDate").value;
   state.draft.club=document.getElementById("eClub").value;
+  state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
   state.draft.category=document.getElementById("eCategory").value;
   state.draft.competitionType=ev.target.value;
+  if(state.draft.competitionType!=="fixed_pairs")state.draft.fixedPairRegistrations={};
   state.draft.courts=Number(document.getElementById("eCourts").value)||1;
   state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
   state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
@@ -3524,14 +3648,15 @@ document.addEventListener("change",function(ev){
   state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
   state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
   if(ev.target.value==="rodeo_tokens")state.draft.name="Rodeo a Gettoni";
-  if(ev.target.value==="rodeo_simple")state.draft.name="Rodeo semplice";
-  if(ev.target.value==="fixed_pairs")state.draft.name="Torneo a coppie fisse";
+  if(ev.target.value==="rodeo_simple")state.draft.name="RODEO SEMPLICE";
+  if(ev.target.value==="fixed_pairs")state.draft.name="COPPIE FISSE";
   save();render();return;
  }
  if(ev.target.matches('[data-action="change-category"]')){
   state.draft.name=document.getElementById("eName").value;
   state.draft.date=document.getElementById("eDate").value;
   state.draft.club=document.getElementById("eClub").value;
+  state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
   state.draft.category=ev.target.value;
   state.draft.courts=Number(document.getElementById("eCourts").value)||1;
   state.draft.competitionType=document.getElementById("eCompetitionType").value;
@@ -3556,11 +3681,16 @@ document.addEventListener("change",function(ev){
  }
  if(ev.target.matches("[data-select-player]")){
   const id=ev.target.getAttribute("data-select-player");
-  if(ev.target.checked&&!state.draft.selected.includes(id))state.draft.selected.push(id);
-  if(!ev.target.checked)state.draft.selected=state.draft.selected.filter(function(x){return x!==id});
-  const count=document.getElementById("selectedPlayersCount");
-  if(count)count.textContent=state.draft.selected.length;
-  save();
+  if(ev.target.checked){
+   if(!state.draft.selected.includes(id))state.draft.selected.push(id);
+   save();render();
+   if(pamIsFixedPairsDraft())setTimeout(function(){pamAskFixedPairRegistration(id)},60);
+  }else{
+   pamRemovePairRegistration(id);
+   state.draft.selected=state.draft.selected.filter(function(x){return x!==id});
+   save();render();
+  }
+  return;
  }
  if(ev.target.matches("[data-payment]")){
   const e=currentEvent(),id=ev.target.getAttribute("data-payment"),field=ev.target.getAttribute("data-pay-field");
@@ -3610,7 +3740,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=4.0.0",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=4.1.0",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
