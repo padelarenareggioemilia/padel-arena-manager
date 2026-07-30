@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 3.4.1.1</title>
+<title>Padel Arena Manager 4.0.1</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1035,6 +1035,82 @@ body{background:linear-gradient(180deg,#07101d,#0b1729)!important;color:#f8fafc!
  .pam-player-choice-actions button{flex:1}
 }
 
+
+/* PADEL ARENA MANAGER 4.0 — IDENTITÀ PRINCIPALE + TEMI CLUB */
+:root{
+ --club-accent:#9DFF25;
+ --club-accent2:#16A8FF;
+ --club-bg:#07111F;
+}
+body{
+ background:
+  radial-gradient(circle at 85% 0%,color-mix(in srgb,var(--club-accent2) 16%,transparent),transparent 30%),
+  radial-gradient(circle at 0% 35%,color-mix(in srgb,var(--club-accent) 10%,transparent),transparent 35%),
+  linear-gradient(180deg,#06101D,var(--club-bg))!important;
+}
+.pam-main-header{
+ position:relative;
+ overflow:hidden;
+ padding:12px;
+ border:1px solid color-mix(in srgb,var(--club-accent) 44%,#294262);
+ border-radius:20px;
+ background:linear-gradient(135deg,#07111F 55%,color-mix(in srgb,var(--club-bg) 84%,var(--club-accent2)));
+ box-shadow:0 14px 36px rgba(0,0,0,.28);
+}
+.pam-main-header:after{
+ content:"";
+ position:absolute;
+ inset:auto -60px -90px auto;
+ width:220px;height:220px;border-radius:50%;
+ border:2px solid color-mix(in srgb,var(--club-accent) 42%,transparent);
+ opacity:.45;
+}
+.pam-master-logo{width:62px!important;height:62px!important;border-radius:17px!important;object-fit:cover!important;border:1px solid #315271}
+.pam-header-actions,.pam-host-mini{position:relative;z-index:2}
+.pam-host-mini{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid color-mix(in srgb,var(--club-accent) 40%,#304861)}
+.pam-host-mini span{font-size:10px;text-transform:uppercase;color:#9fb2c8}
+.pam-host-mini img{width:36px;height:36px;object-fit:contain;background:#fff;border-radius:9px;padding:3px}
+.pam-host-mini b{font-size:12px;max-width:130px}
+.primary,.action:hover,.tab.active{background:var(--club-accent)!important}
+.secondary{border-color:color-mix(in srgb,var(--club-accent2) 75%,#315271)!important}
+.badge,.pill{border-color:var(--club-accent)!important;color:var(--club-accent)!important}
+.card{border-color:color-mix(in srgb,var(--club-accent2) 35%,#2B4267)}
+.pam-brand-hero{display:grid;grid-template-columns:minmax(180px,32%) 1fr;gap:22px;align-items:center;background:linear-gradient(135deg,#081426,#102741)}
+.pam-brand-hero>img{width:100%;max-width:260px;border-radius:24px;box-shadow:0 18px 50px rgba(0,0,0,.36)}
+.pam-brand-hero h2{font-size:clamp(24px,5vw,42px);line-height:1.02}
+.pam-eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;color:#9DFF25}
+.pam-secondary-brands img{opacity:.78;filter:saturate(.86);transition:.2s}
+.pam-secondary-brands img:hover{opacity:1;filter:none;transform:translateY(-2px)}
+nav{background:linear-gradient(180deg,#07111F,#050B14)!important;border-top-color:color-mix(in srgb,var(--club-accent2) 35%,#243B5A)!important}
+nav button[data-view]{color:#B9C8DA}
+nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent)}
+.print-master-brand,.print-host-brand{display:none}
+.footer-master{display:flex;align-items:center;gap:8px}
+.footer-master img{width:34px;height:34px;border-radius:7px}
+@media(max-width:760px){
+ .pam-main-header{align-items:flex-start;flex-wrap:wrap}
+ .pam-host-mini{order:3;width:100%}
+ .pam-header-actions{margin-left:auto}
+ .pam-brand-hero{grid-template-columns:1fr;text-align:center}
+ .pam-brand-hero>img{margin:auto;max-width:220px}
+}
+@media print{
+ .print-event-hero{border-top:10px solid var(--event-accent)!important;background:#fff!important}
+ .print-master-brand{display:flex;align-items:center;gap:12px;border-bottom:1px solid #cbd5e1;padding-bottom:9px;margin-bottom:12px}
+ .print-master-brand img{width:66px;height:66px;border-radius:12px}
+ .print-master-brand div{display:flex;flex-direction:column}
+ .print-master-brand b{font-size:20px;color:#07111F}
+ .print-master-brand span{font-size:9px;letter-spacing:.18em;color:#475569}
+ .print-event-main{grid-template-columns:150px 1fr!important}
+ .print-host-brand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;background:#f8fafc;border:1px solid #cbd5e1}
+ .print-host-brand span{font-size:8px;color:#64748b}
+ .print-host-brand img{max-width:120px;max-height:75px;object-fit:contain}
+ .print-host-brand b{font-size:10px;text-align:center;color:#111827}
+ .print-event-title{color:#111827!important}
+ .print-kicker{color:var(--event-accent)!important}
+ .print-event-footer{border-top:3px solid var(--event-accent)!important}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1219,18 +1295,58 @@ const SEEDED_PLAYERS=[
 
 
 const CLUBS={
+ "Padel Arena Manager":{
+  name:"Padel Arena Manager",
+  address:"",
+  logo:"assets/padel-arena-manager-logo.jpg",
+  accent:"#9DFF25",
+  accent2:"#16A8FF",
+  background:"#07111F",
+  courts:["Campo 1","Campo 2"]
+ },
+ "Padel Arena":{
+  name:"Padel Arena",
+  address:"Reggio Emilia",
+  logo:"assets/padel-arena-reggio-emilia.jpeg",
+  accent:"#16A8FF",
+  accent2:"#9DFF25",
+  background:"#07111F",
+  courts:["Campo 1","Campo 2"]
+ },
  "Eden Padel Club":{
   name:"Eden Padel Club",
   address:"Via Giacomo Balla 6, Reggio Emilia",
   logo:"assets/eden-padel-club.jpeg",
-  accent:"#c91624",
+  accent:"#D91F2A",
+  accent2:"#FF6973",
+  background:"#1A0B10",
   courts:["Campo Blu","Campo Verde"]
  },
  "Happy Time Padel":{
   name:"Happy Time Padel",
   address:"Via Coppi 1/B, Castellarano (RE)",
   logo:"assets/happy-time-padel.jpeg",
-  accent:"#ef476f",
+  accent:"#F04B86",
+  accent2:"#FF9D24",
+  background:"#20101D",
+  courts:["Campo 1","Campo 2"]
+ },
+ "AICS":{
+  name:"AICS",
+  address:"",
+  logo:"assets/aics.jpeg",
+  accent:"#174EA6",
+  accent2:"#00A94F",
+  background:"#07152A",
+  courts:["Campo 1","Campo 2"]
+ },
+ "CUPRA":{
+  name:"CUPRA",
+  address:"",
+  logo:"assets/cupra-symbol.jpeg",
+  accent:"#8E5CFF",
+  accent2:"#C6FF2D",
+  background:"#130D29",
   courts:["Campo 1","Campo 2"]
  }
 };
@@ -1239,7 +1355,7 @@ const ORGANIZERS=[
  {name:"AICS",logo:"assets/aics.jpeg"}
 ];
 function clubInfo(name){
- return CLUBS[name]||{name:name||"Club da definire",address:"",logo:"assets/padel-arena-reggio-emilia.jpeg",accent:"#0b5f8a",courts:[]};
+ return CLUBS[name]||{name:name||"Club o ente da definire",address:"",logo:"assets/padel-arena-manager-logo.jpg",accent:"#9DFF25",accent2:"#16A8FF",background:"#07111F",courts:[]};
 }
 function prettyDate(value){
  if(!value)return "";
@@ -1251,9 +1367,10 @@ function eventPrintBranding(e){
  if(!e)return "";
  const c=clubInfo(e.club);
  const courts=Number(e.courts||1);
- return '<section class="print-event-hero">'+
+ return '<section class="print-event-hero" style="--event-accent:'+esc(c.accent)+';--event-accent2:'+esc(c.accent2||c.accent)+'">'+
+  '<div class="print-master-brand"><img src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager"><div><b>PADEL ARENA MANAGER</b><span>TOURNAMENT MANAGEMENT SYSTEM</span></div></div>'+
   '<div class="print-event-main">'+
-   '<img class="print-club-logo" src="'+esc(e.logoUrl||c.logo)+'" alt="'+esc(e.name)+'">'+
+   '<div class="print-host-brand"><span>CLUB / ENTE OSPITANTE</span><img class="print-club-logo" src="'+esc(e.logoUrl||c.logo)+'" alt="'+esc(c.name)+'"><b>'+esc(c.name)+'</b></div>'+
    '<div class="print-event-copy"><div class="print-kicker">PROGRAMMA UFFICIALE</div>'+
     '<div class="print-event-title">'+esc(e.name)+'</div>'+
     '<div class="print-event-meta">'+
@@ -1264,25 +1381,20 @@ function eventPrintBranding(e){
     '</div>'+
     '<div class="print-address">'+esc(c.address)+'</div>'+
    '</div>'+
-   '<div></div>'+
-  '</div>'+
-  '<div class="print-organizers"><span>Organizzato da</span>'+
-   ORGANIZERS.map(function(o){return '<img src="'+esc(o.logo)+'" alt="'+esc(o.name)+'">'}).join("")+
   '</div>'+
  '</section>';
 }
 function printFooter(e){
  if(!e)return "";
  const c=clubInfo(e.club);
- return '<footer class="print-event-footer">'+
+ return '<footer class="print-event-footer" style="border-top-color:'+esc(c.accent)+'">'+
+  '<div class="footer-master"><img src="assets/padel-arena-manager-logo.jpg"><span><b>PADEL ARENA MANAGER</b><br>Programma ufficiale</span></div>'+
   '<div><b>'+esc(c.name)+'</b><br>'+esc(c.address)+'</div>'+
-  '<div class="footer-center">PADEL ARENA MANAGER<br><b>PROGRAMMA UFFICIALE</b></div>'+
   '<div class="footer-right">Info eventi<br><b>327 691 0287</b></div>'+
  '</footer>';
 }
-
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 3.4.1 · correzione partecipanti</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 4.0 · identità dinamica</div>';
 }
 
 function iphoneInstallCard(){
@@ -1847,18 +1959,38 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.4.1 · Supabase online</span></div></div>';
+ const c=e?clubInfo(e.club):null;
+ return eventPrintBranding(e)+
+ '<div class="top pam-main-header">'+
+  '<div class="brand">'+
+   '<img class="app-brand-logo pam-master-logo" src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
+   '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
+  '</div>'+
+  (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.0 · Supabase online</span></div>'+
+ '</div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
 }
 function home(){
- return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneVersionBanner()+iphoneInstallCard()+
- '<div class="card"><h2>Padel Arena Manager 3.4.1</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
+ return header("Padel Arena Manager","Tournament Management System")+iphoneVersionBanner()+iphoneInstallCard()+
+ '<section class="card pam-brand-hero">'+
+  '<img src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
+  '<div><span class="pam-eyebrow">GESTIONE TORNEI · CLOUD · MULTI-CLUB</span><h2>Un’unica identità. Ogni torneo con il carattere del suo club.</h2>'+
+  '<div class="muted">L’interfaccia usa sempre il marchio Padel Arena Manager. Quando scegli un club o un ente, colori e logo vengono ripresi in forma secondaria nel torneo e nei PDF.</div></div>'+
+ '</section>'+
+ '<div class="card"><h2>Club ed enti configurati</h2><div class="organizer-strip pam-secondary-brands">'+
+  '<img src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena">'+
+  '<img src="assets/eden-padel-club.jpeg" alt="Eden">'+
+  '<img src="assets/happy-time-padel.jpeg" alt="Happy Time">'+
+  '<img src="assets/aics.jpeg" alt="AICS">'+
+  '<img src="assets/cupra-symbol.jpeg" alt="CUPRA">'+
+ '</div></div>'+
  '<div class="grid">'+
- '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
- '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Seleziona giocatori già esistenti</span></button>'+
- '<button class="action" data-view="events">📂<b>Competizioni salvate</b><span>Riapri risultati e classifiche</span></button>'+
+  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
+  '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Scegli club, ente, formato e partecipanti</span></button>'+
+  '<button class="action" data-view="events">📂<b>Competizioni salvate</b><span>Apri risultati, classifiche e PDF</span></button>'+
  '</div>';
 }
 function playersView(){
@@ -3442,9 +3574,31 @@ document.addEventListener("change",function(ev){
   e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};e.ledger[id][field]=Math.max(0,Number(ev.target.value)||0);save();render();
  }
 });
+
+function pamActiveBrand(){
+ if(state.view==="event"){
+  const e=currentEvent();
+  return clubInfo(e&&e.club);
+ }
+ if(state.view==="new")return clubInfo(state.draft&&state.draft.club);
+ return clubInfo("Padel Arena Manager");
+}
+function pamApplyDynamicTheme(){
+ const c=pamActiveBrand();
+ const root=document.documentElement;
+ root.style.setProperty("--club-accent",c.accent||"#9DFF25");
+ root.style.setProperty("--club-accent2",c.accent2||"#16A8FF");
+ root.style.setProperty("--club-bg",c.background||"#07111F");
+ root.style.setProperty("--accent",c.accent||"#9DFF25");
+ const meta=document.querySelector('meta[name="theme-color"]');
+ if(meta)meta.setAttribute("content",c.background||"#07111F");
+ document.body.dataset.club=(c.name||"").toLowerCase().replace(/\s+/g,"-");
+}
+
 function render(){
  let body=state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
+ pamApplyDynamicTheme();
 }
 const pamOriginalRender=render;
 render=function(){
@@ -3456,7 +3610,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=3.4.1",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=4.0.0",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

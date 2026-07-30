@@ -112,3 +112,14 @@ VERSIONE 3.4.1
 - Corretta la sostituzione con giocatore esistente o nuovo.
 - Aggiunto conteggio live dei partecipanti selezionati nel modal.
 - Messaggio di errore più chiaro quando il numero di partecipanti non è valido.
+
+
+VERSIONE 4.0 - IDENTITÀ DINAMICA
+- Unico marchio principale: Padel Arena Manager.
+- Nuovo logo come icona iPhone, icona PWA, intestazione e PDF.
+- Tema base blu notte, blu elettrico, verde fluo e bianco.
+- Club ed enti mostrati soltanto in forma secondaria.
+- Colori dinamici per Padel Arena, Eden, Happy Time, AICS e CUPRA.
+- Quando si apre o si crea un torneo, l'interfaccia riprende il colore del club/ente.
+- PDF con logo Padel Arena Manager dominante e logo del club ospitante secondario.
+- Home riprogettata con identità software professionale.
