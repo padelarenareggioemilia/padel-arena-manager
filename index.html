@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 4.0.1</title>
+<title>Padel Arena Manager 5.0 Preview</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1180,6 +1180,31 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 .pam-status-waitlist{background:#1e3a8a}
 @media(max-width:700px){.pam-request-actions{width:100%;display:grid;grid-template-columns:1fr}.pam-registration-row{align-items:stretch}}
 
+
+
+/* VERSIONE 5.0 PREVIEW — DESIGN FEDELE AL LOGO */
+:root{--pam-navy:#06111f;--pam-blue:#16a8ff;--pam-green:#9dff25;--pam-white:#f8fafc;--pam-slate:#10233b}
+.pam-v5-shell{display:grid;gap:16px}
+.pam-v5-welcome{position:relative;overflow:hidden;display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:center;min-height:230px;padding:24px;background:radial-gradient(circle at 85% 20%,rgba(157,255,37,.17),transparent 28%),radial-gradient(circle at 20% 0%,rgba(22,168,255,.24),transparent 38%),linear-gradient(135deg,#07111f,#0d2844);border:1px solid #285078;border-radius:26px}
+.pam-v5-welcome:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;border:2px solid rgba(22,168,255,.2);right:-100px;bottom:-160px}
+.pam-v5-welcome-logo{width:145px;height:145px;border-radius:30px;object-fit:cover;box-shadow:0 20px 55px rgba(0,0,0,.45);position:relative;z-index:2}
+.pam-v5-kicker{font-size:11px;font-weight:950;letter-spacing:.2em;color:var(--pam-green);text-transform:uppercase}
+.pam-v5-welcome h2{font-size:clamp(30px,6vw,50px);line-height:.98;margin:8px 0 12px;letter-spacing:-.04em}
+.pam-v5-welcome p{max-width:650px;margin:0;color:#bfd0e2;font-size:15px}
+.pam-v5-status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pam-v5-stat{position:relative;overflow:hidden;min-height:118px;padding:17px;border-radius:20px;background:linear-gradient(145deg,#10243d,#0a1829);border:1px solid #27496c}
+.pam-v5-stat:after{content:"";position:absolute;width:80px;height:80px;border-radius:50%;right:-35px;bottom:-35px;background:rgba(22,168,255,.12)}
+.pam-v5-stat b{display:block;font-size:31px;line-height:1;color:#fff;margin:8px 0}.pam-v5-stat span{color:#a9bdd2;font-size:12px;font-weight:800}.pam-v5-stat i{font-style:normal;font-size:21px}
+.pam-v5-actions{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:12px}
+.pam-v5-action{border:1px solid #2b5278;border-radius:21px;background:#0d2037;color:#fff;padding:18px;min-height:134px;text-align:left;transition:.2s}.pam-v5-action:hover{transform:translateY(-2px);border-color:var(--pam-blue);box-shadow:0 14px 32px rgba(0,0,0,.22)}
+.pam-v5-action.primary-tile{background:linear-gradient(135deg,#0e5780,#0d2037 65%);border-color:#16a8ff}.pam-v5-action strong{display:block;font-size:18px;margin-top:15px}.pam-v5-action small{display:block;margin-top:4px}.pam-v5-action .tile-icon{font-size:27px}
+.pam-v5-section-title{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:12px}.pam-v5-section-title h2{margin:0}.pam-v5-section-title small{color:#9fb2c8}
+.pam-v5-campaign{padding:22px;border-radius:25px;border:1px solid #32597b;background:radial-gradient(circle at 90% 20%,rgba(157,255,37,.13),transparent 25%),linear-gradient(145deg,#0d2139,#07111f)}
+.pam-v5-campaign-head{display:grid;grid-template-columns:110px 1fr auto;gap:18px;align-items:center}.pam-v5-campaign-head img{width:110px;height:78px;object-fit:contain;background:white;border-radius:16px;padding:8px}.pam-v5-campaign-head h2{margin:0 0 4px;font-size:25px}.pam-v5-progress{height:11px;border-radius:99px;background:#05101d;overflow:hidden;margin:18px 0 8px;border:1px solid #24415f}.pam-v5-progress>span{display:block;height:100%;width:65%;background:linear-gradient(90deg,var(--pam-blue),var(--pam-green));border-radius:99px}.pam-v5-badge{padding:8px 12px;border-radius:999px;background:rgba(157,255,37,.12);border:1px solid rgba(157,255,37,.45);color:var(--pam-green);font-size:12px;font-weight:900}
+.pam-v5-club-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.pam-v5-club{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;padding:14px;background:#0a192b;border:1px solid #294765;border-radius:18px}.pam-v5-club img{width:64px;height:54px;object-fit:contain;background:#fff;border-radius:12px;padding:5px}.pam-v5-club b{display:block}.pam-v5-club small{display:block;margin-top:4px}
+.pam-champ-toolbar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.pam-champ-title{display:flex;align-items:center;gap:16px}.pam-champ-title img{width:105px;height:70px;object-fit:contain;background:#fff;border-radius:15px;padding:7px}.pam-champ-metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.pam-champ-metric{padding:14px;border-radius:17px;background:#0a1a2c;border:1px solid #294969;text-align:center}.pam-champ-metric b{display:block;font-size:25px;color:#fff}.pam-champ-metric span{font-size:11px;color:#a9bdd1}.pam-team-status{display:grid;grid-template-columns:1.4fr .7fr .7fr .8fr auto;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #294262}.pam-team-status:last-child{border-bottom:0}.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:7px}.status-ok{background:#9dff25}.status-warn{background:#facc15}.status-off{background:#fb7185}
+@media(max-width:760px){.pam-v5-welcome{grid-template-columns:1fr;text-align:center}.pam-v5-welcome-logo{margin:auto;width:125px;height:125px}.pam-v5-status-grid{grid-template-columns:1fr 1fr}.pam-v5-actions{grid-template-columns:1fr 1fr}.pam-v5-campaign-head{grid-template-columns:82px 1fr}.pam-v5-campaign-head img{width:82px}.pam-v5-campaign-head .pam-v5-badge{grid-column:1/-1;text-align:center}.pam-v5-club-grid{grid-template-columns:1fr}.pam-champ-metrics{grid-template-columns:repeat(2,1fr)}.pam-team-status{grid-template-columns:1fr 1fr}.pam-team-status button{grid-column:1/-1}.pam-champ-toolbar{grid-template-columns:1fr}.pam-champ-title{align-items:flex-start}}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2186,30 +2211,59 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v4.3.1 · Supabase online</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v5.0 · Preview grafica</span></div>'+
  '</div>';
 }
 function nav(){
- return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
+ return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
 }
 function home(){
- return header("Padel Arena Manager","Tournament Management System")+iphoneVersionBanner()+iphoneInstallCard()+
- '<section class="card pam-brand-hero">'+
-  '<img src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
-  '<div><span class="pam-eyebrow">GESTIONE TORNEI · CLOUD · MULTI-CLUB</span><h2>Un’unica identità. Ogni torneo con il carattere del suo club.</h2>'+
-  '<div class="muted">L’interfaccia usa sempre il marchio Padel Arena Manager. Quando scegli un club o un ente, colori e logo vengono ripresi in forma secondaria nel torneo e nei PDF.</div></div>'+
- '</section>'+
- '<div class="card"><h2>Club ed enti configurati</h2><div class="organizer-strip pam-secondary-brands">'+
-  '<img src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena">'+
-  '<img src="assets/eden-padel-club.jpeg" alt="Eden">'+
-  '<img src="assets/happy-time-padel.jpeg" alt="Happy Time">'+
-  '<img src="assets/aics.jpeg" alt="AICS">'+
-  '<img src="assets/cupra-symbol.jpeg" alt="CUPRA">'+
- '</div></div>'+
- '<div class="grid">'+
-  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
-  '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Scegli club, ente, formato e partecipanti</span></button>'+
-  '<button class="action" data-view="events">📂<b>Competizioni salvate</b><span>Apri risultati, classifiche e PDF</span></button>'+
+ const playerCount=state.players.length;
+ const eventCount=state.events.length;
+ return header("Padel Arena Manager","Sport Management Platform")+iphoneVersionBanner()+iphoneInstallCard()+
+ '<div class="pam-v5-shell">'+
+  '<section class="pam-v5-welcome">'+
+   '<img class="pam-v5-welcome-logo" src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
+   '<div><span class="pam-v5-kicker">PADEL · TECNOLOGIA · ORGANIZZAZIONE</span><h2>Buonasera Francesco.</h2><p>Gestisci tornei, campionati, club e giocatori da un’unica applicazione, con l’identità blu notte, blu elettrico e verde fluo del logo.</p></div>'+
+  '</section>'+
+  '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Dati disponibili sul dispositivo</small></div><div class="pam-v5-status-grid">'+
+   '<div class="pam-v5-stat"><i>🎾</i><b>'+eventCount+'</b><span>TORNEI SALVATI</span></div>'+
+   '<div class="pam-v5-stat"><i>🏆</i><b>29</b><span>SQUADRE ISCRITTE</span></div>'+
+   '<div class="pam-v5-stat"><i>🏟️</i><b>18</b><span>CLUB COINVOLTI</span></div>'+
+   '<div class="pam-v5-stat"><i>👥</i><b>'+playerCount+'</b><span>GIOCATORI IN ARCHIVIO</span></div>'+
+  '</div></section>'+
+  '<section><div class="pam-v5-section-title"><h2>Accesso rapido</h2><small>Le funzioni che utilizzi di più</small></div><div class="pam-v5-actions">'+
+   '<button class="pam-v5-action primary-tile" data-view="championship"><span class="tile-icon">🏆</span><strong>AICS Championship 2027</strong><small>Squadre, club, rose e documenti</small></button>'+
+   '<button class="pam-v5-action" data-view="events"><span class="tile-icon">🎾</span><strong>Tornei</strong><small>Partite, risultati e classifiche</small></button>'+
+   '<button class="pam-v5-action" data-view="players"><span class="tile-icon">👥</span><strong>Giocatori</strong><small>Anagrafica unica online</small></button>'+
+   '<button class="pam-v5-action" data-view="new"><span class="tile-icon">＋</span><strong>Nuovo evento</strong><small>Crea una competizione</small></button>'+
+  '</div></section>'+
+  '<section class="pam-v5-campaign">'+
+   '<div class="pam-v5-campaign-head"><img src="assets/aics.jpeg" alt="AICS"><div><span class="pam-v5-kicker">CAMPIONATO IN PREPARAZIONE</span><h2>AICS PADEL CHAMPIONSHIP 2027</h2><div class="muted">Iscrizioni squadre e organizzazione della nuova stagione</div></div><span class="pam-v5-badge">65% COMPLETATO</span></div>'+
+   '<div class="pam-v5-progress"><span></span></div><div class="muted">Prossima fase: raccolta delle rose dei giocatori nell’ultima settimana di agosto.</div>'+
+  '</section>'+
+  '<section><div class="pam-v5-section-title"><h2>Club ed enti</h2><small>Identità secondarie, marchio software sempre dominante</small></div><div class="pam-v5-club-grid">'+
+   '<div class="pam-v5-club"><img src="assets/eden-padel-club.jpeg"><div><b>Eden Padel Club</b><small>Accento rosso</small></div></div>'+
+   '<div class="pam-v5-club"><img src="assets/happy-time-padel.jpeg"><div><b>Happy Time</b><small>Accento multicolore</small></div></div>'+
+   '<div class="pam-v5-club"><img src="assets/cupra-symbol.jpeg"><div><b>CUPRA</b><small>Accento viola</small></div></div>'+
+  '</div></section>'+
+ '</div>';
+}
+function championshipView(){
+ return header("AICS Padel Championship 2027","Gestione campionato")+
+ '<div class="pam-v5-shell">'+
+  '<section class="card pam-champ-toolbar"><div class="pam-champ-title"><img src="assets/aics.jpeg"><div><span class="pam-v5-kicker">STAGIONE 2027</span><h2>AICS PADEL CHAMPIONSHIP</h2><div class="muted">Pannello organizzativo centrale</div></div></div><button class="primary" style="width:auto" data-view="home">Torna alla Home</button></section>'+
+  '<section class="pam-v5-campaign"><div class="pam-v5-section-title"><div><span class="pam-v5-kicker">AVANZAMENTO CAMPIONATO</span><h2>Preparazione in corso</h2></div><span class="pam-v5-badge">65%</span></div><div class="pam-v5-progress"><span></span></div><div class="muted">Iscrizioni squadre quasi concluse. Le rose verranno richieste a fine agosto.</div></section>'+
+  '<section class="pam-champ-metrics">'+
+   '<div class="pam-champ-metric"><b>18</b><span>CLUB</span></div><div class="pam-champ-metric"><b>29</b><span>SQUADRE</span></div><div class="pam-champ-metric"><b>0</b><span>GIOCATORI</span></div><div class="pam-champ-metric"><b>48</b><span>PREISCRIZIONI</span></div><div class="pam-champ-metric"><b>12</b><span>AFFILIAZIONI</span></div><div class="pam-champ-metric"><b>0</b><span>ROSE RICEVUTE</span></div>'+
+  '</section>'+
+  '<section class="card"><div class="pam-v5-section-title"><h2>Stato squadre</h2><small>Anteprima della futura gestione</small></div>'+
+   '<div class="pam-team-status"><b><span class="status-dot status-ok"></span>Eden Padel Academy</b><span>Serie C</span><span>Iscritta</span><span class="muted">Rosa da richiedere</span><button class="small">Apri</button></div>'+
+   '<div class="pam-team-status"><b><span class="status-dot status-ok"></span>B&amp;B Team</b><span>Serie A</span><span>Iscritta</span><span class="muted">Rosa da richiedere</span><button class="small">Apri</button></div>'+
+   '<div class="pam-team-status"><b><span class="status-dot status-warn"></span>Happy Time</b><span>Da definire</span><span>Verifica</span><span class="muted">Dati incompleti</span><button class="small">Apri</button></div>'+
+   '<div class="pam-team-status"><b><span class="status-dot status-off"></span>Nuova squadra</b><span>—</span><span>Bozza</span><span class="muted">Iscrizione non inviata</span><button class="small">Apri</button></div>'+
+  '</section>'+
+  '<section class="pam-v5-actions"><button class="pam-v5-action primary-tile"><span class="tile-icon">🏟️</span><strong>Club</strong><small>Anagrafiche e affiliazioni</small></button><button class="pam-v5-action"><span class="tile-icon">👥</span><strong>Squadre</strong><small>Iscrizioni e categorie</small></button><button class="pam-v5-action"><span class="tile-icon">📋</span><strong>Rose</strong><small>Giocatori e approvazioni</small></button><button class="pam-v5-action"><span class="tile-icon">📄</span><strong>Documenti</strong><small>Tessere e certificati</small></button></section>'+
  '</div>';
 }
 function playersView(){
@@ -4228,7 +4282,7 @@ function pamApplyDynamicTheme(){
 }
 
 function render(){
- let body=state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ let body=state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
  pamApplyDynamicTheme();
 }
@@ -4242,7 +4296,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=4.3.1",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=5.0-preview",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
