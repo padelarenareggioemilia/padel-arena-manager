@@ -91,3 +91,15 @@ VERSIONE 3.3.2
 - Corretta la duplicazione: ogni copia riceve un link diverso.
 - Upsert Supabase configurato per non trasformare campi mancanti in NULL.
 - La dicitura OFFLINE diventa NON SINCRONIZZATO quando il database non risponde.
+
+
+VERSIONE 3.4
+- Nuova anagrafica rapida direttamente nella creazione del torneo.
+- Nuova anagrafica rapida nella gestione partecipanti di un torneo esistente.
+- Il nuovo giocatore viene salvato anche nell'anagrafica generale.
+- Pulsante Sostituisci per ogni partecipante già selezionato.
+- Sostituzione con un giocatore già esistente.
+- Sostituzione creando contestualmente una nuova anagrafica.
+- Controllo duplicati per nome e cognome.
+- Nei tornei esistenti, dopo la sostituzione occorre confermare la rigenerazione
+  delle partite per applicare il nuovo elenco partecipanti.

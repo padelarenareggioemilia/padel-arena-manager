@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 3.3.2.1</title>
+<title>Padel Arena Manager 3.4.1</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1007,6 +1007,34 @@ body{background:linear-gradient(180deg,#07101d,#0b1729)!important;color:#f8fafc!
  }
 }
 
+
+/* VERSIONE 3.4 - ANAGRAFICA RAPIDA E SOSTITUZIONE */
+.pam-inline-create{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:10px}
+.pam-inline-create .field{margin-bottom:0}
+.pam-inline-create .primary{width:auto;min-width:220px}
+.pam-select-player-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important}
+.pam-player-select-main{display:flex;align-items:center;gap:9px;margin:0;color:inherit}
+.pam-player-select-main input{width:auto}
+.pam-replace-inline{align-self:center}
+.pam-player-choice-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.pam-quick-player-card{max-width:700px}
+.pam-replace-actions{margin:12px 0}
+.pam-replacement-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:55vh;overflow:auto}
+.pam-replacement-row{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;text-align:left;border:1px solid #315271;background:#081829;color:#fff;border-radius:14px;padding:10px}
+.pam-replacement-row img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#fff}
+.pam-replacement-row span{display:flex;flex-direction:column}
+.pam-replacement-row small{color:#b9c9dc}
+@media(max-width:700px){
+ .pam-inline-create{grid-template-columns:1fr}
+ .pam-inline-create .primary{width:100%;min-width:0}
+ .pam-replacement-list{grid-template-columns:1fr}
+ .pam-select-player-row{grid-template-columns:1fr!important}
+ .pam-replace-inline{width:100%}
+ .pam-player-choice{grid-template-columns:auto 44px minmax(0,1fr)!important}
+ .pam-player-choice-actions{grid-column:1/-1;justify-content:stretch}
+ .pam-player-choice-actions button{flex:1}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1254,7 +1282,7 @@ function printFooter(e){
 }
 
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 3.3.2 · correzione sincronizzazione</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 3.4 · anagrafica rapida e sostituzioni</div>';
 }
 
 function iphoneInstallCard(){
@@ -1689,17 +1717,19 @@ function pamTournamentPlayersModal(id){
  overlay.className="pam-modal-overlay";
  const selected=new Set(e.playerIds||[]);
  const rows=state.players.slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).map(function(p){
-  return '<label class="pam-player-choice">'+
+  return '<div class="pam-player-choice">'+
    '<input type="checkbox" data-tournament-player="'+p.id+'" '+(selected.has(p.id)?"checked":"")+'>'+
    '<img src="'+esc(pamPlayerPhoto(p))+'" alt="">'+
    '<span><b>'+esc(playerName(p))+'</b><small>'+(p.gender?esc(p.gender):"")+'</small></span>'+
-   '<button type="button" class="small" data-rename-tournament-player="'+p.id+'">Rinomina</button>'+
-  '</label>';
+   '<div class="pam-player-choice-actions"><button type="button" class="small" data-rename-tournament-player="'+p.id+'">Rinomina</button>'+
+   (selected.has(p.id)?'<button type="button" class="small" data-replace-existing-event-player="'+p.id+'" data-event-id="'+e.id+'">Sostituisci</button>':'')+
+   '</div></div>';
  }).join("");
  overlay.innerHTML='<div class="pam-modal-card">'+
   '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Aggiungi, togli o rinomina i giocatori. Poi rigenera le partite.</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
   '<div class="notice error"><b>Attenzione:</b> rigenerando le partite verranno cancellati risultati, timer e fasi finali già compilate. I saldi generali dei giocatori non vengono cancellati.</div>'+
-  '<div class="field"><label>Cerca giocatore</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome o cognome"></div>'+
+  '<div class="pam-inline-create"><div class="field"><label>Cerca giocatore</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome o cognome"></div>'+
+  '<button class="primary" data-quick-player-existing-event="'+id+'">➕ Nuova anagrafica e inserisci</button></div>'+
   '<div class="pam-player-choice-list">'+rows+'</div>'+
   '<div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+id+'">Salva partecipanti e rigenera partite</button></div>'+
  '</div>';
@@ -1810,14 +1840,14 @@ function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
- return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.3.2 · Supabase online</span></div></div>';
+ return eventPrintBranding(e)+'<div class="top"><div class="brand"><img class="app-brand-logo" src="assets/padel-arena-reggio-emilia.jpeg" alt="Padel Arena Reggio Emilia"><div><h1>'+esc(title)+'</h1><small>'+esc(sub||"")+'</small></div></div><div class="print-hide" style="display:flex;gap:8px;align-items:center"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v3.4 · Supabase online</span></div></div>';
 }
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="players">👥<br>Giocatori</button><button data-view="new">＋<br>Nuova</button><button data-view="events">🏆<br>Eventi</button></div></nav>';
 }
 function home(){
  return header("Padel Arena Manager","Anagrafica, tornei, risultati e gettoni")+iphoneVersionBanner()+iphoneInstallCard()+
- '<div class="card"><h2>Padel Arena Manager 3.3.2</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
+ '<div class="card"><h2>Padel Arena Manager 3.4</h2><div class="muted">Eventi organizzati da <b>Padel Arena Reggio Emilia</b> e <b>AICS</b>, presso Eden Padel Club e Happy Time Padel.</div><div class="organizer-strip"><img src="assets/padel-arena-reggio-emilia.jpeg"><img src="assets/aics.jpeg"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"></div></div><div class="notice success"><b>Nuovo:</b> lista pagamenti reception in PDF, Rodeo semplice con incroci e prima struttura per tornei a coppie fisse con gironi configurabili.</div><div class="notice success"><b>Gettoni maschile aggiornati:</b> Verzini 13 · Gianferrari 36 · Negretti 11 · Aubry 15 · Balia 35 · Lignola 9 · Marcel 18 · Neri 9 · Fontanesi 16 · Vecchi 3.</div>'+
  '<div class="grid">'+
  '<button class="action" data-view="players">👤<b>Anagrafica clienti</b><span>Crea e gestisci i giocatori</span></button>'+
  '<button class="action" data-view="new">🏆<b>Nuova competizione</b><span>Seleziona giocatori già esistenti</span></button>'+
@@ -1864,6 +1894,127 @@ function savePlayer(){
   alert("Impossibile generare le partite: "+e.message);
  }
 }
+
+let pamQuickPlayerContext=null;
+
+function pamOpenQuickPlayer(context){
+ if(!pamIsAdmin())return;
+ pamQuickPlayerContext=context||{};
+ document.getElementById("pamQuickPlayerOverlay")?.remove();
+ const category=(context&&context.category)||state.draft.category||"Maschile";
+ const overlay=document.createElement("div");
+ overlay.id="pamQuickPlayerOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card pam-quick-player-card">'+
+  '<div class="pam-modal-head"><div><h2>Nuova anagrafica rapida</h2><div class="muted">Il giocatore sarà salvato nell’anagrafica generale e inserito direttamente nel torneo.</div></div><button class="secondary" data-close-quick-player>Chiudi</button></div>'+
+  '<div id="pamQuickPlayerMessage"></div>'+
+  '<div class="row"><div class="field"><label>Nome *</label><input id="pamQuickFirst" autocomplete="off"></div><div class="field"><label>Cognome *</label><input id="pamQuickLast" autocomplete="off"></div></div>'+
+  '<div class="row"><div class="field"><label>Telefono</label><input id="pamQuickPhone" inputmode="tel"></div><div class="field"><label>Email</label><input id="pamQuickEmail" type="email"></div></div>'+
+  '<div class="row"><div class="field"><label>Categoria</label><select id="pamQuickGender"><option '+(category==="Maschile"?"selected":"")+'>Maschile</option><option '+(category==="Femminile"?"selected":"")+'>Femminile</option></select></div><div class="field"><label>Saldo gettoni</label><input id="pamQuickTokens" type="number" min="0" value="0"></div></div>'+
+  '<div class="row"><div class="field"><label>Livello</label><input id="pamQuickLevel" placeholder="Es. principiante, NC, 4ª"></div><div class="field"><label>Comune</label><input id="pamQuickTown"></div></div>'+
+  '<button class="primary" data-save-quick-player>Salva e inserisci nel torneo</button>'+
+ '</div>';
+ document.body.appendChild(overlay);
+ setTimeout(function(){document.getElementById("pamQuickFirst")?.focus()},50);
+}
+
+function pamSaveQuickPlayer(){
+ if(!pamIsAdmin())return;
+ const first=document.getElementById("pamQuickFirst").value.trim();
+ const last=document.getElementById("pamQuickLast").value.trim();
+ const msg=document.getElementById("pamQuickPlayerMessage");
+ if(!first||!last){
+  msg.className="notice error";msg.textContent="Nome e cognome sono obbligatori.";return;
+ }
+ const duplicate=state.players.find(function(p){
+  return normalizeName(playerName(p))===normalizeName(first+" "+last);
+ });
+ if(duplicate){
+  msg.className="notice error";
+  msg.innerHTML='Esiste già <b>'+esc(playerName(duplicate))+'</b>. Usa il giocatore esistente oppure correggi il nome.';
+  return;
+ }
+ const p={
+  id:uid("p"),firstName:first,lastName:last,
+  phone:document.getElementById("pamQuickPhone").value.trim(),
+  email:document.getElementById("pamQuickEmail").value.trim(),
+  birth:"",birthPlace:"",postalCode:"",
+  residenceTown:document.getElementById("pamQuickTown").value.trim(),
+  residenceProvince:"",
+  level:document.getElementById("pamQuickLevel").value.trim(),
+  notes:"Inserito rapidamente durante la gestione di un torneo",
+  gender:document.getElementById("pamQuickGender").value,
+  tokenBalance:Math.max(0,Number(document.getElementById("pamQuickTokens").value)||0)
+ };
+ state.players.push(p);
+ const ctx=pamQuickPlayerContext||{};
+ if(ctx.mode==="new-event"){
+  if(ctx.replaceId)state.draft.selected=state.draft.selected.filter(function(id){return id!==ctx.replaceId});
+  if(!state.draft.selected.includes(p.id))state.draft.selected.push(p.id);
+  save();document.getElementById("pamQuickPlayerOverlay")?.remove();render();
+ }else if(ctx.mode==="existing-event"){
+  const e=state.events.find(function(x){return x.id===ctx.eventId});
+  if(e){
+   e.playerIds=e.playerIds||[];
+   if(ctx.replaceId)e.playerIds=e.playerIds.filter(function(id){return id!==ctx.replaceId});
+   if(!e.playerIds.includes(p.id))e.playerIds.push(p.id);
+   save();
+  }
+  document.getElementById("pamQuickPlayerOverlay")?.remove();
+  pamTournamentPlayersModal(ctx.eventId);
+ }else{
+  save();document.getElementById("pamQuickPlayerOverlay")?.remove();render();
+ }
+ pamToast("Nuova anagrafica inserita.","success");
+}
+
+function pamOpenReplacePlayer(context){
+ if(!pamIsAdmin())return;
+ const old=playerById(context.replaceId);if(!old)return;
+ document.getElementById("pamReplacePlayerOverlay")?.remove();
+ const currentIds=context.mode==="new-event"?(state.draft.selected||[]):((state.events.find(function(e){return e.id===context.eventId})||{}).playerIds||[]);
+ const candidates=state.players.filter(function(p){return p.id!==old.id&&!currentIds.includes(p.id)})
+  .sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const rows=candidates.map(function(p){
+  return '<button class="pam-replacement-row" data-replacement-player="'+p.id+'">'+
+   '<img src="'+esc(pamPlayerPhoto(p))+'" alt=""><span><b>'+esc(playerName(p))+'</b><small>'+esc(p.gender||"Categoria non indicata")+(p.level?" · "+esc(p.level):"")+'</small></span>'+
+  '</button>';
+ }).join("")||'<div class="notice">Non ci sono altri giocatori disponibili.</div>';
+ const overlay=document.createElement("div");
+ overlay.id="pamReplacePlayerOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card">'+
+  '<div class="pam-modal-head"><div><h2>Sostituisci giocatore</h2><div class="muted">Stai sostituendo <b>'+esc(playerName(old))+'</b>.</div></div><button class="secondary" data-close-replace-player>Chiudi</button></div>'+
+  '<div class="pam-replace-actions"><button class="primary" data-replace-with-new>➕ Crea un nuovo giocatore</button></div>'+
+  '<div class="field"><label>Oppure cerca un giocatore già esistente</label><input id="pamReplacementSearch" type="search" placeholder="Nome o cognome"></div>'+
+  '<div class="pam-replacement-list">'+rows+'</div>'+
+ '</div>';
+ document.body.appendChild(overlay);
+ overlay.dataset.context=JSON.stringify(context);
+ overlay.querySelector("#pamReplacementSearch").addEventListener("input",function(ev){
+  const q=normalizeName(ev.target.value);
+  overlay.querySelectorAll(".pam-replacement-row").forEach(function(row){
+   row.style.display=!q||normalizeName(row.textContent).includes(q)?"grid":"none";
+  });
+ });
+}
+
+function pamApplyReplacement(newId){
+ const overlay=document.getElementById("pamReplacePlayerOverlay");if(!overlay)return;
+ const ctx=JSON.parse(overlay.dataset.context||"{}");
+ if(ctx.mode==="new-event"){
+  state.draft.selected=(state.draft.selected||[]).map(function(id){return id===ctx.replaceId?newId:id});
+  state.draft.selected=Array.from(new Set(state.draft.selected));
+  save();overlay.remove();render();
+ }else if(ctx.mode==="existing-event"){
+  const e=state.events.find(function(x){return x.id===ctx.eventId});if(!e)return;
+  e.playerIds=(e.playerIds||[]).map(function(id){return id===ctx.replaceId?newId:id});
+  e.playerIds=Array.from(new Set(e.playerIds));
+  save();overlay.remove();pamTournamentPlayersModal(e.id);
+ }
+ pamToast("Giocatore sostituito. Ricorda di rigenerare le partite.","success");
+}
+
 function editPlayer(id){
  const p=state.players.find(function(x){return x.id===id});if(!p)return;
  const first=prompt("Nome",p.firstName);if(first===null)return;
@@ -1886,9 +2037,12 @@ function newEventView(){
  const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return Number(b.tokenBalance||0)-Number(a.tokenBalance||0)||playerName(a).localeCompare(playerName(b),"it")});
  const checks=eligible.length?eligible.map(function(p){
   const checked=d.selected.includes(p.id)?"checked":"";
-  return '<label class="check event-player-search-row" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
+  return '<div class="check event-player-search-row pam-select-player-row" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'">'+
+   '<label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
    d.competitionType==="rodeo_tokens"?"Saldo aggiornato: "+Number(p.tokenBalance||0)+" gettoni":"Giocatore registrato"
-  )+(p.level?" · "+esc(p.level):"")+'</small></span></label>';
+  )+(p.level?" · "+esc(p.level):"")+'</small></span></label>'+
+   (checked?'<button type="button" class="small pam-replace-inline" data-replace-new-event-player="'+p.id+'">Sostituisci</button>':'')+
+  '</div>';
  }).join(""):'<div class="notice error">Prima crea almeno 4 giocatori nell’anagrafica.</div>';
  const fixedOptions=d.competitionType==="fixed_pairs"?
   '<div class="row"><div class="field"><label>Coppie per girone</label><select id="ePairsPerGroup">'+[3,4,5,6].map(function(x){return'<option '+(Number(d.pairsPerGroup)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div>'+
@@ -1917,7 +2071,9 @@ function newEventView(){
  '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Genera la competizione senza dover scorrere tutto l’elenco.</div></div><button class="primary create-event-top-button" data-action="create-event">Genera competizione</button></div>'+
  '<div id="eventMessage"></div>'+
  '<div class="card"><h2>Seleziona partecipanti</h2>'+
- '<div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
+ '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
+ '<button class="primary" data-quick-player-new-event>➕ Nuova anagrafica e inserisci</button></div>'+
+ '<div class="notice">Per un partecipante già selezionato puoi usare <b>Sostituisci</b> e scegliere un giocatore esistente oppure crearne uno nuovo.</div>'+
  '<div class="checklist">'+checks+'</div></div>'+
  '<button class="primary" data-action="create-event">Genera competizione</button>';
 }
@@ -3097,6 +3253,21 @@ document.addEventListener("click",function(ev){
  const closePlayers=ev.target.closest("[data-close-tournament-players]");if(closePlayers){document.getElementById("pamTournamentPlayersOverlay")?.remove();return}
  const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
  const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
+ const quickNewEvent=ev.target.closest("[data-quick-player-new-event]");if(quickNewEvent){pamOpenQuickPlayer({mode:"new-event",category:state.draft.category});return}
+ const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){const eventId=quickExisting.getAttribute("data-quick-player-existing-event");const e=state.events.find(function(x){return x.id===eventId});pamOpenQuickPlayer({mode:"existing-event",eventId:eventId,category:e&&e.category});return}
+ const replaceNewEvent=ev.target.closest("[data-replace-new-event-player]");if(replaceNewEvent){pamOpenReplacePlayer({mode:"new-event",replaceId:replaceNewEvent.getAttribute("data-replace-new-event-player"),category:state.draft.category});return}
+ const replaceExisting=ev.target.closest("[data-replace-existing-event-player]");if(replaceExisting){pamOpenReplacePlayer({mode:"existing-event",eventId:replaceExisting.getAttribute("data-event-id"),replaceId:replaceExisting.getAttribute("data-replace-existing-event-player")});return}
+ const closeQuick=ev.target.closest("[data-close-quick-player]");if(closeQuick){document.getElementById("pamQuickPlayerOverlay")?.remove();return}
+ const saveQuick=ev.target.closest("[data-save-quick-player]");if(saveQuick){pamSaveQuickPlayer();return}
+ const closeReplace=ev.target.closest("[data-close-replace-player]");if(closeReplace){document.getElementById("pamReplacePlayerOverlay")?.remove();return}
+ const replacement=ev.target.closest("[data-replacement-player]");if(replacement){pamApplyReplacement(replacement.getAttribute("data-replacement-player"));return}
+ const replaceWithNew=ev.target.closest("[data-replace-with-new]");if(replaceWithNew){
+  const overlay=document.getElementById("pamReplacePlayerOverlay");
+  const ctx=JSON.parse(overlay.dataset.context||"{}");
+  overlay.remove();
+  pamOpenQuickPlayer(ctx);
+  return
+ }
 
  const viewBtn=ev.target.closest("[data-view]");if(viewBtn){
   const requested=viewBtn.getAttribute("data-view");
@@ -3250,7 +3421,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=3.3.2",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=3.4.0",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
