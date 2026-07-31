@@ -1429,6 +1429,61 @@ function newEventView(){
  '<div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
  '<button class="primary" data-action="create-event">SALVA E PUBBLICA TORNEO</button>';
 }
+
+function pamOptimizeRoundGroups(matches,courts){
+ courts=Math.max(1,Number(courts)||1);
+ const list=(matches||[]).slice();
+ const people=function(m){return (m.t1||[]).concat(m.t2||[])};
+ const compatible=function(a,b){
+  const used=new Set(people(a));
+  return people(b).every(function(id){return !used.has(id)});
+ };
+
+ if(courts===1)return {groups:list.map(function(m){return[m]}),wastedSlots:0};
+
+ if(courts===2&&list.length<=22){
+  const n=list.length;
+  const memo=new Map();
+  function solve(mask){
+   if(mask===0)return {singletons:0,groups:[]};
+   if(memo.has(mask))return memo.get(mask);
+   let first=0;while(first<n&&!(mask&(1<<first)))first++;
+   let best=solve(mask&~(1<<first));
+   best={singletons:best.singletons+1,groups:[[first]].concat(best.groups)};
+   for(let j=first+1;j<n;j++){
+    if(!(mask&(1<<j))||!compatible(list[first],list[j]))continue;
+    const sub=solve(mask&~(1<<first)&~(1<<j));
+    if(sub.singletons<best.singletons){
+     best={singletons:sub.singletons,groups:[[first,j]].concat(sub.groups)};
+     if(best.singletons===0)break;
+    }
+   }
+   memo.set(mask,best);return best;
+  }
+  const result=solve((1<<n)-1);
+  const groups=result.groups.map(function(g){return g.map(function(i){return list[i]})});
+  return {groups:groups,wastedSlots:result.singletons};
+ }
+
+ const remaining=list.slice(),groups=[];
+ while(remaining.length){
+  let bestGroup=[];
+  function grow(start,chosen){
+   if(chosen.length>bestGroup.length)bestGroup=chosen.slice();
+   if(chosen.length>=courts)return;
+   for(let i=start;i<remaining.length;i++){
+    if(chosen.every(function(m){return compatible(m,remaining[i])}))grow(i+1,chosen.concat([remaining[i]]));
+   }
+  }
+  grow(0,[]);
+  if(!bestGroup.length)bestGroup=[remaining[0]];
+  groups.push(bestGroup);
+  bestGroup.forEach(function(m){const i=remaining.indexOf(m);if(i>=0)remaining.splice(i,1)});
+ }
+ const wasted=groups.reduce(function(sum,g){return sum+(courts-g.length)},0);
+ return {groups:groups,wastedSlots:wasted};
+}
+
 function buildMatches(ids,courts,returnLeg){
  const playerIds=(ids||[]).slice();
  if(playerIds.length<4)throw new Error("servono almeno 4 giocatori per generare le partite");
@@ -1567,7 +1622,15 @@ function buildMatches(ids,courts,returnLeg){
    Object.values(opponentCount).forEach(function(map){
     Object.values(map).forEach(function(n){maxOpponentRepeat=Math.max(maxOpponentRepeat,n)});
    });
-   const penalty=spread*1000000+maxOpponentRepeat*100000+repeatedOpp;
+   const optimizedSchedule=pamOptimizeRoundGroups(chosen,courts);
+   const unavoidableWaste=(courts-(target%courts))%courts;
+   const extraUnusedCourtSlots=Math.max(0,optimizedSchedule.wastedSlots-unavoidableWaste);
+   const penalty=
+    extraUnusedCourtSlots*1000000000+
+    optimizedSchedule.groups.length*10000000+
+    spread*1000000+
+    maxOpponentRepeat*100000+
+    repeatedOpp;
 
    if(penalty<bestPenalty){
     bestPenalty=penalty;
@@ -1581,33 +1644,17 @@ function buildMatches(ids,courts,returnLeg){
 
  if(!selected.length)throw new Error("non è stato possibile generare un calendario senza ripetere le coppie");
 
- const remaining=selected.slice();
+ const optimized=pamOptimizeRoundGroups(selected,courts);
  const ordered=[];
- let round=1;
- while(remaining.length){
-  const busy=new Set();
-  let usedCourts=0;
-  for(let i=0;i<remaining.length&&usedCourts<courts;){
-   const m=remaining[i];
-   const people=m.t1.concat(m.t2);
-   const conflict=people.some(function(id){return busy.has(id)});
-   if(conflict){i++;continue}
-   people.forEach(function(id){busy.add(id)});
-   m.round=round;
-   m.court=usedCourts+1;
+ optimized.groups.forEach(function(group,roundIndex){
+  group.forEach(function(m,courtIndex){
+   m.round=roundIndex+1;
+   m.court=courtIndex+1;
    ordered.push(m);
-   remaining.splice(i,1);
-   usedCourts++;
-  }
-  if(usedCourts===0){
-   const m=remaining.shift();
-   m.round=round;
-   m.court=1;
-   ordered.push(m);
-  }
-  round++;
- }
+  });
+ });
  selected=ordered;
+ let round=optimized.groups.length+1;
 
  if(returnLeg){
   const firstLeg=selected.slice();
