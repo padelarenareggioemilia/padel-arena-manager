@@ -1,1 +1,13 @@
-const CACHE_NAME="padel-arena-manager-v8-completa-stabile";const CORE=["./","./index.html","./manifest.webmanifest","./public-registration.html","./captain-portal.html","./player-registration.html","./poster.html","./assets/icon-192.png","./assets/icon-512.png","./assets/apple-touch-icon.png","./assets/padel-arena-manager-logo.jpg","./assets/aics-serie-a-2027.png","./assets/aics-serie-b-2027.png","./assets/aics-serie-c-2027.png","./assets/aics-coppa-italia-2027.png","./assets/aics-supercoppa-2027.png"];self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE)));self.skipWaiting()});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))));self.clients.claim()});self.addEventListener("message",e=>{if(e.data&&e.data.type==="SKIP_WAITING")self.skipWaiting()});self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const doc=e.request.mode==="navigate"||e.request.destination==="document";if(doc){e.respondWith(fetch(e.request,{cache:"no-store"}).then(r=>{const cp=r.clone();caches.open(CACHE_NAME).then(c=>c.put(e.request,cp));return r}).catch(()=>caches.match(e.request).then(x=>x||caches.match("./index.html"))));return}e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request).then(r=>{const cp=r.clone();caches.open(CACHE_NAME).then(x=>x.put(e.request,cp));return r}))) });
+const CACHE='pam-v8-0-2';
+const CORE=['./','./index.html','./manifest.webmanifest','./assets/padel-arena-manager-logo.jpg'];
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}));self.skipWaiting();});
+self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET')return;
+ const url=new URL(event.request.url);
+ if(event.request.mode==='navigate'||url.pathname.endsWith('/index.html')||url.pathname.endsWith('/')){
+  event.respondWith(fetch(event.request,{cache:'no-store'}).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));return r;}).catch(()=>caches.match(event.request).then(r=>r||caches.match('./index.html'))));
+  return;
+ }
+ event.respondWith(caches.match(event.request).then(cached=>cached||fetch(event.request).then(r=>{if(r.ok&&url.origin===location.origin){const copy=r.clone();caches.open(CACHE).then(c=>c.put(event.request,copy));}return r;})));
+});

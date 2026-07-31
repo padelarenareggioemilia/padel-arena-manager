@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.0</title>
+<title>Padel Arena Manager 8.0.2.2</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1270,9 +1270,14 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 <meta http-equiv="Expires" content="0">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+if(!window.supabase){
+ document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+}
+</script>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.0.2.2</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
 
 <div id="timerAlertOverlay" class="timer-alert-overlay" role="alert" aria-live="assertive">
  <div class="timer-alert-box">
@@ -1284,6 +1289,19 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 
 <script>
 
+
+window.addEventListener("error",function(ev){
+ const root=document.getElementById("root");
+ if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di avvio</h2><p>L’app non è riuscita a partire.</p><pre style="white-space:pre-wrap">'+String(ev.message||"Errore sconosciuto")+'</pre><p>Ricarica la pagina. Se il messaggio resta, invia uno screenshot di questa schermata.</p></div>';
+});
+window.addEventListener("unhandledrejection",function(ev){
+ const root=document.getElementById("root");
+ if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di connessione</h2><pre style="white-space:pre-wrap">'+String(ev.reason&&ev.reason.message||ev.reason||"Errore sconosciuto")+'</pre></div>';
+});
+if(!window.supabase){
+ document.getElementById("root").innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Libreria Supabase non caricata</h2><p>Safari non è riuscito a caricare il collegamento necessario all’app. Disattiva temporaneamente eventuali blocchi contenuti e ricarica.</p></div>';
+ throw new Error("Supabase JS non disponibile");
+}
 
 const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
