@@ -1,4 +1,4 @@
-const CACHE_NAME="pam-v6-0-roster-approval";
+const CACHE_NAME="pam-v6-1-loghi-competizioni";
 const CORE=[
  "./",
  "./index.html",
@@ -9,7 +9,12 @@ const CORE=[
  "./assets/icon-192.png",
  "./assets/icon-512.png",
  "./assets/padel-arena-manager-logo.jpg",
- "./assets/apple-touch-icon.png"
+ "./assets/apple-touch-icon.png",
+ "./assets/aics-serie-a-2027.png",
+ "./assets/aics-serie-b-2027.png",
+ "./assets/aics-serie-c-2027.png",
+ "./assets/aics-coppa-italia-2027.png",
+ "./assets/aics-supercoppa-2027.png"
 ];
 
 self.addEventListener("install",event=>{

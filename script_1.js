@@ -1054,12 +1054,32 @@ function pamOfficialTeamsList(){
   '</div>';
  }).join("")+'</div></section>';
 }
+
+function pamCompetitionLogos(){
+ return '<section class="card pam-competition-showcase">'+
+  '<div class="pam-v5-section-title"><div><span class="pam-v5-kicker">IDENTITÀ UFFICIALI</span><h2>Competizioni AICS Padel 2027</h2></div><small>Visibili ad amministratori, capitani e giocatori</small></div>'+
+  '<div class="pam-competition-logo-grid">'+
+   '<article><img src="assets/aics-serie-a-2027.png" alt="AICS Padel Championship 2027 Serie A"><b>Serie A</b></article>'+
+   '<article><img src="assets/aics-serie-b-2027.png" alt="AICS Padel Championship 2027 Serie B"><b>Serie B</b></article>'+
+   '<article><img src="assets/aics-serie-c-2027.png" alt="AICS Padel Championship 2027 Serie C"><b>Serie C</b></article>'+
+   '<article><img src="assets/aics-coppa-italia-2027.png" alt="Coppa Italia AICS Padel 2027"><b>Coppa Italia</b></article>'+
+   '<article><img src="assets/aics-supercoppa-2027.png" alt="Supercoppa AICS Padel 2027"><b>Supercoppa</b></article>'+
+  '</div></section>';
+}
+function pamSeriesLogo(series){
+ const key=String(series||"").toLowerCase();
+ if(key.includes("serie a"))return "assets/aics-serie-a-2027.png";
+ if(key.includes("serie b"))return "assets/aics-serie-b-2027.png";
+ return "assets/aics-serie-c-2027.png";
+}
+
 function championshipView(){
  const teams=pamChampTeams();
  return header("AICS Padel Championship 2027","Gestione campionato")+
  '<div class="pam-v5-shell">'+
   '<section class="card pam-champ-toolbar"><div class="pam-champ-title"><img src="assets/aics.jpeg"><div><span class="pam-v5-kicker">STAGIONE 2027</span><h2>AICS PADEL CHAMPIONSHIP</h2><div class="muted">Pannello organizzativo centrale</div></div></div><button class="primary" style="width:auto" data-view="home">Torna alla Home</button></section>'+
   '<section class="pam-v5-campaign"><div class="pam-v5-section-title"><div><span class="pam-v5-kicker">ISCRIZIONI UFFICIALI IMPORTATE</span><h2>Dati pronti per i capitani</h2></div><span class="pam-v5-badge">'+teams.length+' SQUADRE</span></div><div class="pam-v5-progress"><span style="width:72%"></span></div><div class="muted">Anagrafiche di club, squadra e capitano già compilate. Tu decidi singolarmente quando aprire l’accesso alla rosa.</div></section>'+
+  pamCompetitionLogos()+
   '<section class="pam-champ-metrics">'+
    '<div class="pam-champ-metric"><b>'+new Set(teams.map(function(t){return t.clubTaxId||t.clubLegalName})).size+'</b><span>CLUB</span></div>'+
    '<div class="pam-champ-metric"><b>'+teams.length+'</b><span>ISCRIZIONI</span></div>'+
@@ -1078,7 +1098,7 @@ function championshipTeamView(){
   return '<div class="field '+(wide?"wide":"")+'"><label>'+label+'</label><input data-champ-field="'+key+'" type="'+(type||"text")+'" value="'+esc(t[key]||"")+'"></div>';
  };
  return header(t.teamName,"Scheda ufficiale squadra")+'<div class="pam-v5-shell">'+
- '<section class="card pam-champ-toolbar"><div><span class="pam-v5-kicker">'+esc(t.series)+' · ISCRIZIONE REGOLARE</span><h2>'+esc(t.teamName)+'</h2><div class="muted">Dati importati dal modulo ufficiale del campionato.</div></div><button class="secondary" data-view="championship">← Tutte le squadre</button></section>'+
+ '<section class="card pam-champ-toolbar pam-team-series-hero"><img class="pam-team-series-logo" src="'+pamSeriesLogo(t.series)+'" alt="'+esc(t.series)+'"><div><span class="pam-v5-kicker">'+esc(t.series)+' · ISCRIZIONE REGOLARE</span><h2>'+esc(t.teamName)+'</h2><div class="muted">Dati importati dal modulo ufficiale del campionato.</div></div><button class="secondary" data-view="championship">← Tutte le squadre</button></section>'+
  '<section class="pam-team-access-box"><div class="pam-team-access-head"><div><span class="pam-v5-kicker">PORTALE CAPITANO</span><h2>'+esc(t.captainName)+'</h2><div class="muted">Il capitano potrà lavorare esclusivamente su questa squadra e soltanto mentre l’accesso è autorizzato.</div></div>'+
  '<label class="pam-switch"><input type="checkbox" data-team-access-checkbox="'+t.id+'" '+(t.captainAccessEnabled?"checked":"")+'> '+(t.captainAccessEnabled?"ACCESSO ATTIVO":"ACCESSO DISABILITATO")+'</label></div>'+
  '<div class="pam-link-preview">'+esc(link)+'</div><div class="row"><button class="primary" data-share-team-invite="'+t.id+'" '+(t.captainAccessEnabled?"":"disabled")+'>Copia / condividi link personale</button><button class="secondary" data-preview-team-portal="'+t.id+'">Anteprima portale capitano</button></div>'+

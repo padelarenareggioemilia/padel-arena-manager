@@ -1242,6 +1242,18 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 @media(max-width:760px){.pam-competition-grid{grid-template-columns:1fr}.pam-logo-upload{grid-template-columns:1fr}.pam-logo-upload img{margin:auto}.pam-team-identity{align-items:flex-start}}
 
 .pam-roster-list{display:grid;gap:10px;margin-top:14px}.pam-roster-row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;background:#081829;border:1px solid #2f4c70;border-radius:15px}.pam-roster-row img{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#fff}.pam-roster-row small{display:block;color:#b9c9dc;margin-top:3px}.pam-status-pending{color:#ffd166}.pam-status-approved{color:#9dff25}.pam-status-rejected{color:#ff7c8b}.pam-roster-actions{display:flex;gap:7px;flex-wrap:wrap}.pam-notification-badge{display:inline-flex;min-width:25px;height:25px;align-items:center;justify-content:center;border-radius:999px;background:#ff4d67;color:#fff;font-weight:900;margin-left:7px}@media(max-width:700px){.pam-roster-row{grid-template-columns:48px 1fr}.pam-roster-row img{width:46px;height:46px}.pam-roster-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.pam-roster-actions button{width:100%}}
+
+/* VERSIONE 6.1 - LOGHI UFFICIALI COMPETIZIONI */
+.pam-competition-showcase{overflow:hidden}
+.pam-competition-logo-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.pam-competition-logo-grid article{background:#fff;border-radius:18px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:190px;border:1px solid #dbe5ef;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.pam-competition-logo-grid img{width:100%;height:145px;object-fit:contain}
+.pam-competition-logo-grid b{color:#0b2345;font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.pam-team-series-hero{display:grid!important;grid-template-columns:110px minmax(0,1fr) auto!important;align-items:center!important}
+.pam-team-series-logo{width:100px;height:112px;object-fit:contain;background:#fff;border-radius:16px;padding:5px}
+@media(max-width:900px){.pam-competition-logo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.pam-competition-logo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pam-competition-logo-grid article{min-height:160px}.pam-competition-logo-grid img{height:115px}.pam-team-series-hero{grid-template-columns:82px minmax(0,1fr)!important}.pam-team-series-logo{width:76px;height:86px}.pam-team-series-hero>button{grid-column:1/-1;width:100%}}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2349,12 +2361,32 @@ function pamAicsCompetitionDetail(selected,c,teams){
  }
  return '<div class="notice pam-competition-detail"><b>Campionato AICS 2027</b><br>'+pamSeriesCount("Serie A")+' squadre in Serie A · '+pamSeriesCount("Serie B")+' in Serie B · '+pamSeriesCount("Serie C")+' in Serie C.</div>';
 }
+
+function pamCompetitionLogos(){
+ return '<section class="card pam-competition-showcase">'+
+  '<div class="pam-v5-section-title"><div><span class="pam-v5-kicker">IDENTITÀ UFFICIALI</span><h2>Competizioni AICS Padel 2027</h2></div><small>Visibili ad amministratori, capitani e giocatori</small></div>'+
+  '<div class="pam-competition-logo-grid">'+
+   '<article><img src="assets/aics-serie-a-2027.png" alt="AICS Padel Championship 2027 Serie A"><b>Serie A</b></article>'+
+   '<article><img src="assets/aics-serie-b-2027.png" alt="AICS Padel Championship 2027 Serie B"><b>Serie B</b></article>'+
+   '<article><img src="assets/aics-serie-c-2027.png" alt="AICS Padel Championship 2027 Serie C"><b>Serie C</b></article>'+
+   '<article><img src="assets/aics-coppa-italia-2027.png" alt="Coppa Italia AICS Padel 2027"><b>Coppa Italia</b></article>'+
+   '<article><img src="assets/aics-supercoppa-2027.png" alt="Supercoppa AICS Padel 2027"><b>Supercoppa</b></article>'+
+  '</div></section>';
+}
+function pamSeriesLogo(series){
+ const key=String(series||"").toLowerCase();
+ if(key.includes("serie a"))return "assets/aics-serie-a-2027.png";
+ if(key.includes("serie b"))return "assets/aics-serie-b-2027.png";
+ return "assets/aics-serie-c-2027.png";
+}
+
 function championshipView(){
  const teams=pamChampTeams();
  return header("AICS Padel Championship 2027","Gestione campionato")+
  '<div class="pam-v5-shell">'+
   '<section class="card pam-champ-toolbar"><div class="pam-champ-title"><img src="assets/aics.jpeg"><div><span class="pam-v5-kicker">STAGIONE 2027</span><h2>AICS PADEL CHAMPIONSHIP</h2><div class="muted">Pannello organizzativo centrale</div></div></div><button class="primary" style="width:auto" data-view="home">Torna alla Home</button></section>'+
   '<section class="pam-v5-campaign"><div class="pam-v5-section-title"><div><span class="pam-v5-kicker">ISCRIZIONI UFFICIALI IMPORTATE</span><h2>Dati pronti per i capitani</h2></div><span class="pam-v5-badge">'+teams.length+' SQUADRE</span></div><div class="pam-v5-progress"><span style="width:72%"></span></div><div class="muted">Anagrafiche di club, squadra e capitano già compilate. Tu decidi singolarmente quando aprire l’accesso alla rosa.</div></section>'+
+  pamCompetitionLogos()+
   '<section class="pam-champ-metrics">'+
    '<div class="pam-champ-metric"><b>'+new Set(teams.map(function(t){return t.clubTaxId||t.clubLegalName})).size+'</b><span>CLUB</span></div>'+
    '<div class="pam-champ-metric"><b>'+teams.length+'</b><span>ISCRIZIONI</span></div>'+
@@ -2373,7 +2405,7 @@ function championshipTeamView(){
   return '<div class="field '+(wide?"wide":"")+'"><label>'+label+'</label><input data-champ-field="'+key+'" type="'+(type||"text")+'" value="'+esc(t[key]||"")+'"></div>';
  };
  return header(t.teamName,"Scheda ufficiale squadra")+'<div class="pam-v5-shell">'+
- '<section class="card pam-champ-toolbar"><div><span class="pam-v5-kicker">'+esc(t.series)+' · ISCRIZIONE REGOLARE</span><h2>'+esc(t.teamName)+'</h2><div class="muted">Dati importati dal modulo ufficiale del campionato.</div></div><button class="secondary" data-view="championship">← Tutte le squadre</button></section>'+
+ '<section class="card pam-champ-toolbar pam-team-series-hero"><img class="pam-team-series-logo" src="'+pamSeriesLogo(t.series)+'" alt="'+esc(t.series)+'"><div><span class="pam-v5-kicker">'+esc(t.series)+' · ISCRIZIONE REGOLARE</span><h2>'+esc(t.teamName)+'</h2><div class="muted">Dati importati dal modulo ufficiale del campionato.</div></div><button class="secondary" data-view="championship">← Tutte le squadre</button></section>'+
  '<section class="pam-team-access-box"><div class="pam-team-access-head"><div><span class="pam-v5-kicker">PORTALE CAPITANO</span><h2>'+esc(t.captainName)+'</h2><div class="muted">Il capitano potrà lavorare esclusivamente su questa squadra e soltanto mentre l’accesso è autorizzato.</div></div>'+
  '<label class="pam-switch"><input type="checkbox" data-team-access-checkbox="'+t.id+'" '+(t.captainAccessEnabled?"checked":"")+'> '+(t.captainAccessEnabled?"ACCESSO ATTIVO":"ACCESSO DISABILITATO")+'</label></div>'+
  '<div class="pam-link-preview">'+esc(link)+'</div><div class="row"><button class="primary" data-share-team-invite="'+t.id+'">Copia / condividi link personale</button><button class="secondary" data-preview-team-portal="'+t.id+'">Anteprima portale capitano</button></div>'+
