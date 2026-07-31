@@ -1754,7 +1754,7 @@ function pamEventRow(e){
   competition_type:e.competitionType||null,
   logo_url:e.logoUrl||null,
   share_token:e.shareToken,
-  status:e.status||"active",
+  status:e.status||"published",
   data:e
  };
 }
@@ -1787,7 +1787,7 @@ async function pamCloudSyncAll(){
    const e=currentEvent();
    if(e){
     const er=await sb.from("tournaments")
-      .update({data:e,status:e.status||"active"})
+      .update({data:e,status:e.status||"published"})
       .eq("id",e.id)
       .select("id,share_token")
       .maybeSingle();
