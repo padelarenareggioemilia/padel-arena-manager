@@ -1375,7 +1375,7 @@ async function pamStartSession(session){
   PAM_PROFILE=await pamGetProfile(session.user);
   document.getElementById("pamLoginOverlay")?.remove();
   pamApplyRole();
-  await pamCloudLoad(true);
+  await pamCloudLoad(true,true);
   pamSubscribeRealtime();
   pamOpenSharedTournamentFromUrl();
   setTimeout(pamRefreshSyncPanel,100);
@@ -1395,7 +1395,7 @@ async function pamBootAuth(){
 }
 
 
-const KEY="pam_v040";
+const KEY="pam_v071";
 const SEEDED_PLAYERS=[
  {firstName:"Andrea",lastName:"Spina",gender:"Maschile",tokenBalance:3},
  {firstName:"Antonio",lastName:"Stirparo",gender:"Maschile",tokenBalance:6},
@@ -1809,7 +1809,8 @@ async function pamCloudSyncAll(){
 function pamSetConnectionState(ok){
  const badge=document.getElementById("pamRoleBadge");
  if(!badge)return;
- badge.textContent=pamRoleLabel()+(ok?" · CONNESSO":" · NON SINCRONIZZATO");
+ badge.textContent=pamRoleLabel()+(ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.title=ok?("Ultima sincronizzazione: "+new Date().toLocaleTimeString("it-IT")):"Connessione a Supabase non disponibile";
  badge.style.background=ok?"#071a2b":"#7f1d1d";
 }
 window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
@@ -1905,8 +1906,8 @@ async function pamCloudLoad(initial,forceReplace){
    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
   });
  });
- if(forceReplace||remotePlayers.length)state.players=remotePlayers;
- if(forceReplace||remoteEvents.length)state.events=remoteEvents;
+ if(forceReplace||initial||remotePlayers.length)state.players=remotePlayers;
+ if(forceReplace||initial||remoteEvents.length)state.events=remoteEvents;
  if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
   pamCloudReady=true;
   await pamCloudSyncAll();
@@ -1921,11 +1922,23 @@ async function pamCloudLoad(initial,forceReplace){
 }
 function pamSubscribeRealtime(){
  if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
- pamRealtimeChannel=sb.channel("padel-arena-tournaments")
-  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},function(){
-   clearTimeout(pamRemoteRefreshTimer);
-   pamRemoteRefreshTimer=setTimeout(function(){if(!pamUploading)pamCloudLoad(false)},450);
-  }).subscribe();
+ const refreshFromCloud=function(){
+  clearTimeout(pamRemoteRefreshTimer);
+  pamRemoteRefreshTimer=setTimeout(function(){if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true)},350);
+ };
+ pamRealtimeChannel=sb.channel("padel-arena-live-v71")
+  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"players"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"public_registrations"},function(){
+    refreshFromCloud();
+    const openTeam=document.querySelector('[data-admin-roster-area]');
+    if(openTeam&&openTeam.dataset.teamId) pamLoadAdminRoster(openTeam.dataset.teamId);
+  })
+  .subscribe(function(status){pamSetConnectionState(status==="SUBSCRIBED")});
+ clearInterval(window.__pamCloudRefreshInterval);
+ window.__pamCloudRefreshInterval=setInterval(function(){
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine)pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
+ },30000);
 }
 function pamToast(message,type){
  const n=document.createElement("div");

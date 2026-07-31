@@ -1,4 +1,4 @@
-const CACHE_NAME="pam-v7-0-torneo-builder";
+const CACHE_NAME="pam-v7-1-sync";
 const CORE=[
  "./",
  "./index.html",
