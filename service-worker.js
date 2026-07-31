@@ -1,9 +1,10 @@
-const CACHE_NAME="padel-arena-manager-v5-1";
+const CACHE_NAME="padel-arena-manager-v5-2-1";
 const CORE=[
  "./",
  "./index.html",
  "./public-registration.html",
  "./captain-portal.html",
+ "./player-registration.html",
  "./manifest.webmanifest",
  "./assets/icon-192.png",
  "./assets/icon-512.png",

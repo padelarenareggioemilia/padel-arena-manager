@@ -211,3 +211,10 @@ VERSIONE 5.2 - ROSA GIOCATORI E LINK DI SQUADRA
 - La richiesta entra con stato "pending" e deve essere approvata.
 - Limite massimo impostato a 20 giocatori per squadra.
 - Per attivare le nuove funzioni rieseguire SUPABASE_AICS_2027_CAPITANI.sql nel SQL Editor.
+
+VERSIONE 5.2.1 - CORREZIONE URGENTE
+- Corretta la schermata nera su telefono aprendo la scheda di una squadra.
+- Corretti i pulsanti APRI nella lista squadre.
+- Il pulsante INVIA LINK ora risponde sempre e spiega di abilitare prima l'accesso quando necessario.
+- Aggiornata la cache PWA per forzare il caricamento della nuova versione.
+- Aggiunta player-registration.html ai file offline della PWA.
