@@ -1,5 +1,21 @@
-1. Carica questo index.html nel repository GitHub sostituendo quello esistente.
-2. Non serve eseguire SQL su Supabase.
-3. Attendi il completamento del deployment GitHub Pages.
-4. Chiudi Safari e riapri l'app.
-5. Nel Torneo Builder comparirà “BOZZA PROTETTA”.
+PADEL ARENA MANAGER 8.0 - BASE STABILE
+
+IMPORTANTE: il file principale è già nominato index.html.
+
+CARICAMENTO SU GITHUB
+1. Aprire il repository padel-arena-manager.
+2. Caricare tutti i file e la cartella assets contenuti in questo pacchetto.
+3. Quando GitHub chiede se sostituire index.html, manifest.webmanifest e service-worker.js, confermare.
+4. NON rinominare index.html.
+5. Non eliminare dal repository eventuali file già presenti come captain-portal.html, player-registration.html e poster.html.
+6. Eseguire Commit changes e attendere GitHub Pages.
+
+CORREZIONI INCLUSE
+- File principale correttamente nominato index.html.
+- Cache aggiornata alla versione 8.0.
+- Schermata stabile durante inserimento numeri e testi.
+- Aste multiple conservate durante la compilazione e sincronizzazione.
+- Eliminatoria da 10 giocatori: 7°+10° contro 8°+9°, riallineata alla classifica finché non viene salvato il risultato.
+
+SUPABASE
+Non è necessario eseguire SQL per questo aggiornamento.
