@@ -1302,7 +1302,7 @@ function pamIsAdmin(){
  return PAM_PROFILE&&PAM_PROFILE.role==="admin";
 }
 function pamRoleLabel(){
- return pamIsAdmin()?"ADMIN · Francesco":"COLLABORATORE · Solo risultati";
+ return pamIsAdmin()?"ADMIN · Francesco":"COLLABORATORE · Gestione torneo";
 }
 function pamRenderLogin(message=""){
  document.getElementById("pamLoginOverlay")?.remove();
@@ -1363,7 +1363,7 @@ function pamApplyRole(){
 }
 function pamRestrictCollaboratorUI(){
  if(pamIsAdmin()||!PAM_SESSION)return;
- const forbidden=["anagrafica","gettoni","pagamenti","impostazioni","nuova competizione","crea torneo","genera competizione","elimina","configurazione","importa","esporta","asta","duplica","modifica torneo","carica logo"];
+ const forbidden=["anagrafica","impostazioni","nuova competizione","crea torneo","genera competizione","elimina","configurazione","importa","esporta","duplica","modifica torneo","carica logo"];
  document.querySelectorAll("button,a,[role='button']").forEach(el=>{
   const t=(el.textContent||"").trim().toLowerCase();
   if(forbidden.some(w=>t.includes(w)))el.style.display="none";
@@ -2039,7 +2039,6 @@ function pamEditEvent(id){
  pamToast("Dati del torneo aggiornati.","success");
 }
 function pamTournamentPlayersModal(id){
- if(!pamIsAdmin())return;
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  document.getElementById("pamTournamentPlayersOverlay")?.remove();
  const overlay=document.createElement("div");
@@ -2080,7 +2079,6 @@ function pamTournamentPlayersModal(id){
  });
 }
 function pamRenameTournamentPlayer(playerId){
- if(!pamIsAdmin())return;
  const p=playerById(playerId);if(!p)return;
  const full=prompt("Nome e cognome del giocatore",playerName(p));if(full===null)return;
  const clean=full.trim();if(!clean)return;
@@ -2110,7 +2108,6 @@ function pamResetEventGeneratedData(e){
  e.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
 }
 function pamRegenerateTournament(id){
- if(!pamIsAdmin())return;
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  const overlay=document.getElementById("pamTournamentPlayersOverlay");
  const ids=Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
@@ -2556,7 +2553,6 @@ function pamCurrentModalSelectedIds(){
 }
 
 function pamOpenQuickPlayer(context){
- if(!pamIsAdmin())return;
  pamQuickPlayerContext=context||{};
  document.getElementById("pamQuickPlayerOverlay")?.remove();
  const category=(context&&context.category)||state.draft.category||"Maschile";
@@ -2577,7 +2573,6 @@ function pamOpenQuickPlayer(context){
 }
 
 function pamSaveQuickPlayer(){
- if(!pamIsAdmin())return;
  const first=document.getElementById("pamQuickFirst").value.trim();
  const last=document.getElementById("pamQuickLast").value.trim();
  const msg=document.getElementById("pamQuickPlayerMessage");
@@ -2632,7 +2627,6 @@ function pamSaveQuickPlayer(){
 }
 
 function pamOpenReplacePlayer(context){
- if(!pamIsAdmin())return;
  const old=playerById(context.replaceId);if(!old)return;
  document.getElementById("pamReplacePlayerOverlay")?.remove();
  const currentIds=context.mode==="new-event"?(state.draft.selected||[]):((state.events.find(function(e){return e.id===context.eventId})||{}).playerIds||[]);
@@ -3148,10 +3142,12 @@ function eventView(){
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
   '<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
-  (pamIsAdmin()?'<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button><button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+  '<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button>'+
+  (pamIsAdmin()?'<button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button>':'')+
+  (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div>'+
  '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
- (!pamIsAdmin()?'<div class="notice print-hide"><b>Modalità collaboratore:</b> puoi inserire o correggere esclusivamente i risultati delle partite.</div>':'')+
+ (!pamIsAdmin()?'<div class="notice success print-hide"><b>Modalità collaboratore:</b> gestione operativa del torneo: risultati, timer, classifica, gettoni, aste, fasi finali, pagamenti, iscrizioni, PDF e condivisione. Partecipanti, sostituzioni e rigenerazione restano riservati all’amministratore.</div>':'')+
  '<div class="notice print-hide"><b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
  ' · durata effettiva '+Number(e.timerDuration||e.matchDuration||15)+' minuti'+
  ' · nuova partita ogni '+Number(e.slotDuration||e.matchDuration||20)+' minuti'+
@@ -4245,10 +4241,10 @@ document.addEventListener("click",function(ev){
 
  const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
  const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
- const managePlayers=ev.target.closest("[data-manage-tournament-players]");if(managePlayers){pamTournamentPlayersModal(managePlayers.getAttribute("data-manage-tournament-players"));return}
+ const managePlayers=ev.target.closest("[data-manage-tournament-players]");if(managePlayers){if(!pamIsAdmin()){pamToast("Solo l’amministratore può modificare i partecipanti o rigenerare le partite.","error");return}pamTournamentPlayersModal(managePlayers.getAttribute("data-manage-tournament-players"));return}
  const closePlayers=ev.target.closest("[data-close-tournament-players]");if(closePlayers){document.getElementById("pamTournamentPlayersOverlay")?.remove();return}
- const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
- const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
+ const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){if(!pamIsAdmin()){pamToast("Solo l’amministratore può modificare i giocatori del torneo.","error");return}pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
+ const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){if(!pamIsAdmin()){pamToast("Solo l’amministratore può rigenerare le partite.","error");return}pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
  const generateFixedFinals=ev.target.closest("[data-generate-fixed-finals]");if(generateFixedFinals){
   try{pamGenerateFixedFinals(currentEvent())}catch(err){pamToast(err.message,"error")}
   return
@@ -4278,6 +4274,7 @@ document.addEventListener("click",function(ev){
  }
  const quickNewEvent=ev.target.closest("[data-quick-player-new-event]");if(quickNewEvent){pamOpenQuickPlayer({mode:"new-event",category:state.draft.category});return}
  const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){
+  if(!pamIsAdmin()){pamToast("Solo l’amministratore può aggiungere giocatori al torneo.","error");return}
   const eventId=quickExisting.getAttribute("data-quick-player-existing-event");
   const e=state.events.find(function(x){return x.id===eventId});
   pamOpenQuickPlayer({
@@ -4290,6 +4287,7 @@ document.addEventListener("click",function(ev){
  }
  const replaceNewEvent=ev.target.closest("[data-replace-new-event-player]");if(replaceNewEvent){pamOpenReplacePlayer({mode:"new-event",replaceId:replaceNewEvent.getAttribute("data-replace-new-event-player"),category:state.draft.category});return}
  const replaceExisting=ev.target.closest("[data-replace-existing-event-player]");if(replaceExisting){
+  if(!pamIsAdmin()){pamToast("Solo l’amministratore può sostituire i giocatori del torneo.","error");return}
   pamOpenReplacePlayer({
    mode:"existing-event",
    eventId:replaceExisting.getAttribute("data-event-id"),
@@ -4332,7 +4330,7 @@ document.addEventListener("click",function(ev){
  const viewBtn=ev.target.closest("[data-view]");if(viewBtn){
   const requested=viewBtn.getAttribute("data-view");
   if(!pamIsAdmin()&&["players","new"].includes(requested)){
-   pamToast("L'account collaboratore può aprire i tornei e inserire i risultati.","error");
+   pamToast("Il collaboratore può gestire i tornei, ma non può accedere all’anagrafica generale o creare nuove competizioni.","error");
    return;
   }
   setView(requested);return
@@ -4547,7 +4545,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=6.0-roster-approval",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=7.2.2-collaboratore-operativo",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

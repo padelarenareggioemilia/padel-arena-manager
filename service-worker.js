@@ -1,4 +1,4 @@
-const CACHE_NAME="pam-v7-2-aste-multiple";
+const CACHE_NAME="pam-v7-2-1-collaboratore-operativo";
 const CORE=[
  "./",
  "./index.html",
