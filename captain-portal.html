@@ -12,7 +12,8 @@
 main{max-width:920px;margin:auto;padding:18px 14px 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:15px}.brand img{width:70px;height:70px;border-radius:18px}.brand h1{margin:0;font-size:24px}.brand small{color:var(--muted);letter-spacing:.08em}
 .card{background:rgba(16,35,59,.96);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 16px 44px rgba(0,0,0,.22)}h2,h3{margin:0 0 12px}.muted{color:var(--muted)}.notice{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line);margin:10px 0}.success{border-color:#4ade80;background:#0b2a20}.error{border-color:#ef4444;background:#351316}
 label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #365474;background:#071523;color:white}button{padding:13px 16px;border:0;border-radius:12px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#07111f}.secondary{background:#17304e;color:white;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:white}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}.team-hero{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pill{display:inline-flex;padding:6px 10px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);font-weight:900}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.datum{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line)}.datum b{display:block;margin-bottom:4px}.roster-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}@media(max-width:650px){.row,.grid,.roster-row{grid-template-columns:1fr}.team-hero{display:block}}
-.team-logo-box{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center}.team-logo-box img{width:100px;height:100px;object-fit:contain;background:#fff;border-radius:18px;padding:7px}.upload-label{display:flex;align-items:center;justify-content:center;padding:13px;border-radius:12px;background:#17304e;border:1px solid #3c5d7d;color:#fff;font-weight:900;cursor:pointer}.upload-label input{display:none}@media(max-width:650px){.team-logo-box{grid-template-columns:1fr}.team-logo-box img{margin:auto}}</style>
+.team-logo-box{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center}.team-logo-box img{width:100px;height:100px;object-fit:contain;background:#fff;border-radius:18px;padding:7px}.upload-label{display:flex;align-items:center;justify-content:center;padding:13px;border-radius:12px;background:#17304e;border:1px solid #3c5d7d;color:#fff;font-weight:900;cursor:pointer}.upload-label input{display:none}@media(max-width:650px){.team-logo-box{grid-template-columns:1fr}.team-logo-box img{margin:auto}}.roster-list{display:grid;gap:10px;margin-top:12px}.roster-row{display:grid;grid-template-columns:54px 1fr auto;gap:10px;align-items:center;background:#081829;border:1px solid #2f4c70;border-radius:14px;padding:11px}.roster-row img{width:50px;height:50px;border-radius:50%;object-fit:cover;background:#fff}.roster-row small{display:block;color:#b9c9dc}.status-pending{color:#ffd166}.status-approved{color:#9dff25}.status-rejected{color:#ff7c8b}.decision-actions{display:flex;gap:6px}@media(max-width:650px){.roster-row{grid-template-columns:46px 1fr}.decision-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.decision-actions button{width:100%}}
+</style>
 </head>
 <body>
 <main>
@@ -53,11 +54,11 @@ async function signup(){
  session=data.session;await claimAndLoad();
 }
 async function claimAndLoad(){
- if(preview){renderPortal();return}
+ if(preview){renderPortal();setTimeout(loadRoster,20);return}
  const {data,error}=await sb.rpc("claim_championship_team_invite",{p_token:invite});
  if(error){loginView("Accesso non ancora autorizzato oppure configurazione Supabase da completare: "+error.message);return}
  if(!data?.access_enabled){loginView("L’organizzazione non ha ancora aperto l’accesso a questa squadra.");return}
- team=Object.assign(team,data.team||{});renderPortal();
+ team=Object.assign(team,data.team||{});renderPortal();await loadRoster();
 }
 function renderPortal(){
  document.getElementById("app").innerHTML='<section class="card team-hero"><div><span class="pill">'+esc(team.series)+'</span><h2 style="margin-top:12px">'+esc(team.teamName)+'</h2><div class="muted">'+esc(team.clubLegalName)+'</div></div><button class="secondary" id="logout">Esci</button></section>'+
@@ -84,8 +85,33 @@ function renderPortal(){
 function datum(label,value){return '<div class="datum"><b>'+esc(label)+'</b><span>'+esc(value||"—")+'</span></div>'}
 (async function(){
  const {data}=await sb.auth.getSession();session=data.session;
- if(preview){renderPortal();return}
+ if(preview){renderPortal();setTimeout(loadRoster,20);return}
  if(session)await claimAndLoad();else loginView();
 })();
+
+let CAPTAIN_ROSTER=[];
+function rosterStatusLabel(v){return v==='approved'?'APPROVATO':v==='rejected'?'RIFIUTATO':'IN ATTESA'}
+async function loadRoster(){
+ const box=document.getElementById('roster');if(!box)return;
+ if(preview&&!session){box.innerHTML='<div class="notice">Anteprima: accedendo come capitano qui compariranno le richieste reali.</div>';return}
+ box.innerHTML='<div class="muted">Caricamento richieste...</div>';
+ const {data,error}=await sb.from('championship_roster_players').select('*').eq('team_id',team.id).order('created_at',{ascending:false});
+ if(error){box.innerHTML='<div class="notice error">Non posso caricare la rosa: '+esc(error.message)+'</div>';return}
+ CAPTAIN_ROSTER=data||[];renderRoster();
+}
+function renderRoster(){
+ const box=document.getElementById('roster');if(!box)return;
+ const pending=CAPTAIN_ROSTER.filter(r=>r.approval_status==='pending').length,approved=CAPTAIN_ROSTER.filter(r=>r.approval_status==='approved').length;
+ let html='<div class="notice '+(pending?'error':'success')+'"><b>'+pending+' richieste in attesa</b> · '+approved+' giocatori approvati</div>';
+ if(!CAPTAIN_ROSTER.length){box.innerHTML=html+'<div class="muted">Nessun giocatore inserito.</div>';return}
+ html+='<div class="roster-list">'+CAPTAIN_ROSTER.map(r=>'<div class="roster-row"><img src="'+esc(r.photo_url||'assets/padel-arena-manager-logo.jpg')+'"><div><b>'+esc((r.first_name||'')+' '+(r.last_name||''))+'</b><small>'+esc(r.email||'')+' · '+esc(r.phone||'')+'</small><small class="status-'+esc(r.approval_status||'pending')+'"><b>'+rosterStatusLabel(r.approval_status)+'</b>'+(r.rejection_reason?' · '+esc(r.rejection_reason):'')+'</small></div><div class="decision-actions">'+(r.approval_status==='pending'?'<button class="primary" data-cap-approve="'+r.id+'">Approva</button><button class="danger" data-cap-reject="'+r.id+'">Rifiuta</button>':'')+'</div></div>').join('')+'</div>';
+ box.innerHTML=html;
+}
+async function decideRoster(id,decision){
+ let reason=null;if(decision==='rejected'){reason=prompt('Motivo del rifiuto:','Dati da correggere');if(reason===null)return}
+ const {error}=await sb.rpc('decide_championship_roster_player',{p_player_id:id,p_decision:decision,p_reason:reason});
+ if(error){alert('Errore: '+error.message);return}await loadRoster();alert(decision==='approved'?'Giocatore approvato.':'Richiesta rifiutata: il giocatore potrà inviarla di nuovo.');
+}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-cap-approve]'),r=e.target.closest('[data-cap-reject]');if(a)decideRoster(a.getAttribute('data-cap-approve'),'approved');if(r)decideRoster(r.getAttribute('data-cap-reject'),'rejected')});
 </script>
 </body></html>

@@ -3051,11 +3051,21 @@ document.addEventListener("input",function(ev){
   if(count)count.textContent=visible+" nominativi visualizzati";
  }
  if(ev.target.id==="eventPlayerSearchInput"){
-  const query=ev.target.value.trim().toLowerCase();
+  const query=normalizeName(ev.target.value||"");
+  let visible=0;
   document.querySelectorAll(".event-player-search-row").forEach(function(row){
-   const show=!query||String(row.getAttribute("data-event-player-search")||"").includes(query);
-   row.style.display=show?"":"none";
+   const haystack=normalizeName(row.getAttribute("data-event-player-search")||"");
+   const checked=!!row.querySelector('[data-select-player]:checked');
+   const selectedOnly=!!(state.draft&&state.draft.showSelectedOnly);
+   const show=query ? haystack.includes(query) : (!selectedOnly||checked);
+   row.classList.toggle("pam-hidden-unselected",!show);
+   row.style.removeProperty("display");
+   if(show)visible++;
   });
+  const badge=document.getElementById("pamSelectedPlayersBadge");
+  if(badge){
+   badge.textContent=query ? visible+" TROVATI" : (state.draft.selected.length+" SELEZIONATI");
+  }
  }
 });
 

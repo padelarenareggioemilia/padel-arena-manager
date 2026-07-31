@@ -1240,6 +1240,8 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 .pam-competition-detail{border-left:4px solid var(--club-accent)}
 .pam-search-live{margin-top:8px;color:#b7ff3c;font-weight:850}
 @media(max-width:760px){.pam-competition-grid{grid-template-columns:1fr}.pam-logo-upload{grid-template-columns:1fr}.pam-logo-upload img{margin:auto}.pam-team-identity{align-items:flex-start}}
+
+.pam-roster-list{display:grid;gap:10px;margin-top:14px}.pam-roster-row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;background:#081829;border:1px solid #2f4c70;border-radius:15px}.pam-roster-row img{width:54px;height:54px;border-radius:50%;object-fit:cover;background:#fff}.pam-roster-row small{display:block;color:#b9c9dc;margin-top:3px}.pam-status-pending{color:#ffd166}.pam-status-approved{color:#9dff25}.pam-status-rejected{color:#ff7c8b}.pam-roster-actions{display:flex;gap:7px;flex-wrap:wrap}.pam-notification-badge{display:inline-flex;min-width:25px;height:25px;align-items:center;justify-content:center;border-radius:999px;background:#ff4d67;color:#fff;font-weight:900;margin-left:7px}@media(max-width:700px){.pam-roster-row{grid-template-columns:48px 1fr}.pam-roster-row img{width:46px;height:46px}.pam-roster-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.pam-roster-actions button{width:100%}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1532,7 +1534,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 4.3.1 · richieste iscrizione</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 5.4.2 · ricerca automatica nominativi ripristinata</div>';
 }
 
 function iphoneInstallCard(){
@@ -2387,7 +2389,7 @@ function championshipTeamView(){
  f("Nome e cognome","captainName")+f("Email di accesso","captainEmail","email")+f("Telefono","captainPhone")+f("Data di nascita","captainBirthDate","date")+
  f("Luogo di nascita","captainBirthPlace")+f("Comune di residenza","captainResidence")+
  '</div><button class="primary" data-save-champ-team="'+t.id+'">Salva eventuali correzioni</button></section>'+
- '<section class="card"><div class="pam-v5-section-title"><h2>Rosa giocatori</h2><small>Puoi inserire direttamente i giocatori oppure inviare il link personale della squadra.</small></div><div class="pam-roster-placeholder"><div><b>0 / 20</b><small>Giocatori inseriti</small></div><div><b>0</b><small>In attesa di approvazione</small></div><div><b>0</b><small>Schierabili</small></div></div><div class="pam-final-actions"><button class="primary" style="width:auto" data-add-team-player="'+t.id+'">Inserisci giocatore</button><button class="secondary" data-toggle-roster="'+t.id+'">Chiudi raccolta rosa</button><button class="secondary" data-share-player-link="'+t.id+'">Invia link ai giocatori</button><button class="secondary" data-copy-player-link="'+t.id+'">Copia link squadra</button></div><div class="notice success"><b>Raccolta rose attiva.</b> Capitano e giocatori possono già inserire i dati.<br><br><b>Istruzioni incluse nel messaggio:</b> il giocatore apre il link, compila i propri dati, carica la foto e invia la richiesta. La registrazione resta in attesa finché capitano o organizzazione non la approvano.</div></section>'+
+ '<section class="card"><div class="pam-v5-section-title"><h2>Rosa giocatori <span id="pamRosterPendingBadge"></span></h2><small>Approva o rifiuta le richieste ricevute dal link personale della squadra.</small></div><div id="pamAdminRosterArea"><div class="muted">Caricamento richieste in corso...</div></div><div class="pam-final-actions"><button class="primary" style="width:auto" data-add-team-player="'+t.id+'">Inserisci giocatore</button><button class="secondary" data-toggle-roster="'+t.id+'">Chiudi raccolta rosa</button><button class="secondary" data-share-player-link="'+t.id+'">Invia link ai giocatori</button><button class="secondary" data-copy-player-link="'+t.id+'">Copia link squadra</button></div><div class="notice success"><b>Raccolta rose attiva.</b> Capitano e giocatori possono già inserire i dati.<br><br><b>Istruzioni incluse nel messaggio:</b> il giocatore apre il link, compila i propri dati, carica la foto e invia la richiesta. La registrazione resta in attesa finché capitano o organizzazione non la approvano.</div></section>'+
  '</div>';
 }
 async function pamToggleTeamAccess(id,forced){
@@ -4275,7 +4277,7 @@ document.addEventListener("click",function(ev){
  }
 
 
- const openChamp=ev.target.closest("[data-open-champ-team]");if(openChamp){state.champTeamId=openChamp.getAttribute("data-open-champ-team");state.view="championship-team";save();render();return}
+ const openChamp=ev.target.closest("[data-open-champ-team]");if(openChamp){state.champTeamId=openChamp.getAttribute("data-open-champ-team");state.view="championship-team";save();render();setTimeout(function(){pamLoadAdminRoster(openChamp.getAttribute("data-open-champ-team"))},40);return}
  const toggleChamp=ev.target.closest("[data-toggle-team-access]");if(toggleChamp){pamToggleTeamAccess(toggleChamp.getAttribute("data-toggle-team-access"));return}
  const shareChamp=ev.target.closest("[data-share-team-invite]");if(shareChamp){pamShareTeamInvite(shareChamp.getAttribute("data-share-team-invite"));return}
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
@@ -4350,14 +4352,16 @@ document.addEventListener("input",function(ev){
   const query=normalizeName(ev.target.value||"");
   let visible=0;
   document.querySelectorAll(".event-player-search-row").forEach(function(row){
-   const hay=normalizeName(String(row.getAttribute("data-event-player-search")||""));
-   const show=!query||hay.includes(query);
-   row.classList.remove("pam-hidden-unselected");
-   row.style.display=show?"":"none";
+   const haystack=normalizeName(row.getAttribute("data-event-player-search")||"");
+   const checked=!!row.querySelector('[data-select-player]:checked');
+   const selectedOnly=!!(state.draft&&state.draft.showSelectedOnly);
+   const show=query ? haystack.includes(query) : (!selectedOnly||checked);
+   row.classList.toggle("pam-hidden-unselected",!show);
+   row.style.removeProperty("display");
    if(show)visible++;
   });
   const count=document.getElementById("pamEventPlayerSearchCount");
-  if(count)count.textContent=visible+(query?" risultati trovati":" nominativi disponibili");
+  if(count)count.textContent=query ? visible+" nominativi trovati" : visible+" nominativi disponibili";
  }
 });
 
@@ -4497,7 +4501,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=5.0-preview",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=6.0-roster-approval",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
@@ -4571,6 +4575,40 @@ document.addEventListener('click',e=>{
  if(a){location.href=pamPlayerRegistrationUrl(team)+'&mode=admin';return}
  if(sh){pamShareText('Invito rosa '+team.teamName,pamPlayerInstructions(team));return}
  navigator.clipboard?.writeText(pamPlayerRegistrationUrl(team)); alert('Link della squadra copiato.');
+});
+
+
+const PAM_ADMIN_ROSTER_CACHE={};
+function pamRosterStatusLabel(v){return v==='approved'?'APPROVATO':v==='rejected'?'RIFIUTATO':'IN ATTESA'}
+function pamRosterStatusClass(v){return v==='approved'?'pam-status-approved':v==='rejected'?'pam-status-rejected':'pam-status-pending'}
+async function pamLoadAdminRoster(teamId){
+ const area=document.getElementById('pamAdminRosterArea');if(!area)return;
+ if(!PAM_SESSION){area.innerHTML='<div class="notice error">Accedi come amministratore per vedere e gestire le richieste online.</div>';return}
+ area.innerHTML='<div class="muted">Caricamento richieste in corso...</div>';
+ const {data,error}=await sb.from('championship_roster_players').select('*').eq('team_id',teamId).order('created_at',{ascending:false});
+ if(error){area.innerHTML='<div class="notice error">Impossibile caricare la rosa: '+esc(error.message)+'</div>';return}
+ PAM_ADMIN_ROSTER_CACHE[teamId]=data||[];pamRenderAdminRoster(teamId);
+}
+function pamRenderAdminRoster(teamId){
+ const area=document.getElementById('pamAdminRosterArea');if(!area)return;
+ const rows=PAM_ADMIN_ROSTER_CACHE[teamId]||[];
+ const active=rows.filter(r=>r.approval_status!=='rejected'),pending=rows.filter(r=>r.approval_status==='pending'),approved=rows.filter(r=>r.approval_status==='approved');
+ const badge=document.getElementById('pamRosterPendingBadge');if(badge)badge.innerHTML=pending.length?'<span class="pam-notification-badge">'+pending.length+'</span>':'';
+ let html='<div class="pam-roster-placeholder"><div><b>'+active.length+' / 20</b><small>Giocatori inseriti</small></div><div><b>'+pending.length+'</b><small>In attesa di approvazione</small></div><div><b>'+approved.length+'</b><small>Schierabili</small></div></div>';
+ if(!rows.length){area.innerHTML=html+'<div class="notice">Non è ancora arrivata alcuna richiesta.</div>';return}
+ html+='<div class="pam-roster-list">'+rows.map(function(r){return '<div class="pam-roster-row"><img src="'+esc(r.photo_url||'assets/padel-arena-manager-logo.jpg')+'"><div><b>'+esc((r.first_name||'')+' '+(r.last_name||''))+'</b><small>'+esc(r.email||'')+' · '+esc(r.phone||'')+'</small><small class="'+pamRosterStatusClass(r.approval_status)+'"><b>'+pamRosterStatusLabel(r.approval_status)+'</b>'+(r.rejection_reason?' · '+esc(r.rejection_reason):'')+'</small></div><div class="pam-roster-actions">'+(r.approval_status==='pending'?'<button class="primary small" data-admin-roster-approve="'+r.id+'" data-team-id="'+teamId+'">Approva</button><button class="danger small" data-admin-roster-reject="'+r.id+'" data-team-id="'+teamId+'">Rifiuta</button>':'')+'</div></div>'}).join('')+'</div>';
+ area.innerHTML=html;
+}
+async function pamDecideRoster(playerId,teamId,decision){
+ let reason=null;if(decision==='rejected'){reason=prompt('Motivo del rifiuto (sarà visibile nella gestione):','Dati da correggere');if(reason===null)return}
+ const {error}=await sb.rpc('decide_championship_roster_player',{p_player_id:playerId,p_decision:decision,p_reason:reason});
+ if(error){pamToast('Errore: '+error.message,'error');return}
+ pamToast(decision==='approved'?'Giocatore approvato e inserito nella rosa.':'Richiesta rifiutata. Il giocatore potrà compilarla nuovamente.','success');
+ await pamLoadAdminRoster(teamId);
+}
+document.addEventListener('click',function(e){
+ const ap=e.target.closest('[data-admin-roster-approve]'),rj=e.target.closest('[data-admin-roster-reject]');if(!ap&&!rj)return;
+ const el=ap||rj;pamDecideRoster(el.getAttribute(ap?'data-admin-roster-approve':'data-admin-roster-reject'),el.getAttribute('data-team-id'),ap?'approved':'rejected');
 });
 </script>
 </body>

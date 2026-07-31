@@ -236,3 +236,11 @@ VERSIONE 5.4 - RACCOLTA ROSE ATTIVA
 - Stato iniziale impostato su RACCOLTA APERTA.
 - Corretto il riferimento ai pulsanti della rosa nella scheda squadra.
 - Eseguire SUPABASE_AICS_2027_CAPITANI.sql per aggiornare anche i dati online.
+
+
+VERSIONE 5.4.2 - RICERCA NOMINATIVI TORNEI
+- Ripristinato il filtro immediato mentre si digitano nome o cognome nella creazione torneo.
+- La ricerca funziona anche con il filtro MOSTRA SOLO SELEZIONATI attivo.
+- Ricerca indipendente da maiuscole, minuscole e accenti.
+- Conteggio dei risultati trovati durante la digitazione.
+- Cache PWA aggiornata per forzare il caricamento della correzione.
