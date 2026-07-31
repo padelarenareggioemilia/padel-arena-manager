@@ -291,7 +291,8 @@ function freshState(){return{view:"home",tab:"matches",players:[],events:[],curr
  fee:25,
  pairsPerGroup:4,
  finalsOption:"top2",
- selected:[]
+ selected:[],
+ description:"",endDate:new Date().toISOString().slice(0,10),endTime:"23:00",registrationMin:4,registrationCapacity:16,registrationOpen:true,waitlistEnabled:true,registrationApproval:"manual",posterTheme:"eden_summer",sponsorLogos:[]
 }}}
 let state;
 try{state=JSON.parse(localStorage.getItem(KEY))||freshState()}catch(e){state=freshState()}
@@ -316,6 +317,16 @@ if(state.draft.initialTimerEnabled===undefined)state.draft.initialTimerEnabled=t
 if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerEnabled=false;
 if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
 if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false;
+if(!state.draft.endDate)state.draft.endDate=state.draft.date||new Date().toISOString().slice(0,10);
+if(!state.draft.endTime)state.draft.endTime="23:00";
+if(state.draft.registrationMin===undefined)state.draft.registrationMin=4;
+if(state.draft.registrationCapacity===undefined)state.draft.registrationCapacity=16;
+if(state.draft.registrationOpen===undefined)state.draft.registrationOpen=true;
+if(state.draft.waitlistEnabled===undefined)state.draft.waitlistEnabled=true;
+if(!state.draft.registrationApproval)state.draft.registrationApproval="manual";
+if(!state.draft.posterTheme)state.draft.posterTheme="eden_summer";
+if(state.draft.description===undefined)state.draft.description="";
+if(!state.draft.sponsorLogos)state.draft.sponsorLogos=[];
 (state.events||[]).forEach(function(e){
  if(!e.shareToken)e.shareToken=pamUuid();
  if(!e.competitionType)e.competitionType="rodeo_tokens";
@@ -329,6 +340,15 @@ if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false
  if(!e.slotDuration)e.slotDuration=Number(e.matchDuration)||20;
  if(e.customAddress===undefined)e.customAddress="";
  if(!e.fixedPairRegistrations)e.fixedPairRegistrations={};
+ if(e.registrationOpen===undefined)e.registrationOpen=true;
+ if(e.waitlistEnabled===undefined)e.waitlistEnabled=true;
+ if(e.registrationCapacity===undefined)e.registrationCapacity=Math.max(16,(e.playerIds||[]).length);
+ if(e.registrationMin===undefined)e.registrationMin=4;
+ if(!e.endDate)e.endDate=e.date||"";
+ if(!e.endTime)e.endTime="23:00";
+ if(!e.posterTheme)e.posterTheme="eden_summer";
+ if(e.description===undefined)e.description="";
+ if(!e.sponsorLogos)e.sponsorLogos=[];
 });
 
 (state.players||[]).forEach(function(p){
@@ -1388,7 +1408,14 @@ function newEventView(){
  '<div class="field"><label>Eliminatorie</label><select id="eEliminationReturnLeg"><option value="no" '+(!d.eliminationReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.eliminationReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
  '<div class="field"><label>Semifinali</label><select id="eSemifinalReturnLeg"><option value="no" '+(!d.semifinalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.semifinalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
  '<div class="field"><label>Finale</label><select id="eFinalReturnLeg"><option value="no" '+(!d.finalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.finalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div></div>'+fixedOptions+'</div>'+
- '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Genera la competizione senza dover scorrere tutto l’elenco.</div></div><button class="primary create-event-top-button" data-action="create-event">Genera competizione</button></div>'+
+ '<div class="card"><h2>Pubblicazione e iscrizioni</h2>'+
+ '<div class="field"><label>Descrizione invito</label><textarea id="eDescription" rows="4" placeholder="Presentazione, programma, premi e informazioni utili...">'+esc(d.description||"")+'</textarea></div>'+
+ '<div class="row"><div class="field"><label>Fine prevista: data</label><input id="eEndDate" type="date" value="'+esc(d.endDate||d.date)+'"></div><div class="field"><label>Fine prevista: ora</label><input id="eEndTime" type="time" value="'+esc(d.endTime||"23:00")+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Numero minimo giocatori</label><input id="eRegistrationMin" type="number" min="1" value="'+Number(d.registrationMin||4)+'"></div><div class="field"><label>Numero massimo giocatori</label><input id="eRegistrationCapacity" type="number" min="4" value="'+Number(d.registrationCapacity||16)+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Stato iscrizioni</label><select id="eRegistrationOpen"><option value="yes" '+(d.registrationOpen!==false?"selected":"")+'>APERTE</option><option value="no" '+(d.registrationOpen===false?"selected":"")+'>CHIUSE</option></select></div><div class="field"><label>Lista di attesa</label><select id="eWaitlistEnabled"><option value="yes" '+(d.waitlistEnabled!==false?"selected":"")+'>ATTIVA</option><option value="no" '+(d.waitlistEnabled===false?"selected":"")+'>DISATTIVA</option></select></div></div>'+
+ '<div class="field"><label>Base grafica locandina</label><select id="ePosterTheme"><option value="eden_summer" '+(d.posterTheme==="eden_summer"?"selected":"")+'>EDEN SUMMER · piscina, Spritz, musica e bar</option><option value="cupra_bossoni" '+(d.posterTheme==="cupra_bossoni"?"selected":"")+'>CUPRA BOSSONI · nero, rame e stile automotive</option><option value="aics_mare" '+(d.posterTheme==="aics_mare"?"selected":"")+'>AICS AL MARE · tricolore, spiaggia e competizione</option></select></div>'+
+ '<div id="pamTimeFeasibility" class="notice">Il controllo automatico della durata sarà aggiornato mentre compili.</div></div>'+
+ '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Puoi salvare e pubblicare il torneo anche senza avere ancora inserito i giocatori.</div></div><button class="primary create-event-top-button" data-action="create-event">SALVA E PUBBLICA TORNEO</button></div>'+
  '<div id="eventMessage"></div>'+
  '<div class="card"><h2>Seleziona partecipanti</h2>'+
  '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
@@ -1400,7 +1427,7 @@ function newEventView(){
   '<span class="pill" id="pamSelectedPlayersBadge">'+d.selected.length+' SELEZIONATI</span>'+
  '</div>'+
  '<div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
- '<button class="primary" data-action="create-event">Genera competizione</button>';
+ '<button class="primary" data-action="create-event">SALVA E PUBBLICA TORNEO</button>';
 }
 function buildMatches(ids,courts,returnLeg){
  const playerIds=(ids||[]).slice();
@@ -1749,15 +1776,26 @@ function createEvent(){
   state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
   state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
   state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  state.draft.description=document.getElementById("eDescription")?.value.trim()||"";
+  state.draft.endDate=document.getElementById("eEndDate")?.value||state.draft.date;
+  state.draft.endTime=document.getElementById("eEndTime")?.value||"23:00";
+  state.draft.registrationMin=Math.max(1,Number(document.getElementById("eRegistrationMin")?.value)||4);
+  state.draft.registrationCapacity=Math.max(state.draft.registrationMin,Number(document.getElementById("eRegistrationCapacity")?.value)||16);
+  state.draft.registrationOpen=document.getElementById("eRegistrationOpen")?.value!=="no";
+  state.draft.waitlistEnabled=document.getElementById("eWaitlistEnabled")?.value!=="no";
+  state.draft.posterTheme=document.getElementById("ePosterTheme")?.value||"eden_summer";
   if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
   if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
-  if(state.draft.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(state.draft.selected.length))throw new Error("per il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori");
-  if(state.draft.competitionType!=="rodeo_tokens"&&state.draft.selected.length<4)throw new Error("seleziona almeno 4 giocatori");
-  if(state.draft.competitionType==="fixed_pairs"){
-   if(state.draft.selected.length%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
+  const selectedCount=state.draft.selected.length;
+  if(selectedCount>0&&state.draft.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(selectedCount))throw new Error("per generare subito il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori; in alternativa salva il torneo con zero giocatori e raccogli le iscrizioni dal link");
+  if(selectedCount>0&&selectedCount<4)throw new Error("con giocatori già inseriti ne servono almeno 4; in alternativa deselezionali e salva il torneo vuoto");
+  if(state.draft.competitionType==="fixed_pairs"&&selectedCount>0){
+   if(selectedCount%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
    const missing=state.draft.selected.filter(function(id){return !(state.draft.fixedPairRegistrations||{})[id]});
    if(missing.length)throw new Error("indica per ogni giocatore se l’iscrizione è singola oppure in coppia");
   }
+  const feasibility=pamEstimateDraftFeasibility();
+  if(feasibility.overrun&&!confirm(feasibility.message+"\n\nVuoi salvare comunque il torneo?"))throw new Error("salvataggio annullato: modifica orari, campi o formula");
   const event={
    id:uid("e"),
    name:state.draft.name||"Nuova competizione",
@@ -1781,6 +1819,16 @@ function createEvent(){
    eliminationTimerEnabled:state.draft.eliminationTimerEnabled,
    semifinalTimerEnabled:state.draft.semifinalTimerEnabled,
    finalTimerEnabled:state.draft.finalTimerEnabled,
+   description:state.draft.description||"",
+   endDate:state.draft.endDate,
+   endTime:state.draft.endTime,
+   registrationMin:state.draft.registrationMin,
+   registrationCapacity:state.draft.registrationCapacity,
+   registrationOpen:state.draft.registrationOpen,
+   waitlistEnabled:state.draft.waitlistEnabled,
+   registrationApproval:"manual",
+   posterTheme:state.draft.posterTheme,
+   sponsorLogos:[],
    timers:{},
    playerIds:state.draft.selected.slice(),
    payments:defaultPayments(state.draft.selected.slice(),state.draft.fee),
@@ -1798,18 +1846,16 @@ function createEvent(){
     final:{teamA:[],teamB:[],score1:null,score2:null}
    }
   };
-  if(event.competitionType==="fixed_pairs"){
-   event.playerIds=pamOrderedFixedPairIds(event.playerIds);
-   const built=buildFixedPairs(event.playerIds,state.draft.pairsPerGroup,event.courts,event.returnLeg);
-   event.pairs=built.pairs;
-   event.matches=built.matches;
-   event.pairsPerGroup=state.draft.pairsPerGroup;
-   event.finalsOption=state.draft.finalsOption;
-   event.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
-  }else{
-   event.matches=buildMatches(event.playerIds,event.courts,event.returnLeg);
+  if(event.playerIds.length){
+   if(event.competitionType==="fixed_pairs"){
+    event.playerIds=pamOrderedFixedPairIds(event.playerIds);
+    const built=buildFixedPairs(event.playerIds,state.draft.pairsPerGroup,event.courts,event.returnLeg);
+    event.pairs=built.pairs;event.matches=built.matches;
+    event.pairsPerGroup=state.draft.pairsPerGroup;event.finalsOption=state.draft.finalsOption;
+    event.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
+   }else event.matches=buildMatches(event.playerIds,event.courts,event.returnLeg);
   }
-  if(!event.matches||!event.matches.length)throw new Error("nessuna partita generata: controlla i partecipanti selezionati");
+  event.status=event.registrationOpen?"registration_open":"registration_closed";
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
   state.events.unshift(event);state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();
  }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
@@ -1889,9 +1935,12 @@ function eventView(){
  '<div class="event-online-tools print-hide">'+
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
+  '<button class="primary" data-open-poster="'+e.id+'">🖼️ LOCANDINA + QR</button>'+
+  (pamIsAdmin()?'<button class="secondary" data-toggle-registration="'+e.id+'">'+(e.registrationOpen?'🔒 Chiudi iscrizioni':'🔓 Apri iscrizioni')+'</button>':'')+
   '<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
   (pamIsAdmin()?'<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div>'+
+ '<div class="notice '+(e.registrationOpen?'success':'error')+' print-hide"><b>Iscrizioni '+(e.registrationOpen?'APERTE':'CHIUSE')+':</b> '+(e.playerIds||[]).length+' / '+Number(e.registrationCapacity||16)+' partecipanti · '+(e.waitlistEnabled?'lista di attesa attiva':'lista di attesa disattiva')+'</div>'+
  '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice print-hide"><b>Modalità collaboratore:</b> puoi inserire o correggere esclusivamente i risultati delle partite.</div>':'')+
  '<div class="notice print-hide"><b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
@@ -3007,6 +3056,10 @@ document.addEventListener("click",function(ev){
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
  const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(t)window.open(pamCaptainPortalUrl(t)+"&preview=1","_blank");return}
 
+ const posterBtn=ev.target.closest("[data-open-poster]");if(posterBtn){pamOpenPoster(posterBtn.getAttribute("data-open-poster"));return}
+ const toggleReg=ev.target.closest("[data-toggle-registration]");if(toggleReg){pamToggleTournamentRegistration(toggleReg.getAttribute("data-toggle-registration"));return}
+ const posterClose=ev.target.closest("[data-close-poster]");if(posterClose){document.getElementById("pamPosterOverlay")?.remove();return}
+ const posterDownload=ev.target.closest("[data-download-poster]");if(posterDownload){pamDownloadPoster(posterDownload.getAttribute("data-download-poster"));return}
  const viewBtn=ev.target.closest("[data-view]");if(viewBtn){
   const requested=viewBtn.getAttribute("data-view");
   if(!pamIsAdmin()&&["players","new"].includes(requested)){
@@ -3047,6 +3100,54 @@ document.addEventListener("click",function(ev){
 });
 
 
+
+function pamDraftValue(id,fallback){const el=document.getElementById(id);return el?el.value:fallback}
+function pamEstimateTournamentEnd(opts){
+ const count=Math.max(0,Number(opts.count)||0),courts=Math.max(1,Number(opts.courts)||1),slot=Math.max(1,Number(opts.slot)||20);
+ let matches=0;
+ if(count>=4){
+  if(opts.type==="fixed_pairs"){const pairs=Math.floor(count/2),g=Math.max(2,Number(opts.pairsPerGroup)||4);matches=Math.ceil(pairs/g)*(g*(g-1)/2)+3}
+  else matches=({6:6,8:8,10:10,12:12,16:16}[count]||count)+3;
+  if(opts.returnLeg)matches*=2;
+ }
+ const slots=Math.ceil(matches/courts),minutes=slots*slot;
+ const start=new Date((opts.date||new Date().toISOString().slice(0,10))+"T"+(opts.start||"20:00"));
+ return{matches,minutes,end:new Date(start.getTime()+minutes*60000)};
+}
+function pamEstimateDraftFeasibility(){
+ const count=Number(pamDraftValue("eRegistrationCapacity",state.draft.registrationCapacity||16));
+ const result=pamEstimateTournamentEnd({count:count,courts:pamDraftValue("eCourts",state.draft.courts),slot:pamDraftValue("eSlotDuration",state.draft.slotDuration),type:pamDraftValue("eCompetitionType",state.draft.competitionType),pairsPerGroup:pamDraftValue("ePairsPerGroup",state.draft.pairsPerGroup),returnLeg:pamDraftValue("eReturnLeg",state.draft.returnLeg?"yes":"no")==="yes",date:pamDraftValue("eDate",state.draft.date),start:pamDraftValue("eStartTime",state.draft.startTime)});
+ const limit=new Date((pamDraftValue("eEndDate",state.draft.endDate)||pamDraftValue("eDate",state.draft.date))+"T"+(pamDraftValue("eEndTime",state.draft.endTime)||"23:00"));
+ const overrun=result.end>limit;
+ const fmt=d=>d.toLocaleString("it-IT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+ return{overrun,result,limit,message:(overrun?"ATTENZIONE: con ":"Configurazione compatibile: con ")+count+" giocatori sono previste circa "+result.matches+" partite e la fine stimata è "+fmt(result.end)+(overrun?", oltre il limite impostato "+fmt(limit)+".":".")};
+}
+function pamUpdateFeasibility(){const box=document.getElementById("pamTimeFeasibility");if(!box)return;const f=pamEstimateDraftFeasibility();box.className="notice "+(f.overrun?"error":"success");box.innerHTML="<b>Controllo automatico tempi:</b> "+esc(f.message)+(f.overrun?"<br>Potrai comunque salvare confermando l’avviso.":"");}
+async function pamToggleTournamentRegistration(id){const e=state.events.find(x=>x.id===id);if(!e)return;e.registrationOpen=!e.registrationOpen;e.status=e.registrationOpen?"registration_open":"registration_closed";save();render();pamToast("Iscrizioni "+(e.registrationOpen?"aperte":"chiuse"),"success")}
+function pamPosterTheme(e){
+ if(e.posterTheme==="cupra_bossoni")return{bg:"#08090b",accent:"#c67855",sub:"CUPRA BOSSONI",motif:"AUTOMOTIVE · PADEL · PERFORMANCE"};
+ if(e.posterTheme==="aics_mare")return{bg:"#f5fbff",accent:"#087a4a",sub:"AICS PADEL AL MARE",motif:"SPORT · MARE · ITALIA",light:true};
+ return{bg:"#06253b",accent:"#ff8a18",sub:"EDEN SUMMER PADEL",motif:"PISCINA · SPRITZ · MUSICA · BAR"};
+}
+function pamOpenPoster(id){
+ const e=state.events.find(x=>x.id===id);if(!e)return;document.getElementById("pamPosterOverlay")?.remove();
+ const o=document.createElement("div");o.id="pamPosterOverlay";o.className="pam-modal-overlay";o.innerHTML='<div class="pam-modal-card" style="max-width:760px"><div class="pam-modal-head"><div><h2>Locandina dinamica</h2><div class="muted">Include il QR Code collegato all’iscrizione pubblica.</div></div><button class="secondary" data-close-poster>Chiudi</button></div><canvas id="pamPosterCanvas" width="1080" height="1350" style="width:100%;border-radius:16px;background:#fff"></canvas><div class="actions" style="margin-top:12px"><button class="primary" data-download-poster="'+id+'">SCARICA LOCANDINA PNG</button><button class="secondary" data-share-registration="'+id+'">CONDIVIDI LINK ISCRIZIONE</button></div></div>';document.body.appendChild(o);pamDrawPoster(e);
+}
+function pamDrawPoster(e){
+ const c=document.getElementById("pamPosterCanvas"),x=c.getContext("2d"),t=pamPosterTheme(e),url=pamRegistrationUrl(e);x.fillStyle=t.bg;x.fillRect(0,0,c.width,c.height);
+ x.fillStyle=t.accent;x.fillRect(0,0,1080,28);x.fillRect(0,1322,1080,28);
+ x.textAlign="center";x.fillStyle=t.light?"#09254b":"#fff";x.font="900 46px Arial";x.fillText(t.sub,540,110);x.font="700 25px Arial";x.fillText(t.motif,540,155);
+ x.font="900 74px Arial";wrapCanvasText(x,(e.name||"TORNEO PADEL").toUpperCase(),540,280,920,82);
+ x.fillStyle=t.accent;x.font="900 38px Arial";x.fillText((e.category||"").toUpperCase()+" · "+competitionTypeLabel(e.competitionType),540,510);
+ x.fillStyle=t.light?"#09254b":"#fff";x.font="800 44px Arial";x.fillText((e.date||"")+" · ORE "+(e.startTime||""),540,590);x.font="700 34px Arial";x.fillText(e.club||"",540,645);
+ x.font="700 28px Arial";wrapCanvasText(x,e.description||"Iscriviti ora e assicurati il tuo posto!",540,735,880,38);
+ x.fillStyle=t.accent;x.fillRect(115,880,850,250);x.fillStyle="#07111f";x.font="900 38px Arial";x.fillText("INQUADRA IL QR CODE E ISCRIVITI",540,940);
+ const box=document.createElement("div");box.style.cssText="position:fixed;left:-9999px;top:-9999px";document.body.appendChild(box);new QRCode(box,{text:url,width:150,height:150,correctLevel:QRCode.CorrectLevel.H});setTimeout(()=>{const img=box.querySelector("img")||box.querySelector("canvas");if(img)x.drawImage(img,465,970,150,150);box.remove();},80);
+ x.fillStyle=t.light?"#09254b":"#fff";x.font="800 27px Arial";x.fillText("POSTI: "+Number(e.registrationCapacity||16)+" · QUOTA: € "+Number(e.entryFee||0),540,1205);x.font="600 22px Arial";x.fillText("Padel Arena Manager · iscrizioni online e lista d’attesa",540,1260);
+}
+function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight){const words=String(text||"").split(/\s+/);let line="",yy=y;for(const w of words){const test=line+w+" ";if(ctx.measureText(test).width>maxWidth&&line){ctx.fillText(line.trim(),x,yy);line=w+" ";yy+=lineHeight}else line=test}if(line)ctx.fillText(line.trim(),x,yy);return yy}
+function pamDownloadPoster(id){const e=state.events.find(x=>x.id===id),c=document.getElementById("pamPosterCanvas");if(!e||!c)return;setTimeout(()=>{const a=document.createElement("a");a.download=(e.name||"torneo").replace(/[^a-z0-9]+/gi,"_")+"_locandina.png";a.href=c.toDataURL("image/png");a.click()},150)}
+
 function pamFilterChampTeams(){
  const q=(document.getElementById("champTeamSearch")?.value||"").trim().toLowerCase();
  const series=document.getElementById("champSeriesFilter")?.value||"";
@@ -3057,6 +3158,7 @@ function pamFilterChampTeams(){
  });
 }
 document.addEventListener("input",function(ev){
+ if(["eRegistrationCapacity","eCourts","eSlotDuration","eStartTime","eEndTime","eDate","eEndDate"].includes(ev.target.id)){pamUpdateFeasibility()}
  if(ev.target.id==="champTeamSearch"){pamFilterChampTeams();return}
 
  if(ev.target.id==="playerSearchInput"){
@@ -3127,6 +3229,14 @@ document.addEventListener("change",function(ev){
   state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
   state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
   state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  state.draft.description=document.getElementById("eDescription")?.value.trim()||"";
+  state.draft.endDate=document.getElementById("eEndDate")?.value||state.draft.date;
+  state.draft.endTime=document.getElementById("eEndTime")?.value||"23:00";
+  state.draft.registrationMin=Math.max(1,Number(document.getElementById("eRegistrationMin")?.value)||4);
+  state.draft.registrationCapacity=Math.max(state.draft.registrationMin,Number(document.getElementById("eRegistrationCapacity")?.value)||16);
+  state.draft.registrationOpen=document.getElementById("eRegistrationOpen")?.value!=="no";
+  state.draft.waitlistEnabled=document.getElementById("eWaitlistEnabled")?.value!=="no";
+  state.draft.posterTheme=document.getElementById("ePosterTheme")?.value||"eden_summer";
   if(ev.target.value==="rodeo_tokens")state.draft.name="Rodeo a Gettoni";
   if(ev.target.value==="rodeo_simple")state.draft.name="RODEO SEMPLICE";
   if(ev.target.value==="fixed_pairs")state.draft.name="COPPIE FISSE";
@@ -3154,6 +3264,14 @@ document.addEventListener("change",function(ev){
   state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
   state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
   state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  state.draft.description=document.getElementById("eDescription")?.value.trim()||"";
+  state.draft.endDate=document.getElementById("eEndDate")?.value||state.draft.date;
+  state.draft.endTime=document.getElementById("eEndTime")?.value||"23:00";
+  state.draft.registrationMin=Math.max(1,Number(document.getElementById("eRegistrationMin")?.value)||4);
+  state.draft.registrationCapacity=Math.max(state.draft.registrationMin,Number(document.getElementById("eRegistrationCapacity")?.value)||16);
+  state.draft.registrationOpen=document.getElementById("eRegistrationOpen")?.value!=="no";
+  state.draft.waitlistEnabled=document.getElementById("eWaitlistEnabled")?.value!=="no";
+  state.draft.posterTheme=document.getElementById("ePosterTheme")?.value||"eden_summer";
   if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
   if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
   state.draft.selected=[];

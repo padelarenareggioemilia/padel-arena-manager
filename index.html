@@ -1546,7 +1546,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 5.4.2 · ricerca automatica nominativi ripristinata</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 7.0 · Torneo Builder e iscrizioni pubbliche</div>';
 }
 
 function iphoneInstallCard(){
@@ -1600,6 +1600,17 @@ if(state.draft.initialTimerEnabled===undefined)state.draft.initialTimerEnabled=t
 if(state.draft.eliminationTimerEnabled===undefined)state.draft.eliminationTimerEnabled=false;
 if(state.draft.semifinalTimerEnabled===undefined)state.draft.semifinalTimerEnabled=false;
 if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false;
+if(!state.draft.endDate)state.draft.endDate=state.draft.date;
+if(!state.draft.endTime)state.draft.endTime="23:00";
+if(state.draft.description===undefined)state.draft.description="";
+if(state.draft.minParticipants===undefined)state.draft.minParticipants=0;
+if(state.draft.maxParticipants===undefined)state.draft.maxParticipants=16;
+if(state.draft.registrationMode===undefined)state.draft.registrationMode="automatic";
+if(state.draft.waitlistEnabled===undefined)state.draft.waitlistEnabled=true;
+if(state.draft.registrationOpen===undefined)state.draft.registrationOpen=true;
+if(!state.draft.posterTheme)state.draft.posterTheme="eden_summer";
+if(!state.draft.registrationCloseDate)state.draft.registrationCloseDate=state.draft.date;
+if(!state.draft.registrationCloseTime)state.draft.registrationCloseTime=state.draft.startTime||"20:00";
 (state.events||[]).forEach(function(e){
  if(!e.shareToken)e.shareToken=pamUuid();
  if(!e.competitionType)e.competitionType="rodeo_tokens";
@@ -1613,6 +1624,17 @@ if(state.draft.finalTimerEnabled===undefined)state.draft.finalTimerEnabled=false
  if(!e.slotDuration)e.slotDuration=Number(e.matchDuration)||20;
  if(e.customAddress===undefined)e.customAddress="";
  if(!e.fixedPairRegistrations)e.fixedPairRegistrations={};
+ if(!e.endDate)e.endDate=e.date;
+ if(!e.endTime)e.endTime="23:00";
+ if(e.description===undefined)e.description="";
+ if(e.minParticipants===undefined)e.minParticipants=0;
+ if(e.maxParticipants===undefined)e.maxParticipants=e.registrationCapacity||16;
+ if(e.registrationMode===undefined)e.registrationMode="automatic";
+ if(e.waitlistEnabled===undefined)e.waitlistEnabled=true;
+ if(e.registrationOpen===undefined)e.registrationOpen=true;
+ if(!e.posterTheme)e.posterTheme="eden_summer";
+ if(!e.registrationCloseDate)e.registrationCloseDate=e.date;
+ if(!e.registrationCloseTime)e.registrationCloseTime=e.startTime||"20:00";
 });
 
 (state.players||[]).forEach(function(p){
@@ -1927,7 +1949,7 @@ async function pamShareRegistration(id){
  try{
   if(navigator.share)await navigator.share({
    title:"Iscrizione · "+e.name,
-   text:"Apri il link e iscriviti al torneo senza password.",
+   text:(e.description?e.description+"\n\n":"")+"Iscriviti a "+e.name+". Posti: "+(e.maxParticipants||"liberi")+". Quota: €"+Number(e.entryFee||0)+".",
    url:url
   });
   else{
@@ -2657,58 +2679,50 @@ function editPlayer(id){
 function competitionTypeLabel(v){
  return v==="rodeo_simple"?"RODEO SEMPLICE":v==="fixed_pairs"?"Coppie fisse":"Rodeo a gettoni";
 }
+function pamMinutes(time){
+ const parts=String(time||"00:00").split(":").map(Number);return (parts[0]||0)*60+(parts[1]||0);
+}
+function pamEstimateDraft(d,participantCount){
+ const n=Math.max(0,Number(participantCount||d.maxParticipants||0));
+ const courts=Math.max(1,Number(d.courts)||1),slot=Math.max(1,Number(d.slotDuration||20));
+ let matches=0;
+ if(d.competitionType==="fixed_pairs"){
+  const pairs=Math.floor(n/2), per=Math.max(3,Number(d.pairsPerGroup)||4), groups=Math.max(1,Math.ceil(pairs/per));
+  const base=Math.ceil(pairs/groups); matches=groups*(base*(base-1)/2);
+ }else matches=n>3?(n in {6:1,8:1,10:1,12:1,16:1}?n:Math.max(4,n)):0;
+ if(d.returnLeg)matches*=2;
+ const rounds=Math.ceil(matches/courts);
+ const finals=(d.competitionType==="fixed_pairs"?3:4)*slot;
+ const minutes=rounds*slot+finals;
+ const start=new Date((d.date||new Date().toISOString().slice(0,10))+"T"+(d.startTime||"20:00")+":00");
+ const predicted=new Date(start.getTime()+minutes*60000);
+ const end=new Date((d.endDate||d.date)+"T"+(d.endTime||"23:00")+":00");
+ return {matches,minutes,predicted,available:Math.round((end-start)/60000),delta:Math.round((end-predicted)/60000)};
+}
+function pamFeasibilityHtml(d){
+ const r=pamEstimateDraft(d,Number(d.maxParticipants)||Number(d.selected?.length)||0);
+ const cls=r.delta>=20?"success":r.delta>=0?"":"error";
+ const label=r.delta>=20?"NEI TEMPI":r.delta>=0?"AL LIMITE":"FUORI TEMPO";
+ return '<div class="notice '+cls+'" id="pamFeasibilityBox"><b>'+label+'</b><br>Stima con '+Number(d.maxParticipants||0)+' partecipanti: '+r.matches+' partite iniziali, termine previsto alle <b>'+r.predicted.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"})+'</b>. '+(r.delta>=0?'Margine: '+r.delta+' minuti.':'Sforamento: '+Math.abs(r.delta)+' minuti.')+'</div>';
+}
+function pamPosterUrl(e){
+ const base=location.href.split("?")[0].split("#")[0].replace(/index\.html$/i,"");
+ return base+"poster.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
 function newEventView(){
  const d=state.draft;
- const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return Number(b.tokenBalance||0)-Number(a.tokenBalance||0)||playerName(a).localeCompare(playerName(b),"it")});
- const checks=eligible.length?eligible.map(function(p){
-  const checked=d.selected.includes(p.id)?"checked":"";
-  return '<div class="check event-player-search-row pam-select-player-row '+(d.showSelectedOnly&&!checked?"pam-hidden-unselected":"")+'" data-event-player-search="'+esc([playerName(p),p.phone,p.email,p.residenceTown].join(" ").toLowerCase())+'">'+
-   '<label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+(
-   d.competitionType==="rodeo_tokens"?"Saldo aggiornato: "+Number(p.tokenBalance||0)+" gettoni":"Giocatore registrato"
-  )+(p.level?" · "+esc(p.level):"")+
-  (d.competitionType==="fixed_pairs"&&checked?'<br><b class="pam-pair-reg-label">'+esc(pamPairRegistrationLabel(p.id)||"DA DEFINIRE")+'</b>':'')+
-  '</small></span></label>'+
-   (checked?'<button type="button" class="small pam-replace-inline" data-replace-new-event-player="'+p.id+'">Sostituisci</button>':'')+
-  '</div>';
- }).join(""):'<div class="notice error">Prima crea almeno 4 giocatori nell’anagrafica.</div>';
- const fixedOptions=d.competitionType==="fixed_pairs"?
-  '<div class="row"><div class="field"><label>Coppie per girone</label><select id="ePairsPerGroup">'+[3,4,5,6].map(function(x){return'<option '+(Number(d.pairsPerGroup)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div>'+
-  '<div class="field"><label>Qualificazione fasi finali</label><select id="eFinalsOption"><option value="top1" '+(d.finalsOption==="top1"?"selected":"")+'>Solo prime</option><option value="top2" '+(d.finalsOption==="top2"?"selected":"")+'>Prime due</option></select></div></div>'+
-  '<div class="notice">Per ogni giocatore selezionato indica se l’iscrizione è singola oppure in coppia. Le iscrizioni in coppia resteranno unite; le singole verranno abbinate tra loro.</div>':'';
- return header("Nuova competizione","Scegli il formato e seleziona i partecipanti")+
- '<div class="card"><div class="row"><div class="field"><label>Formato competizione</label><select id="eCompetitionType" data-action="change-type">'+
- '<option value="rodeo_tokens" '+(d.competitionType==="rodeo_tokens"?"selected":"")+'>RODEO A GETTONI</option>'+
- '<option value="rodeo_simple" '+(d.competitionType==="rodeo_simple"?"selected":"")+'>RODEO SEMPLICE</option>'+
- '<option value="fixed_pairs" '+(d.competitionType==="fixed_pairs"?"selected":"")+'>COPPIE FISSE</option></select></div>'+
- '<div class="field"><label>Quota individuale (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div>'+
- '<div class="row"><div class="field"><label>Nome competizione</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Data</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div></div>'+
- '<div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(function(x){return'<option value="'+esc(x)+'" '+(x===d.club?"selected":"")+'>'+esc(x)+' - '+esc(CLUBS[x].address)+'</option>'}).join("")+'</select></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(function(x){return'<option '+(x===d.category?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div><div class="field"><label>Campi</label><select id="eCourts">'+[1,2,3,4].map(function(x){return'<option '+(Number(d.courts)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></div></div>'+
- '<div id="pamCustomAddressWrap" class="field '+(pamClubAllowsCustomAddress(d.club)?"":"hidden")+'"><label>Indirizzo completo dell’evento</label><input id="eCustomAddress" value="'+esc(d.customAddress||"")+'" placeholder="Via, numero civico, città e provincia"></div>'+
- '<div class="row"><div class="field"><label>Orario di inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||"20:00")+'"></div>'+
- '<div class="field"><label>Durata effettiva partita / timer (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||d.matchDuration||15)+'"></div>'+
- '<div class="field"><label>Intervallo tra gli inizi delle partite (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||d.matchDuration||20)+'"></div></div>'+
- '<div class="notice"><b>Esempio:</b> timer da 15 minuti e nuova partita ogni 20 minuti = 5 minuti di pausa.</div>'+
- '<div class="row"><div class="field"><label>Timer fase iniziale</label><select id="eInitialTimer"><option value="yes" '+(d.initialTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.initialTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
- '<div class="field"><label>Timer eliminatorie</label><select id="eEliminationTimer"><option value="yes" '+(d.eliminationTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.eliminationTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
- '<div class="field"><label>Timer semifinali</label><select id="eSemifinalTimer"><option value="yes" '+(d.semifinalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.semifinalTimerEnabled?"selected":"")+'>Disattivo</option></select></div>'+
- '<div class="field"><label>Timer finale</label><select id="eFinalTimer"><option value="yes" '+(d.finalTimerEnabled?"selected":"")+'>Attivo</option><option value="no" '+(!d.finalTimerEnabled?"selected":"")+'>Disattivo</option></select></div></div>'+
- '<div class="row"><div class="field"><label>Gironi / fase iniziale</label><select id="eReturnLeg"><option value="no" '+(!d.returnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.returnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
- '<div class="field"><label>Eliminatorie</label><select id="eEliminationReturnLeg"><option value="no" '+(!d.eliminationReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.eliminationReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
- '<div class="field"><label>Semifinali</label><select id="eSemifinalReturnLeg"><option value="no" '+(!d.semifinalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.semifinalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div>'+
- '<div class="field"><label>Finale</label><select id="eFinalReturnLeg"><option value="no" '+(!d.finalReturnLeg?"selected":"")+'>SOLO ANDATA</option><option value="yes" '+(d.finalReturnLeg?"selected":"")+'>ANDATA E RITORNO</option></select></div></div>'+fixedOptions+'</div>'+
- '<div class="card create-event-toolbar"><div><b>Partecipanti selezionati: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Genera la competizione senza dover scorrere tutto l’elenco.</div></div><button class="primary create-event-top-button" data-action="create-event">Genera competizione</button></div>'+
- '<div id="eventMessage"></div>'+
- '<div class="card"><h2>Seleziona partecipanti</h2>'+
- '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Scrivi alcune lettere del nome o cognome..." autocomplete="off"></div>'+
- '<button class="primary" data-quick-player-new-event>➕ Nuova anagrafica e inserisci</button></div>'+
- '<div class="notice">Per un partecipante già selezionato puoi usare <b>Sostituisci</b> e scegliere un giocatore esistente oppure crearne uno nuovo.</div>'+
- '<div class="pam-player-selection-tools">'+
-  '<button type="button" class="secondary" data-deselect-all-players>DESELEZIONA TUTTI</button>'+
-  '<button type="button" class="secondary" data-toggle-selected-only aria-pressed="'+(d.showSelectedOnly?"true":"false")+'">'+(d.showSelectedOnly?"MOSTRA TUTTI I GIOCATORI":"MOSTRA SOLO SELEZIONATI")+'</button>'+
-  '<span class="pill" id="pamSelectedPlayersBadge">'+d.selected.length+' SELEZIONATI</span>'+
- '</div>'+
- '<div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
- '<button class="primary" data-action="create-event">Genera competizione</button>';
+ const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const checks=eligible.length?eligible.map(function(p){const checked=d.selected.includes(p.id)?"checked":"";return '<div class="check event-player-search-row pam-select-player-row '+(d.showSelectedOnly&&!checked?'pam-hidden-unselected':'')+'" data-event-player-search="'+esc([playerName(p),p.phone,p.email].join(' ').toLowerCase())+'"><label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+esc(p.level||'Giocatore registrato')+'</small></span></label></div>'}).join(""):'<div class="notice">Puoi salvare il torneo anche senza giocatori e condividere subito il link di iscrizione.</div>';
+ return header("Torneo Builder","Crea, salva e pubblica il torneo prima di avere gli iscritti")+
+ '<div class="card"><h2>1. Identità del torneo</h2><div class="row"><div class="field"><label>Nome torneo</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(x=>'<option '+(x===d.category?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'+
+ '<div class="field"><label>Descrizione invito</label><textarea id="eDescription" rows="4" placeholder="Formula, atmosfera, premi, bar, musica, piscina...">'+esc(d.description||'')+'</textarea></div>'+
+ '<div class="row"><div class="field"><label>Formato</label><select id="eCompetitionType" data-action="change-type"><option value="rodeo_tokens" '+(d.competitionType==='rodeo_tokens'?'selected':'')+'>RODEO A GETTONI</option><option value="rodeo_simple" '+(d.competitionType==='rodeo_simple'?'selected':'')+'>RODEO SEMPLICE</option><option value="fixed_pairs" '+(d.competitionType==='fixed_pairs'?'selected':'')+'>COPPIE FISSE</option></select></div><div class="field"><label>Tema locandina</label><select id="ePosterTheme"><option value="eden_summer" '+(d.posterTheme==='eden_summer'?'selected':'')+'>EDEN SUMMER · Spritz, musica, piscina</option><option value="cupra_bossoni" '+(d.posterTheme==='cupra_bossoni'?'selected':'')+'>CUPRA BOSSONI · nero, rame, premium</option><option value="aics_mare" '+(d.posterTheme==='aics_mare'?'selected':'')+'>AICS AL MARE · estate e tricolore</option></select></div></div></div>'+
+ '<div class="card"><h2>2. Luogo e orari</h2><div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(x=>'<option value="'+esc(x)+'" '+(x===d.club?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label>Campi disponibili</label><select id="eCourts">'+[1,2,3,4,5,6].map(x=>'<option '+(Number(d.courts)===x?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div><div id="pamCustomAddressWrap" class="field '+(pamClubAllowsCustomAddress(d.club)?'':'hidden')+'"><label>Indirizzo evento</label><input id="eCustomAddress" value="'+esc(d.customAddress||'')+'"></div>'+
+ '<div class="row"><div class="field"><label>Data inizio</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div><div class="field"><label>Ora inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||'20:00')+'"></div><div class="field"><label>Data fine</label><input id="eEndDate" type="date" value="'+esc(d.endDate||d.date)+'"></div><div class="field"><label>Ora fine</label><input id="eEndTime" type="time" value="'+esc(d.endTime||'23:00')+'"></div></div>'+
+ '<div class="row"><div class="field"><label>Timer partita (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||15)+'"></div><div class="field"><label>Nuova partita ogni (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||20)+'"></div></div>'+pamFeasibilityHtml(d)+'</div>'+
+ '<div class="card"><h2>3. Iscrizioni pubbliche</h2><div class="row"><div class="field"><label>Numero minimo</label><input id="eMinParticipants" type="number" min="0" value="'+Number(d.minParticipants||0)+'"></div><div class="field"><label>Numero massimo</label><input id="eMaxParticipants" type="number" min="1" value="'+Number(d.maxParticipants||16)+'"></div><div class="field"><label>Quota (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div><div class="row"><div class="field"><label>Gestione richieste</label><select id="eRegistrationMode"><option value="automatic" '+(d.registrationMode==='automatic'?'selected':'')+'>ACCETTA AUTOMATICAMENTE</option><option value="approval" '+(d.registrationMode==='approval'?'selected':'')+'>RICHIEDI APPROVAZIONE</option></select></div><div class="field"><label>Lista d’attesa</label><select id="eWaitlistEnabled"><option value="yes" '+(d.waitlistEnabled?'selected':'')+'>ATTIVA</option><option value="no" '+(!d.waitlistEnabled?'selected':'')+'>DISATTIVA</option></select></div><div class="field"><label>Stato iscrizioni</label><select id="eRegistrationOpen"><option value="yes" '+(d.registrationOpen?'selected':'')+'>APERTE</option><option value="no" '+(!d.registrationOpen?'selected':'')+'>CHIUSE</option></select></div></div><div class="row"><div class="field"><label>Chiusura iscrizioni</label><input id="eRegistrationCloseDate" type="date" value="'+esc(d.registrationCloseDate||d.date)+'"></div><div class="field"><label>Ora chiusura</label><input id="eRegistrationCloseTime" type="time" value="'+esc(d.registrationCloseTime||d.startTime||'20:00')+'"></div></div></div>'+
+ '<div class="card create-event-toolbar"><div><b>Giocatori già inseriti: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Non sono obbligatori: puoi pubblicare il torneo con zero iscritti.</div></div><button class="primary create-event-top-button" data-action="create-event">SALVA E PUBBLICA</button></div><div id="eventMessage"></div>'+
+ '<div class="card"><h2>4. Inserimento manuale facoltativo</h2><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Nome o cognome..." autocomplete="off"></div><button class="primary" data-quick-player-new-event>➕ Nuovo giocatore</button></div><div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>';
 }
 function buildMatches(ids,courts,returnLeg){
  const playerIds=(ids||[]).slice();
@@ -3034,92 +3048,16 @@ function defaultPayments(ids,fee){
 function createEvent(){
  const msg=document.getElementById("eventMessage");
  try{
-  state.draft.name=document.getElementById("eName").value.trim();
-  state.draft.date=document.getElementById("eDate").value;
-  state.draft.club=document.getElementById("eClub").value.trim();
-  state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
-  state.draft.category=document.getElementById("eCategory").value;
-  state.draft.competitionType=document.getElementById("eCompetitionType").value;
-  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
-  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
-  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
-  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
-  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
-  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
-  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
-  state.draft.matchMode="timed";
-  const timerInput=document.getElementById("eTimerDuration")||document.getElementById("eMatchDuration");
-  const slotInput=document.getElementById("eSlotDuration")||document.getElementById("eMatchDuration");
-  state.draft.timerDuration=Math.max(1,Number(timerInput&&timerInput.value)||15);
-  state.draft.slotDuration=Math.max(state.draft.timerDuration,Number(slotInput&&slotInput.value)||20);
-  state.draft.matchDuration=state.draft.slotDuration;
-  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
-  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
-  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
-  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
-  if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
-  if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
-  if(state.draft.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(state.draft.selected.length))throw new Error("per il Rodeo a gettoni seleziona 6, 8, 10, 12 oppure 16 giocatori");
-  if(state.draft.competitionType!=="rodeo_tokens"&&state.draft.selected.length<4)throw new Error("seleziona almeno 4 giocatori");
-  if(state.draft.competitionType==="fixed_pairs"){
-   if(state.draft.selected.length%2!==0)throw new Error("per le coppie fisse devi selezionare un numero pari di giocatori");
-   const missing=state.draft.selected.filter(function(id){return !(state.draft.fixedPairRegistrations||{})[id]});
-   if(missing.length)throw new Error("indica per ogni giocatore se l’iscrizione è singola oppure in coppia");
-  }
-  const event={
-   id:uid("e"),
-   name:state.draft.name||"Nuova competizione",
-   date:state.draft.date,
-   club:state.draft.club,
-   customAddress:state.draft.customAddress||"",
-   category:state.draft.category,
-   competitionType:state.draft.competitionType,
-   courts:state.draft.courts,
-   entryFee:state.draft.fee,
-   returnLeg:state.draft.returnLeg,
-   eliminationReturnLeg:state.draft.eliminationReturnLeg,
-   semifinalReturnLeg:state.draft.semifinalReturnLeg,
-   finalReturnLeg:state.draft.finalReturnLeg,
-   startTime:state.draft.startTime,
-   matchMode:"timed",
-   matchDuration:state.draft.slotDuration,
-   timerDuration:state.draft.timerDuration,
-   slotDuration:state.draft.slotDuration,
-   initialTimerEnabled:state.draft.initialTimerEnabled,
-   eliminationTimerEnabled:state.draft.eliminationTimerEnabled,
-   semifinalTimerEnabled:state.draft.semifinalTimerEnabled,
-   finalTimerEnabled:state.draft.finalTimerEnabled,
-   timers:{},
-   playerIds:state.draft.selected.slice(),
-   payments:defaultPayments(state.draft.selected.slice(),state.draft.fee),
-   fixedPairRegistrations:JSON.parse(JSON.stringify(state.draft.fixedPairRegistrations||{})),
-   matches:[],
-   ledger:{},
-   finalStages:{
-    elimination:{teamA:[],teamB:[],score1:null,score2:null},
-    auction1:{spending:{}},
-    semifinals:[
-     {id:"semi1",teamA:[],teamB:[],score1:null,score2:null},
-     {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
-    ],
-    auction2:{spending:{}},
-    final:{teamA:[],teamB:[],score1:null,score2:null}
-   }
-  };
-  if(event.competitionType==="fixed_pairs"){
-   event.playerIds=pamOrderedFixedPairIds(event.playerIds);
-   const built=buildFixedPairs(event.playerIds,state.draft.pairsPerGroup,event.courts,event.returnLeg);
-   event.pairs=built.pairs;
-   event.matches=built.matches;
-   event.pairsPerGroup=state.draft.pairsPerGroup;
-   event.finalsOption=state.draft.finalsOption;
-   event.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
-  }else{
-   event.matches=buildMatches(event.playerIds,event.courts,event.returnLeg);
-  }
-  if(!event.matches||!event.matches.length)throw new Error("nessuna partita generata: controlla i partecipanti selezionati");
+  const d=state.draft;
+  d.name=document.getElementById("eName").value.trim();d.description=document.getElementById("eDescription").value.trim();d.date=document.getElementById("eDate").value;d.endDate=document.getElementById("eEndDate").value;d.endTime=document.getElementById("eEndTime").value;d.startTime=document.getElementById("eStartTime").value||"20:00";
+  d.club=document.getElementById("eClub").value;d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=document.getElementById("eCategory").value;d.competitionType=document.getElementById("eCompetitionType").value;d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(document.getElementById("eCourts").value)||1);d.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);d.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);d.slotDuration=Math.max(d.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";
+  if(!d.name)throw new Error("inserisci il nome del torneo");if(!d.date||!d.endDate)throw new Error("inserisci data di inizio e fine");if(d.maxParticipants<d.minParticipants)throw new Error("il numero massimo non può essere inferiore al minimo");
+  const feasibility=pamEstimateDraft(d,d.maxParticipants);if(feasibility.delta<0&&!confirm("Con i parametri attuali il torneo potrebbe terminare "+Math.abs(feasibility.delta)+" minuti oltre l’orario impostato. Vuoi salvarlo comunque?"))return;
+  const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
+  const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
+  if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
-  state.events.unshift(event);state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();
+  state.events.unshift(event);state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();pamToast("Torneo salvato e pronto per essere condiviso","success");
  }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
 }
 function eventsView(){
@@ -3130,7 +3068,7 @@ function eventsView(){
   '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"SOLO ANDATA")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
   '<button class="small" data-open-event="'+e.id+'">Apri</button>'+
   '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
-  '<button class="small" data-share-registration="'+e.id+'">Link iscrizioni</button>'+
+  '<button class="small" data-share-registration="'+e.id+'">Invito / link</button><button class="small" data-open-poster="'+e.id+'">Locandina + QR</button>'+
   (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
   '</div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
@@ -3198,7 +3136,7 @@ function eventView(){
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
   '<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
-  (pamIsAdmin()?'<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+  (pamIsAdmin()?'<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button><button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div>'+
  '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice print-hide"><b>Modalità collaboratore:</b> puoi inserire o correggere esclusivamente i risultati delle partite.</div>':'')+
@@ -4226,6 +4164,7 @@ document.addEventListener("click",function(ev){
  if(refreshCloud){pamCloudLoad(false).then(function(){pamToast("Dati aggiornati","success")}).catch(function(err){pamToast(err.message,"error")});return}
  const share=ev.target.closest("[data-share-event]");if(share){pamShareEvent(share.getAttribute("data-share-event"));return}
  const shareRegistration=ev.target.closest("[data-share-registration]");if(shareRegistration){pamShareRegistration(shareRegistration.getAttribute("data-share-registration"));return}
+ const openPoster=ev.target.closest("[data-open-poster]");if(openPoster){const e=state.events.find(x=>x.id===openPoster.getAttribute("data-open-poster"));if(e)window.open(pamPosterUrl(e),"_blank");return}
  const openRegistrations=ev.target.closest("[data-open-registrations]");if(openRegistrations){pamOpenRegistrations(openRegistrations.getAttribute("data-open-registrations"));return}
  const closeRegistrations=ev.target.closest("[data-close-registrations]");if(closeRegistrations){document.getElementById("pamRegistrationsOverlay")?.remove();return}
  const setCapacity=ev.target.closest("[data-set-registration-capacity]");if(setCapacity){pamSetRegistrationCapacity(setCapacity.getAttribute("data-set-registration-capacity"));return}

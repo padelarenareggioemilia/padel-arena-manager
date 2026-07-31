@@ -1,8 +1,9 @@
-const CACHE_NAME="pam-v6-1-loghi-competizioni";
+const CACHE_NAME="pam-v7-0-torneo-builder";
 const CORE=[
  "./",
  "./index.html",
  "./public-registration.html",
+ "./poster.html",
  "./captain-portal.html",
  "./player-registration.html",
  "./manifest.webmanifest",

@@ -73,7 +73,7 @@ function newForm(kind){
 function render(){
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
- '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
+ '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.event_date||tournament.date||"")+' · '+esc(tournament.start_time||"")+' · '+esc(tournament.club||"")+'</div>'+(tournament.description?'<p>'+esc(tournament.description)+'</p>':'')+'<div class="notice"><b>Posti:</b> '+(tournament.max_participants||'senza limite')+' · <b>Disponibili:</b> '+(tournament.available_places==null?'—':tournament.available_places)+' · <b>Quota:</b> € '+Number(tournament.entry_fee||0)+'</div>'+ 
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
  '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
  '<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
@@ -83,7 +83,7 @@ function render(){
  personSection("primary","I TUOI DATI")+
  (mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
  '<section class="card"><div class="privacy">I dati vengono utilizzati esclusivamente per gestire l’iscrizione al torneo e aggiornare l’anagrafica sportiva dell’organizzatore.</div>'+
- '<button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button><div id="submitMessage"></div></section>';
+ (tournament.registration_open?'<button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button>':'<div class="notice error"><b>ISCRIZIONI CHIUSE</b><br>'+(tournament.waitlist_enabled?'Contatta l’organizzatore per la lista d’attesa.':'Non è possibile inviare nuove richieste.')+'</div>')+'<div id="submitMessage"></div></section>';
 }
 async function searchPlayers(kind,q){
  const box=document.getElementById(kind+"Results");if(!box)return;
