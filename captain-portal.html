@@ -12,7 +12,7 @@
 main{max-width:920px;margin:auto;padding:18px 14px 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:15px}.brand img{width:70px;height:70px;border-radius:18px}.brand h1{margin:0;font-size:24px}.brand small{color:var(--muted);letter-spacing:.08em}
 .card{background:rgba(16,35,59,.96);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 16px 44px rgba(0,0,0,.22)}h2,h3{margin:0 0 12px}.muted{color:var(--muted)}.notice{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line);margin:10px 0}.success{border-color:#4ade80;background:#0b2a20}.error{border-color:#ef4444;background:#351316}
 label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #365474;background:#071523;color:white}button{padding:13px 16px;border:0;border-radius:12px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#07111f}.secondary{background:#17304e;color:white;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:white}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}.team-hero{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pill{display:inline-flex;padding:6px 10px;border-radius:999px;border:1px solid var(--accent);color:var(--accent);font-weight:900}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.datum{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line)}.datum b{display:block;margin-bottom:4px}.roster-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}@media(max-width:650px){.row,.grid,.roster-row{grid-template-columns:1fr}.team-hero{display:block}}
-</style>
+.team-logo-box{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center}.team-logo-box img{width:100px;height:100px;object-fit:contain;background:#fff;border-radius:18px;padding:7px}.upload-label{display:flex;align-items:center;justify-content:center;padding:13px;border-radius:12px;background:#17304e;border:1px solid #3c5d7d;color:#fff;font-weight:900;cursor:pointer}.upload-label input{display:none}@media(max-width:650px){.team-logo-box{grid-template-columns:1fr}.team-logo-box img{margin:auto}}</style>
 </head>
 <body>
 <main>
@@ -61,6 +61,7 @@ async function claimAndLoad(){
 }
 function renderPortal(){
  document.getElementById("app").innerHTML='<section class="card team-hero"><div><span class="pill">'+esc(team.series)+'</span><h2 style="margin-top:12px">'+esc(team.teamName)+'</h2><div class="muted">'+esc(team.clubLegalName)+'</div></div><button class="secondary" id="logout">Esci</button></section>'+
+ '<section class="card"><h2>Logo della squadra</h2><div class="team-logo-box"><img id="teamLogoPreview" src="'+esc(team.teamLogoUrl||team.team_logo_url||'assets/padel-arena-manager-logo.jpg')+'" alt="Logo squadra"><div><label class="upload-label">Carica o sostituisci logo<input id="teamLogoInput" type="file" accept="image/*"></label><div class="muted" style="margin-top:8px">Usa preferibilmente un file quadrato PNG o JPG. Il logo sarà visibile nella scheda ufficiale della squadra.</div></div></div></section>'+
  '<section class="card"><h2>Dati già compilati</h2><div class="notice success">Non devi ricompilare i dati della squadra. Controllali e segnala all’organizzazione eventuali correzioni.</div><div class="grid">'+
  datum("Capitano",team.captainName)+datum("Email",team.captainEmail)+datum("Telefono",team.captainPhone)+datum("Campo di casa",team.homeCourtAddress)+datum("Giorno",team.homeDay)+datum("Orario",team.homeTime)+'</div></section>'+
  '<section class="card"><h2>Rosa giocatori</h2><div class="notice success"><b>Puoi lavorare sulla tua squadra in due modi:</b><br>inserire personalmente un giocatore oppure inviargli il link della squadra, così potrà compilare i dati in autonomia.</div><div id="roster"><div class="muted">Nessun giocatore inserito.</div></div><div class="actions"><button class="primary" id="addPlayer">Inserisci giocatore</button><button class="secondary" id="sharePlayerLink">Invia link ai giocatori</button><button class="secondary" id="copyPlayerLink">Copia link</button></div><div class="notice"><b>Cosa riceverà il giocatore:</b> link personale della squadra, istruzioni per compilare i dati, caricare una foto riconoscibile, accettare privacy e regolamento e inviare la richiesta. La richiesta resterà in attesa della tua approvazione e di quella dell’organizzazione.</div></section>';
@@ -70,6 +71,15 @@ function renderPortal(){
  document.getElementById('addPlayer').onclick=()=>location.href=playerUrl+'&mode=captain';
  document.getElementById('sharePlayerLink').onclick=async()=>{try{if(navigator.share)await navigator.share({title:'Invito rosa '+team.teamName,text:playerMessage});else{await navigator.clipboard.writeText(playerMessage);alert('Messaggio e link copiati.')}}catch(e){if(e.name!=='AbortError')prompt('Copia il messaggio:',playerMessage)}};
  document.getElementById('copyPlayerLink').onclick=async()=>{await navigator.clipboard.writeText(playerUrl);alert('Link copiato.');};
+ const logoInput=document.getElementById('teamLogoInput');
+ logoInput.onchange=async()=>{
+  const file=logoInput.files&&logoInput.files[0];if(!file)return;
+  if(file.size>2500000){alert('Il logo supera 2,5 MB. Scegli un file più leggero.');logoInput.value='';return}
+  const reader=new FileReader();reader.onload=async()=>{
+   const value=String(reader.result||'');team.teamLogoUrl=value;team.team_logo_url=value;document.getElementById('teamLogoPreview').src=value;
+   try{const {error}=await sb.from('championship_teams').update({team_logo_url:value,updated_at:new Date().toISOString()}).eq('id',team.id);if(error)throw error;alert('Logo squadra salvato.')}catch(e){localStorage.setItem('pam_team_logo_'+team.id,value);alert('Logo salvato sul dispositivo. Per sincronizzarlo online esegui lo script Supabase aggiornato.');}
+  };reader.readAsDataURL(file);
+ };
 }
 function datum(label,value){return '<div class="datum"><b>'+esc(label)+'</b><span>'+esc(value||"—")+'</span></div>'}
 (async function(){

@@ -1225,6 +1225,21 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 .pam-roster-placeholder>div{padding:14px;border-radius:14px;background:#09182a;border:1px solid #294262;text-align:center}
 @media(max-width:850px){.pam-official-team{grid-template-columns:1fr 90px}.pam-official-team-main{grid-column:1/-1}.pam-team-buttons{grid-column:1/-1;justify-content:stretch}.pam-team-buttons button{flex:1}.pam-team-form-grid{grid-template-columns:1fr}.pam-roster-placeholder{grid-template-columns:1fr}.pam-team-search{grid-template-columns:1fr}}
 
+
+/* VERSIONE 5.3 - LOGHI SQUADRA, COMPETIZIONI AICS E RICERCA */
+.pam-team-logo{width:58px;height:58px;object-fit:contain;background:#fff;border-radius:14px;padding:5px;border:1px solid #365474;flex:0 0 auto}
+.pam-team-logo-placeholder{display:grid;place-items:center;font-weight:1000;color:#07111f;background:linear-gradient(135deg,#16a8ff,#9dff25)}
+.pam-team-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.pam-logo-upload{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center}
+.pam-logo-upload img{width:110px;height:110px;object-fit:contain;background:#fff;border-radius:20px;padding:8px;border:1px solid #365474}
+.pam-competition-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.pam-competition-card{border:1px solid #315271;background:linear-gradient(145deg,#0a1a2e,#102b47);color:#fff;border-radius:20px;padding:18px;text-align:left;min-height:170px;position:relative;overflow:hidden}
+.pam-competition-card:after{content:"🏆";position:absolute;right:12px;bottom:-10px;font-size:76px;opacity:.08}
+.pam-competition-card b{display:block;font-size:21px;margin:14px 0 6px}.pam-competition-card small{color:#b9c9dc}.pam-competition-card .pill{display:inline-flex}
+.pam-competition-card.on{outline:3px solid var(--club-accent);border-color:var(--club-accent)}
+.pam-competition-detail{border-left:4px solid var(--club-accent)}
+.pam-search-live{margin-top:8px;color:#b7ff3c;font-weight:850}
+@media(max-width:760px){.pam-competition-grid{grid-template-columns:1fr}.pam-logo-upload{grid-template-columns:1fr}.pam-logo-upload img{margin:auto}.pam-team-identity{align-items:flex-start}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2280,6 +2295,11 @@ function pamChampTeams(){
  return PAM_CHAMPIONSHIP_TEAMS.map(function(t){return Object.assign({},t,overrides[t.id]||{})});
 }
 function pamChampTeam(id){return pamChampTeams().find(function(t){return t.id===id})||null}
+function pamTeamLogo(t){return t&&t.teamLogoUrl?t.teamLogoUrl:""}
+function pamTeamLogoHtml(t){const src=pamTeamLogo(t);return src?'<img class="pam-team-logo" src="'+esc(src)+'" alt="Logo '+esc(t.teamName)+'">':'<div class="pam-team-logo pam-team-logo-placeholder">'+esc((t.teamName||"T").slice(0,1).toUpperCase())+'</div>'}
+const PAM_AICS_COMP_KEY="pam_aics_2027_competitions";
+function pamAicsCompetitionState(){try{return Object.assign({championshipWinner:"",cupWinner:""},JSON.parse(localStorage.getItem(PAM_AICS_COMP_KEY)||"{}"))}catch(_){return{championshipWinner:"",cupWinner:""}}}
+function pamSaveAicsCompetitionState(patch){localStorage.setItem(PAM_AICS_COMP_KEY,JSON.stringify(Object.assign(pamAicsCompetitionState(),patch||{})))}
 function pamSaveChampTeam(id,patch){
  const all=pamChampOverrides();
  all[id]=Object.assign({},all[id]||{},patch||{});
@@ -2299,7 +2319,7 @@ function pamOfficialTeamsList(){
  '<div id="champTeamRows">'+teams.map(function(t){
   const search=[t.teamName,t.clubLegalName,t.captainName,t.captainEmail,t.series,t.clubTown].join(" ").toLowerCase();
   return '<div class="pam-official-team" data-champ-team-row="'+esc(search)+'" data-champ-series="'+esc(t.series)+'">'+
-   '<div class="pam-official-team-main"><b><span class="status-dot status-ok"></span>'+esc(t.teamName)+'</b><small>'+esc(t.clubLegalName)+' · '+esc(t.clubTown)+' ('+esc(t.clubProvince)+')</small></div>'+
+   '<div class="pam-official-team-main pam-team-identity">'+pamTeamLogoHtml(t)+'<div><b><span class="status-dot status-ok"></span>'+esc(t.teamName)+'</b><small>'+esc(t.clubLegalName)+' · '+esc(t.clubTown)+' ('+esc(t.clubProvince)+')</small></div></div>'+
    '<span class="pill">'+esc(t.series)+'</span>'+
    '<div><b>'+esc(t.captainName)+'</b><small>'+esc(t.captainEmail)+'</small></div>'+
    '<div class="'+(t.captainAccessEnabled?"pam-access-on":"pam-access-off")+'"><b>'+(t.captainAccessEnabled?"ACCESSO ATTIVO":"ACCESSO CHIUSO")+'</b><small>'+esc(t.rosterStatus)+'</small></div>'+
@@ -2308,6 +2328,24 @@ function pamOfficialTeamsList(){
    '<button class="primary" style="width:auto" data-share-team-invite="'+t.id+'">Invia link</button></div>'+
   '</div>';
  }).join("")+'</div></section>';
+}
+function pamAicsCompetitionsView(){
+ const teams=pamChampTeams(), c=pamAicsCompetitionState();
+ const selected=state.champCompetition||"campionato";
+ const cards='<section class="card"><div class="pam-v5-section-title"><div><h2>Competizioni AICS 2027</h2><small>Le squadre iscritte partecipano al Campionato e alla Coppa Italia. La Supercoppa mette di fronte le due vincitrici.</small></div></div><div class="pam-competition-grid">'+
+  '<button class="pam-competition-card '+(selected==="campionato"?"on":"")+'" data-champ-competition="campionato"><span class="pill">'+teams.length+' SQUADRE</span><b>Campionato AICS</b><small>Serie A, Serie B e Serie C con classifiche e fasi previste dal regolamento.</small></button>'+
+  '<button class="pam-competition-card '+(selected==="coppa"?"on":"")+'" data-champ-competition="coppa"><span class="pill">TUTTE LE SQUADRE</span><b>Coppa Italia AICS</b><small>Partecipano automaticamente tutte le squadre regolarmente iscritte al campionato.</small></button>'+
+  '<button class="pam-competition-card '+(selected==="supercoppa"?"on":"")+'" data-champ-competition="supercoppa"><span class="pill">FINALE UNICA</span><b>Supercoppa AICS</b><small>Vincitrice del Campionato contro vincitrice della Coppa Italia.</small></button></div>'+pamAicsCompetitionDetail(selected,c,teams)+'</section>';
+ return cards;
+}
+function pamAicsCompetitionDetail(selected,c,teams){
+ if(selected==="coppa")return '<div class="notice success pam-competition-detail"><b>Coppa Italia · '+teams.length+' partecipanti</b><br>Tutte le squadre ufficialmente iscritte sono già incluse. Il tabellone verrà generato quando definirai formula, teste di serie e date.</div>';
+ if(selected==="supercoppa"){
+  const optsChamp='<option value="">Da definire</option>'+teams.map(t=>'<option value="'+esc(t.id)+'" '+(t.id===c.championshipWinner?'selected':'')+'>'+esc(t.teamName)+'</option>').join('');
+  const optsCup='<option value="">Da definire</option>'+teams.map(t=>'<option value="'+esc(t.id)+'" '+(t.id===c.cupWinner?'selected':'')+'>'+esc(t.teamName)+'</option>').join('');
+  return '<div class="card pam-competition-detail"><h3>Finale di Supercoppa</h3><div class="row"><div class="field"><label>Vincitrice Campionato</label><select id="pamChampionshipWinner">'+optsChamp+'</select></div><div class="field"><label>Vincitrice Coppa Italia</label><select id="pamCupWinner">'+optsCup+'</select></div></div><button class="secondary" data-save-supercup>Salva finaliste</button><div class="notice">La gara sarà: <b>'+(pamChampTeam(c.championshipWinner)?.teamName||'Vincitrice Campionato')+'</b> contro <b>'+(pamChampTeam(c.cupWinner)?.teamName||'Vincitrice Coppa Italia')+'</b>.</div></div>';
+ }
+ return '<div class="notice pam-competition-detail"><b>Campionato AICS 2027</b><br>'+pamSeriesCount("Serie A")+' squadre in Serie A · '+pamSeriesCount("Serie B")+' in Serie B · '+pamSeriesCount("Serie C")+' in Serie C.</div>';
 }
 function championshipView(){
  const teams=pamChampTeams();
@@ -2322,7 +2360,7 @@ function championshipView(){
    '<div class="pam-champ-metric"><b>'+pamSeriesCount("Serie B")+'</b><span>SERIE B</span></div>'+
    '<div class="pam-champ-metric"><b>'+pamSeriesCount("Serie C")+'</b><span>SERIE C</span></div>'+
    '<div class="pam-champ-metric"><b>'+teams.filter(function(t){return t.captainAccessEnabled}).length+'</b><span>ACCESSI APERTI</span></div>'+
-  '</section>'+pamOfficialTeamsList()+
+  '</section>'+pamAicsCompetitionsView()+pamOfficialTeamsList()+
  '</div>';
 }
 function championshipTeamView(){
@@ -2338,6 +2376,7 @@ function championshipTeamView(){
  '<label class="pam-switch"><input type="checkbox" data-team-access-checkbox="'+t.id+'" '+(t.captainAccessEnabled?"checked":"")+'> '+(t.captainAccessEnabled?"ACCESSO ATTIVO":"ACCESSO DISABILITATO")+'</label></div>'+
  '<div class="pam-link-preview">'+esc(link)+'</div><div class="row"><button class="primary" data-share-team-invite="'+t.id+'">Copia / condividi link personale</button><button class="secondary" data-preview-team-portal="'+t.id+'">Anteprima portale capitano</button></div>'+
  '<div class="notice '+(t.captainAccessEnabled?"success":"error")+'">'+(t.captainAccessEnabled?"Il link è utilizzabile. Al primo accesso il capitano dovrà creare il proprio account con la sua email.":"Il link non consente modifiche finché non abiliti l’accesso.")+'</div></section>'+
+ '<section class="card"><div class="pam-v5-section-title"><h2>Logo della squadra</h2><small>Può essere inserito da te o dal capitano autorizzato.</small></div><div class="pam-logo-upload">'+(pamTeamLogo(t)?'<img src="'+esc(pamTeamLogo(t))+'" alt="Logo squadra">':'<div class="pam-team-logo pam-team-logo-placeholder" style="width:110px;height:110px">'+esc((t.teamName||'T').slice(0,1))+'</div>')+'<div><label class="upload-button">Carica o sostituisci logo<input type="file" accept="image/*" data-team-logo-upload="'+t.id+'"></label><div class="muted">Formato consigliato quadrato, PNG o JPG. Il logo apparirà nella scheda e negli elenchi.</div></div></div></section>'+
  '<section class="card"><div class="pam-v5-section-title"><h2>Dati della squadra</h2><small>Già precompilati: puoi correggerli prima di aprire il portale.</small></div><div class="pam-team-form-grid">'+
  f("Nome squadra","teamName")+f("Serie","series")+f("Ragione sociale club","clubLegalName")+f("Codice fiscale / P. IVA","clubTaxId")+
  f("Indirizzo club","clubAddress")+f("CAP","clubPostalCode")+f("Comune","clubTown")+f("Provincia","clubProvince")+
@@ -2634,7 +2673,7 @@ function newEventView(){
   '<button type="button" class="secondary" data-toggle-selected-only aria-pressed="'+(d.showSelectedOnly?"true":"false")+'">'+(d.showSelectedOnly?"MOSTRA TUTTI I GIOCATORI":"MOSTRA SOLO SELEZIONATI")+'</button>'+
   '<span class="pill" id="pamSelectedPlayersBadge">'+d.selected.length+' SELEZIONATI</span>'+
  '</div>'+
- '<div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
+ '<div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>'+
  '<button class="primary" data-action="create-event">Genera competizione</button>';
 }
 function buildMatches(ids,courts,returnLeg){
@@ -4242,6 +4281,8 @@ document.addEventListener("click",function(ev){
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
  const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(t)window.open(pamCaptainPortalUrl(t)+"&preview=1","_blank");return}
 
+ const compBtn=ev.target.closest("[data-champ-competition]");if(compBtn){state.champCompetition=compBtn.getAttribute("data-champ-competition");save();render();return}
+ const saveSuper=ev.target.closest("[data-save-supercup]");if(saveSuper){pamSaveAicsCompetitionState({championshipWinner:document.getElementById("pamChampionshipWinner")?.value||"",cupWinner:document.getElementById("pamCupWinner")?.value||""});pamToast("Finaliste di Supercoppa salvate.","success");render();return}
  const viewBtn=ev.target.closest("[data-view]");if(viewBtn){
   const requested=viewBtn.getAttribute("data-view");
   if(!pamIsAdmin()&&["players","new"].includes(requested)){
@@ -4306,15 +4347,26 @@ document.addEventListener("input",function(ev){
   if(count)count.textContent=visible+" nominativi visualizzati";
  }
  if(ev.target.id==="eventPlayerSearchInput"){
-  const query=ev.target.value.trim().toLowerCase();
+  const query=normalizeName(ev.target.value||"");
+  let visible=0;
   document.querySelectorAll(".event-player-search-row").forEach(function(row){
-   const show=!query||String(row.getAttribute("data-event-player-search")||"").includes(query);
+   const hay=normalizeName(String(row.getAttribute("data-event-player-search")||""));
+   const show=!query||hay.includes(query);
+   row.classList.remove("pam-hidden-unselected");
    row.style.display=show?"":"none";
+   if(show)visible++;
   });
+  const count=document.getElementById("pamEventPlayerSearchCount");
+  if(count)count.textContent=visible+(query?" risultati trovati":" nominativi disponibili");
  }
 });
 
 document.addEventListener("change",function(ev){
+ const logoInput=ev.target.closest("[data-team-logo-upload]");if(logoInput&&logoInput.files&&logoInput.files[0]){
+  const id=logoInput.getAttribute("data-team-logo-upload"),file=logoInput.files[0];
+  if(file.size>2500000){pamToast("Il logo supera 2,5 MB. Scegli un file più leggero.","error");logoInput.value="";return}
+  const reader=new FileReader();reader.onload=function(){pamSaveChampTeam(id,{teamLogoUrl:String(reader.result||"")});pamToast("Logo squadra salvato.","success");render()};reader.readAsDataURL(file);return
+ }
  const accessBox=ev.target.closest("[data-team-access-checkbox]");if(accessBox){pamToggleTeamAccess(accessBox.getAttribute("data-team-access-checkbox"),accessBox.checked);return}
  if(ev.target.id==="champSeriesFilter"){pamFilterChampTeams()}
 

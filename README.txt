@@ -218,3 +218,12 @@ VERSIONE 5.2.1 - CORREZIONE URGENTE
 - Il pulsante INVIA LINK ora risponde sempre e spiega di abilitare prima l'accesso quando necessario.
 - Aggiornata la cache PWA per forzare il caricamento della nuova versione.
 - Aggiunta player-registration.html ai file offline della PWA.
+
+VERSIONE 5.3
+- Ripristinata e rinforzata la ricerca automatica dei nominativi nella creazione tornei.
+- Conteggio immediato dei risultati durante la ricerca.
+- Possibilità per Admin e capitano di caricare il logo della squadra.
+- Aggiunte le competizioni AICS 2027: Campionato, Coppa Italia e Supercoppa.
+- Tutte le squadre iscritte partecipano alla Coppa Italia.
+- Supercoppa: vincitrice Campionato contro vincitrice Coppa Italia.
+- Eseguire nuovamente SUPABASE_AICS_2027_CAPITANI.sql per aggiungere il campo logo squadra.

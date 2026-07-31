@@ -266,3 +266,6 @@ grant execute on function public.submit_public_championship_roster_player(text,j
 -- Per aprire una squadra dall'app, impostare entrambi i campi a true.
 -- Esempio:
 -- update public.championship_teams set roster_open=true, player_self_registration_enabled=true where id='aics2027_01';
+
+-- VERSIONE 5.3 - LOGO SQUADRA
+alter table public.championship_teams add column if not exists team_logo_url text;
