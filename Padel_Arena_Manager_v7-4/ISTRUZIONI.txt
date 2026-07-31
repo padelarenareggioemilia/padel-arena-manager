@@ -1,0 +1,5 @@
+1. Carica questo index.html nel repository GitHub sostituendo quello esistente.
+2. Non serve eseguire SQL su Supabase.
+3. Attendi il completamento del deployment GitHub Pages.
+4. Chiudi Safari e riapri l'app.
+5. Nel Torneo Builder comparirà “BOZZA PROTETTA”.
