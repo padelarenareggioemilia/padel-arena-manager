@@ -227,3 +227,12 @@ VERSIONE 5.3
 - Tutte le squadre iscritte partecipano alla Coppa Italia.
 - Supercoppa: vincitrice Campionato contro vincitrice Coppa Italia.
 - Eseguire nuovamente SUPABASE_AICS_2027_CAPITANI.sql per aggiungere il campo logo squadra.
+
+
+VERSIONE 5.4 - RACCOLTA ROSE ATTIVA
+- Raccolta rose abilitata per tutte le squadre iscritte.
+- Inserimento diretto disponibile per amministratore e capitano.
+- Link giocatori attivo e distinto per ogni squadra.
+- Stato iniziale impostato su RACCOLTA APERTA.
+- Corretto il riferimento ai pulsanti della rosa nella scheda squadra.
+- Eseguire SUPABASE_AICS_2027_CAPITANI.sql per aggiornare anche i dati online.

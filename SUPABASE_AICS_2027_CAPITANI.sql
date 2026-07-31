@@ -28,7 +28,7 @@ create table if not exists public.championship_teams (
   home_time text,
   invite_token text unique not null,
   access_enabled boolean not null default false,
-  roster_open boolean not null default false,
+  roster_open boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -199,7 +199,7 @@ on conflict (id) do update set
 
 -- VERSIONE 5.2 - LINK GIOCATORI DISTINTO PER OGNI SQUADRA
 alter table public.championship_teams add column if not exists player_invite_token text unique;
-alter table public.championship_teams add column if not exists player_self_registration_enabled boolean not null default false;
+alter table public.championship_teams add column if not exists player_self_registration_enabled boolean not null default true;
 alter table public.championship_roster_players add column if not exists registration_source text not null default 'captain';
 alter table public.championship_roster_players add column if not exists privacy_accepted boolean not null default false;
 alter table public.championship_roster_players add column if not exists regulation_accepted boolean not null default false;
@@ -269,3 +269,10 @@ grant execute on function public.submit_public_championship_roster_player(text,j
 
 -- VERSIONE 5.3 - LOGO SQUADRA
 alter table public.championship_teams add column if not exists team_logo_url text;
+
+
+-- VERSIONE 5.4 - RACCOLTA ROSE APERTA PER TUTTE LE SQUADRE
+update public.championship_teams
+set roster_open = true,
+    player_self_registration_enabled = true,
+    updated_at = now();
