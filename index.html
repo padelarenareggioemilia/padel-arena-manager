@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 5.0 Preview</title>
+<title>Padel Arena Manager 7.2.5</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1297,60 +1297,6 @@ let pamSyncTimer=null;
 let pamRealtimeChannel=null;
 let pamRemoteRefreshTimer=null;
 let pamUploading=false;
-let pamBuilderDirty=false;
-let pamBuilderRemoteUpdatePending=false;
-let pamBuilderDraftSaveTimer=null;
-
-function pamBuilderIsActive(){
- return state&&state.view==="new";
-}
-function pamBuilderCaptureDraft(){
- if(!pamBuilderIsActive()||!state.draft)return;
- const value=function(id,fallback){const el=document.getElementById(id);return el?el.value:fallback};
- const num=function(id,fallback,min){const el=document.getElementById(id);let n=el?Number(el.value):Number(fallback);if(!Number.isFinite(n))n=Number(fallback)||0;return Math.max(min==null?-Infinity:min,n)};
- const yes=function(id,fallback){const el=document.getElementById(id);return el?el.value==="yes":!!fallback};
- const d=state.draft;
- d.name=value("eName",d.name||"");
- d.category=value("eCategory",d.category||"Maschile");
- d.description=value("eDescription",d.description||"");
- d.competitionType=value("eCompetitionType",d.competitionType||"rodeo_tokens");
- d.posterTheme=value("ePosterTheme",d.posterTheme||"eden_summer");
- d.auctionCount=Math.min(4,Math.max(1,num("eAuctionCount",d.auctionCount||2,1)));
- d.club=value("eClub",d.club||"");
- d.customAddress=pamClubAllowsCustomAddress(d.club)?String(value("eCustomAddress",d.customAddress||"")).trim():"";
- d.courts=Math.max(1,num("eCourts",d.courts||1,1));
- d.date=value("eDate",d.date||"");
- d.startTime=value("eStartTime",d.startTime||"20:00");
- d.endDate=value("eEndDate",d.endDate||d.date||"");
- d.endTime=value("eEndTime",d.endTime||"23:00");
- d.timerDuration=Math.max(1,num("eTimerDuration",d.timerDuration||15,1));
- d.slotDuration=Math.max(d.timerDuration,num("eSlotDuration",d.slotDuration||20,1));
- d.matchDuration=d.slotDuration;
- d.minParticipants=Math.max(0,num("eMinParticipants",d.minParticipants||0,0));
- d.maxParticipants=Math.max(1,num("eMaxParticipants",d.maxParticipants||16,1));
- d.fee=Math.max(0,num("eFee",d.fee||0,0));
- d.registrationMode=value("eRegistrationMode",d.registrationMode||"automatic");
- d.waitlistEnabled=yes("eWaitlistEnabled",d.waitlistEnabled);
- d.registrationOpen=yes("eRegistrationOpen",d.registrationOpen!==false);
- d.registrationCloseDate=value("eRegistrationCloseDate",d.registrationCloseDate||d.date||"");
- d.registrationCloseTime=value("eRegistrationCloseTime",d.registrationCloseTime||d.startTime||"20:00");
- localStorage.setItem(KEY,JSON.stringify(state));
-}
-function pamBuilderMarkDirty(){
- if(!pamBuilderIsActive())return;
- pamBuilderDirty=true;
- clearTimeout(pamBuilderDraftSaveTimer);
- pamBuilderDraftSaveTimer=setTimeout(function(){
-  pamBuilderCaptureDraft();
-  const badge=document.getElementById("pamBuilderDraftStatus");
-  if(badge)badge.textContent=pamBuilderRemoteUpdatePending?"● BOZZA SALVATA · AGGIORNAMENTO ONLINE IN ATTESA":"● BOZZA SALVATA SUL DISPOSITIVO";
- },180);
-}
-function pamBuilderLeave(){
- pamBuilderCaptureDraft();
- pamBuilderDirty=false;
- pamBuilderRemoteUpdatePending=false;
-}
 
 function pamIsAdmin(){
  return PAM_PROFILE&&PAM_PROFILE.role==="admin";
@@ -1947,9 +1893,6 @@ function pamSyncPanelHtml(){
 }
 
 async function pamCloudLoad(initial,forceReplace){
- const builderWasActive=pamBuilderIsActive();
- if(builderWasActive)pamBuilderCaptureDraft();
- const preservedDraft=builderWasActive?JSON.parse(JSON.stringify(state.draft||{})):null;
  const [playersRes,eventsRes]=await Promise.all([
   sb.from("players").select("id,data,photo_url").order("updated_at",{ascending:true}),
   sb.from("tournaments").select("id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at").order("event_date",{ascending:false})
@@ -1967,11 +1910,6 @@ async function pamCloudLoad(initial,forceReplace){
  });
  if(forceReplace||initial||remotePlayers.length)state.players=remotePlayers;
  if(forceReplace||initial||remoteEvents.length)state.events=remoteEvents;
- if(builderWasActive){
-  state.view="new";
-  state.draft=preservedDraft;
-  pamBuilderRemoteUpdatePending=true;
- }
  if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
   pamCloudReady=true;
   await pamCloudSyncAll();
@@ -1980,13 +1918,6 @@ async function pamCloudLoad(initial,forceReplace){
  }
  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
  localStorage.setItem(KEY,JSON.stringify(state));
- if(builderWasActive){
-  pamSetConnectionState(true);
-  const badge=document.getElementById("pamBuilderDraftStatus");
-  if(badge)badge.textContent="● BOZZA PROTETTA · DATI ONLINE AGGIORNATI IN ATTESA";
-  setTimeout(pamRefreshSyncPanel,50);
-  return;
- }
  render();
  pamApplyRole();
  setTimeout(pamRefreshSyncPanel,50);
@@ -2353,7 +2284,7 @@ function pamOpenSharedTournamentFromUrl(){
  if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";localStorage.setItem(KEY,JSON.stringify(state));render();pamApplyRole()}
 }
 
-function setView(v){if(pamBuilderIsActive()&&v!=="new")pamBuilderLeave();state.view=v;save();render()}
+function setView(v){state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
@@ -2365,7 +2296,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v5.0 · Preview grafica</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v7.2.5 · Eliminatoria corretta</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2794,7 +2725,6 @@ function newEventView(){
  const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
  const checks=eligible.length?eligible.map(function(p){const checked=d.selected.includes(p.id)?"checked":"";return '<div class="check event-player-search-row pam-select-player-row '+(d.showSelectedOnly&&!checked?'pam-hidden-unselected':'')+'" data-event-player-search="'+esc([playerName(p),p.phone,p.email].join(' ').toLowerCase())+'"><label class="pam-player-select-main"><input type="checkbox" data-select-player="'+p.id+'" '+checked+'><span><b>'+esc(playerName(p))+'</b><br><small>'+esc(p.level||'Giocatore registrato')+'</small></span></label></div>'}).join(""):'<div class="notice">Puoi salvare il torneo anche senza giocatori e condividere subito il link di iscrizione.</div>';
  return header("Torneo Builder","Crea, salva e pubblica il torneo prima di avere gli iscritti")+
- '<div class="notice success" id="pamBuilderDraftStatus"><b>● BOZZA PROTETTA</b><br>Puoi scrivere senza interruzioni: la sincronizzazione non sovrascriverà i campi finché non premi SALVA E PUBBLICA.</div>'+
  '<div class="card"><h2>1. Identità del torneo</h2><div class="row"><div class="field"><label>Nome torneo</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(x=>'<option '+(x===d.category?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'+
  '<div class="field"><label>Descrizione invito</label><textarea id="eDescription" rows="4" placeholder="Formula, atmosfera, premi, bar, musica, piscina...">'+esc(d.description||'')+'</textarea></div>'+
  '<div class="row"><div class="field"><label>Formato</label><select id="eCompetitionType" data-action="change-type"><option value="rodeo_tokens" '+(d.competitionType==='rodeo_tokens'?'selected':'')+'>RODEO A GETTONI</option><option value="rodeo_simple" '+(d.competitionType==='rodeo_simple'?'selected':'')+'>RODEO SEMPLICE</option><option value="fixed_pairs" '+(d.competitionType==='fixed_pairs'?'selected':'')+'>COPPIE FISSE</option></select></div><div class="field"><label>Tema locandina</label><select id="ePosterTheme"><option value="eden_summer" '+(d.posterTheme==='eden_summer'?'selected':'')+'>EDEN SUMMER · Spritz, musica, piscina</option><option value="cupra_bossoni" '+(d.posterTheme==='cupra_bossoni'?'selected':'')+'>CUPRA BOSSONI · nero, rame, premium</option><option value="aics_mare" '+(d.posterTheme==='aics_mare'?'selected':'')+'>AICS AL MARE · estate e tricolore</option></select></div></div>'+
@@ -3967,10 +3897,29 @@ function stagePlayerOptions(ids,selected){
 function initEliminationFromRanking(e){
  const fs=ensureFinalStages(e);
  const rank=standings(e);
- if(rank.length<10)return false;
- if(fs.elimination.teamA.length===0&&fs.elimination.teamB.length===0){
-  fs.elimination.teamA=[rank[6].id,rank[9].id];
-  fs.elimination.teamB=[rank[7].id,rank[8].id];
+ if(rank.length!==10)return false;
+
+ const m=fs.elimination;
+ const wantedA=[rank[6].id,rank[9].id]; // 7° + 10°
+ const wantedB=[rank[7].id,rank[8].id]; // 8° + 9°
+
+ // Finché l'eliminatoria non è stata giocata, le coppie devono seguire
+ // SEMPRE la classifica aggiornata dopo tutti i risultati della fase iniziale.
+ const hasResult=[m.score1,m.score2,m.score1R,m.score2R].some(function(v){
+  return v!==null&&v!==undefined;
+ });
+
+ const wrongTeams=
+  m.teamA.join("|")!==wantedA.join("|")||
+  m.teamB.join("|")!==wantedB.join("|");
+
+ if(!hasResult&&wrongTeams){
+  m.teamA=wantedA.slice();
+  m.teamB=wantedB.slice();
+  m.score1=null;
+  m.score2=null;
+  m.score1R=null;
+  m.score2R=null;
   save();
  }
  return true;
@@ -4462,7 +4411,7 @@ document.addEventListener("click",function(ev){
   if(a==="start-timer")startTimer(action.getAttribute("data-timer-key"));
   if(a==="reset-timer")resetTimer(action.getAttribute("data-timer-key"));
   if(a==="save-player")savePlayer();
-  if(a==="create-event"){pamBuilderCaptureDraft();pamBuilderDirty=false;pamBuilderRemoteUpdatePending=false;createEvent();}
+  if(a==="create-event")createEvent();
   if(a==="save-result")saveResult(action);
   if(a==="edit-result")editResult(action.getAttribute("data-match-id"));
   if(a==="commit-balances")commitBalances();
@@ -4495,9 +4444,6 @@ function pamFilterChampTeams(){
  });
 }
 document.addEventListener("input",function(ev){
- if(pamBuilderIsActive()&&ev.target.closest("main")&&(/^e[A-Z]/.test(ev.target.id||"")||ev.target.id==="eventPlayerSearchInput")){
-  if(ev.target.id!=="eventPlayerSearchInput")pamBuilderMarkDirty();
- }
  if(ev.target.id==="champTeamSearch"){pamFilterChampTeams();return}
 
  if(ev.target.id==="playerSearchInput"){
@@ -4529,7 +4475,6 @@ document.addEventListener("input",function(ev){
 });
 
 document.addEventListener("change",function(ev){
- if(pamBuilderIsActive()&&(/^e[A-Z]/.test(ev.target.id||""))){pamBuilderMarkDirty();pamBuilderCaptureDraft()}
  const logoInput=ev.target.closest("[data-team-logo-upload]");if(logoInput&&logoInput.files&&logoInput.files[0]){
   const id=logoInput.getAttribute("data-team-logo-upload"),file=logoInput.files[0];
   if(file.size>2500000){pamToast("Il logo supera 2,5 MB. Scegli un file più leggero.","error");logoInput.value="";return}
@@ -4666,7 +4611,7 @@ render();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=7.2.4-builder-bozza-protetta",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=7.2.2-collaboratore-operativo",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
