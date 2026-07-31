@@ -1,4 +1,4 @@
-const CACHE_NAME="pam-v7-1-sync";
+const CACHE_NAME="pam-v7-2-aste-multiple";
 const CORE=[
  "./",
  "./index.html",

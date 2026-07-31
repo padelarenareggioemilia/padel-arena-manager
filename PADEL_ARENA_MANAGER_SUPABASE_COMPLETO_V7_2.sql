@@ -1,0 +1,636 @@
+-- ============================================================
+-- PADEL ARENA MANAGER - SUPABASE COMPLETO V7.1.1
+-- File unico: Campionato AICS + Tornei + Iscrizioni + Sync + Fix
+-- Eseguire tutto nel SQL Editor di Supabase e premere RUN.
+-- Non cancella i dati esistenti.
+-- ============================================================
+
+BEGIN;
+
+-- PADEL ARENA MANAGER 5.1
+-- Portale capitani AICS Padel Championship 2027
+-- Eseguire nel SQL Editor di Supabase come amministratore.
+
+create extension if not exists pgcrypto;
+
+create table if not exists public.championship_teams (
+  id text primary key,
+  championship_code text not null default 'AICS-2027',
+  team_name text not null,
+  club_legal_name text,
+  club_tax_id text,
+  series text,
+  captain_name text,
+  captain_email text,
+  captain_phone text,
+  captain_birth_date date,
+  captain_birth_place text,
+  captain_residence text,
+  club_address text,
+  club_postal_code text,
+  club_town text,
+  club_province text,
+  club_phone text,
+  club_email text,
+  home_court_address text,
+  home_day text,
+  home_time text,
+  invite_token text unique not null,
+  access_enabled boolean not null default false,
+  roster_open boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.championship_team_members (
+  team_id text not null references public.championship_teams(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null default 'captain' check (role in ('captain','manager')),
+  created_at timestamptz not null default now(),
+  primary key(team_id,user_id)
+);
+
+create table if not exists public.championship_roster_players (
+  id uuid primary key default gen_random_uuid(),
+  team_id text not null references public.championship_teams(id) on delete cascade,
+  first_name text not null,
+  last_name text not null,
+  birth_date date,
+  birth_place text,
+  postal_code text,
+  residence_town text,
+  residence_province text,
+  phone text,
+  email text,
+  photo_url text,
+  payment_status text not null default 'missing',
+  membership_status text not null default 'missing',
+  medical_status text not null default 'missing',
+  approval_status text not null default 'draft',
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.championship_teams enable row level security;
+alter table public.championship_team_members enable row level security;
+alter table public.championship_roster_players enable row level security;
+
+create or replace function public.is_pam_admin()
+returns boolean language sql stable security definer set search_path=public as $$
+  select exists(
+    select 1 from public.profiles
+    where id=auth.uid() and role='admin'
+  );
+$$;
+
+drop policy if exists "admins manage championship teams" on public.championship_teams;
+create policy "admins manage championship teams" on public.championship_teams
+for all using (public.is_pam_admin()) with check (public.is_pam_admin());
+
+drop policy if exists "captains read own team" on public.championship_teams;
+create policy "captains read own team" on public.championship_teams
+for select using (
+  exists(select 1 from public.championship_team_members m where m.team_id=id and m.user_id=auth.uid())
+);
+
+drop policy if exists "admins manage memberships" on public.championship_team_members;
+create policy "admins manage memberships" on public.championship_team_members
+for all using (public.is_pam_admin()) with check (public.is_pam_admin());
+
+drop policy if exists "users read own membership" on public.championship_team_members;
+create policy "users read own membership" on public.championship_team_members
+for select using (user_id=auth.uid());
+
+drop policy if exists "admins manage rosters" on public.championship_roster_players;
+create policy "admins manage rosters" on public.championship_roster_players
+for all using (public.is_pam_admin()) with check (public.is_pam_admin());
+
+drop policy if exists "captains manage own roster" on public.championship_roster_players;
+create policy "captains manage own roster" on public.championship_roster_players
+for all using (
+  exists(select 1 from public.championship_team_members m where m.team_id=championship_roster_players.team_id and m.user_id=auth.uid())
+  and exists(select 1 from public.championship_teams t where t.id=championship_roster_players.team_id and t.access_enabled and t.roster_open)
+)
+with check (
+  exists(select 1 from public.championship_team_members m where m.team_id=championship_roster_players.team_id and m.user_id=auth.uid())
+  and exists(select 1 from public.championship_teams t where t.id=championship_roster_players.team_id and t.access_enabled and t.roster_open)
+);
+
+create or replace function public.claim_championship_team_invite(p_token text)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare
+  t public.championship_teams;
+begin
+  if auth.uid() is null then raise exception 'Accesso richiesto'; end if;
+  select * into t from public.championship_teams where invite_token=p_token;
+  if t.id is null then raise exception 'Invito non valido'; end if;
+  if lower(coalesce(auth.jwt()->>'email','')) <> lower(t.captain_email) then
+    raise exception 'Usa l email del referente registrato';
+  end if;
+  if not t.access_enabled then
+    return jsonb_build_object('access_enabled',false);
+  end if;
+  insert into public.championship_team_members(team_id,user_id,role)
+  values(t.id,auth.uid(),'captain') on conflict do nothing;
+  return jsonb_build_object(
+    'access_enabled',true,
+    'roster_open',t.roster_open,
+    'team',to_jsonb(t)-'invite_token'
+  );
+end;
+$$;
+
+grant execute on function public.claim_championship_team_invite(text) to authenticated;
+
+insert into public.championship_teams(
+ id,team_name,club_legal_name,club_tax_id,series,captain_name,captain_email,captain_phone,
+ captain_birth_date,captain_birth_place,captain_residence,club_address,club_postal_code,
+ club_town,club_province,club_phone,club_email,home_court_address,home_day,home_time,invite_token
+) values
+('aics2027_01','FIFTEEN RACQUET CLUB','FIFTEEN RACQUET CLUB','03127460347','Serie B','GOFFREDO GATTI','goffredo.gatti@gmail.com','334/6260938','1969-07-02','PARMA','SAN POLO D''ENZA','VIA RENZO PEZZANI 47A','43029','TRAVERSETOLO','PARMA','3488204373','nicola77.fagetti@gmail.com','VIA RENZO PEZZANI 47 43029 TRAVERSETOLO (PR)','Domenica','14:00 SOLO SABATO E DOMENICA','eb641f337adbd7e419b29c653e1d3b2b'),
+('aics2027_02','CA''MARTA squadra A','Ca''Marta sport&fun ssd a rl','03384630368','Serie B','Dignatici Luca','lucadignatici@hotmail.com','3357536953','1973-11-18','Sassuolo','Sassuolo','via Regina Pacis 118','41049','Ssasuolo','modena','0536812923','tommyvale99@gmail.com','Sassuolo Via Regina Pacis 118 (mo)','Sabato','14:00 SOLO SABATO E DOMENICA','1e5c655dd0b65dae1543cb557e1c1f5d'),
+('aics2027_03','CA''MARTA squadra B','CA''MARTA SPORT&FUN SSD A RL UNI','03384630368','Serie C','VALENTI TOMMASO','tommyvale99@gmail.com','3426480454','1989-09-21','CARPI','CARPI','VIA REGINA PACIS 118','41049','SASSUOLO','MODENA','0536 812923','tommyvale99@gmail.com','SASSUOLO VIA REGINA PACIS 118 (mo)','Sabato','14:00 SOLO SABATO E DOMENICA','f82739604639840f3993414517315476'),
+('aics2027_04','CA''MARTA squadra C','Ca''Marta sport&fun ssd a rl uni','03384630368','Serie C','CANALI MATTEO','mcanali83@gmail.com','3282280304','1983-11-17','Sassuolo','Prignano s/s (MO)','Regina Pacis 118','41049','Sassuolo','MODENA','0536812923','tommyvale99@gmail.com','SASSUOLO VIA REGINA PACIS 118 (MO)','Sabato','16:00 SOLO SABATO E DOMENICA','27a2f7521b705337255ac794e591d916'),
+('aics2027_05','Pol Nonantola Padel','Polisportiva Nonantola A.D.','80015050364','Serie C','Marco Meschiari','marco.meschiari81@gmail.com','3479565881','1981-09-15','Modena','Modena','Via Mazzini 34','41015','Nonantola','Modena','3479565881','polnonantola.padel@gmail.com','Via Risorgimento 50, 41015 Nonantola','Venerdi','20:00 SOLO VENERDÌ','9548bac08b29fc4b5b25f2cdced44122'),
+('aics2027_06','Padel Prime La Patria Carpi','S.G.La Patria 1879 ASD','90003660363','Serie C','Marco Gradellini','marco.grade@gmail.com','3467192364','1993-01-05','Carpi','Carpi','Via Nuova Ponente 24/H','41012','Carpi','Modena','059644070','amministrazione.lapatria@gmail.com','Via Nuova Ponente 24/H, 41012, Carpi (MO)','Sabato','14:00 SOLO SABATO E DOMENICA','8968637df0729fb0ca7daa67ed41cf26'),
+('aics2027_07','CT CORREGGIO 2','Circolo Tennis Correggio ASD','91010210358','Serie B','Maurizio Musso','elemaeri@alice.it','3470887572','1972-07-11','Asti','Correggio','via Bruto Terrachini 2','42015','Correggio','Reggio Emilia','0522637164','direzione@ctcorreggio.it','via Bruto Terrachini 2 - 42015 Correggio (RE)','Sabato','14:00 SOLO SABATO E DOMENICA','be07b2c3818295a3b08cdbf40536a6da'),
+('aics2027_08','Phoenix Cavriago','ASD Phoenix Cavriago','02500230350','Serie B','Zecchetti Patrick','patrickz@libero.it','3498945499','1990-09-07','Montecchio Emilia','Cavriago (RE) - 42025','Via Torre n.3','42025','Cavriago','REGGIO NELL''EMILIA','3478979048','rocchi.marco@ognibene.com','Via Cantonazzo n.1, Cavriago 42025','Sabato','16:00 SOLO SABATO E DOMENICA','ef291d90603a3e6407cd3b444ee7f38d'),
+('aics2027_09','MIRAPADEL CENTER','MIRAPADEL CENTER','04023790365','Serie C','LAGONEGRO ROSARIO','info@mirapadelcenter.it','3406686972','1976-11-15','MILANO','MIRANDOLA','VIA 2 GIUGNO 26','41037','MIRANDOLA','MODENA','3428340667','info@mirapadelcenter.it','VIA 2 GIUGNO 26, 41037 MIRANDOLA (MO)','Domenica','15:00 SOLO SABATO E DOMENICA','be928a8283eba98180f5c62164f1e838'),
+('aics2027_10','CT CORREGGIO Serie A','CIRCOLO TENNIS CORREGGIO ASD','91010210358','Serie A','VEZZADINI DAVIDE','vezzadini77@gmail.com','334 6886932','1977-02-23','CORREGGIO','CORREGGIO','B.TERRACHINI 2','42015','CORREGGIO','REGGIO EMILIA','0522 637164','ctcorreggio@wansport.com','Via B. Terrachini 2, 42015 Correggio RE','Sabato','17:00 SOLO SABATO E DOMENICA','7d425b9a7e5fb27b622f0d6d734622bc'),
+('aics2027_11','VILLAGE PADDLE MODENA','MODENA PADDLE CLUB SSDRL','03834490363','Serie B','ENZO ZARA','enzo.zara83@gmail.com','3397039671','1983-03-21','FORMIGINE (MO)','FORMIGINE (MO)','STRADA BELLARIA 127/1','41126','MODENA','MODENA','3512209713','tornei.villagepaddle@gmail.com','STRADA CAVEZZO 27,  41126 BAGGIOVARA (MO)','Domenica','15:00 SOLO SABATO E DOMENICA','197e17dbebc13cffca9f3e02098ba27b'),
+('aics2027_12','B&B TEAM - Bope & Bullet','PADEL ARENA SRL','02906640343','Serie A + Serie B','NICOLA GROSSI','nicolagrossi659@gmail.com','3357443152','1965-07-24','PARMA','PARMA','Via Ernesto Ghirarduzzi 2','43122','PARMA','PARMA','+393534253475','proparmapadelarena@gmail.com','PRO GREEN STR. MARTINELLA 328 VIGATTO 43124 PR','Sabato','14:00 SOLO SABATO E DOMENICA','7ef1717ead2c959510ca1ad361968d7f'),
+('aics2027_13','PRO PARMA LOBOS','PADEL ACCADEMY SSDRL','02913830341','Serie B','Davide Chierici','crociato68@gmail.com','3313534301','1968-02-18','Parma','Montechiarugolo','Via Ernesto Ghirarduzzi 2','43122','Parma','Parma','3534253475','proparmapadelarena@gmail.com','Via Ernesto Ghirarduzzi 2 (Parma) cap 43122','Venerdi','20:00 SOLO VENERDÌ','b7181140951230695d6ea142595d9c7b'),
+('aics2027_14','PRO PARMA TIGERS','PADEL ACADEMY SSDRL','02913830341','Serie B','FABRIZIO VENTURINI','disossoventurini@gmail.com','3382666694','1972-09-29','PARMA','PARMA','ERNESTO GHIRARDUZZI, 2','43122','PARMA','PARMA','0521772686','proparmapadelarena@gmail.com','PARMA, VIA ERNESTO GHIRARDUZZI, 2 43122','Sabato','14:00 SOLO SABATO E DOMENICA','22220d9daa1a9bf4d66f92cb0038487a'),
+('aics2027_15','Punto G Nera','ASD Punto G Padel','00702500349','Serie B','Massimo Bosi','mbosilavoro@gmail.com','3356690914','1969-10-31','Parma','Parma','Via Sonnino 21','43126','Parma','Parma','342 166 7082','segreteria@puntopadel.it','Via Sonnino 21 - 43126 Parma','Venerdi','20:00 SOLO VENERDÌ','482fc05e38f16e30b19346ad48f00e21'),
+('aics2027_16','Punto G White','ASD Punto G Padel','00702500349','Serie B','Francesco Pizzi','francescopizzi80@gmail.com','3483616933','1980-02-18','San Secondo Parmense','Roccabianca','Via Sonnino 21','43126','Parma','Parma','342 166 7082','segreteria@puntopadel.it','Via Sonnino 21 - 43126 Parma','Venerdi','20:00 SOLO VENERDÌ','8e6e3ccf4f94c517c0ac869c1fbfe4c7'),
+('aics2027_17','CANI SCIOLTI','PADEL CLUB REGGIOLO SRLSD','02949130351','Serie C','Gabriele Palmieri','gpalmieri@ag-informatica.com','3481520720','1968-05-24','Campagnola Emilia','Campagnola Emilia','Strada Gavello n.3','42046','Reggiolo','Reggio Emilia','3287469448','info@padelclubreggiolo.com','Strada Gavello n.3, Reggiolo (RE) 42046','Domenica','11:00 SOLO DOMENICA','9860922d476ad5fcefd8f2ba49ceb75d'),
+('aics2027_18','PALA RBG CREW','RACQUET BALL GAMES SSDaRL','03121830354','Serie C','RINALDI MARCO','ing.rinaldi.marco@gmail.com','3337188334','1980-11-20','FORMIGINE (MO)','REGGIO EMILIA','VIA DEI PRATONIERI 7','42124','REGGIO EMILIA','REGGIO EMILIA','3275612828','racquetball@tim.it','VIA ERNESTO SPALLANZANI 8/A - 42124','Domenica','17:00 SOLO SABATO E DOMENICA','a4fe0e70c3a61f4ccdef016ea48943f1'),
+('aics2027_19','PLAYA PADEL','PLAYA ASD','90054040366','Serie B + Serie C','FAGLIONI ENRICO','enricofaglioni70@gmail.com','3382130665','1970-09-14','MIRANDOLA (MO)','CAVEZZO (MO)','VIA IMPERIALE 22/A','41037','MIRANDOLA','MODENA','3382130665','measportsrl@gmail.com','Via imperiale 22/a 41037 Mirandola (MO)','Domenica','10:00 SOLO DOMENICA','7357a7a2dcc1b11c0ea6f3b6a4d7a8cc'),
+('aics2027_20','ALL STAR PADEL -SERIE C','ALL STAR PADEL SSDRL','04028950360','Serie C','ENRICO LEONELLI','enrico.allstarpadel@gmail.com','3403669735','1979-01-21','BONDENO','BONDENO','VIA LAVACCHI 1635','41038','SAN FELICE SUL PANARO','MODENA','3395796474','amministrazione.allstarpadel@gmail.com','VIA LAVACCHI 1635, 41038 SAN FELICE SUL PANARO','Sabato','17:00 SOLO SABATO E DOMENICA','bd25d724f413b7895c5b251ad38d20a6'),
+('aics2027_21','La quercia B','Ssd','02671840201','Serie B','Stefano Storchi','stefano_storchi@virgilio.it','3358433367','2026-07-30','Suzzara','Suzzara','Stradello Opi 7','46026','Suzzara','Mantova','3498698003','laquerciapadel@gmail.it','Stradello Opi 7 46029 suzzara','Sabato','15:00 SOLO SABATO E DOMENICA','321e31ec5dcc9ef11bd229e1effc4822'),
+('aics2027_22','HORMIGA PADEL CLUB','ASD HORMIGA','CF 94212630365','Serie B','MAURO FIORANI','fioranimauro64@gmal.com','3358238780','1964-11-08','MODENA','MODENA','VIA PANARO 193','41056','SAVIGNANO SUL PANARO','MODENA','3240413208','hormigapadel@gmail.com','via panaro 193, Formica di Savignano sul Panaro','Domenica','11:00 SOLO DOMENICA','1d3ce08606b3a37d3a880a33af177711'),
+('aics2027_23','Quercia C','Ssd','02671840201','Serie C','Stefano Storchi','stefano_storchi@virgilio.it','3358433367','2026-07-14','Suzzara','Mantova','Stradello Opi 7','46029','Suzzara','Mantova','3498698003','laquerciapadel@gmail.it','Stradello Opi 7 46029 suzzara','Sabato','14:00 SOLO SABATO E DOMENICA','9b652470e6cae54b99aba9e12013cba2'),
+('aics2027_24','Padel San Donnino A','Padel San Donnino S.S.D a R.L.','04053390367','Serie C','Francesco Teoli','francesco.teoli09@gmail.com','3472612643','2002-10-01','Modena','Modena','Via della Genziana, 18','41126','Modena','Modena','3666358467','padelsandonnino@gmail.com','Via della Genziana, 18, 41126','Sabato','17:00 SOLO SABATO E DOMENICA','452df60bf8a25ddd65124021e140d479'),
+('aics2027_25','Padel San Donnino B','Padel San Donnino S.S.D. a R.L.','04053390367','Serie C','Francesco Teoli','francesco.teoli09@gmail.com','3472612643','2002-10-01','Modena','Modena','Via della Genziana 18','41126','Modena','Modena','3666358467','padelsandonnino@gmail.com','Via della Genziana 18, 41126','Domenica','15:00 SOLO SABATO E DOMENICA','68c779bcfdb353fe25005b757bc49f13'),
+('aics2027_26','Qui Pádel C','Qui Padel & Fun SSD','02674970203','Serie C','Emiliano Verolla','emilioverolla11@gmail.com','3458345177','1978-10-11','Formia LT','Carpi','G. Di Vittorio 49','46026','Quistello','MN','3458345177','quipadel@gmail.com','via Allende 7, 46026 Quistello MN','Domenica','15:00 SOLO SABATO E DOMENICA','26715c3fd053394ceb51c3c5579be8d8'),
+('aics2027_27','EDEN ACADEMY SERIE C','EDEN SPORT & SALUTE','02310620352','Serie C','AUGUSTO AUBRY','augustoaubry@gmail.com','3405918068','1974-09-27','NAPOLI','SCANDIANO','VIA G.BALLA 6','42124','REGGIO EMILIA','RE','0522944244','info@edenbenessere.it','VIA G.BALLA 6 42124 REGGIO EMILIA','Domenica','17:00 SOLO SABATO E DOMENICA','cb5ff81c53eb60444a471cb80d6f2a27'),
+('aics2027_28','BLUE PADEL CARPI C','BLUE PADEL CARPI','03955960368','Serie C','Maria Pia Calabrese','pia@maglificiolsm.com','3333208040','1991-09-30','carpi','carpi','PIAZZALE DELLE PISCINE 4','41012','CARPI','modena','MO','amministrazione.bluepadelcarpi@gmail.com','Piazzale delle piscine 4 carpi 41012','Sabato','15:00 SOLO SABATO E DOMENICA','fc74338b71f7af2969764bcb46af624c'),
+('aics2027_29','BLUE PADEL CARPI B','BLUE PADEL CARPI','03955960368','Serie B','MARIA PIA CALABRESE','pia@maglificiolsm.com','3333208040','1991-09-30','CARPI','CARPI','PIAZZALE DELLE PISCINE 4','41012','CARPI','MODENA','3333208040','pia@maglificiolsm.com','PIAZZALE DELLE PISCINE 4 CARPI 41012','Venerdi','20:00 SOLO VENERDÌ','7d069a1fbf11a1d1a8a6d086ab0037fe')
+on conflict (id) do update set
+ team_name=excluded.team_name,
+ club_legal_name=excluded.club_legal_name,
+ club_tax_id=excluded.club_tax_id,
+ series=excluded.series,
+ captain_name=excluded.captain_name,
+ captain_email=excluded.captain_email,
+ captain_phone=excluded.captain_phone,
+ captain_birth_date=excluded.captain_birth_date,
+ captain_birth_place=excluded.captain_birth_place,
+ captain_residence=excluded.captain_residence,
+ club_address=excluded.club_address,
+ club_postal_code=excluded.club_postal_code,
+ club_town=excluded.club_town,
+ club_province=excluded.club_province,
+ club_phone=excluded.club_phone,
+ club_email=excluded.club_email,
+ home_court_address=excluded.home_court_address,
+ home_day=excluded.home_day,
+ home_time=excluded.home_time,
+ updated_at=now();
+
+-- L'amministratore può aprire un accesso con:
+-- update public.championship_teams set access_enabled=true where id='aics2027_01';
+-- e aprire la rosa con:
+-- update public.championship_teams set roster_open=true where id='aics2027_01';
+
+-- VERSIONE 5.2 - LINK GIOCATORI DISTINTO PER OGNI SQUADRA
+alter table public.championship_teams add column if not exists player_invite_token text unique;
+alter table public.championship_teams add column if not exists player_self_registration_enabled boolean not null default true;
+alter table public.championship_roster_players add column if not exists registration_source text not null default 'captain';
+alter table public.championship_roster_players add column if not exists privacy_accepted boolean not null default false;
+alter table public.championship_roster_players add column if not exists regulation_accepted boolean not null default false;
+
+update public.championship_teams
+set player_invite_token=coalesce(player_invite_token, invite_token || 'player');
+
+create unique index if not exists championship_teams_player_invite_token_idx
+on public.championship_teams(player_invite_token);
+
+create or replace function public.public_championship_team_for_roster(p_token text)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare t public.championship_teams;
+begin
+ select * into t from public.championship_teams where player_invite_token=p_token;
+ if t.id is null then raise exception 'Link squadra non valido'; end if;
+ if not t.roster_open or not t.player_self_registration_enabled then
+   raise exception 'La raccolta della rosa non è ancora stata abilitata dall organizzazione';
+ end if;
+ return jsonb_build_object('id',t.id,'team_name',t.team_name,'club_legal_name',t.club_legal_name,'series',t.series);
+end;
+$$;
+
+grant execute on function public.public_championship_team_for_roster(text) to anon, authenticated;
+
+create or replace function public.submit_public_championship_roster_player(p_token text,p_player jsonb)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare t public.championship_teams; new_id uuid;
+begin
+ select * into t from public.championship_teams where player_invite_token=p_token;
+ if t.id is null then raise exception 'Link squadra non valido'; end if;
+ if not t.roster_open or not t.player_self_registration_enabled then
+   raise exception 'La raccolta della rosa non è ancora aperta';
+ end if;
+ if (select count(*) from public.championship_roster_players where team_id=t.id) >= 20 then
+   raise exception 'La rosa ha già raggiunto il limite di 20 giocatori';
+ end if;
+ if coalesce(trim(p_player->>'first_name'),'')='' or coalesce(trim(p_player->>'last_name'),'')='' or
+    coalesce(trim(p_player->>'email'),'')='' or coalesce(trim(p_player->>'phone'),'')='' then
+   raise exception 'Compila tutti i campi obbligatori';
+ end if;
+ if exists(select 1 from public.championship_roster_players where team_id=t.id and lower(email)=lower(p_player->>'email')) then
+   raise exception 'Esiste già una richiesta con questa email per la squadra';
+ end if;
+ insert into public.championship_roster_players(
+   team_id,first_name,last_name,birth_date,birth_place,postal_code,residence_town,residence_province,
+   phone,email,photo_url,approval_status,registration_source,privacy_accepted,regulation_accepted
+ ) values(
+   t.id,trim(p_player->>'first_name'),trim(p_player->>'last_name'),nullif(p_player->>'birth_date','')::date,
+   trim(p_player->>'birth_place'),trim(p_player->>'postal_code'),trim(p_player->>'residence_town'),
+   upper(trim(p_player->>'residence_province')),trim(p_player->>'phone'),lower(trim(p_player->>'email')),
+   nullif(p_player->>'photo_data',''),'pending','player_link',true,true
+ ) returning id into new_id;
+ return jsonb_build_object('ok',true,'id',new_id,'team_id',t.id,'status','pending');
+end;
+$$;
+
+grant execute on function public.submit_public_championship_roster_player(text,jsonb) to anon, authenticated;
+
+-- Per aprire una squadra dall'app, impostare entrambi i campi a true.
+-- Esempio:
+-- update public.championship_teams set roster_open=true, player_self_registration_enabled=true where id='aics2027_01';
+
+-- VERSIONE 5.3 - LOGO SQUADRA
+alter table public.championship_teams add column if not exists team_logo_url text;
+
+
+-- VERSIONE 5.4 - RACCOLTA ROSE APERTA PER TUTTE LE SQUADRE
+update public.championship_teams
+set roster_open = true,
+    player_self_registration_enabled = true,
+    updated_at = now();
+
+
+-- VERSIONE 6.0 - APPROVAZIONE E RIFIUTO RICHIESTE ROSA
+alter table public.championship_roster_players add column if not exists rejection_reason text;
+alter table public.championship_roster_players add column if not exists decided_at timestamptz;
+alter table public.championship_roster_players add column if not exists decided_by uuid references auth.users(id);
+
+create index if not exists championship_roster_team_status_idx
+on public.championship_roster_players(team_id, approval_status);
+
+-- Il giocatore rifiutato può correggere e inviare nuovamente la richiesta.
+create or replace function public.submit_public_championship_roster_player(p_token text,p_player jsonb)
+returns jsonb
+language plpgsql security definer set search_path=public
+as $$
+declare t public.championship_teams; new_id uuid; old_id uuid;
+begin
+ select * into t from public.championship_teams where player_invite_token=p_token;
+ if t.id is null then raise exception 'Link squadra non valido'; end if;
+ if not t.roster_open or not t.player_self_registration_enabled then
+   raise exception 'La raccolta della rosa non è ancora aperta';
+ end if;
+ if coalesce(trim(p_player->>'first_name'),'')='' or coalesce(trim(p_player->>'last_name'),'')='' or
+    coalesce(trim(p_player->>'email'),'')='' or coalesce(trim(p_player->>'phone'),'')='' then
+   raise exception 'Compila tutti i campi obbligatori';
+ end if;
+ select id into old_id from public.championship_roster_players
+ where team_id=t.id and lower(email)=lower(trim(p_player->>'email')) limit 1;
+ if old_id is not null then
+   if exists(select 1 from public.championship_roster_players where id=old_id and approval_status='rejected') then
+     update public.championship_roster_players set
+       first_name=trim(p_player->>'first_name'), last_name=trim(p_player->>'last_name'),
+       birth_date=nullif(p_player->>'birth_date','')::date, birth_place=trim(p_player->>'birth_place'),
+       postal_code=trim(p_player->>'postal_code'), residence_town=trim(p_player->>'residence_town'),
+       residence_province=upper(trim(p_player->>'residence_province')), phone=trim(p_player->>'phone'),
+       photo_url=nullif(p_player->>'photo_data',''), approval_status='pending', rejection_reason=null,
+       decided_at=null, decided_by=null, privacy_accepted=true, regulation_accepted=true, updated_at=now()
+     where id=old_id;
+     return jsonb_build_object('ok',true,'id',old_id,'team_id',t.id,'status','pending','resubmitted',true);
+   end if;
+   raise exception 'Esiste già una richiesta con questa email per la squadra';
+ end if;
+ if (select count(*) from public.championship_roster_players where team_id=t.id and approval_status<>'rejected') >= 20 then
+   raise exception 'La rosa ha già raggiunto il limite di 20 giocatori';
+ end if;
+ insert into public.championship_roster_players(
+   team_id,first_name,last_name,birth_date,birth_place,postal_code,residence_town,residence_province,
+   phone,email,photo_url,approval_status,registration_source,privacy_accepted,regulation_accepted
+ ) values(
+   t.id,trim(p_player->>'first_name'),trim(p_player->>'last_name'),nullif(p_player->>'birth_date','')::date,
+   trim(p_player->>'birth_place'),trim(p_player->>'postal_code'),trim(p_player->>'residence_town'),
+   upper(trim(p_player->>'residence_province')),trim(p_player->>'phone'),lower(trim(p_player->>'email')),
+   nullif(p_player->>'photo_data',''),'pending','player_link',true,true
+ ) returning id into new_id;
+ return jsonb_build_object('ok',true,'id',new_id,'team_id',t.id,'status','pending');
+end;
+$$;
+grant execute on function public.submit_public_championship_roster_player(text,jsonb) to anon, authenticated;
+
+create or replace function public.decide_championship_roster_player(p_player_id uuid,p_decision text,p_reason text default null)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare r public.championship_roster_players; allowed boolean;
+begin
+ if auth.uid() is null then raise exception 'Accesso richiesto'; end if;
+ select * into r from public.championship_roster_players where id=p_player_id;
+ if r.id is null then raise exception 'Richiesta non trovata'; end if;
+ allowed := public.is_pam_admin() or exists(
+   select 1 from public.championship_team_members m
+   join public.championship_teams t on t.id=m.team_id
+   where m.team_id=r.team_id and m.user_id=auth.uid() and t.access_enabled
+ );
+ if not allowed then raise exception 'Non sei autorizzato a gestire questa richiesta'; end if;
+ if p_decision not in ('approved','rejected') then raise exception 'Decisione non valida'; end if;
+ update public.championship_roster_players set
+   approval_status=p_decision,
+   rejection_reason=case when p_decision='rejected' then nullif(trim(coalesce(p_reason,'')),'') else null end,
+   decided_at=now(), decided_by=auth.uid(), updated_at=now()
+ where id=p_player_id;
+ return jsonb_build_object('ok',true,'id',p_player_id,'status',p_decision);
+end;
+$$;
+grant execute on function public.decide_championship_roster_player(uuid,text,text) to authenticated;
+
+
+-- PADEL ARENA MANAGER 7.0 - TORNEO BUILDER
+-- Eseguire nel SQL Editor di Supabase. Non elimina dati esistenti.
+create extension if not exists pgcrypto;
+create extension if not exists unaccent;
+
+create table if not exists public.tournaments (
+ id text primary key,
+ name text not null,
+ event_date date,
+ club text,
+ category text,
+ competition_type text,
+ logo_url text,
+ share_token uuid not null default gen_random_uuid() unique,
+ status text not null default 'published',
+ data jsonb not null default '{}'::jsonb,
+ updated_at timestamptz not null default now()
+);
+
+create table if not exists public.players (
+ id text primary key,
+ data jsonb not null default '{}'::jsonb,
+ photo_url text,
+ updated_at timestamptz not null default now()
+);
+
+create table if not exists public.public_registrations (
+ id uuid primary key default gen_random_uuid(),
+ tournament_id text not null references public.tournaments(id) on delete cascade,
+ mode text not null check (mode in ('single','pair')),
+ status text not null default 'new' check (status in ('new','accepted','rejected','waitlist','imported')),
+ primary_payload jsonb not null,
+ partner_payload jsonb,
+ created_at timestamptz not null default now(),
+ processed_at timestamptz,
+ processed_by uuid
+);
+create index if not exists public_registrations_tournament_idx on public.public_registrations(tournament_id,status,created_at);
+
+alter table public.tournaments enable row level security;
+alter table public.players enable row level security;
+alter table public.public_registrations enable row level security;
+
+-- Le letture pubbliche avvengono esclusivamente tramite funzioni security definer.
+create or replace function public.public_tournament_for_registration(p_share_token uuid)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare t public.tournaments; d jsonb; accepted_count int; cap int; open_flag boolean; close_at timestamptz;
+begin
+ select * into t from public.tournaments where share_token=p_share_token;
+ if not found then return null; end if;
+ d:=coalesce(t.data,'{}'::jsonb);
+ select count(*) into accepted_count from public.public_registrations where tournament_id=t.id and status='accepted';
+ cap:=coalesce(nullif(d->>'maxParticipants','')::int,nullif(d->>'registrationCapacity','')::int,0);
+ open_flag:=coalesce((d->>'registrationOpen')::boolean,true);
+ if coalesce(d->>'registrationCloseDate','')<>'' then
+  close_at:=((d->>'registrationCloseDate')||' '||coalesce(nullif(d->>'registrationCloseTime',''),'23:59'))::timestamptz;
+  if now()>close_at then open_flag:=false; end if;
+ end if;
+ return jsonb_build_object(
+  'id',t.id,'name',t.name,'event_date',t.event_date,'club',t.club,'category',t.category,
+  'competition_type',t.competition_type,'logo_url',t.logo_url,'description',d->>'description',
+  'address',coalesce(d->>'customAddress',''),'start_time',d->>'startTime','end_date',d->>'endDate','end_time',d->>'endTime',
+  'entry_fee',coalesce(nullif(d->>'entryFee','')::numeric,0),'min_participants',coalesce(nullif(d->>'minParticipants','')::int,0),
+  'max_participants',cap,'accepted_count',accepted_count,'available_places',case when cap>0 then greatest(cap-accepted_count,0) else null end,
+  'registration_open',open_flag,'waitlist_enabled',coalesce((d->>'waitlistEnabled')::boolean,true),
+  'registration_mode',coalesce(d->>'registrationMode','automatic'),'poster_theme',coalesce(d->>'posterTheme','eden_summer')
+ );
+end $$;
+
+grant execute on function public.public_tournament_for_registration(uuid) to anon,authenticated;
+
+create or replace function public.public_search_players_for_registration(p_share_token uuid,p_query text)
+returns table(id text,full_name text) language sql security definer set search_path=public as $$
+ select p.id,trim(coalesce(p.data->>'firstName','')||' '||coalesce(p.data->>'lastName',''))
+ from public.players p
+ where exists(select 1 from public.tournaments t where t.share_token=p_share_token)
+ and lower(unaccent(coalesce(p.data->>'firstName','')||' '||coalesce(p.data->>'lastName',''))) like '%'||lower(unaccent(p_query))||'%'
+ order by 2 limit 20;
+$$;
+grant execute on function public.public_search_players_for_registration(uuid,text) to anon,authenticated;
+
+create or replace function public.public_submit_tournament_registration_request(p_share_token uuid,p_mode text,p_primary jsonb,p_partner jsonb default null)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare t public.tournaments; d jsonb; cap int; accepted_count int; initial_status text; open_flag boolean; duplicate_count int;
+begin
+ select * into t from public.tournaments where share_token=p_share_token for update;
+ if not found then raise exception 'Torneo non trovato'; end if;
+ d:=coalesce(t.data,'{}'::jsonb); open_flag:=coalesce((d->>'registrationOpen')::boolean,true);
+ if not open_flag then raise exception 'Le iscrizioni sono chiuse'; end if;
+ if p_mode not in ('single','pair') then raise exception 'Modalità non valida'; end if;
+ select count(*) into duplicate_count from public.public_registrations r where r.tournament_id=t.id and r.status in ('new','accepted','waitlist') and (
+  (p_primary->>'kind'='existing' and (r.primary_payload->>'player_id'=p_primary->>'player_id' or r.partner_payload->>'player_id'=p_primary->>'player_id')) or
+  (p_primary->>'kind'='new' and lower(r.primary_payload#>>'{data,email}')=lower(p_primary#>>'{data,email}'))
+ );
+ if duplicate_count>0 then raise exception 'Risulta già una richiesta attiva con questi dati'; end if;
+ select count(*) into accepted_count from public.public_registrations where tournament_id=t.id and status='accepted';
+ cap:=coalesce(nullif(d->>'maxParticipants','')::int,nullif(d->>'registrationCapacity','')::int,0);
+ if cap>0 and accepted_count>=cap then
+  if coalesce((d->>'waitlistEnabled')::boolean,true) then initial_status:='waitlist'; else raise exception 'Posti esauriti e lista d’attesa non disponibile'; end if;
+ elsif coalesce(d->>'registrationMode','automatic')='automatic' then initial_status:='accepted';
+ else initial_status:='new'; end if;
+ insert into public.public_registrations(tournament_id,mode,status,primary_payload,partner_payload) values(t.id,p_mode,initial_status,p_primary,p_partner);
+ return jsonb_build_object('status',initial_status,'message',case initial_status when 'accepted' then 'Iscrizione confermata.' when 'waitlist' then 'Posti esauriti: sei stato inserito in lista d’attesa.' else 'Richiesta inviata all’organizzatore per approvazione.' end);
+end $$;
+grant execute on function public.public_submit_tournament_registration_request(uuid,text,jsonb,jsonb) to anon,authenticated;
+
+create or replace function public.admin_process_public_registration(p_registration_id uuid,p_action text)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare r public.public_registrations; primary_id text; partner_id text;
+begin
+ if auth.uid() is null then raise exception 'Accesso richiesto'; end if;
+ if p_action not in ('accepted','rejected','waitlist') then raise exception 'Azione non valida'; end if;
+ select * into r from public.public_registrations where id=p_registration_id for update;
+ if not found then raise exception 'Richiesta non trovata'; end if;
+ update public.public_registrations set status=p_action,processed_at=now(),processed_by=auth.uid() where id=p_registration_id;
+ if p_action='accepted' then
+  if r.primary_payload->>'kind'='existing' then primary_id:=r.primary_payload->>'player_id'; else primary_id:='p_'||replace(gen_random_uuid()::text,'-',''); insert into public.players(id,data) values(primary_id,r.primary_payload->'data') on conflict do nothing; end if;
+  if r.mode='pair' and r.partner_payload is not null then if r.partner_payload->>'kind'='existing' then partner_id:=r.partner_payload->>'player_id'; else partner_id:='p_'||replace(gen_random_uuid()::text,'-',''); insert into public.players(id,data) values(partner_id,r.partner_payload->'data') on conflict do nothing; end if; end if;
+ end if;
+ return jsonb_build_object('primary_player_id',primary_id,'partner_player_id',partner_id,'status',p_action);
+end $$;
+grant execute on function public.admin_process_public_registration(uuid,text) to authenticated;
+
+
+-- PADEL ARENA MANAGER 7.1 - SINCRONIZZAZIONE COMPLETA
+-- Copiare tutto nel SQL Editor di Supabase e premere Run.
+
+create extension if not exists pgcrypto;
+create extension if not exists unaccent;
+
+create table if not exists public.tournaments (
+ id text primary key,
+ name text not null,
+ event_date date,
+ club text,
+ category text,
+ competition_type text,
+ logo_url text,
+ share_token uuid not null default gen_random_uuid() unique,
+ status text not null default 'published',
+ data jsonb not null default '{}'::jsonb,
+ updated_at timestamptz not null default now()
+);
+
+create table if not exists public.players (
+ id text primary key,
+ data jsonb not null default '{}'::jsonb,
+ photo_url text,
+ updated_at timestamptz not null default now()
+);
+
+create table if not exists public.public_registrations (
+ id uuid primary key default gen_random_uuid(),
+ tournament_id text not null references public.tournaments(id) on delete cascade,
+ mode text not null default 'single',
+ status text not null default 'new',
+ primary_payload jsonb not null default '{}'::jsonb,
+ partner_payload jsonb,
+ created_at timestamptz not null default now(),
+ processed_at timestamptz,
+ processed_by uuid
+);
+
+alter table public.tournaments enable row level security;
+alter table public.players enable row level security;
+alter table public.public_registrations enable row level security;
+
+drop policy if exists pam_tournaments_authenticated on public.tournaments;
+drop policy if exists pam_players_authenticated on public.players;
+drop policy if exists pam_registrations_authenticated on public.public_registrations;
+
+create policy pam_tournaments_authenticated on public.tournaments
+ for all to authenticated using (true) with check (true);
+create policy pam_players_authenticated on public.players
+ for all to authenticated using (true) with check (true);
+create policy pam_registrations_authenticated on public.public_registrations
+ for all to authenticated using (true) with check (true);
+
+grant select,insert,update,delete on public.tournaments to authenticated;
+grant select,insert,update,delete on public.players to authenticated;
+grant select,insert,update,delete on public.public_registrations to authenticated;
+
+-- Evita il conflitto tra token UUID e testo.
+drop function if exists public.public_tournament_for_registration(uuid);
+drop function if exists public.public_tournament_for_registration(text);
+
+create function public.public_tournament_for_registration(p_share_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare t public.tournaments; d jsonb; accepted_count int; cap int; open_flag boolean; close_at timestamptz;
+begin
+ select * into t from public.tournaments where share_token::text=p_share_token;
+ if not found then return null; end if;
+ d:=coalesce(t.data,'{}'::jsonb);
+ select count(*) into accepted_count from public.public_registrations where tournament_id=t.id and status='accepted';
+ cap:=coalesce(nullif(d->>'maxParticipants','')::int,nullif(d->>'registrationCapacity','')::int,0);
+ open_flag:=coalesce((d->>'registrationOpen')::boolean,true);
+ if coalesce(d->>'registrationCloseDate','')<>'' then
+  close_at:=((d->>'registrationCloseDate')||' '||coalesce(nullif(d->>'registrationCloseTime',''),'23:59'))::timestamptz;
+  if now()>close_at then open_flag:=false; end if;
+ end if;
+ return jsonb_build_object(
+  'id',t.id,'name',t.name,'event_date',t.event_date,'club',t.club,'category',t.category,
+  'competition_type',t.competition_type,'logo_url',t.logo_url,'description',d->>'description',
+  'address',coalesce(d->>'customAddress',''),'start_time',d->>'startTime','end_date',d->>'endDate','end_time',d->>'endTime',
+  'entry_fee',coalesce(nullif(d->>'entryFee','')::numeric,0),'min_participants',coalesce(nullif(d->>'minParticipants','')::int,0),
+  'max_participants',cap,'accepted_count',accepted_count,
+  'available_places',case when cap>0 then greatest(cap-accepted_count,0) else null end,
+  'registration_open',open_flag,'waitlist_enabled',coalesce((d->>'waitlistEnabled')::boolean,true),
+  'registration_mode',coalesce(d->>'registrationMode','automatic'),'poster_theme',coalesce(d->>'posterTheme','eden_summer')
+ );
+end $$;
+
+grant execute on function public.public_tournament_for_registration(text) to anon,authenticated;
+
+-- Aggiorna automaticamente l'orario di modifica.
+create or replace function public.pam_touch_updated_at()
+returns trigger language plpgsql as $$ begin new.updated_at=now(); return new; end $$;
+
+drop trigger if exists pam_touch_tournaments on public.tournaments;
+create trigger pam_touch_tournaments before update on public.tournaments
+for each row execute function public.pam_touch_updated_at();
+
+drop trigger if exists pam_touch_players on public.players;
+create trigger pam_touch_players before update on public.players
+for each row execute function public.pam_touch_updated_at();
+
+-- Aggiunge le tabelle alla pubblicazione realtime, se non sono già presenti.
+do $$
+begin
+ begin alter publication supabase_realtime add table public.tournaments; exception when duplicate_object then null; end;
+ begin alter publication supabase_realtime add table public.players; exception when duplicate_object then null; end;
+ begin alter publication supabase_realtime add table public.public_registrations; exception when duplicate_object then null; end;
+end $$;
+
+notify pgrst, 'reload schema';
+-- PADEL ARENA MANAGER 7.1.1
+-- Correzione salvataggio tornei: stato non ammesso dal vincolo tournaments_status_check.
+
+ALTER TABLE public.tournaments
+DROP CONSTRAINT IF EXISTS tournaments_status_check;
+
+ALTER TABLE public.tournaments
+ADD CONSTRAINT tournaments_status_check
+CHECK (status IN ('draft','published','active','closed','archived'));
+
+UPDATE public.tournaments
+SET status = 'published'
+WHERE status IS NULL OR status = '';
+
+NOTIFY pgrst, 'reload schema';
+
+
+COMMIT;
+
+NOTIFY pgrst, 'reload schema';
+
+
+-- VERSIONE 7.2
+-- Il numero delle aste e i relativi saldi sono salvati nel campo JSON data della tabella tournaments.
+-- Non sono necessarie nuove colonne.
+NOTIFY pgrst, 'reload schema';

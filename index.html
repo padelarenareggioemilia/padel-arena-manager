@@ -1546,7 +1546,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 7.0 · Torneo Builder e iscrizioni pubbliche</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: 7.2 · Aste multiple e saldo gettoni progressivo</div>';
 }
 
 function iphoneInstallCard(){
@@ -1575,6 +1575,7 @@ function freshState(){return{view:"home",tab:"matches",players:[],events:[],curr
  fee:25,
  pairsPerGroup:4,
  finalsOption:"top2",
+ auctionCount:2,
  selected:[]
 }}}
 let state;
@@ -1584,6 +1585,7 @@ if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
 if(state.draft.fee===undefined)state.draft.fee=25;
 if(!state.draft.pairsPerGroup)state.draft.pairsPerGroup=4;
 if(!state.draft.finalsOption)state.draft.finalsOption="top2";
+if(!state.draft.auctionCount)state.draft.auctionCount=2;
 if(state.draft.returnLeg===undefined)state.draft.returnLeg=false;
 if(state.draft.eliminationReturnLeg===undefined)state.draft.eliminationReturnLeg=false;
 if(state.draft.semifinalReturnLeg===undefined)state.draft.semifinalReturnLeg=false;
@@ -2100,6 +2102,8 @@ function pamResetEventGeneratedData(e){
    {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
   ],
   auction2:{spending:{}},
+  auction3:{spending:{}},
+  auction4:{spending:{}},
   final:{teamA:[],teamB:[],score1:null,score2:null}
  };
  e.simpleFinals=null;
@@ -2729,7 +2733,8 @@ function newEventView(){
  return header("Torneo Builder","Crea, salva e pubblica il torneo prima di avere gli iscritti")+
  '<div class="card"><h2>1. Identità del torneo</h2><div class="row"><div class="field"><label>Nome torneo</label><input id="eName" value="'+esc(d.name)+'"></div><div class="field"><label>Categoria</label><select id="eCategory" data-action="change-category">'+["Maschile","Femminile","Misto"].map(x=>'<option '+(x===d.category?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div>'+
  '<div class="field"><label>Descrizione invito</label><textarea id="eDescription" rows="4" placeholder="Formula, atmosfera, premi, bar, musica, piscina...">'+esc(d.description||'')+'</textarea></div>'+
- '<div class="row"><div class="field"><label>Formato</label><select id="eCompetitionType" data-action="change-type"><option value="rodeo_tokens" '+(d.competitionType==='rodeo_tokens'?'selected':'')+'>RODEO A GETTONI</option><option value="rodeo_simple" '+(d.competitionType==='rodeo_simple'?'selected':'')+'>RODEO SEMPLICE</option><option value="fixed_pairs" '+(d.competitionType==='fixed_pairs'?'selected':'')+'>COPPIE FISSE</option></select></div><div class="field"><label>Tema locandina</label><select id="ePosterTheme"><option value="eden_summer" '+(d.posterTheme==='eden_summer'?'selected':'')+'>EDEN SUMMER · Spritz, musica, piscina</option><option value="cupra_bossoni" '+(d.posterTheme==='cupra_bossoni'?'selected':'')+'>CUPRA BOSSONI · nero, rame, premium</option><option value="aics_mare" '+(d.posterTheme==='aics_mare'?'selected':'')+'>AICS AL MARE · estate e tricolore</option></select></div></div></div>'+
+ '<div class="row"><div class="field"><label>Formato</label><select id="eCompetitionType" data-action="change-type"><option value="rodeo_tokens" '+(d.competitionType==='rodeo_tokens'?'selected':'')+'>RODEO A GETTONI</option><option value="rodeo_simple" '+(d.competitionType==='rodeo_simple'?'selected':'')+'>RODEO SEMPLICE</option><option value="fixed_pairs" '+(d.competitionType==='fixed_pairs'?'selected':'')+'>COPPIE FISSE</option></select></div><div class="field"><label>Tema locandina</label><select id="ePosterTheme"><option value="eden_summer" '+(d.posterTheme==='eden_summer'?'selected':'')+'>EDEN SUMMER · Spritz, musica, piscina</option><option value="cupra_bossoni" '+(d.posterTheme==='cupra_bossoni'?'selected':'')+'>CUPRA BOSSONI · nero, rame, premium</option><option value="aics_mare" '+(d.posterTheme==='aics_mare'?'selected':'')+'>AICS AL MARE · estate e tricolore</option></select></div></div>'+
+ (d.competitionType==='rodeo_tokens'?'<div class="row"><div class="field"><label>Numero di aste</label><select id="eAuctionCount">'+[1,2,3,4].map(function(x){return '<option value="'+x+'" '+(Number(d.auctionCount||2)===x?'selected':'')+'>'+x+(x===1?' ASTA':' ASTE')+'</option>'}).join('')+'</select><div class="muted">Ogni asta avrà una schermata separata e il saldo gettoni sarà ricalcolato dopo ogni salvataggio.</div></div></div>':'')+'</div>'+
  '<div class="card"><h2>2. Luogo e orari</h2><div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(x=>'<option value="'+esc(x)+'" '+(x===d.club?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label>Campi disponibili</label><select id="eCourts">'+[1,2,3,4,5,6].map(x=>'<option '+(Number(d.courts)===x?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div><div id="pamCustomAddressWrap" class="field '+(pamClubAllowsCustomAddress(d.club)?'':'hidden')+'"><label>Indirizzo evento</label><input id="eCustomAddress" value="'+esc(d.customAddress||'')+'"></div>'+
  '<div class="row"><div class="field"><label>Data inizio</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div><div class="field"><label>Ora inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||'20:00')+'"></div><div class="field"><label>Data fine</label><input id="eEndDate" type="date" value="'+esc(d.endDate||d.date)+'"></div><div class="field"><label>Ora fine</label><input id="eEndTime" type="time" value="'+esc(d.endTime||'23:00')+'"></div></div>'+
  '<div class="row"><div class="field"><label>Timer partita (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||15)+'"></div><div class="field"><label>Nuova partita ogni (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||20)+'"></div></div>'+pamFeasibilityHtml(d)+'</div>'+
@@ -3063,10 +3068,10 @@ function createEvent(){
  try{
   const d=state.draft;
   d.name=document.getElementById("eName").value.trim();d.description=document.getElementById("eDescription").value.trim();d.date=document.getElementById("eDate").value;d.endDate=document.getElementById("eEndDate").value;d.endTime=document.getElementById("eEndTime").value;d.startTime=document.getElementById("eStartTime").value||"20:00";
-  d.club=document.getElementById("eClub").value;d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=document.getElementById("eCategory").value;d.competitionType=document.getElementById("eCompetitionType").value;d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(document.getElementById("eCourts").value)||1);d.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);d.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);d.slotDuration=Math.max(d.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";
+  d.club=document.getElementById("eClub").value;d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=document.getElementById("eCategory").value;d.competitionType=document.getElementById("eCompetitionType").value;d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(document.getElementById("eCourts").value)||1);d.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);d.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);d.slotDuration=Math.max(d.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";d.auctionCount=d.competitionType==="rodeo_tokens"?Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||2)):0;
   if(!d.name)throw new Error("inserisci il nome del torneo");if(!d.date||!d.endDate)throw new Error("inserisci data di inizio e fine");if(d.maxParticipants<d.minParticipants)throw new Error("il numero massimo non può essere inferiore al minimo");
   const feasibility=pamEstimateDraft(d,d.maxParticipants);if(feasibility.delta<0&&!confirm("Con i parametri attuali il torneo potrebbe terminare "+Math.abs(feasibility.delta)+" minuti oltre l’orario impostato. Vuoi salvarlo comunque?"))return;
-  const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
+  const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,auctionCount:d.auctionCount,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
   const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
   if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
@@ -3112,18 +3117,13 @@ function eventView(){
  const e=currentEvent();if(!e)return eventsView();
  let tabDefs;
  if(e.competitionType==="rodeo_tokens"){
-  const n=e.playerIds.length;
-  if(n===6){
-   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Eliminatoria"],["auction1","Asta e finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
-  }else if(n===8){
-   tabDefs=[["matches","Partite"],["standings","Classifica"],["auction1","Fasi finali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
-  }else if(n===10||n===12){
-   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Eliminatoria"],["auction1","Fasi finali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
-  }else if(n===16){
-   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Quarti di finale"],["auction1","Semifinali"],["auction2","Finale"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
-  }else{
-   tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination","Fasi finali"],["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]];
+  const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
+  tabDefs=[["matches","Partite"],["standings","Classifica"]];
+  if(n===6||n===10||n===12||n===16)tabDefs.push(["elimination",n===16?"Quarti di finale":"Eliminatoria"]);
+  if([6,8,10,12,16].includes(n)){
+   for(let i=1;i<=auctionCount;i++)tabDefs.push(["auction"+i,auctionCount===1?"Asta unica":("Asta "+i)]);
   }
+  tabDefs.push(["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]);
  }else if(e.competitionType==="rodeo_simple"){
   tabDefs=[["matches","Partite"],["standings","Classifica"],["simplefinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];
  }else{
@@ -3133,8 +3133,7 @@ function eventView(){
  let body=
   state.tab==="standings"?standingsView(e):
   state.tab==="elimination"?eliminationView(e):
-  state.tab==="auction1"?auction1View(e):
-  state.tab==="auction2"?auction2View(e):
+  /^auction[1-4]$/.test(state.tab)?auctionView(e,Number(state.tab.replace("auction",""))):
   state.tab==="tokens"?tokensView(e):
   state.tab==="payments"?paymentsView(e):
   state.tab==="simplefinals"?simpleFinalsView(e):
@@ -3770,6 +3769,8 @@ function ensureFinalStages(e){
     {id:"semi2",teamA:[],teamB:[],score1:null,score2:null}
    ],
    auction2:{spending:{}},
+   auction3:{spending:{}},
+   auction4:{spending:{}},
    final:{teamA:[],teamB:[],score1:null,score2:null},
    elimination12:[
     {id:"elim12_1",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
@@ -3787,6 +3788,11 @@ function ensureFinalStages(e){
  if(!e.finalStages.auction1.spending)e.finalStages.auction1.spending={};
  if(!e.finalStages.auction2)e.finalStages.auction2={spending:{}};
  if(!e.finalStages.auction2.spending)e.finalStages.auction2.spending={};
+ if(!e.finalStages.auction3)e.finalStages.auction3={spending:{}};
+ if(!e.finalStages.auction3.spending)e.finalStages.auction3.spending={};
+ if(!e.finalStages.auction4)e.finalStages.auction4={spending:{}};
+ if(!e.finalStages.auction4.spending)e.finalStages.auction4.spending={};
+ e.auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
  if(!Array.isArray(e.finalStages.elimination12)||e.finalStages.elimination12.length!==2){
   e.finalStages.elimination12=[
    {id:"elim12_1",teamA:[],teamB:[],score1:null,score2:null,score1R:null,score2R:null},
@@ -4012,6 +4018,57 @@ function semifinalWinners(e){
  });
  return out;
 }
+
+function pamAuctionCount(e){return Math.min(4,Math.max(1,Number(e.auctionCount)||2))}
+function pamAuctionData(e,which){
+ const fs=ensureFinalStages(e),key="auction"+which;
+ if(!fs[key])fs[key]={spending:{}};
+ if(!fs[key].spending)fs[key].spending={};
+ return fs[key];
+}
+function pamAuctionRows(e,which,ids,label){
+ const auction=pamAuctionData(e,which);
+ return '<div class="card table-wrap"><table class="table"><thead><tr><th>'+esc(label||"Giocatore")+'</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+ids.map(function(id){
+  const row=standings(e).find(function(x){return x.id===id}),old=Number(auction.spending[id])||0,available=(row?row.balance:0)+old;
+  return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+old+'" data-auction-spend="'+which+'" data-player-id="'+id+'"></td><td><b>'+(available-old)+'</b></td></tr>';
+ }).join('')+'</tbody></table></div><button class="primary" data-save-auction="'+which+'">Salva asta '+which+'</button>';
+}
+function pamFinalOnlyView(e){
+ const fs=ensureFinalStages(e),finalists=semifinalWinners(e);
+ if(finalists.length!==4)return '<div class="notice error">Completa entrambe le semifinali per comporre la finale.</div>';
+ const m=fs.final,base=(e.matches||[]).length+3+(e.semifinalReturnLeg?2:0);
+ const selectors='<div class="row"><div class="field"><label>Coppia A - giocatore 1</label><select data-team-stage="final" data-side="A" data-pos="0">'+stagePlayerOptions(finalists,m.teamA[0])+'</select></div><div class="field"><label>Coppia A - giocatore 2</label><select data-team-stage="final" data-side="A" data-pos="1">'+stagePlayerOptions(finalists,m.teamA[1])+'</select></div></div>'+ 
+ '<div class="row"><div class="field"><label>Coppia B - giocatore 1</label><select data-team-stage="final" data-side="B" data-pos="0">'+stagePlayerOptions(finalists,m.teamB[0])+'</select></div><div class="field"><label>Coppia B - giocatore 2</label><select data-team-stage="final" data-side="B" data-pos="1">'+stagePlayerOptions(finalists,m.teamB[1])+'</select></div></div>';
+ const cards=stageLegCard(e,"final",m,"Finale",1,base,1,"final")+(e.finalReturnLeg?stageLegCard(e,"final",m,"Finale",2,base+1,1,"final"):"");
+ const t=stageAggregate(e,"final",m);let summary="";
+ if(t){
+  if(t.a===t.b)summary='<div class="notice error">Totale finale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>';
+  else{
+   const winners=t.a>t.b?m.teamA:m.teamB,seconds=t.a>t.b?m.teamB:m.teamA;
+   e.playerIds.forEach(function(id){e.ledger[id].podium=0});winners.forEach(function(id){e.ledger[id].podium=10});seconds.forEach(function(id){e.ledger[id].podium=5});
+   summary='<div class="notice success">Totale finale: <b>'+t.a+' - '+t.b+'</b><br>Vincitori: <b>'+esc(names(winners))+'</b><br>Secondi: <b>'+esc(names(seconds))+'</b></div>';
+  }
+ }
+ return '<div class="card"><h2>Composizione finale</h2>'+selectors+'</div>'+cards+summary;
+}
+function auctionView(e,which){
+ const count=pamAuctionCount(e);
+ if(which<1||which>count)return '<div class="notice error">Asta non prevista per questo torneo.</div>';
+ if(which===1){
+  const first=auction1View(e);
+  if(e.playerIds.length===6)return first;
+  return count===1?first+'<div style="height:14px"></div><div class="notice"><b>Asta unica:</b> dopo le semifinali puoi comporre qui la finale senza una seconda asta.</div>'+pamFinalOnlyView(e):first;
+ }
+ if(e.playerIds.length===6){
+  const ids=standings(e).map(function(x){return x.id});
+  return '<div class="notice"><b>Asta '+which+' di '+count+':</b> inserisci i gettoni spesi. Il saldo residuo viene aggiornato automaticamente.</div>'+pamAuctionRows(e,which,ids,"Giocatore");
+ }
+ const finalists=semifinalWinners(e);
+ if(finalists.length!==4)return '<div class="notice error">Prima completa entrambe le semifinali.</div>';
+ const rows=pamAuctionRows(e,which,finalists,"Finalista");
+ if(which<count)return '<div class="notice"><b>Asta '+which+' di '+count+':</b> inserisci i gettoni spesi. Il saldo residuo verrà aggiornato e riportato nell’asta successiva.</div>'+rows;
+ return '<div class="notice"><b>Asta '+which+' di '+count+':</b> ultima asta. Inserisci i gettoni spesi e componi la finale.</div>'+rows+'<div style="height:14px"></div>'+pamFinalOnlyView(e);
+}
 function auction2View(e){
  const fs=ensureFinalStages(e),finalists=semifinalWinners(e);
  if(finalists.length!==4)return '<div class="notice error">Prima completa entrambe le semifinali.</div>';
@@ -4088,15 +4145,18 @@ function editStageResult(stage,leg){
  save();render();
 }
 function saveAuction(which){
- const e=currentEvent(),fs=ensureFinalStages(e);
- const selector=which===1?"[data-auction1-spend]":"[data-auction2-spend]";
- const inputs=Array.from(document.querySelectorAll(selector));
- const target=which===1?fs.auction1.spending:fs.auction2.spending;
- inputs.forEach(function(input){target[input.getAttribute(which===1?"data-auction1-spend":"data-auction2-spend")]=Math.max(0,Number(input.value)||0)});
- e.playerIds.forEach(function(id){
-  e.ledger[id].spent=(Number(fs.auction1.spending[id])||0)+(Number(fs.auction2.spending[id])||0);
+ const e=currentEvent(),auction=pamAuctionData(e,which);
+ const inputs=Array.from(document.querySelectorAll('[data-auction-spend="'+which+'"], [data-auction'+which+'-spend]'));
+ inputs.forEach(function(input){
+  const id=input.getAttribute("data-player-id")||input.getAttribute("data-auction"+which+"-spend");
+  auction.spending[id]=Math.max(0,Number(input.value)||0);
  });
- save();alert((which===1?"Prima":"Seconda")+" asta salvata.");render();
+ const count=pamAuctionCount(e);
+ e.playerIds.forEach(function(id){
+  let total=0;for(let i=1;i<=count;i++)total+=Number(pamAuctionData(e,i).spending[id])||0;
+  e.ledger[id].spent=total;
+ });
+ save();alert("Asta "+which+" salvata. Saldo gettoni aggiornato.");render();
 }
 function updateStageTeam(select){
  const e=currentEvent(),stage=select.getAttribute("data-team-stage"),side=select.getAttribute("data-side"),pos=Number(select.getAttribute("data-pos")),m=stageMatch(e,stage);
@@ -4129,7 +4189,7 @@ function printCurrentPage(){
   standings:"Classifica",
   elimination:"Eliminatoria",
   auction1:"Asta 1 e semifinali",
-  auction2:"Asta 2 e finale",
+  auction2:"Asta 2",auction3:"Asta 3",auction4:"Asta 4",
   tokens:"Situazione gettoni",
   players:"Partecipanti",payments:"Pagamenti reception",simplefinals:"Fasi finali",pairstandings:"Classifiche gironi",pairs:"Coppie",fixedfinals:"Fasi finali"
  };
@@ -4295,6 +4355,7 @@ document.addEventListener("click",function(ev){
   if(a==="edit-stage-result")editStageResult(action.getAttribute("data-stage"),action.getAttribute("data-leg"));
   if(a==="save-auction1")saveAuction(1);
   if(a==="save-auction2")saveAuction(2);
+  const auctionButton=action.closest("[data-save-auction]");if(auctionButton){saveAuction(Number(auctionButton.getAttribute("data-save-auction")));return}
   if(a==="print-pdf")printCurrentPage();
   if(a==="delete-all-events")deleteAllEvents();
   if(a==="save-simple-result")saveSimpleResult(action);
@@ -4376,6 +4437,7 @@ document.addEventListener("change",function(ev){
   state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
   state.draft.category=document.getElementById("eCategory").value;
   state.draft.competitionType=ev.target.value;
+  state.draft.auctionCount=Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||Number(state.draft.auctionCount)||2));
   if(state.draft.competitionType!=="fixed_pairs")state.draft.fixedPairRegistrations={};
   state.draft.courts=Number(document.getElementById("eCourts").value)||1;
   state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
