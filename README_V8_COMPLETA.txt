@@ -19,3 +19,9 @@ PUBBLICAZIONE
 3. Eseguire un solo file in Supabase: PADEL_ARENA_MANAGER_SUPABASE_V8_COMPLETO.sql
 4. Attendere GitHub Pages e riaprire Safari.
 5. Se l'icona installata mantiene la vecchia cache, eliminarla dalla Home e reinstallarla da Safari.
+
+
+CORREZIONE V8.0.1 SUPABASE
+- Migrazione share_token compatibile con database precedenti in cui la colonna era UUID.
+- Eliminazione delle vecchie funzioni RPC duplicate UUID/TEXT prima della ricreazione.
+- Il file SQL resta unico, completo e non distruttivo.

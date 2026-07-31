@@ -13,7 +13,25 @@ insert into public.profiles(id,email,role,display_name) select id,email,case whe
 
 create table if not exists public.players(id text primary key,data jsonb not null default '{}'::jsonb,photo_url text,created_at timestamptz default now(),updated_at timestamptz default now());
 create table if not exists public.tournaments(id text primary key,name text,event_date date,club text,category text,competition_type text,logo_url text,share_token text unique not null default gen_random_uuid()::text,status text not null default 'published',data jsonb not null default '{}'::jsonb,created_at timestamptz default now(),updated_at timestamptz default now());
-alter table public.tournaments add column if not exists share_token text; update public.tournaments set share_token=gen_random_uuid()::text where share_token is null or share_token=''; alter table public.tournaments alter column share_token set not null;
+-- Migrazione sicura di share_token: compatibile sia con vecchie colonne UUID sia con colonne TEXT.
+alter table public.tournaments add column if not exists share_token text;
+do $$
+declare current_type text;
+begin
+ select data_type into current_type
+ from information_schema.columns
+ where table_schema='public' and table_name='tournaments' and column_name='share_token';
+
+ if current_type is distinct from 'text' then
+  alter table public.tournaments alter column share_token drop default;
+  alter table public.tournaments alter column share_token type text using share_token::text;
+ end if;
+end$$;
+alter table public.tournaments alter column share_token set default gen_random_uuid()::text;
+update public.tournaments
+set share_token=gen_random_uuid()::text
+where share_token is null or btrim(share_token)='';
+alter table public.tournaments alter column share_token set not null;
 do $$declare c record;begin for c in select conname from pg_constraint where conrelid='public.tournaments'::regclass and contype='c' loop execute format('alter table public.tournaments drop constraint %I',c.conname);end loop;end$$;
 alter table public.tournaments add constraint tournaments_status_check check(status in('draft','published','active','registration_open','registration_closed','completed','archived','cancelled'));
 create unique index if not exists tournaments_share_token_uidx on public.tournaments(share_token);
@@ -88,6 +106,12 @@ insert into public.championship_teams (id,team_name,series,club_legal_name,club_
 insert into public.championship_teams (id,team_name,series,club_legal_name,club_tax_id,club_address,club_postal_code,club_town,club_province,club_phone,club_email,home_court_address,home_day,home_time,captain_name,captain_email,captain_phone,captain_birth_date,captain_birth_place,captain_residence,invite_token,player_invite_token,access_enabled,roster_open,player_self_registration_enabled) values ('aics2027_29','BLUE PADEL CARPI B','Serie B','BLUE PADEL CARPI','03955960368','PIAZZALE DELLE PISCINE 4','41012','CARPI','MODENA','3333208040','pia@maglificiolsm.com','PIAZZALE DELLE PISCINE 4 CARPI 41012','Venerdi','20:00 SOLO VENERDÌ','MARIA PIA CALABRESE','pia@maglificiolsm.com','3333208040','1991-09-30','CARPI','CARPI','7d069a1fbf11a1d1a8a6d086ab0037fe','7d069a1fbf11a1d1a8a6d086ab0037feplayer',false,true,true) on conflict (id) do update set team_name=excluded.team_name,series=excluded.series,club_legal_name=excluded.club_legal_name,club_tax_id=excluded.club_tax_id,club_address=excluded.club_address,club_postal_code=excluded.club_postal_code,club_town=excluded.club_town,club_province=excluded.club_province,club_phone=excluded.club_phone,club_email=excluded.club_email,home_court_address=excluded.home_court_address,home_day=excluded.home_day,home_time=excluded.home_time,captain_name=excluded.captain_name,captain_email=excluded.captain_email,captain_phone=excluded.captain_phone,captain_birth_date=excluded.captain_birth_date,captain_birth_place=excluded.captain_birth_place,captain_residence=excluded.captain_residence,invite_token=excluded.invite_token,player_invite_token=excluded.player_invite_token,access_enabled=excluded.access_enabled,roster_open=excluded.roster_open,player_self_registration_enabled=excluded.player_self_registration_enabled;
 
 -- funzioni pubbliche tornei
+drop function if exists public.public_tournament_for_registration(uuid);
+drop function if exists public.public_tournament_for_registration(text);
+drop function if exists public.public_search_players_for_registration(uuid,text);
+drop function if exists public.public_search_players_for_registration(text,text);
+drop function if exists public.public_submit_tournament_registration_request(uuid,text,jsonb,jsonb);
+drop function if exists public.public_submit_tournament_registration_request(text,text,jsonb,jsonb);
 create or replace function public.public_tournament_for_registration(p_share_token text) returns jsonb language plpgsql security definer set search_path=public as $$declare t public.tournaments; d jsonb; count_ok int;begin select * into t from public.tournaments where share_token=p_share_token limit 1;if not found then return null;end if;d=coalesce(t.data,'{}'::jsonb);select count(*) into count_ok from public.public_registrations where tournament_id=t.id and status in('accepted','imported');return jsonb_build_object('id',t.id,'name',coalesce(t.name,d->>'name'),'date',coalesce(t.event_date::text,d->>'date'),'start_time',d->>'startTime','end_date',d->>'endDate','end_time',d->>'endTime','club',coalesce(t.club,d->>'club'),'address',d->>'customAddress','category',coalesce(t.category,d->>'category'),'competition_type',coalesce(t.competition_type,d->>'competitionType'),'logo_url',coalesce(t.logo_url,d->>'logoUrl'),'description',d->>'description','entry_fee',coalesce((d->>'entryFee')::numeric,0),'max_participants',coalesce((d->>'registrationCapacity')::int,(d->>'maxParticipants')::int),'available_places',greatest(0,coalesce((d->>'registrationCapacity')::int,(d->>'maxParticipants')::int,999)-count_ok),'registration_open',coalesce((d->>'registrationOpen')::boolean,true),'poster_theme',coalesce(d->>'posterTheme','eden_summer'),'accent','#9dff25');end$$;
 create or replace function public.public_search_players_for_registration(p_share_token text,p_query text) returns table(id text,full_name text) language sql security definer set search_path=public as $$select p.id,trim(coalesce(p.data->>'firstName','')||' '||coalesce(p.data->>'lastName','')) from public.players p where exists(select 1 from public.tournaments t where t.share_token=p_share_token) and lower(trim(coalesce(p.data->>'firstName','')||' '||coalesce(p.data->>'lastName',''))) like '%'||lower(trim(p_query))||'%' order by 2 limit 20$$;
 create or replace function public.public_submit_tournament_registration_request(p_share_token text,p_mode text,p_primary jsonb,p_partner jsonb default null) returns jsonb language plpgsql security definer set search_path=public as $$declare tid text; rid text; cap int; accepted_count int; st text:='new';begin select id,coalesce((data->>'registrationCapacity')::int,(data->>'maxParticipants')::int) into tid,cap from public.tournaments where share_token=p_share_token and coalesce((data->>'registrationOpen')::boolean,true)=true;if tid is null then raise exception 'Iscrizioni chiuse o torneo non trovato';end if;if p_mode not in('single','pair') then raise exception 'Modalità non valida';end if;select count(*) into accepted_count from public.public_registrations where tournament_id=tid and status in('accepted','imported');if cap is not null and accepted_count>=cap then st:='waitlist';end if;insert into public.public_registrations(tournament_id,mode,primary_payload,partner_payload,status) values(tid,p_mode,p_primary,p_partner,st) returning id into rid;return jsonb_build_object('id',rid,'status',st,'message',case when st='waitlist' then 'Posti esauriti: richiesta inserita in lista d’attesa.' else 'Richiesta inviata all’organizzatore.' end);end$$;
