@@ -1,0 +1,12 @@
+PADEL ARENA MANAGER V8.1.3 - ACCESSO RAPIDO
+
+Correzione:
+- dopo il login l area riservata si apre immediatamente;
+- il caricamento Supabase prosegue in background;
+- la Home visitatore non resta visibile durante la sincronizzazione;
+- in caso di rete lenta l utente può comunque lavorare con la copia locale.
+
+Installazione:
+1. Sostituire su GitHub tutti i file del pacchetto.
+2. Non eseguire SQL su Supabase.
+3. Aprire index.html?v=813.

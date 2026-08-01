@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.1.2.2</title>
+<title>Padel Arena Manager 8.1.3</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1301,7 +1301,7 @@ if(!window.supabase){
 </script>
 </head>
 <body>
-<div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.2.2</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
+<div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
 
 <div id="timerAlertOverlay" class="timer-alert-overlay" role="alert" aria-live="assertive">
  <div class="timer-alert-box">
@@ -1416,14 +1416,30 @@ async function pamStartSession(session){
  try{
   PAM_PROFILE=await pamGetProfile(session.user);
   document.getElementById("pamLoginOverlay")?.remove();
+
+  // Entra subito nell'area riservata usando la copia locale già disponibile.
+  // Il download Supabase prosegue in background senza lasciare l'utente
+  // bloccato per diversi secondi nella Home visitatore.
+  if(state.view==="public"||!state.view)state.view="home";
+  document.body.classList.remove("pam-public-mode");
+  render();
   pamApplyRole();
-  await pamCloudLoad(true,true);
-  pamSubscribeRealtime();
-  pamOpenSharedTournamentFromUrl();
-  setTimeout(pamRefreshSyncPanel,100);
+  pamToast("Accesso effettuato. Aggiornamento dati online in corso…","success");
+
+  pamCloudLoad(true,true).then(function(){
+   pamSubscribeRealtime();
+   pamOpenSharedTournamentFromUrl();
+   pamToast("Dati online aggiornati","success");
+   setTimeout(pamRefreshSyncPanel,100);
+  }).catch(function(err){
+   console.error(err);
+   pamSetConnectionState(false);
+   pamToast("Accesso riuscito. Sincronizzazione momentaneamente non disponibile: "+(err.message||err),"error");
+  });
  }catch(err){
   console.error(err);
-  await sb.auth.signOut();
+  // Non restare in modalità visitatore se l'autenticazione è riuscita.
+  // Mostra l'errore account senza cancellare automaticamente la sessione.
   pamRenderLogin("Configurazione account incompleta: "+err.message);
  }
 }
@@ -4734,7 +4750,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.1-public-home",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=8.1.3-fast-login",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
