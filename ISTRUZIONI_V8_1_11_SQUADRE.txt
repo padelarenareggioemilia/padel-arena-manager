@@ -1,0 +1,15 @@
+PADEL ARENA MANAGER V8.1.11 - SQUADRE AICS AGGIORNATE
+
+1. Caricare su GitHub tutti i file del pacchetto, compresa la cartella assets.
+2. In Supabase aprire SQL Editor > New query.
+3. Copiare integralmente SUPABASE_V8_1_11_SQUADRE_AGGIORNATE.sql.
+4. Incollare e premere Run una sola volta.
+5. Chiudere e riaprire l’app.
+
+NOVITA
+- Elenco aggiornato a 35 iscrizioni ufficiali al 1 agosto 2026.
+- Le righe non contengono più pulsanti amministrativi.
+- Cliccando la riga si apre la scheda della squadra.
+- Ogni riga mostra logo, nome, campo di casa, serie, capitano, telefono ed email cliccabile.
+- I capitani vedono un elenco consultabile di tutte le squadre con gli stessi dati pubblici.
+- Loghi, accessi, rose e link già esistenti non vengono cancellati o azzerati.
