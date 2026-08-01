@@ -1278,6 +1278,33 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media(max-width:850px){.pam-public-tournaments{grid-template-columns:1fr 1fr}.pam-public-champ-grid{grid-template-columns:1fr}.pam-public-partners{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:600px){.pam-public-top{align-items:flex-start;flex-direction:column}.pam-public-brand img{width:64px;height:64px}.pam-public-actions{width:100%}.pam-public-actions button{flex:1}.pam-public-tournaments{grid-template-columns:1fr}.pam-public-section-head{align-items:flex-start;flex-direction:column}.pam-public-standing{grid-template-columns:28px 1fr 40px 40px 45px}.pam-public-partners{grid-template-columns:repeat(2,1fr)}}
 
+
+/* V8.1.9 - UI più pulita: menu richiudibili e rosso solo per allarmi */
+.pam-actions-menu{margin:10px 0 14px;border:1px solid var(--line);border-radius:16px;background:#0b182a;overflow:hidden}
+.pam-actions-menu>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;font-weight:900;color:#fff;cursor:pointer;user-select:none}
+.pam-actions-menu>summary::-webkit-details-marker{display:none}
+.pam-actions-menu>summary:after{content:"⌄";font-size:20px;color:var(--accent);transition:transform .18s ease}
+.pam-actions-menu[open]>summary:after{transform:rotate(180deg)}
+.pam-actions-menu[open]>summary{border-bottom:1px solid var(--line);background:#10233b}
+.pam-actions-content{display:flex;gap:8px;flex-wrap:wrap;padding:12px}
+.pam-actions-content .primary,.pam-actions-content .secondary,.pam-actions-content .small,.pam-actions-content .upload-button{width:auto;min-width:150px;flex:1 1 170px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.pam-event-row-actions{margin-left:auto;min-width:170px}
+.pam-event-row-actions .pam-actions-content{min-width:240px;display:grid;grid-template-columns:1fr;position:absolute;right:0;z-index:25;background:#0b182a;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.38)}
+.pam-event-row-actions{position:relative}
+.pam-event-row-actions>summary{padding:9px 12px;background:#203754;border-radius:12px}
+.pam-event-row-actions[open]>summary{border-bottom:0}
+.pam-detail-menu .pam-actions-content{display:block;line-height:1.55;color:var(--muted)}
+.status-off{background:#64748b!important}
+.secondary{background:#19304d}
+.small{background:#19304d}
+.tabs button{border-color:#314a6d;background:#0b192c}
+@media(max-width:700px){
+ .pam-actions-content{display:grid;grid-template-columns:1fr}
+ .pam-actions-content .primary,.pam-actions-content .secondary,.pam-actions-content .small,.pam-actions-content .upload-button{width:100%;min-width:0}
+ .pam-event-row-actions{min-width:0;width:100%;margin-left:0}
+ .pam-event-row-actions .pam-actions-content{position:static;min-width:0;box-shadow:none}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3319,11 +3346,13 @@ function eventsView(){
   return '<div class="item">'+
   '<img class="player-avatar" src="'+esc(e.logoUrl||"assets/padel-arena-reggio-emilia.jpeg")+'" alt="">'+
   '<div class="grow"><b>'+esc(e.name)+'</b><div class="muted">'+esc(e.date)+' · '+competitionTypeLabel(e.competitionType)+' · '+(e.returnLeg?"Andata/Ritorno":"SOLO ANDATA")+' · '+e.playerIds.length+' giocatori · '+done+'/'+e.matches.length+' risultati</div></div>'+
-  '<button class="small" data-open-event="'+e.id+'">Apri</button>'+
-  '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
-  '<button class="small" data-share-registration="'+e.id+'">Invito / link</button><button class="small" data-open-poster="'+e.id+'">Locandina + QR</button>'+
-  (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
-  '</div>'
+  '<button class="primary" style="width:auto;padding:10px 16px" data-open-event="'+e.id+'">Apri</button>'+
+  '<details class="pam-actions-menu pam-event-row-actions"><summary>Altre azioni</summary><div class="pam-actions-content">'+
+   '<button class="small" data-share-event="'+e.id+'">Condividi</button>'+
+   '<button class="small" data-share-registration="'+e.id+'">Invito / link</button>'+
+   '<button class="small" data-open-poster="'+e.id+'">Locandina + QR</button>'+
+   (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
+  '</div></details></div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
  return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>';
 }
@@ -3377,21 +3406,23 @@ function eventView(){
   matchesView(e);
  return header(e.name,e.date+" · "+e.club+" · "+competitionTypeLabel(e.competitionType))+
  (e.logoUrl?'<img class="event-logo-preview print-hide" src="'+esc(e.logoUrl)+'" alt="'+esc(e.name)+'">':'')+
- '<div class="event-online-tools print-hide">'+
+ '<button class="primary print-hide" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
+ '<details class="pam-actions-menu print-hide"><summary>Azioni e strumenti del torneo</summary><div class="pam-actions-content">'+
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
-  '<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI ISCRIZIONI</button>'+
-  '<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button>'+
+  '<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button>'+
+  '<button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button>'+
   (pamIsAdmin()?'<button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button>':'')+
   (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
- '</div>'+
+ '</div></details>'+
  '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice success print-hide"><b>Modalità collaboratore:</b> gestione operativa del torneo: risultati, timer, classifica, gettoni, aste, fasi finali, pagamenti, iscrizioni, PDF e condivisione. Partecipanti, sostituzioni e rigenerazione restano riservati all’amministratore.</div>':'')+
- '<div class="notice print-hide"><b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
+ '<details class="pam-actions-menu pam-detail-menu print-hide"><summary>Dettagli programmazione e PDF</summary><div class="pam-actions-content">'+
+ '<b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
  ' · durata effettiva '+Number(e.timerDuration||e.matchDuration||15)+' minuti'+
  ' · nuova partita ogni '+Number(e.slotDuration||e.matchDuration||20)+' minuti'+
- ' · pausa prevista '+Math.max(0,Number(e.slotDuration||e.matchDuration||20)-Number(e.timerDuration||e.matchDuration||15))+' minuti<br>Fase iniziale: '+(e.initialTimerEnabled?"timer attivo":"timer disattivo")+' · Eliminatorie: '+(e.eliminationTimerEnabled?"attivo":"disattivo")+' · Semifinali: '+(e.semifinalTimerEnabled?"attivo":"disattivo")+' · Finale: '+(e.finalTimerEnabled?"attivo":"disattivo")+'</div>'+
- '<div class="notice print-hide"><b>PDF condivisibile:</b> apri la sezione desiderata e premi “PDF pagina”.</div>'+
+ ' · pausa prevista '+Math.max(0,Number(e.slotDuration||e.matchDuration||20)-Number(e.timerDuration||e.matchDuration||15))+' minuti<br>Fase iniziale: '+(e.initialTimerEnabled?"timer attivo":"timer disattivo")+' · Eliminatorie: '+(e.eliminationTimerEnabled?"attivo":"disattivo")+' · Semifinali: '+(e.semifinalTimerEnabled?"attivo":"disattivo")+' · Finale: '+(e.finalTimerEnabled?"attivo":"disattivo")+'<br><br><b>PDF condivisibile:</b> apri la sezione desiderata e premi “PDF pagina”.'+
+ '</div></details>'+
  '<div class="tabs">'+tabs+'</div>'+body+printFooter(e);
 }
 

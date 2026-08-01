@@ -1,0 +1,12 @@
+PADEL ARENA MANAGER V8.1.9 - RIFINITURA UI
+
+Modifiche esclusivamente grafiche e di usabilità:
+- Azioni secondarie raccolte in menu richiudibili.
+- Un solo pulsante principale ben visibile nelle schermate torneo.
+- Elenco tornei più pulito: Apri + menu Altre azioni.
+- Programmazione e PDF raccolti in una sezione richiudibile.
+- Rosso mantenuto solo per errori, rifiuti, eliminazioni e timer scaduto.
+- Stato non attivo mostrato in grigio anziché rosso.
+- Nessuna logica torneo, campionato, gettoni, aste o sincronizzazione modificata.
+
+Pubblicazione: sostituire tutti i file su GitHub, incluso service-worker.js. Nessun SQL necessario.
