@@ -70,16 +70,23 @@ function newForm(kind){
  '<div><label>Livello facoltativo</label><input id="'+f("level")+'" placeholder="Principiante, intermedio..."></div></div>'+
  '<label>Note facoltative</label><textarea id="'+f("notes")+'" rows="2"></textarea>';
 }
+function isFixedPairsTournament(){
+ return String(tournament&&tournament.competition_type||"").toLowerCase()==="fixed_pairs";
+}
+function normalizeRegistrationMode(){
+ if(!isFixedPairsTournament())mode="single";
+}
 function render(){
+ normalizeRegistrationMode();
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
  '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
  '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
- '<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
+ (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
   '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+
   '<button type="button" class="secondary '+(mode==="pair"?"on":"")+'" data-mode="pair">ISCRIZIONE CON PARTNER</button>'+
- '</div></section>'+
+ '</div><div class="muted" style="margin-top:10px">Nei tornei a coppie puoi iscriverti singolarmente oppure indicare il partner.</div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo a gettoni e Rodeo semplice ogni giocatore si iscrive singolarmente.</div></section>')+
  personSection("primary","I TUOI DATI")+
  (mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
  '<section class="card"><div class="privacy">I dati vengono utilizzati esclusivamente per gestire l’iscrizione al torneo e aggiornare l’anagrafica sportiva dell’organizzatore.</div>'+
@@ -119,6 +126,7 @@ async function submit(){
  const btn=document.getElementById("submitRegistration"),msg=document.getElementById("submitMessage");
  try{
   btn.disabled=true;btn.textContent="INVIO IN CORSO...";
+  normalizeRegistrationMode();
   const primaryPayload=payloadFor("primary");
   const partnerPayload=mode==="pair"?payloadFor("partner"):null;
   if(mode==="pair"&&primaryPayload.kind==="existing"&&partnerPayload.kind==="existing"&&primaryPayload.player_id===partnerPayload.player_id)throw new Error("Il giocatore e il partner devono essere persone diverse.");

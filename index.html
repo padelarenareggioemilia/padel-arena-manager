@@ -2875,7 +2875,7 @@ function newEventView(){
  '<div class="row"><div class="field"><label>Timer partita (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||15)+'"></div><div class="field"><label>Nuova partita ogni (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||20)+'"></div></div>'+pamFeasibilityHtml(d)+'</div>'+
  '<div class="card"><h2>3. Iscrizioni pubbliche</h2><div class="row"><div class="field"><label>Numero minimo</label><input id="eMinParticipants" type="number" min="0" value="'+Number(d.minParticipants||0)+'"></div><div class="field"><label>Numero massimo</label><input id="eMaxParticipants" type="number" min="1" value="'+Number(d.maxParticipants||16)+'"></div><div class="field"><label>Quota (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div><div class="row"><div class="field"><label>Gestione richieste</label><select id="eRegistrationMode"><option value="automatic" '+(d.registrationMode==='automatic'?'selected':'')+'>ACCETTA AUTOMATICAMENTE</option><option value="approval" '+(d.registrationMode==='approval'?'selected':'')+'>RICHIEDI APPROVAZIONE</option></select></div><div class="field"><label>Lista d’attesa</label><select id="eWaitlistEnabled"><option value="yes" '+(d.waitlistEnabled?'selected':'')+'>ATTIVA</option><option value="no" '+(!d.waitlistEnabled?'selected':'')+'>DISATTIVA</option></select></div><div class="field"><label>Stato iscrizioni</label><select id="eRegistrationOpen"><option value="yes" '+(d.registrationOpen?'selected':'')+'>APERTE</option><option value="no" '+(!d.registrationOpen?'selected':'')+'>CHIUSE</option></select></div></div><div class="row"><div class="field"><label>Chiusura iscrizioni</label><input id="eRegistrationCloseDate" type="date" value="'+esc(d.registrationCloseDate||d.date)+'"></div><div class="field"><label>Ora chiusura</label><input id="eRegistrationCloseTime" type="time" value="'+esc(d.registrationCloseTime||d.startTime||'20:00')+'"></div></div></div>'+
  '<div class="card create-event-toolbar"><div><b>Giocatori già inseriti: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Non sono obbligatori: puoi pubblicare il torneo con zero iscritti.</div></div><button class="primary create-event-top-button" data-action="create-event">SALVA E PUBBLICA</button></div><div id="eventMessage"></div>'+
- '<div class="card"><h2>4. Inserimento manuale facoltativo</h2><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Nome o cognome..." autocomplete="off"></div><button class="primary" data-quick-player-new-event>➕ Nuovo giocatore</button></div><div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>';
+ '<div class="card"><h2>4. Inserimento manuale facoltativo</h2><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Nome o cognome..." autocomplete="off"></div><button class="primary" data-quick-player-new-event>➕ Nuovo giocatore</button></div><div class="row print-hide"><button class="secondary" type="button" data-toggle-selected-only>'+(d.showSelectedOnly?'Mostra tutti i giocatori':'Mostra solo i giocatori selezionati')+'</button><button class="secondary" type="button" data-deselect-all-players>Deseleziona tutti</button></div><div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>';
 }
 
 function pamOptimizeRoundGroups(matches,courts){
@@ -3272,9 +3272,7 @@ function eventsView(){
   (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
   '</div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
- const reset=state.events.length?
-  '<div class="card print-hide"><h2>Pulizia tornei di prova</h2><div class="notice error">Questa funzione cancella tutte le competizioni salvate, ma mantiene intatti anagrafica giocatori e saldi gettoni.</div><button class="danger" data-action="delete-all-events">Cancella tutti i tornei</button></div>':'';
- return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>'+reset;
+ return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>';
 }
 function playerById(id){return state.players.find(function(p){return p.id===id})}
 function names(ids){return ids.map(function(id){const p=playerById(id);return p?playerName(p):"Giocatore"}).join(" / ")}
@@ -4418,19 +4416,6 @@ function deleteEvent(id){
   });
  }
 }
-function deleteAllEvents(){
- if(!state.events.length)return;
- const first=confirm("Vuoi cancellare tutte le "+state.events.length+" competizioni di prova?\\n\\nI giocatori e i loro saldi gettoni resteranno salvati.");
- if(!first)return;
- const second=confirm("Conferma definitiva: tutti i tornei, risultati, aste e fasi finali verranno eliminati. Procedere?");
- if(!second)return;
- state.events=[];
- state.currentEventId=null;
- state.view="events";
- state.tab="matches";
- save();render();
- alert("Tutti i tornei sono stati cancellati. Anagrafica e saldi gettoni sono rimasti invariati.");
-}
 document.addEventListener("click",function(ev){
  const refreshCloud=ev.target.closest("[data-refresh-cloud]");
  if(refreshCloud){pamCloudLoad(false).then(function(){pamToast("Dati aggiornati","success")}).catch(function(err){pamToast(err.message,"error")});return}
@@ -4558,7 +4543,6 @@ document.addEventListener("click",function(ev){
   if(a==="save-auction2")saveAuction(2);
   const auctionButton=action.closest("[data-save-auction]");if(auctionButton){saveAuction(Number(auctionButton.getAttribute("data-save-auction")));return}
   if(a==="print-pdf")printCurrentPage();
-  if(a==="delete-all-events")deleteAllEvents();
   if(a==="save-simple-result")saveSimpleResult(action);
   if(a==="edit-simple-result")editSimpleResult(action.getAttribute("data-simple-id"));
   if(a==="save-six-result")saveSixResult(action);

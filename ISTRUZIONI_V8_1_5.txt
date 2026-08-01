@@ -1,0 +1,12 @@
+PADEL ARENA MANAGER V8.1.5 — AGGIORNAMENTO MIRATO
+
+Modifiche applicate senza cambiare la struttura funzionante:
+- Rodeo a gettoni e Rodeo semplice: iscrizione pubblica solo individuale.
+- Coppie fisse: scelta tra iscrizione individuale o con partner.
+- Ripristinati “Mostra solo i giocatori selezionati” e “Deseleziona tutti”.
+- Rimosso il comando che cancellava tutti i tornei insieme. Ogni torneo si elimina singolarmente.
+- Conservata la situazione gettoni separata per ogni giocatore e categoria.
+
+INSTALLAZIONE
+Sostituire su GitHub tutti i file del pacchetto, soprattutto index.html, public-registration.html e service-worker.js.
+Non serve eseguire SQL su Supabase.
