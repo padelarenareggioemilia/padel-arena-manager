@@ -1426,7 +1426,11 @@ async function pamStartSession(session){
   pamApplyRole();
   pamToast("Accesso effettuato. Aggiornamento dati online in corso…","success");
 
-  pamCloudLoad(true,true).then(function(){
+  pamCloudLoad(true,true).then(async function(){
+   if(pamIsAdmin()){
+    const imported=await pamImportEdenClients();
+    if(imported&&(imported.added||imported.updated))pamToast("Anagrafiche Eden integrate: "+imported.added+" nuove, "+imported.updated+" aggiornate. I gettoni esistenti sono rimasti invariati.","success");
+   }
    pamSubscribeRealtime();
    pamOpenSharedTournamentFromUrl();
    pamToast("Dati online aggiornati","success");
@@ -1862,6 +1866,55 @@ function save(){
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
 function playerName(p){return (p.firstName+" "+p.lastName).trim()}
+function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
+function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
+let pamEdenImportRunning=false;
+async function pamImportEdenClients(){
+ if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
+ pamEdenImportRunning=true;
+ try{
+  const response=await fetch("assets/eden-clients-clean.json",{cache:"no-store"});
+  if(!response.ok)throw new Error("Archivio Eden non disponibile");
+  const records=await response.json();
+  let added=0,updated=0;
+  records.forEach(function(r){
+   const email=pamCleanContactEmail(r.email),phone=pamCleanContactPhone(r.phone),key=String(r.nameKey||registryTokenKey(r.displayName));
+   let match=null;
+   if(Array.isArray(r.sourceClientIds)&&r.sourceClientIds.length){
+    match=(state.players||[]).find(function(p){return (p.edenClientIds||[]).some(function(id){return r.sourceClientIds.includes(String(id))})})||null;
+   }
+   if(!match&&email)match=(state.players||[]).find(function(p){return pamCleanContactEmail(p.email)===email||((p.alternateEmails||[]).map(pamCleanContactEmail).includes(email))})||null;
+   if(!match&&phone)match=(state.players||[]).find(function(p){return pamCleanContactPhone(p.phone)===phone||((p.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))})||null;
+   if(!match){
+    const candidates=(state.players||[]).filter(function(p){
+     if(registryTokenKey(playerName(p))!==key)return false;
+     const pp=pamCleanContactPhone(p.phone),pe=pamCleanContactEmail(p.email),birth=String(p.birth||"");
+     if(pp&&phone&&pp!==phone)return false;
+     if(pe&&email&&pe!==email)return false;
+     if(birth&&r.birth&&birth!==r.birth)return false;
+     return true;
+    });
+    if(candidates.length===1)match=candidates[0];
+   }
+   if(!match){
+    match={id:"eden_"+r.importKey,firstName:r.displayName,lastName:"",phone:phone,email:email,birth:r.birth||"",birthPlace:r.birthPlace||"",postalCode:r.postalCode||"",residenceTown:r.residenceTown||"",residenceProvince:r.residenceProvince||"",gender:r.gender||"",level:r.level||"",notes:"Importato e ripulito da Gestione Clienti Eden",tokenBalance:0,edenClientIds:r.sourceClientIds||[],edenImportKey:r.importKey,nameOrderNeedsReview:true};
+    state.players.push(match);added++;return;
+   }
+   let changed=false;
+   function fill(field,value){if(value&&!String(match[field]||"").trim()){match[field]=value;changed=true}}
+   fill("phone",phone);fill("email",email);fill("birth",r.birth);fill("birthPlace",r.birthPlace);fill("postalCode",r.postalCode);fill("residenceTown",r.residenceTown);fill("residenceProvince",r.residenceProvince);fill("gender",r.gender);fill("level",r.level);
+   const beforeIds=JSON.stringify(match.edenClientIds||[]);
+   match.edenClientIds=Array.from(new Set([...(match.edenClientIds||[]).map(String),...(r.sourceClientIds||[]).map(String)]));
+   if(beforeIds!==JSON.stringify(match.edenClientIds))changed=true;
+   if(!match.edenImportKey){match.edenImportKey=r.importKey;changed=true}
+   if(phone&&pamCleanContactPhone(match.phone)!==phone&&!((match.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))){match.alternatePhones=[...(match.alternatePhones||[]),phone];changed=true}
+   if(email&&pamCleanContactEmail(match.email)!==email&&!((match.alternateEmails||[]).map(pamCleanContactEmail).includes(email))){match.alternateEmails=[...(match.alternateEmails||[]),email];changed=true}
+   if(changed)updated++;
+  });
+  if(added||updated){save();await pamCloudSyncAll();render()}
+  return{added:added,updated:updated,total:records.length};
+ }finally{pamEdenImportRunning=false}
+}
 function currentEvent(){return state.events.find(function(e){return e.id===state.currentEventId})||null}
 
 function pamEventRow(e){
@@ -2645,7 +2698,7 @@ async function pamSaveChampTeamForm(id){
 function playersView(){
  const orderedPlayers=state.players.slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
  const rows=orderedPlayers.length?orderedPlayers.map(function(p,i){
-  const searchText=[playerName(p),p.phone,p.email,p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
+  const searchText=[playerName(p),p.phone,p.email,(p.alternatePhones||[]).join(" "),(p.alternateEmails||[]).join(" "),p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
   return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><img class="player-avatar" src="'+esc(pamPlayerPhoto(p))+'" alt="'+esc(playerName(p))+'"><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
   '<div class="muted">'+
   (p.birthPlace?'Nato/a a '+esc(p.birthPlace):'Luogo di nascita non compilato')+

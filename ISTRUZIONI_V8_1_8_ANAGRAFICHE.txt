@@ -1,0 +1,14 @@
+PADEL ARENA MANAGER V8.1.8 - ANAGRAFICHE EDEN
+
+1. Carica su GitHub tutti i file del pacchetto, compresa la cartella assets.
+2. In Supabase apri SQL Editor > New query.
+3. Copia e incolla SUPABASE_V8_1_8_ANAGRAFICHE.sql e premi Run.
+4. Accedi all’app come amministratore: l’archivio Eden viene integrato automaticamente.
+5. I saldi gettoni già presenti non vengono sovrascritti.
+
+REGOLE
+- Iscrizione autonoma a torneo o rosa: nome, cognome, data e luogo di nascita, CAP, comune e provincia, telefono, email e sesso obbligatori.
+- Inserimento da amministratore: soltanto nome e cognome obbligatori.
+- Esclusi i record senza telefono e senza email.
+- Doppioni uniti solo in assenza di dati in conflitto.
+- Omonimie con contatti o date diverse mantenute separate.

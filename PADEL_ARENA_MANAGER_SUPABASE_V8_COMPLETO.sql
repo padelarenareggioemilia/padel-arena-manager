@@ -123,10 +123,10 @@ begin
  if not found then raise exception 'Richiesta non trovata'; end if;
  if p_action='accepted' then
   pp=r.primary_payload;
-  if pp->>'kind'='existing' then pid1=pp->>'player_id'; else pid1='p_'||gen_random_uuid()::text; insert into public.players(id,data) values(pid1,pp->'data') on conflict(id) do update set data=excluded.data,updated_at=now(); end if;
+  if pp->>'kind'='existing' then pid1=pp->>'player_id'; if pp ? 'data' then update public.players set data=coalesce(data,'{}'::jsonb)||(pp->'data'),updated_at=now() where id=pid1; end if; else pid1='p_'||gen_random_uuid()::text; insert into public.players(id,data) values(pid1,pp->'data') on conflict(id) do update set data=coalesce(public.players.data,'{}'::jsonb)||excluded.data,updated_at=now(); end if;
   if r.partner_payload is not null then
    pp=r.partner_payload;
-   if pp->>'kind'='existing' then pid2=pp->>'player_id'; else pid2='p_'||gen_random_uuid()::text; insert into public.players(id,data) values(pid2,pp->'data') on conflict(id) do update set data=excluded.data,updated_at=now(); end if;
+   if pp->>'kind'='existing' then pid2=pp->>'player_id'; if pp ? 'data' then update public.players set data=coalesce(data,'{}'::jsonb)||(pp->'data'),updated_at=now() where id=pid2; end if; else pid2='p_'||gen_random_uuid()::text; insert into public.players(id,data) values(pid2,pp->'data') on conflict(id) do update set data=coalesce(public.players.data,'{}'::jsonb)||excluded.data,updated_at=now(); end if;
   end if;
   update public.public_registrations set status='accepted',primary_player_id=pid1,partner_player_id=pid2,updated_at=now() where id=r.id;
  elsif p_action='waitlist' then update public.public_registrations set status='waitlist',updated_at=now() where id=r.id;
