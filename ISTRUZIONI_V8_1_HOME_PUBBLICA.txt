@@ -1,0 +1,10 @@
+PADEL ARENA MANAGER V8.1 · HOME PUBBLICA
+
+1. Carica su GitHub TUTTI i file e la cartella assets contenuti nello ZIP.
+2. Sostituisci i file esistenti, soprattutto index.html, service-worker.js e manifest.webmanifest.
+3. In Supabase apri SQL Editor > New query.
+4. Copia tutto il contenuto di SUPABASE_V8_1_HOME_PUBBLICA.sql e premi Run.
+5. Apri: https://padelarenareggioemilia.github.io/padel-arena-manager/index.html?v=81
+
+La Home è pubblica. Il pulsante ACCEDI apre il login. Dopo l’accesso ciascun ruolo mantiene le autorizzazioni già programmate.
+I dati pubblici del campionato sono limitati a calendario, risultati, classifica e formazioni con nome, cognome e foto.

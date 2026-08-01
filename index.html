@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.0.2.2</title>
+<title>Padel Arena Manager 8.1.2.2</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1254,6 +1254,30 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 @media(max-width:900px){.pam-competition-logo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:620px){.pam-competition-logo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.pam-competition-logo-grid article{min-height:160px}.pam-competition-logo-grid img{height:115px}.pam-team-series-hero{grid-template-columns:82px minmax(0,1fr)!important}.pam-team-series-logo{width:76px;height:86px}.pam-team-series-hero>button{grid-column:1/-1;width:100%}}
 
+
+/* V8.1 · HOME PUBBLICA */
+.pam-public-page{min-height:100vh;background:radial-gradient(circle at 88% 0%,rgba(22,168,255,.22),transparent 32%),linear-gradient(180deg,#06101d,#07111f);color:#f8fafc}
+.pam-public-wrap{max-width:1180px;margin:auto;padding:18px 16px 70px}
+.pam-public-top{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 0 22px}
+.pam-public-brand{display:flex;align-items:center;gap:14px}.pam-public-brand img{width:76px;height:76px;border-radius:22px;box-shadow:0 16px 42px rgba(0,0,0,.32)}
+.pam-public-brand h1{font-size:clamp(24px,4vw,38px);margin:0}.pam-public-brand small{display:block;color:#a9bacd;letter-spacing:.16em;margin-top:4px}
+.pam-public-actions{display:flex;gap:10px;flex-wrap:wrap}.pam-public-actions button{width:auto;padding:13px 18px}
+.pam-public-hero{position:relative;overflow:hidden;border:1px solid #294262;border-radius:28px;padding:clamp(22px,5vw,52px);background:linear-gradient(130deg,rgba(12,38,65,.98),rgba(5,19,34,.98));box-shadow:0 24px 70px rgba(0,0,0,.3)}
+.pam-public-hero:after{content:"";position:absolute;width:360px;height:360px;border-radius:50%;right:-100px;top:-130px;border:3px solid rgba(157,255,37,.35);box-shadow:0 0 70px rgba(22,168,255,.22)}
+.pam-public-hero>*{position:relative;z-index:1}.pam-public-kicker{font-size:12px;font-weight:1000;letter-spacing:.2em;color:#9dff25}.pam-public-hero h2{font-size:clamp(32px,7vw,68px);line-height:.98;max-width:850px;margin:14px 0 18px}.pam-public-hero p{max-width:760px;color:#c6d5e6;font-size:clamp(16px,2.4vw,21px);line-height:1.55}
+.pam-public-quick{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}.pam-public-quick a,.pam-public-quick button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:0;border-radius:14px;padding:14px 18px;font-weight:1000}.pam-public-quick .primary{width:auto}.pam-public-quick .secondary{border:1px solid #365474}
+.pam-public-section{margin-top:34px}.pam-public-section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:15px}.pam-public-section-head h2{margin:0;font-size:clamp(24px,4vw,36px)}.pam-public-section-head p{margin:4px 0 0;color:#a9bacd}.pam-public-section-head .pill{white-space:nowrap}
+.pam-public-tournaments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.pam-public-event{display:flex;flex-direction:column;min-height:390px;border:1px solid #294262;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#142943,#0c1b2e);box-shadow:0 16px 42px rgba(0,0,0,.2)}
+.pam-public-event-cover{height:155px;position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 80% 20%,rgba(157,255,37,.25),transparent 34%),linear-gradient(135deg,#092440,#123e5f)}.pam-public-event-cover img{width:110px;height:110px;object-fit:contain;background:#fff;border-radius:20px;padding:8px}.pam-public-event-cover span{position:absolute;left:12px;top:12px;padding:7px 10px;border-radius:999px;background:#07111fdd;color:#9dff25;font-size:11px;font-weight:1000}
+.pam-public-event-body{display:flex;flex-direction:column;flex:1;padding:16px}.pam-public-event h3{font-size:23px;line-height:1.05;margin:0 0 10px}.pam-public-event-meta{display:grid;gap:7px;color:#c5d4e5;font-size:14px}.pam-public-event-meta b{color:#fff}.pam-public-places{margin-top:13px;padding:10px 12px;border-radius:12px;background:#09182a;border:1px solid #294262}.pam-public-places strong{color:#9dff25}.pam-public-event-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;padding-top:14px}.pam-public-event-actions a,.pam-public-event-actions button{text-decoration:none;text-align:center;border:0;border-radius:12px;padding:11px 8px;font-weight:900}.pam-public-event-actions .wide{grid-column:1/-1}
+.pam-public-champ-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.pam-public-panel{border:1px solid #294262;border-radius:22px;padding:18px;background:linear-gradient(180deg,#132740,#0d1c30)}.pam-public-panel h3{margin:0 0 14px;font-size:21px}.pam-public-tabs{display:flex;gap:8px;overflow:auto;margin-bottom:14px}.pam-public-tabs button{white-space:nowrap;background:#09182a;color:#b6c5d7;border:1px solid #294262;border-radius:999px;padding:9px 13px;font-weight:900}.pam-public-tabs button.on{background:#9dff25;color:#06101d;border-color:#9dff25}
+.pam-public-match,.pam-public-standing,.pam-public-lineup{display:grid;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #294262}.pam-public-match{grid-template-columns:82px 1fr auto}.pam-public-standing{grid-template-columns:35px 1fr repeat(3,55px)}.pam-public-lineup{grid-template-columns:52px 1fr}.pam-public-lineup img{width:46px;height:46px;border-radius:50%;object-fit:cover;background:#fff}.pam-public-match:last-child,.pam-public-standing:last-child,.pam-public-lineup:last-child{border-bottom:0}.pam-public-score{font-size:20px;font-weight:1000;color:#9dff25}.pam-public-muted{color:#9fb1c6}.pam-public-empty{padding:24px;text-align:center;border:1px dashed #365474;border-radius:16px;color:#a9bacd}
+.pam-public-partners{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.pam-public-partners img{width:100%;height:92px;object-fit:contain;background:#fff;border-radius:16px;padding:10px}
+.pam-public-footer{margin-top:38px;border-top:1px solid #294262;padding:22px 0;color:#8fa4bb;text-align:center}
+body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-public-mode nav{display:none!important}
+@media(max-width:850px){.pam-public-tournaments{grid-template-columns:1fr 1fr}.pam-public-champ-grid{grid-template-columns:1fr}.pam-public-partners{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.pam-public-top{align-items:flex-start;flex-direction:column}.pam-public-brand img{width:64px;height:64px}.pam-public-actions{width:100%}.pam-public-actions button{flex:1}.pam-public-tournaments{grid-template-columns:1fr}.pam-public-section-head{align-items:flex-start;flex-direction:column}.pam-public-standing{grid-template-columns:28px 1fr 40px 40px 45px}.pam-public-partners{grid-template-columns:repeat(2,1fr)}}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1277,7 +1301,7 @@ if(!window.supabase){
 </script>
 </head>
 <body>
-<div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.0.2.2</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
+<div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.2.2</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
 
 <div id="timerAlertOverlay" class="timer-alert-overlay" role="alert" aria-live="assertive">
  <div class="timer-alert-box">
@@ -1360,7 +1384,7 @@ async function pamLogout(){
  if(pamRealtimeChannel){await sb.removeChannel(pamRealtimeChannel);pamRealtimeChannel=null}
  document.getElementById("pamRoleBadge")?.remove();
  document.getElementById("pamLogoutBtn")?.remove();
- pamRenderLogin();
+ pamRenderPublicHome();
 }
 async function pamGetProfile(user){
  const {data,error}=await sb.from("profiles").select("id,email,role,display_name").eq("id",user.id).maybeSingle();
@@ -1403,12 +1427,62 @@ async function pamStartSession(session){
   pamRenderLogin("Configurazione account incompleta: "+err.message);
  }
 }
+
+const PAM_PUBLIC_DATA={tournaments:[],matches:[],standings:[],lineups:[],series:"Tutte"};
+function pamPublicEsc(v){return String(v??"").replace(/[&<>\"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function pamPublicBase(){return location.href.split("?")[0].replace(/index\.html?$/i,"").replace(/\/$/,"")}
+function pamPublicRegistrationUrl(t){return pamPublicBase()+"/public-registration.html?tournament="+encodeURIComponent(t.share_token||"")}
+function pamPublicPosterUrl(t){return pamPublicBase()+"/poster.html?tournament="+encodeURIComponent(t.share_token||"")}
+function pamPublicDate(v){if(!v)return "Data da definire";try{return new Date(v+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}catch(_){return v}}
+function pamPublicFormatType(v){return String(v||"TORNEO").replaceAll("_"," ").toUpperCase()}
+function pamPublicLogo(t){return t.logo_url||"assets/padel-arena-manager-logo.png"}
+function pamPublicEventCard(t){
+ const open=t.registration_open!==false,available=Number(t.available_places??0),wait=t.waitlist_enabled!==false;
+ const action=open?'<a class="primary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>':wait?'<a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">LISTA D’ATTESA</a>':'<span class="secondary wide" style="opacity:.7">ISCRIZIONI CHIUSE</span>';
+ return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
+}
+function pamPublicUpcomingHtml(){return PAM_PUBLIC_DATA.tournaments.length?PAM_PUBLIC_DATA.tournaments.map(pamPublicEventCard).join(""):'<div class="pam-public-empty" style="grid-column:1/-1">Al momento non sono pubblicati tornei in programma.</div>'}
+function pamPublicMatchesHtml(){const rows=PAM_PUBLIC_DATA.matches.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,12).map(m=>'<div class="pam-public-match"><div><b>'+pamPublicEsc(pamPublicDate(m.event_date))+'</b><div class="pam-public-muted">'+pamPublicEsc(m.start_time||'')+'</div></div><div><b>'+pamPublicEsc(m.home_team_name||'Da definire')+'</b><div class="pam-public-muted">vs '+pamPublicEsc(m.away_team_name||'Da definire')+' · '+pamPublicEsc(m.series||'')+'</div></div><div class="pam-public-score">'+(m.home_score==null?'–':pamPublicEsc(m.home_score))+' : '+(m.away_score==null?'–':pamPublicEsc(m.away_score))+'</div></div>').join(''):'<div class="pam-public-empty">Calendario e risultati saranno pubblicati dall’organizzazione.</div>'}
+function pamPublicStandingsHtml(){const rows=PAM_PUBLIC_DATA.standings.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.map((r,i)=>'<div class="pam-public-standing"><b>'+(i+1)+'</b><div><b>'+pamPublicEsc(r.team_name||'')+'</b><div class="pam-public-muted">'+pamPublicEsc(r.series||'')+'</div></div><span title="Giocate">'+Number(r.played||0)+'</span><span title="Vinte">'+Number(r.won||0)+'</span><b title="Punti">'+Number(r.points||0)+'</b></div>').join(''):'<div class="pam-public-empty">Le classifiche saranno visibili dopo l’inizio del campionato.</div>'}
+function pamPublicLineupsHtml(){const rows=PAM_PUBLIC_DATA.lineups.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,20).map(r=>'<div class="pam-public-lineup"><img src="'+pamPublicEsc(r.photo_url||'assets/padel-arena-manager-logo.png')+'"><div><b>'+pamPublicEsc(r.first_name||'')+' '+pamPublicEsc(r.last_name||'')+'</b><div class="pam-public-muted">'+pamPublicEsc(r.team_name||'')+' · '+pamPublicEsc(r.match_label||'Formazione')+'</div></div></div>').join(''):'<div class="pam-public-empty">Le formazioni saranno pubblicate nelle giornate di campionato. Saranno visibili soltanto nome, cognome e foto.</div>'}
+function pamRenderPublicChampContent(){const box=document.getElementById('pamPublicChampContent');if(!box)return;const tab=box.dataset.tab||'matches';box.innerHTML=tab==='standings'?pamPublicStandingsHtml():tab==='lineups'?pamPublicLineupsHtml():pamPublicMatchesHtml()}
+function pamRenderPublicHome(){
+ document.body.classList.add('pam-public-mode');
+ document.getElementById('pamLoginOverlay')?.remove();
+ document.getElementById('pamRoleBadge')?.remove();document.getElementById('pamLogoutBtn')?.remove();
+ const root=document.getElementById('root');
+ root.innerHTML='<div class="pam-public-page"><main class="pam-public-wrap"><header class="pam-public-top"><div class="pam-public-brand"><img src="assets/padel-arena-manager-logo.png"><div><h1>Padel Arena Manager</h1><small>EVENTI · TORNEI · CAMPIONATI</small></div></div><div class="pam-public-actions"><button class="secondary" data-public-share-home>CONDIVIDI PAGINA</button><button class="primary" data-public-login>ACCEDI</button></div></header><section class="pam-public-hero"><span class="pam-public-kicker">LA COMMUNITY DEL PADEL IN UN’UNICA PIATTAFORMA</span><h2>Scopri gli eventi. Segui i campionati. Iscriviti online.</h2><p>Consulta i tornei in programma, le classifiche, i calendari e i risultati. L’area riservata permette ad amministratore, collaboratori e capitani di operare con le autorizzazioni già assegnate.</p><div class="pam-public-quick"><a class="primary" href="#tornei">VEDI I TORNEI</a><a class="secondary" href="#campionati">SEGUI IL CAMPIONATO</a></div></section><section id="tornei" class="pam-public-section"><div class="pam-public-section-head"><div><span class="pam-public-kicker">ISCRIZIONI ONLINE</span><h2>Tornei in programma</h2><p>Apri la locandina, condividi l’evento oppure iscriviti direttamente.</p></div><span class="pill" id="pamPublicTournamentCount">CARICAMENTO</span></div><div id="pamPublicTournaments" class="pam-public-tournaments"><div class="pam-public-empty" style="grid-column:1/-1">Caricamento tornei...</div></div></section><section id="campionati" class="pam-public-section"><div class="pam-public-section-head"><div><span class="pam-public-kicker">AICS PADEL CHAMPIONSHIP 2027</span><h2>Campionati</h2><p>Calendari, risultati, classifiche e formazioni pubbliche senza dati personali riservati.</p></div></div><div class="pam-public-champ-grid"><article class="pam-public-panel"><div class="pam-public-tabs"><button class="on" data-public-champ-tab="matches">CALENDARIO / RISULTATI</button><button data-public-champ-tab="standings">CLASSIFICHE</button><button data-public-champ-tab="lineups">FORMAZIONI</button></div><div id="pamPublicChampContent" data-tab="matches"><div class="pam-public-empty">Caricamento campionato...</div></div></article><aside class="pam-public-panel"><h3>Competizioni 2027</h3><div class="pam-competition-logo-grid"><article><img src="assets/aics-serie-a-2027.png"><b>Serie A</b></article><article><img src="assets/aics-serie-b-2027.png"><b>Serie B</b></article><article><img src="assets/aics-serie-c-2027.png"><b>Serie C</b></article><article><img src="assets/aics-coppa-italia-2027.png"><b>Coppa Italia</b></article><article><img src="assets/aics-supercoppa-2027.png"><b>Supercoppa</b></article></div></aside></div></section><section class="pam-public-section"><div class="pam-public-section-head"><div><span class="pam-public-kicker">CLUB · ENTI · PARTNER</span><h2>La rete degli eventi</h2></div></div><div class="pam-public-partners"><img src="assets/padel-arena-manager-logo.png"><img src="assets/eden-padel-club.jpeg"><img src="assets/happy-time-padel.jpeg"><img src="assets/aics.jpeg"><img src="assets/cupra-symbol.jpeg"></div></section><footer class="pam-public-footer">Padel Arena Manager · La pagina pubblica mostra esclusivamente dati sportivi e informazioni autorizzate.</footer></main></div>';
+ pamLoadPublicHomeData();
+}
+async function pamLoadPublicHomeData(){
+ try{
+  const [t,m,st,l]=await Promise.all([
+   sb.rpc('public_upcoming_tournaments'),
+   sb.rpc('public_championship_matches'),
+   sb.rpc('public_championship_standings'),
+   sb.rpc('public_championship_lineups')
+  ]);
+  PAM_PUBLIC_DATA.tournaments=t.error?[]:(t.data||[]);PAM_PUBLIC_DATA.matches=m.error?[]:(m.data||[]);PAM_PUBLIC_DATA.standings=st.error?[]:(st.data||[]);PAM_PUBLIC_DATA.lineups=l.error?[]:(l.data||[]);
+  const events=document.getElementById('pamPublicTournaments');if(events)events.innerHTML=pamPublicUpcomingHtml();
+  const count=document.getElementById('pamPublicTournamentCount');if(count)count.textContent=PAM_PUBLIC_DATA.tournaments.length+' EVENTI';
+  pamRenderPublicChampContent();
+ }catch(err){console.error(err);const events=document.getElementById('pamPublicTournaments');if(events)events.innerHTML='<div class="pam-public-empty" style="grid-column:1/-1">Impossibile caricare momentaneamente gli eventi. Riprova tra poco.</div>';pamRenderPublicChampContent()}
+}
+async function pamPublicShareHome(){const url=pamPublicBase()+'/';const text='Scopri i tornei in programma, segui i campionati e iscriviti agli eventi su Padel Arena Manager.';try{if(navigator.share)await navigator.share({title:'Padel Arena Manager',text,url});else{await navigator.clipboard.writeText(text+'\n'+url);alert('Link della pagina copiato.')}}catch(e){if(e.name!=='AbortError')prompt('Copia il link:',url)}}
+async function pamPublicShareEvent(token){const t=PAM_PUBLIC_DATA.tournaments.find(x=>x.share_token===token);if(!t)return;const url=pamPublicRegistrationUrl(t),text='Iscriviti a '+(t.name||'questo torneo')+' su Padel Arena Manager.';try{if(navigator.share)await navigator.share({title:t.name||'Torneo',text,url});else{await navigator.clipboard.writeText(text+'\n'+url);alert('Invito copiato.')}}catch(e){}}
+document.addEventListener('click',function(ev){
+ const login=ev.target.closest('[data-public-login]');if(login){pamRenderLogin();return}
+ if(ev.target.closest('[data-public-share-home]')){pamPublicShareHome();return}
+ const share=ev.target.closest('[data-public-share-event]');if(share){pamPublicShareEvent(share.getAttribute('data-public-share-event'));return}
+ const tab=ev.target.closest('[data-public-champ-tab]');if(tab){document.querySelectorAll('[data-public-champ-tab]').forEach(b=>b.classList.toggle('on',b===tab));const box=document.getElementById('pamPublicChampContent');if(box)box.dataset.tab=tab.getAttribute('data-public-champ-tab');pamRenderPublicChampContent();return}
+});
+
 async function pamBootAuth(){
  const {data}=await sb.auth.getSession();
  if(data.session)await pamStartSession(data.session);
- else pamRenderLogin();
+ else pamRenderPublicHome();
  sb.auth.onAuthStateChange(function(event,session){
-  if(event==="SIGNED_OUT"&&!session)pamRenderLogin();
+  if(event==="SIGNED_OUT"&&!session)pamRenderPublicHome();
  });
 }
 
@@ -1459,7 +1533,7 @@ const CLUBS={
  "Padel Arena Manager":{
   name:"Padel Arena Manager",
   address:"",
-  logo:"assets/padel-arena-manager-logo.jpg",
+  logo:"assets/padel-arena-manager-logo.png",
   accent:"#9DFF25",
   accent2:"#16A8FF",
   background:"#07111F",
@@ -1525,7 +1599,7 @@ function pamEventAddress(e){
  return pamClubAllowsCustomAddress(e.club)&&e.customAddress?e.customAddress:c.address;
 }
 function clubInfo(name){
- return CLUBS[name]||{name:name||"Club o ente da definire",address:"",logo:"assets/padel-arena-manager-logo.jpg",accent:"#9DFF25",accent2:"#16A8FF",background:"#07111F",courts:[]};
+ return CLUBS[name]||{name:name||"Club o ente da definire",address:"",logo:"assets/padel-arena-manager-logo.png",accent:"#9DFF25",accent2:"#16A8FF",background:"#07111F",courts:[]};
 }
 function prettyDate(value){
  if(!value)return "";
@@ -1538,7 +1612,7 @@ function eventPrintBranding(e){
  const c=clubInfo(e.club);
  const courts=Number(e.courts||1);
  return '<section class="print-event-hero" style="--event-accent:'+esc(c.accent)+';--event-accent2:'+esc(c.accent2||c.accent)+'">'+
-  '<div class="print-master-brand"><img src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager"><div><b>PADEL ARENA MANAGER</b><span>TOURNAMENT MANAGEMENT SYSTEM</span></div></div>'+
+  '<div class="print-master-brand"><img src="assets/padel-arena-manager-logo.png" alt="Padel Arena Manager"><div><b>PADEL ARENA MANAGER</b><span>TOURNAMENT MANAGEMENT SYSTEM</span></div></div>'+
   '<div class="print-event-main">'+
    '<div class="print-host-brand"><span>CLUB / ENTE OSPITANTE</span><img class="print-club-logo" src="'+esc(e.logoUrl||c.logo)+'" alt="'+esc(c.name)+'"><b>'+esc(c.name)+'</b></div>'+
    '<div class="print-event-copy"><div class="print-kicker">PROGRAMMA UFFICIALE</div>'+
@@ -1558,7 +1632,7 @@ function printFooter(e){
  if(!e)return "";
  const c=clubInfo(e.club);
  return '<footer class="print-event-footer" style="border-top-color:'+esc(c.accent)+'">'+
-  '<div class="footer-master"><img src="assets/padel-arena-manager-logo.jpg"><span><b>PADEL ARENA MANAGER</b><br>Programma ufficiale</span></div>'+
+  '<div class="footer-master"><img src="assets/padel-arena-manager-logo.png"><span><b>PADEL ARENA MANAGER</b><br>Programma ufficiale</span></div>'+
   '<div><b>'+esc(c.name)+'</b><br>'+esc(pamEventAddress(e))+'</div>'+
   '<div class="footer-right">Info eventi<br><b>327 691 0287</b></div>'+
  '</footer>';
@@ -2332,11 +2406,11 @@ function header(title,sub){
  return eventPrintBranding(e)+
  '<div class="top pam-main-header">'+
   '<div class="brand">'+
-   '<img class="app-brand-logo pam-master-logo" src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
+   '<img class="app-brand-logo pam-master-logo" src="assets/padel-arena-manager-logo.png" alt="Padel Arena Manager">'+
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.0 · Base stabile</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1 · Home pubblica</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2348,7 +2422,7 @@ function home(){
  return header("Padel Arena Manager","Sport Management Platform")+iphoneVersionBanner()+iphoneInstallCard()+
  '<div class="pam-v5-shell">'+
   '<section class="pam-v5-welcome">'+
-   '<img class="pam-v5-welcome-logo" src="assets/padel-arena-manager-logo.jpg" alt="Padel Arena Manager">'+
+   '<img class="pam-v5-welcome-logo" src="assets/padel-arena-manager-logo.png" alt="Padel Arena Manager">'+
    '<div><span class="pam-v5-kicker">PADEL · TECNOLOGIA · ORGANIZZAZIONE</span><h2>Buonasera Francesco.</h2><p>Gestisci tornei, campionati, club e giocatori da un’unica applicazione, con l’identità blu notte, blu elettrico e verde fluo del logo.</p></div>'+
   '</section>'+
   '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Dati disponibili sul dispositivo</small></div><div class="pam-v5-status-grid">'+
@@ -4645,6 +4719,7 @@ function pamApplyDynamicTheme(){
 }
 
 function render(){
+ document.body.classList.remove("pam-public-mode");
  let body=state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
  pamApplyDynamicTheme();
@@ -4655,11 +4730,11 @@ render=function(){
  setTimeout(pamRestrictCollaboratorUI,0);
 };
 
-render();
+pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.0-stabile",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=8.1-public-home",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
@@ -4754,7 +4829,7 @@ function pamRenderAdminRoster(teamId){
  const badge=document.getElementById('pamRosterPendingBadge');if(badge)badge.innerHTML=pending.length?'<span class="pam-notification-badge">'+pending.length+'</span>':'';
  let html='<div class="pam-roster-placeholder"><div><b>'+active.length+' / 20</b><small>Giocatori inseriti</small></div><div><b>'+pending.length+'</b><small>In attesa di approvazione</small></div><div><b>'+approved.length+'</b><small>Schierabili</small></div></div>';
  if(!rows.length){area.innerHTML=html+'<div class="notice">Non è ancora arrivata alcuna richiesta.</div>';return}
- html+='<div class="pam-roster-list">'+rows.map(function(r){return '<div class="pam-roster-row"><img src="'+esc(r.photo_url||'assets/padel-arena-manager-logo.jpg')+'"><div><b>'+esc((r.first_name||'')+' '+(r.last_name||''))+'</b><small>'+esc(r.email||'')+' · '+esc(r.phone||'')+'</small><small class="'+pamRosterStatusClass(r.approval_status)+'"><b>'+pamRosterStatusLabel(r.approval_status)+'</b>'+(r.rejection_reason?' · '+esc(r.rejection_reason):'')+'</small></div><div class="pam-roster-actions">'+(r.approval_status==='pending'?'<button class="primary small" data-admin-roster-approve="'+r.id+'" data-team-id="'+teamId+'">Approva</button><button class="danger small" data-admin-roster-reject="'+r.id+'" data-team-id="'+teamId+'">Rifiuta</button>':'')+'</div></div>'}).join('')+'</div>';
+ html+='<div class="pam-roster-list">'+rows.map(function(r){return '<div class="pam-roster-row"><img src="'+esc(r.photo_url||'assets/padel-arena-manager-logo.png')+'"><div><b>'+esc((r.first_name||'')+' '+(r.last_name||''))+'</b><small>'+esc(r.email||'')+' · '+esc(r.phone||'')+'</small><small class="'+pamRosterStatusClass(r.approval_status)+'"><b>'+pamRosterStatusLabel(r.approval_status)+'</b>'+(r.rejection_reason?' · '+esc(r.rejection_reason):'')+'</small></div><div class="pam-roster-actions">'+(r.approval_status==='pending'?'<button class="primary small" data-admin-roster-approve="'+r.id+'" data-team-id="'+teamId+'">Approva</button><button class="danger small" data-admin-roster-reject="'+r.id+'" data-team-id="'+teamId+'">Rifiuta</button>':'')+'</div></div>'}).join('')+'</div>';
  area.innerHTML=html;
 }
 async function pamDecideRoster(playerId,teamId,decision){
