@@ -2274,9 +2274,14 @@ function pamRegenerateTournament(id){
 
 function pamRegistrationPersonName(person){
  if(!person)return "Giocatore";
- if(person.kind==="existing")return person.name||"Giocatore già presente";
- const d=person.data||{};
- return ((d.firstName||"")+" "+(d.lastName||"")).trim()||"Nuovo giocatore";
+ if(person.kind==="existing"){
+  const pid=String(person.player_id||person.playerId||person.id||"");
+  const p=(state.players||[]).find(function(x){return String(x.id)===pid});
+  if(p)return playerName(p);
+  return person.name||person.full_name||"Giocatore già presente";
+ }
+ const d=person.data||person;
+ return ((d.firstName||d.first_name||"")+" "+(d.lastName||d.last_name||"")).trim()||"Nuovo giocatore";
 }
 function pamRegistrationStatusLabel(status){
  return {
@@ -2359,21 +2364,27 @@ async function pamProcessRegistration(registrationId,action,eventId){
  if(action==="rejected"&&!confirm("Rifiutare questa richiesta?"))return;
  const res=await sb.rpc("admin_process_public_registration",{
   p_registration_id:String(registrationId),
-  p_action:String(action)
+  p_action:String(action),
+  p_capacity:e.registrationCapacity?Number(e.registrationCapacity):null
  });
  if(res.error){pamToast(res.error.message,"error");return}
  if(action==="accepted"){
-  await pamCloudLoad(false);
   const result=res.data||{};
-  const ids=[result.primary_player_id,result.partner_player_id].filter(Boolean).map(String);
-  ids.forEach(function(id){if(!e.playerIds.includes(id))e.playerIds.push(id)});
-  if(e.competitionType==="fixed_pairs"&&ids.length===2){
-   e.fixedPairRegistrations=e.fixedPairRegistrations||{};
-   e.fixedPairRegistrations[ids[0]]={mode:"pair",partnerId:ids[1]};
-   e.fixedPairRegistrations[ids[1]]={mode:"pair",partnerId:ids[0]};
+  await pamCloudLoad(false);
+  const current=state.events.find(function(x){return String(x.id)===String(eventId)});
+  if(!current){pamToast("Torneo non trovato dopo la sincronizzazione.","error");return}
+  let ids=[result.primary_player_id,result.partner_player_id].filter(Boolean).map(String);
+  if(!ids.length&&Array.isArray(result.player_ids))ids=result.player_ids.filter(Boolean).map(String);
+  current.playerIds=current.playerIds||[];
+  ids.forEach(function(id){if(!current.playerIds.includes(id))current.playerIds.push(id)});
+  if(current.competitionType==="fixed_pairs"&&ids.length===2){
+   current.fixedPairRegistrations=current.fixedPairRegistrations||{};
+   current.fixedPairRegistrations[ids[0]]={mode:"pair",partnerId:ids[1]};
+   current.fixedPairRegistrations[ids[1]]={mode:"pair",partnerId:ids[0]};
   }
   save();
-  pamToast("Richiesta accettata. Rigenera gironi e partite quando sei pronto.","success");
+  await pamCloudSyncAll();
+  pamToast("Richiesta accettata. Il giocatore è stato aggiunto al torneo.","success");
  }else if(action==="waitlist"){
   pamToast("Richiesta inserita in lista d’attesa.","success");
  }else{
@@ -2426,7 +2437,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1 · Home pubblica</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.4 · Correzioni iscrizioni</span></div>'+
  '</div>';
 }
 function nav(){
@@ -3238,8 +3249,8 @@ function createEvent(){
  const msg=document.getElementById("eventMessage");
  try{
   const d=state.draft;
-  d.name=document.getElementById("eName").value.trim();d.description=document.getElementById("eDescription").value.trim();d.date=document.getElementById("eDate").value;d.endDate=document.getElementById("eEndDate").value;d.endTime=document.getElementById("eEndTime").value;d.startTime=document.getElementById("eStartTime").value||"20:00";
-  d.club=document.getElementById("eClub").value;d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=document.getElementById("eCategory").value;d.competitionType=document.getElementById("eCompetitionType").value;d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(document.getElementById("eCourts").value)||1);d.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);d.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);d.slotDuration=Math.max(d.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";d.auctionCount=d.competitionType==="rodeo_tokens"?Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||2)):0;
+  d.name=pamFormValue("eName",state.draft.name).trim();d.description=document.getElementById("eDescription").value.trim();d.date=pamFormValue("eDate",state.draft.date);d.endDate=document.getElementById("eEndDate").value;d.endTime=document.getElementById("eEndTime").value;d.startTime=pamFormValue("eStartTime",state.draft.startTime)||"20:00";
+  d.club=pamFormValue("eClub",state.draft.club);d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=pamFormValue("eCategory",state.draft.category);d.competitionType=pamFormValue("eCompetitionType",state.draft.competitionType);d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(pamFormValue("eCourts",state.draft.courts))||1);d.fee=Math.max(0,Number(pamFormValue("eFee",state.draft.fee))||0);d.timerDuration=Math.max(1,Number(pamFormValue("eTimerDuration",state.draft.timerDuration))||15);d.slotDuration=Math.max(d.timerDuration,Number(pamFormValue("eSlotDuration",state.draft.slotDuration))||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";d.auctionCount=d.competitionType==="rodeo_tokens"?Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||2)):0;
   if(!d.name)throw new Error("inserisci il nome del torneo");if(!d.date||!d.endDate)throw new Error("inserisci data di inizio e fine");if(d.maxParticipants<d.minParticipants)throw new Error("il numero massimo non può essere inferiore al minimo");
   const feasibility=pamEstimateDraft(d,d.maxParticipants);if(feasibility.delta<0&&!confirm("Con i parametri attuali il torneo potrebbe terminare "+Math.abs(feasibility.delta)+" minuti oltre l’orario impostato. Vuoi salvarlo comunque?"))return;
   const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,auctionCount:d.auctionCount,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
@@ -4611,6 +4622,14 @@ document.addEventListener("input",function(ev){
  }
 });
 
+function pamFormValue(id,fallback){
+ const el=document.getElementById(id);
+ return el?el.value:(fallback===undefined?"":fallback);
+}
+function pamFormYes(id,fallback){
+ const el=document.getElementById(id);
+ return el?el.value==="yes":Boolean(fallback);
+}
 document.addEventListener("change",function(ev){
  pamProtectCurrentEdit(8000);
  const logoInput=ev.target.closest("[data-team-logo-upload]");if(logoInput&&logoInput.files&&logoInput.files[0]){
@@ -4633,56 +4652,56 @@ document.addEventListener("change",function(ev){
   updateStageTeam(ev.target);return;
  }
  if(ev.target.matches('[data-action="change-type"]')){
-  state.draft.name=document.getElementById("eName").value;
-  state.draft.date=document.getElementById("eDate").value;
-  state.draft.club=document.getElementById("eClub").value;
+  state.draft.name=pamFormValue("eName",state.draft.name);
+  state.draft.date=pamFormValue("eDate",state.draft.date);
+  state.draft.club=pamFormValue("eClub",state.draft.club);
   state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
-  state.draft.category=document.getElementById("eCategory").value;
+  state.draft.category=pamFormValue("eCategory",state.draft.category);
   state.draft.competitionType=ev.target.value;
   state.draft.auctionCount=Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||Number(state.draft.auctionCount)||2));
   if(state.draft.competitionType!=="fixed_pairs")state.draft.fixedPairRegistrations={};
-  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
-  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
-  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
-  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
-  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
-  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
-  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
+  state.draft.courts=Number(pamFormValue("eCourts",state.draft.courts))||1;
+  state.draft.fee=Math.max(0,Number(pamFormValue("eFee",state.draft.fee))||0);
+  state.draft.returnLeg=pamFormYes("eReturnLeg",state.draft.returnLeg);
+  state.draft.eliminationReturnLeg=pamFormYes("eEliminationReturnLeg",state.draft.eliminationReturnLeg);
+  state.draft.semifinalReturnLeg=pamFormYes("eSemifinalReturnLeg",state.draft.semifinalReturnLeg);
+  state.draft.finalReturnLeg=pamFormYes("eFinalReturnLeg",state.draft.finalReturnLeg);
+  state.draft.startTime=pamFormValue("eStartTime",state.draft.startTime)||"20:00";
   state.draft.matchMode="timed";
-  state.draft.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);
-  state.draft.slotDuration=Math.max(state.draft.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);
+  state.draft.timerDuration=Math.max(1,Number(pamFormValue("eTimerDuration",state.draft.timerDuration))||15);
+  state.draft.slotDuration=Math.max(state.draft.timerDuration,Number(pamFormValue("eSlotDuration",state.draft.slotDuration))||20);
   state.draft.matchDuration=state.draft.slotDuration;
-  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
-  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
-  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
-  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  state.draft.initialTimerEnabled=pamFormYes("eInitialTimer",state.draft.initialTimerEnabled);
+  state.draft.eliminationTimerEnabled=pamFormYes("eEliminationTimer",state.draft.eliminationTimerEnabled);
+  state.draft.semifinalTimerEnabled=pamFormYes("eSemifinalTimer",state.draft.semifinalTimerEnabled);
+  state.draft.finalTimerEnabled=pamFormYes("eFinalTimer",state.draft.finalTimerEnabled);
   if(ev.target.value==="rodeo_tokens")state.draft.name="Rodeo a Gettoni";
   if(ev.target.value==="rodeo_simple")state.draft.name="RODEO SEMPLICE";
   if(ev.target.value==="fixed_pairs")state.draft.name="COPPIE FISSE";
   save();render();return;
  }
  if(ev.target.matches('[data-action="change-category"]')){
-  state.draft.name=document.getElementById("eName").value;
-  state.draft.date=document.getElementById("eDate").value;
-  state.draft.club=document.getElementById("eClub").value;
+  state.draft.name=pamFormValue("eName",state.draft.name);
+  state.draft.date=pamFormValue("eDate",state.draft.date);
+  state.draft.club=pamFormValue("eClub",state.draft.club);
   state.draft.customAddress=pamClubAllowsCustomAddress(state.draft.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";
   state.draft.category=ev.target.value;
-  state.draft.courts=Number(document.getElementById("eCourts").value)||1;
-  state.draft.competitionType=document.getElementById("eCompetitionType").value;
-  state.draft.fee=Math.max(0,Number(document.getElementById("eFee").value)||0);
-  state.draft.returnLeg=document.getElementById("eReturnLeg").value==="yes";
-  state.draft.eliminationReturnLeg=document.getElementById("eEliminationReturnLeg").value==="yes";
-  state.draft.semifinalReturnLeg=document.getElementById("eSemifinalReturnLeg").value==="yes";
-  state.draft.finalReturnLeg=document.getElementById("eFinalReturnLeg").value==="yes";
-  state.draft.startTime=document.getElementById("eStartTime").value||"20:00";
+  state.draft.courts=Number(pamFormValue("eCourts",state.draft.courts))||1;
+  state.draft.competitionType=pamFormValue("eCompetitionType",state.draft.competitionType);
+  state.draft.fee=Math.max(0,Number(pamFormValue("eFee",state.draft.fee))||0);
+  state.draft.returnLeg=pamFormYes("eReturnLeg",state.draft.returnLeg);
+  state.draft.eliminationReturnLeg=pamFormYes("eEliminationReturnLeg",state.draft.eliminationReturnLeg);
+  state.draft.semifinalReturnLeg=pamFormYes("eSemifinalReturnLeg",state.draft.semifinalReturnLeg);
+  state.draft.finalReturnLeg=pamFormYes("eFinalReturnLeg",state.draft.finalReturnLeg);
+  state.draft.startTime=pamFormValue("eStartTime",state.draft.startTime)||"20:00";
   state.draft.matchMode="timed";
-  state.draft.timerDuration=Math.max(1,Number(document.getElementById("eTimerDuration").value)||15);
-  state.draft.slotDuration=Math.max(state.draft.timerDuration,Number(document.getElementById("eSlotDuration").value)||20);
+  state.draft.timerDuration=Math.max(1,Number(pamFormValue("eTimerDuration",state.draft.timerDuration))||15);
+  state.draft.slotDuration=Math.max(state.draft.timerDuration,Number(pamFormValue("eSlotDuration",state.draft.slotDuration))||20);
   state.draft.matchDuration=state.draft.slotDuration;
-  state.draft.initialTimerEnabled=document.getElementById("eInitialTimer").value==="yes";
-  state.draft.eliminationTimerEnabled=document.getElementById("eEliminationTimer").value==="yes";
-  state.draft.semifinalTimerEnabled=document.getElementById("eSemifinalTimer").value==="yes";
-  state.draft.finalTimerEnabled=document.getElementById("eFinalTimer").value==="yes";
+  state.draft.initialTimerEnabled=pamFormYes("eInitialTimer",state.draft.initialTimerEnabled);
+  state.draft.eliminationTimerEnabled=pamFormYes("eEliminationTimer",state.draft.eliminationTimerEnabled);
+  state.draft.semifinalTimerEnabled=pamFormYes("eSemifinalTimer",state.draft.semifinalTimerEnabled);
+  state.draft.finalTimerEnabled=pamFormYes("eFinalTimer",state.draft.finalTimerEnabled);
   if(document.getElementById("ePairsPerGroup"))state.draft.pairsPerGroup=Number(document.getElementById("ePairsPerGroup").value)||4;
   if(document.getElementById("eFinalsOption"))state.draft.finalsOption=document.getElementById("eFinalsOption").value;
   state.draft.selected=[];
