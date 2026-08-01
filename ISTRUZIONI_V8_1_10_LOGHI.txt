@@ -1,0 +1,9 @@
+PADEL ARENA MANAGER V8.1.10 - LOGHI SQUADRE
+
+- Corretto caricamento logo squadra dal pannello Campionato.
+- Il logo viene salvato localmente e sincronizzato su Supabase.
+- Visibile anche al capitano e nelle pagine che usano il logo squadra.
+- Nessuna modifica a tornei, gettoni, aste, giocatori o campionato.
+- Non serve eseguire SQL.
+
+Caricare tutti i file su GitHub, soprattutto index.html e service-worker.js.

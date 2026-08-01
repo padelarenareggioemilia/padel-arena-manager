@@ -2667,7 +2667,7 @@ function championshipTeamView(){
  '<label class="pam-switch"><input type="checkbox" data-team-access-checkbox="'+t.id+'" '+(t.captainAccessEnabled?"checked":"")+'> '+(t.captainAccessEnabled?"ACCESSO ATTIVO":"ACCESSO DISABILITATO")+'</label></div>'+
  '<div class="pam-link-preview">'+esc(link)+'</div><div class="row"><button class="primary" data-share-team-invite="'+t.id+'">Copia / condividi link personale</button><button class="secondary" data-preview-team-portal="'+t.id+'">Anteprima portale capitano</button></div>'+
  '<div class="notice '+(t.captainAccessEnabled?"success":"error")+'">'+(t.captainAccessEnabled?"Il link è utilizzabile. Al primo accesso il capitano dovrà creare il proprio account con la sua email.":"Il link non consente modifiche finché non abiliti l’accesso.")+'</div></section>'+
- '<section class="card"><div class="pam-v5-section-title"><h2>Logo della squadra</h2><small>Può essere inserito da te o dal capitano autorizzato.</small></div><div class="pam-logo-upload">'+(pamTeamLogo(t)?'<img src="'+esc(pamTeamLogo(t))+'" alt="Logo squadra">':'<div class="pam-team-logo pam-team-logo-placeholder" style="width:110px;height:110px">'+esc((t.teamName||'T').slice(0,1))+'</div>')+'<div><label class="upload-button">Carica o sostituisci logo<input type="file" accept="image/*" data-team-logo-upload="'+t.id+'"></label><div class="muted">Formato consigliato quadrato, PNG o JPG. Il logo apparirà nella scheda e negli elenchi.</div></div></div></section>'+
+ '<section class="card"><div class="pam-v5-section-title"><h2>Logo della squadra</h2><small>Può essere inserito da te o dal capitano autorizzato.</small></div><div class="pam-logo-upload">'+(pamTeamLogo(t)?'<img src="'+esc(pamTeamLogo(t))+'" alt="Logo squadra">':'<div class="pam-team-logo pam-team-logo-placeholder" style="width:110px;height:110px">'+esc((t.teamName||'T').slice(0,1))+'</div>')+'<div><label class="upload-button">Carica o sostituisci logo<input type="file" accept="image/png,image/jpeg,image/webp" data-team-logo-upload="'+t.id+'"></label><div class="muted">Formato consigliato quadrato, PNG o JPG. Il logo apparirà nella scheda e negli elenchi.</div></div></div></section>'+
  '<section class="card"><div class="pam-v5-section-title"><h2>Dati della squadra</h2><small>Già precompilati: puoi correggerli prima di aprire il portale.</small></div><div class="pam-team-form-grid">'+
  f("Nome squadra","teamName")+f("Serie","series")+f("Ragione sociale club","clubLegalName")+f("Codice fiscale / P. IVA","clubTaxId")+
  f("Indirizzo club","clubAddress")+f("CAP","clubPostalCode")+f("Comune","clubTown")+f("Provincia","clubProvince")+
@@ -4703,7 +4703,25 @@ document.addEventListener("change",function(ev){
  const logoInput=ev.target.closest("[data-team-logo-upload]");if(logoInput&&logoInput.files&&logoInput.files[0]){
   const id=logoInput.getAttribute("data-team-logo-upload"),file=logoInput.files[0];
   if(file.size>2500000){pamToast("Il logo supera 2,5 MB. Scegli un file più leggero.","error");logoInput.value="";return}
-  const reader=new FileReader();reader.onload=function(){pamSaveChampTeam(id,{teamLogoUrl:String(reader.result||"")});pamToast("Logo squadra salvato.","success");render()};reader.readAsDataURL(file);return
+  pamToast("Caricamento logo squadra in corso...");
+  const reader=new FileReader();
+  reader.onerror=function(){pamToast("Non riesco a leggere il file selezionato.","error")};
+  reader.onload=async function(){
+   const dataUrl=String(reader.result||"");
+   if(!dataUrl){pamToast("Il file selezionato non è valido.","error");return}
+   pamSaveChampTeam(id,{teamLogoUrl:dataUrl});
+   const team=pamChampTeam(id);
+   if(pamIsAdmin()&&PAM_SESSION){
+    const result=await sb.from("championship_teams").update({team_logo_url:dataUrl,updated_at:new Date().toISOString()}).eq("id",id);
+    if(result.error){
+     pamToast("Logo salvato sul dispositivo, ma non sincronizzato online: "+result.error.message,"error");
+     render();return
+    }
+   }
+   pamToast("Logo squadra salvato e sincronizzato.","success");
+   render();
+  };
+  reader.readAsDataURL(file);return
  }
  const accessBox=ev.target.closest("[data-team-access-checkbox]");if(accessBox){pamToggleTeamAccess(accessBox.getAttribute("data-team-access-checkbox"),accessBox.checked);return}
  if(ev.target.id==="champSeriesFilter"){pamFilterChampTeams()}
