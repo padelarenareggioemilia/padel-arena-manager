@@ -1,0 +1,9 @@
+PADEL ARENA MANAGER V8.1.7
+
+Modifica mirata:
+- Maurizia Casini: saldo femminile 34 gettoni
+- Monia Mazzi: saldo femminile 51 gettoni
+- Nessun altro dato o funzionamento modificato
+
+Caricare tutti i file su GitHub, soprattutto index.html e service-worker.js.
+Non serve eseguire SQL su Supabase.

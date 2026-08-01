@@ -1,4 +1,4 @@
-const CACHE='pam-v8-0-3';
+const CACHE='pam-v8-1-7';
 const CORE=['./','./index.html','./manifest.webmanifest','./assets/padel-arena-manager-logo.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).catch(()=>{}));self.skipWaiting();});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});

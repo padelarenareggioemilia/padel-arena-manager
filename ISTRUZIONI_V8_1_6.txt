@@ -1,0 +1,9 @@
+PADEL ARENA MANAGER V8.1.6
+
+Modifica mirata:
+- Aggiornato saldo circuito femminile di Maurizia Casini da 34 a 52 gettoni.
+- Aggiornato saldo circuito femminile di Monia Mazzi da 51 a 74 gettoni.
+- Nessun altro dato o funzionamento modificato.
+
+Caricare su GitHub tutti i file del pacchetto, in particolare index.html e service-worker.js.
+Non serve eseguire SQL su Supabase.
