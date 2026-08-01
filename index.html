@@ -1597,6 +1597,7 @@ function freshState(){return{view:"home",tab:"matches",players:[],events:[],curr
  selected:[]
 }}}
 let state;
+let pamLocalEditUntil=0;
 try{state=JSON.parse(localStorage.getItem(KEY))||freshState()}catch(e){state=freshState()}
 if(!state.draft)state.draft=freshState().draft;
 if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
@@ -1755,7 +1756,6 @@ function applyMaleTokenBalancesTappa2(){
 }
 applyMaleTokenBalancesTappa2();
 
-let pamLocalEditUntil=0;
 function pamIsUserEditing(){
  const a=document.activeElement;
  const formActive=!!(a&&a.matches&&a.matches("input,textarea,select"));
