@@ -1,0 +1,14 @@
+PADEL ARENA MANAGER V8.1.19 - PORTALE CAPITANO
+
+Correzione esclusivamente mirata al punto 1:
+- Anteprima portale capitano genera e verifica il token corretto su Supabase.
+- Condivisione del link abilita automaticamente l accesso della squadra.
+- Se la squadra non era ancora sincronizzata, viene inserita senza modificare le altre squadre.
+- Il portale accetta i parametri invite, token e team per compatibilita con i vecchi link.
+- Nessuna modifica a tornei, partite, gettoni, iscrizioni, classifiche o altri punti del Campionato.
+
+INSTALLAZIONE
+1. Sostituire su GitHub tutti i file del pacchetto.
+2. Mantenere la cartella assets gia presente.
+3. Non eseguire SQL su Supabase.
+4. Aprire index.html?v=8119.

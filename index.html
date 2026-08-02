@@ -2631,9 +2631,32 @@ function pamSaveChampTeam(id,patch){
  all[id]=Object.assign({},all[id]||{},patch||{});
  localStorage.setItem(PAM_CHAMP_TEAMS_KEY,JSON.stringify(all));
 }
-function pamCaptainPortalUrl(team){
+function pamCaptainPortalUrl(team,tokenOverride){
  const base=location.href.split("?")[0].replace(/index\.html?$/i,"").replace(/\/$/,"");
- return base+"/captain-portal.html?invite="+encodeURIComponent(team.inviteToken);
+ const token=tokenOverride||team?.inviteToken||team?.invite_token||"";
+ return base+"/captain-portal.html?invite="+encodeURIComponent(token);
+}
+async function pamPrepareCaptainPortal(team){
+ if(!team)throw new Error("Squadra non trovata.");
+ if(!pamIsAdmin()||!PAM_SESSION)throw new Error("Accedi come amministratore per preparare il portale capitano.");
+ let token=String(team.inviteToken||team.invite_token||"").trim();
+ if(!token)token=(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):(Date.now().toString(16)+Math.random().toString(16).slice(2)));
+ const lookup=await sb.from("championship_teams").select("id,invite_token,access_enabled").eq("id",team.id).maybeSingle();
+ if(lookup.error)throw lookup.error;
+ if(lookup.data){
+  token=String(lookup.data.invite_token||token);
+  const upd=await sb.from("championship_teams").update({invite_token:token,access_enabled:true,updated_at:new Date().toISOString()}).eq("id",team.id).select("id,invite_token").single();
+  if(upd.error)throw upd.error;
+  token=String(upd.data?.invite_token||token);
+ }else{
+  const row={id:team.id,team_name:team.teamName||"Squadra",series:team.series||"",club_legal_name:team.clubLegalName||"",club_tax_id:team.clubTaxId||"",club_address:team.clubAddress||"",club_postal_code:team.clubPostalCode||"",club_town:team.clubTown||"",club_province:team.clubProvince||"",club_phone:team.clubPhone||"",club_email:team.clubEmail||"",home_court_address:team.homeCourtAddress||"",home_day:team.homeDay||"",home_time:team.homeTime||"",captain_name:team.captainName||"",captain_email:team.captainEmail||"",captain_phone:team.captainPhone||"",access_enabled:true,invite_token:token,roster_status:team.rosterStatus||"Da compilare",status:team.status||"Iscritta",updated_at:new Date().toISOString()};
+  const ins=await sb.from("championship_teams").insert(row).select("id,invite_token").single();
+  if(ins.error)throw ins.error;
+  token=String(ins.data?.invite_token||token);
+ }
+ pamSaveChampTeam(team.id,{inviteToken:token,captainAccessEnabled:true});
+ team.inviteToken=token;team.captainAccessEnabled=true;
+ return pamCaptainPortalUrl(team,token);
 }
 function pamSeriesCount(label){
  return pamChampTeams().filter(function(t){return String(t.series).includes(label)}).length;
@@ -2769,13 +2792,12 @@ async function pamToggleTeamAccess(id,forced){
 }
 async function pamShareTeamInvite(id){
  const t=pamChampTeam(id);if(!t)return;
- if(!t.captainAccessEnabled){pamToast("Prima devi abilitare l’accesso per questa squadra.","error");return}
- const url=pamCaptainPortalUrl(t);
- const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
  try{
+  const url=await pamPrepareCaptainPortal(t);
+  const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
   if(navigator.share){await navigator.share({title:"Accesso squadra "+t.teamName,text:text,url:url})}
-  else{await navigator.clipboard.writeText(text);pamToast("Messaggio e link copiati negli appunti.","success")}
- }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a condividere il link: "+err.message,"error")}
+  else{await navigator.clipboard.writeText(text);pamToast("Accesso abilitato: messaggio e link copiati negli appunti.","success")}
+ }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a preparare il portale capitano: "+err.message,"error")}
 }
 async function pamSaveChampTeamForm(id){
  const patch={};
@@ -4688,7 +4710,7 @@ document.addEventListener("click",function(ev){
  const toggleChamp=ev.target.closest("[data-toggle-team-access]");if(toggleChamp){pamToggleTeamAccess(toggleChamp.getAttribute("data-toggle-team-access"));return}
  const shareChamp=ev.target.closest("[data-share-team-invite]");if(shareChamp){pamShareTeamInvite(shareChamp.getAttribute("data-share-team-invite"));return}
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
- const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(t)window.open(pamCaptainPortalUrl(t)+"&preview=1","_blank");return}
+ const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(!t){pamToast("Squadra non trovata.","error");return}pamPrepareCaptainPortal(t).then(function(url){window.open(url+"&preview=1","_blank")}).catch(function(err){pamToast("Non riesco ad aprire il portale capitano: "+err.message,"error")});return}
 
  const compBtn=ev.target.closest("[data-champ-competition]");if(compBtn){state.champCompetition=compBtn.getAttribute("data-champ-competition");save();render();return}
  const saveSuper=ev.target.closest("[data-save-supercup]");if(saveSuper){pamSaveAicsCompetitionState({championshipWinner:document.getElementById("pamChampionshipWinner")?.value||"",cupWinner:document.getElementById("pamCupWinner")?.value||""});pamToast("Finaliste di Supercoppa salvate.","success");render();return}
@@ -4948,7 +4970,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.1.18-navigation",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=8.1.19-captain-link",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){
