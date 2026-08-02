@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.1.14</title>
+<title>Padel Arena Manager 8.1.15</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1894,7 +1894,7 @@ function save(){
  if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
-function playerName(p){return (p.firstName+" "+p.lastName).trim()}
+function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
 function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
 function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
 let pamEdenImportRunning=false;
@@ -4454,7 +4454,7 @@ function updateStageTeam(select){
  save();
 }
 function eventPlayersView(e){
- return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
+ return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);if(!p)return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>Giocatore non disponibile</b><div class="muted">Riferimento anagrafico temporaneamente non trovato. I dati del torneo non sono stati cancellati.</div></div></div>';return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
 }
 function commitBalances(){
  const e=currentEvent();if(!e)return;

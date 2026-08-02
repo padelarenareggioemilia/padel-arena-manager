@@ -1,0 +1,13 @@
+PADEL ARENA MANAGER V8.1.15 - RECUPERO APERTURA TORNEI
+
+Correzione mirata:
+- impedisce il blocco TypeError su p.firstName quando un torneo contiene un riferimento temporaneamente non agganciato all’anagrafica;
+- il torneo continua ad aprirsi e mostra un avviso neutro per l’eventuale riferimento mancante;
+- nessun torneo, risultato, asta o saldo gettoni viene cancellato o modificato;
+- conserva tutte le correzioni della V8.1.14.
+
+Pubblicazione:
+1. Sostituire su GitHub tutti i file del pacchetto.
+2. Mantenere la cartella assets già presente.
+3. Non eseguire SQL su Supabase.
+4. Aprire index.html?v=8115.
