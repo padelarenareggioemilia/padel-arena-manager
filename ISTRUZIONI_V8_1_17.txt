@@ -1,0 +1,19 @@
+PADEL ARENA MANAGER V8.1.17 - RECUPERO PARTECIPANTI E ISCRIZIONI
+
+Correzioni principali:
+- ripristinati “Mostra solo i giocatori selezionati” e “Deseleziona tutti” anche nella gestione di un torneo già creato;
+- “Deseleziona tutti” richiede sempre conferma;
+- ricerca nell’anagrafica esistente separata dalla creazione di una nuova anagrafica;
+- richieste duplicate raggruppate e cancellabili dall’amministratore;
+- salvataggio di una copia dei nomi dei partecipanti dentro il torneo, per evitare “Giocatore non disponibile” durante caricamenti incompleti;
+- SQL di recupero per riallineare anagrafiche e richieste accettate;
+- locandina stampabile in una sola pagina A4, con tema CUPRA femminile dedicato.
+
+INSTALLAZIONE
+1. Caricare su GitHub tutti i file e la sottocartella assets contenuti nel pacchetto.
+2. Conservare gli altri file già presenti nella cartella assets del repository.
+3. In Supabase aprire SQL Editor > New query.
+4. Copiare tutto SUPABASE_V8_1_17_RECUPERO_PARTECIPANTI.sql e premere Run una sola volta.
+5. Aprire index.html?v=8117.
+
+NON rigenerare le partite dei tornei già disputati soltanto per recuperare i nomi.
