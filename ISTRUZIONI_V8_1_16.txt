@@ -1,0 +1,21 @@
+PADEL ARENA MANAGER V8.1.16 — ISCRIZIONI INTELLIGENTI
+
+CORREZIONI
+- La ricerca pubblica mostra una sola riga per nominativo, scegliendo l'anagrafica più completa.
+- Chi è già in anagrafica non reinserisce i dati già presenti.
+- Se mancano dati, vengono richiesti esclusivamente quelli mancanti.
+- La stessa persona non può inviare più richieste per lo stesso torneo.
+- Anche una nuova registrazione viene confrontata con email, telefono e nome+cognome+data di nascita per evitare doppioni.
+- Nella pagina pubblica del torneo sono visibili nome, cognome e stato: confermata, in valutazione o lista d'attesa.
+- Le richieste rifiutate non sono pubblicate.
+- Nella Home pubblica compare il comando VEDI ISCRITTI.
+
+INSTALLAZIONE
+1. Caricare su GitHub tutti i file del pacchetto, mantenendo la cartella assets già presente.
+2. In Supabase aprire SQL Editor > New query.
+3. Copiare integralmente SUPABASE_V8_1_16_ISCRIZIONI_INTELLIGENTI.sql.
+4. Premere Run una sola volta.
+5. Aprire index.html?v=8116.
+
+L'aggiornamento non modifica partite, risultati, gettoni, aste o Campionato.
+Le email automatiche non sono incluse: richiedono una Edge Function e un servizio email configurato con una chiave privata.

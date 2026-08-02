@@ -9,13 +9,15 @@
 <style>
 :root{--bg:#07111f;--card:#10233b;--line:#294262;--text:#f8fafc;--muted:#a9bacd;--accent:#9dff25;--blue:#16a8ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0%,#123f61,transparent 35%),linear-gradient(180deg,#06101d,#07111f);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;min-height:100vh}
-main{max-width:820px;margin:auto;padding:18px 14px 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:15px}.brand img{width:66px;height:66px;border-radius:18px}.brand h1{margin:0;font-size:24px}.brand small{color:var(--muted);letter-spacing:.08em}
+main{max-width:880px;margin:auto;padding:18px 14px 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:15px}.brand img{width:66px;height:66px;border-radius:18px}.brand h1{margin:0;font-size:24px}.brand small{color:var(--muted);letter-spacing:.08em}
 .card{background:rgba(16,35,59,.96);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 16px 44px rgba(0,0,0,.22)}h2,h3{margin:0 0 12px}.muted{color:var(--muted)}.notice{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line);margin:10px 0}.success{border-color:#4ade80;background:#0b2a20}.error{border-color:#ef4444;background:#351316}
 label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #365474;background:#071523;color:white}button{padding:13px 16px;border:0;border-radius:12px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#07111f}.secondary{background:#17304e;color:white;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:white}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}
-.search-results{display:grid;gap:8px;margin-top:8px}.person-result{display:flex;justify-content:space-between;align-items:center;text-align:left;background:#09182a;color:white;border:1px solid #365474}.person-result span{display:block}.person-result small{color:var(--muted)}.selected-person{padding:12px;border:2px solid var(--accent);border-radius:14px;background:#0d291d}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}.on{outline:2px solid var(--accent)}
+.search-results{display:grid;gap:8px;margin-top:8px}.person-result{display:flex;justify-content:space-between;align-items:center;text-align:left;background:#09182a;color:white;border:1px solid #365474}.person-result span{display:block}.person-result small{color:var(--muted)}.selected-person{padding:12px;border:2px solid var(--accent);border-radius:14px;background:#0d291d}.selected-person .status{margin-top:8px;font-weight:900;color:var(--accent)}
 .required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}
-@media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
+.public-list{display:grid;gap:8px}.public-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid #294262;border-radius:13px;background:#09182a}.public-row b{display:block}.status-pill{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;background:#203754;color:#fff}.status-accepted{background:#174c32;color:#caffdf}.status-new{background:#17304e;color:#d9ecff}.status-waitlist{background:#5b4210;color:#fff1b8}
+.missing-title{margin:12px 0 4px;color:var(--accent);font-weight:950}.complete-note{border-color:#4ade80;background:#0b2a20}
+@media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}.public-row{grid-template-columns:1fr}.status-pill{justify-self:start}}
 </style>
 </head>
 <body>
@@ -28,138 +30,104 @@ const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}});
 const token=new URLSearchParams(location.search).get("tournament");
-let tournament=null;
+let tournament=null,registrations=[];
 let mode="single";
-let primary={type:"existing",id:null,name:""};
-let partner={type:"existing",id:null,name:""};
-
-const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-async function loadTournament(){
+let primary={type:"existing",id:null,name:"",missing:[],status:null};
+let partner={type:"existing",id:null,name:"",missing:[],status:null};
+const searchCache={primary:new Map(),partner:new Map()};
+const esc=v=>String(v??"").replace(/[&<>\"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const fieldDefs={
+ firstName:{label:"Nome",type:"text"},lastName:{label:"Cognome",type:"text"},birth:{label:"Data di nascita",type:"date"},birthPlace:{label:"Luogo di nascita",type:"text"},postalCode:{label:"CAP di residenza",type:"text",inputmode:"numeric"},residenceTown:{label:"Comune di residenza",type:"text"},residenceProvince:{label:"Provincia di residenza",type:"text",maxlength:"2",placeholder:"RE"},phone:{label:"Telefono",type:"tel"},email:{label:"Indirizzo email",type:"email"},gender:{label:"Sesso",type:"select"},level:{label:"Livello facoltativo",type:"text",placeholder:"Principiante, intermedio..."},notes:{label:"Note facoltative",type:"textarea"}
+};
+const statusLabel=s=>({accepted:"Iscrizione confermata",imported:"Iscrizione confermata",new:"In valutazione",waitlist:"Lista d’attesa",rejected:"Rifiutata"}[s]||"");
+const statusClass=s=>s==="accepted"||s==="imported"?"status-accepted":s==="waitlist"?"status-waitlist":"status-new";
+async function load(){
  if(!token){showError("Link di iscrizione non valido.");return}
- const {data,error}=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
- if(error||!data){showError(error?.message||"Torneo non trovato.");return}
- tournament=data;render();
+ const [tRes,lRes]=await Promise.all([
+  sb.rpc("public_tournament_for_registration",{p_share_token:token}),
+  sb.rpc("public_tournament_registration_list",{p_share_token:token})
+ ]);
+ if(tRes.error||!tRes.data){showError(tRes.error?.message||"Torneo non trovato.");return}
+ tournament=tRes.data;registrations=lRes.error?[]:(lRes.data||[]);render();
 }
 function showError(msg){document.getElementById("app").innerHTML='<div class="card error">'+esc(msg)+'</div>'}
-function personSection(kind,title){
- const p=kind==="primary"?primary:partner;
- return '<section class="card" id="'+kind+'Section"><h3>'+title+'</h3>'+
-  '<div class="actions"><button type="button" class="secondary '+(p.type==="existing"?"on":"")+'" data-person-type="'+kind+'" data-type="existing">SONO GIÀ IN ANAGRAFICA</button>'+
-  '<button type="button" class="secondary '+(p.type==="new"?"on":"")+'" data-person-type="'+kind+'" data-type="new">NUOVA REGISTRAZIONE</button></div>'+
-  (p.type==="existing"?existingSearch(kind,p):newForm(kind))+
- '</section>';
+function isFixedPairsTournament(){return String(tournament?.competition_type||"").toLowerCase()==="fixed_pairs"}
+function normalizeRegistrationMode(){if(!isFixedPairsTournament())mode="single"}
+function fieldHtml(kind,key){
+ const d=fieldDefs[key];if(!d)return"";const id=kind+"_"+key;
+ if(d.type==="select")return '<div><label>'+d.label+' <span class="required">*</span></label><select id="'+id+'"><option value="">Seleziona</option><option>Maschile</option><option>Femminile</option><option>Altro / non binario</option></select></div>';
+ if(d.type==="textarea")return '<div style="grid-column:1/-1"><label>'+d.label+'</label><textarea id="'+id+'" rows="2"></textarea></div>';
+ return '<div><label>'+d.label+(key!=="level"?' <span class="required">*</span>':'')+'</label><input id="'+id+'" type="'+d.type+'" '+(d.inputmode?'inputmode="'+d.inputmode+'" ':'')+(d.maxlength?'maxlength="'+d.maxlength+'" ':'')+(d.placeholder?'placeholder="'+d.placeholder+'" ':'')+'></div>';
+}
+function missingForm(kind,missing,isNew){
+ const keys=isNew?["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email","gender","level","notes"]:[...missing,"level","notes"];
+ if(!isNew&&missing.length===0)return '<div class="notice complete-note"><b>Anagrafica completa.</b><br>Non devi reinserire alcun dato: puoi inviare subito la richiesta.</div>';
+ return '<div class="missing-title">'+(isNew?'COMPILA I DATI OBBLIGATORI':'COMPLETA SOLTANTO I DATI MANCANTI')+'</div><div class="row">'+keys.map(k=>fieldHtml(kind,k)).join("")+'</div>';
 }
 function existingSearch(kind,p){
- return '<label>Scrivi almeno una parte del nome o del cognome</label>'+
-  '<input type="search" data-search-person="'+kind+'" placeholder="Esempio: Franc Lig">'+
-  '<div class="search-results" id="'+kind+'Results"></div>'+
-  (p.id?'<div class="selected-person"><b>SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button></div><div class="notice"><b>Conferma e completa i dati obbligatori.</b> Per tutelare la privacy non mostriamo i dati già presenti.</div>'+newForm(kind):'');
+ return '<label>Scrivi almeno una parte del nome o del cognome</label><input type="search" data-search-person="'+kind+'" placeholder="Esempio: Franc Lig"><div class="search-results" id="'+kind+'Results"></div>'+
+ (p.id?'<div class="selected-person"><b>SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button>'+(p.status?'<div class="status">'+esc(statusLabel(p.status))+'</div>':'')+'</div>'+(p.status?'<div class="notice">Questa persona risulta già iscritta a questo torneo. Non verrà creata una seconda richiesta.</div>':missingForm(kind,p.missing,false)):'');
 }
-function newForm(kind){
- const f=n=>kind+"_"+n;
- return '<div class="row"><div><label>Nome <span class="required">*</span></label><input id="'+f("firstName")+'" required></div>'+
- '<div><label>Cognome <span class="required">*</span></label><input id="'+f("lastName")+'" required></div></div>'+
- '<div class="row"><div><label>Data di nascita <span class="required">*</span></label><input id="'+f("birth")+'" type="date" required></div>'+
- '<div><label>Luogo di nascita <span class="required">*</span></label><input id="'+f("birthPlace")+'" required></div></div>'+
- '<div class="row"><div><label>CAP di residenza <span class="required">*</span></label><input id="'+f("postalCode")+'" inputmode="numeric" required></div>'+
- '<div><label>Comune di residenza <span class="required">*</span></label><input id="'+f("residenceTown")+'" required></div></div>'+
- '<div class="row"><div><label>Provincia di residenza <span class="required">*</span></label><input id="'+f("residenceProvince")+'" maxlength="2" placeholder="RE" required></div>'+
- '<div><label>Telefono <span class="required">*</span></label><input id="'+f("phone")+'" type="tel" required></div></div>'+
- '<label>Indirizzo email <span class="required">*</span></label><input id="'+f("email")+'" type="email" required>'+
- '<div class="row"><div><label>Sesso <span class="required">*</span></label><select id="'+f("gender")+'" required><option value="">Seleziona</option><option>Maschile</option><option>Femminile</option><option>Altro / non binario</option></select></div>'+
- '<div><label>Livello facoltativo</label><input id="'+f("level")+'" placeholder="Principiante, intermedio..."></div></div>'+
- '<label>Note facoltative</label><textarea id="'+f("notes")+'" rows="2"></textarea>';
+function personSection(kind,title){
+ const p=kind==="primary"?primary:partner;
+ return '<section class="card"><h3>'+title+'</h3><div class="actions"><button type="button" class="secondary '+(p.type==="existing"?"on":"")+'" data-person-type="'+kind+'" data-type="existing">SONO GIÀ IN ANAGRAFICA</button><button type="button" class="secondary '+(p.type==="new"?"on":"")+'" data-person-type="'+kind+'" data-type="new">NUOVA REGISTRAZIONE</button></div>'+(p.type==="existing"?existingSearch(kind,p):missingForm(kind,[],true))+'</section>';
 }
-function isFixedPairsTournament(){
- return String(tournament&&tournament.competition_type||"").toLowerCase()==="fixed_pairs";
-}
-function normalizeRegistrationMode(){
- if(!isFixedPairsTournament())mode="single";
+function publicListHtml(){
+ if(!registrations.length)return '<div class="notice">Non risultano ancora richieste di iscrizione pubblicabili.</div>';
+ return '<div class="public-list">'+registrations.map(r=>'<div class="public-row"><div><b>'+esc(r.full_name)+'</b></div><span class="status-pill '+statusClass(r.status)+'">'+esc(statusLabel(r.status))+'</span></div>').join("")+'</div>';
 }
 function render(){
- normalizeRegistrationMode();
- document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
+ normalizeRegistrationMode();document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
- '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
- (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
- '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
- (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
-  '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+
-  '<button type="button" class="secondary '+(mode==="pair"?"on":"")+'" data-mode="pair">ISCRIZIONE CON PARTNER</button>'+
- '</div><div class="muted" style="margin-top:10px">Nei tornei a coppie puoi iscriverti singolarmente oppure indicare il partner.</div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo a gettoni e Rodeo semplice ogni giocatore si iscrive singolarmente.</div></section>')+
- personSection("primary","I TUOI DATI")+
- (mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
- '<section class="card"><div class="privacy">I dati vengono utilizzati esclusivamente per gestire l’iscrizione al torneo e aggiornare l’anagrafica sportiva dell’organizzatore.</div>'+
- '<button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button><div id="submitMessage"></div></section>';
+ '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+(tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+'<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi inviare la tua iscrizione e consultare esclusivamente nomi, cognomi e stato delle richieste.</div></section>'+
+ '<section class="card"><h3>ISCRITTI E RICHIESTE</h3><div class="muted" style="margin-bottom:10px">Sono visibili soltanto nome, cognome e stato. Nessun altro dato personale viene mostrato.</div>'+publicListHtml()+'</section>'+
+ (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid"><button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button><button type="button" class="secondary '+(mode==="pair"?"on":"")+'" data-mode="pair">ISCRIZIONE CON PARTNER</button></div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo ogni giocatore si iscrive singolarmente.</div></section>')+
+ personSection("primary","I TUOI DATI")+(mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
+ '<section class="card"><div class="privacy">I dati vengono usati esclusivamente per gestire l’iscrizione e aggiornare l’anagrafica sportiva. I dati già presenti non vengono mostrati né richiesti nuovamente.</div><button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button><div id="submitMessage"></div></section>';
 }
 async function searchPlayers(kind,q){
- const box=document.getElementById(kind+"Results");if(!box)return;
- if(q.trim().length<2){box.innerHTML='<div class="muted">Scrivi almeno 2 caratteri.</div>';return}
- box.innerHTML='<div class="muted">Ricerca...</div>';
- const {data,error}=await sb.rpc("public_search_players_for_registration",{p_share_token:token,p_query:q.trim()});
+ const box=document.getElementById(kind+"Results");if(!box)return;if(q.trim().length<2){box.innerHTML='<div class="muted">Scrivi almeno 2 caratteri.</div>';return}
+ box.innerHTML='<div class="muted">Ricerca...</div>';const {data,error}=await sb.rpc("public_search_players_for_registration",{p_share_token:token,p_query:q.trim()});
  if(error){box.innerHTML='<div class="error notice">'+esc(error.message)+'</div>';return}
- box.innerHTML=(data||[]).length?(data||[]).map(p=>
-  '<button type="button" class="person-result" data-select-person="'+kind+'" data-id="'+p.id+'" data-name="'+esc(p.full_name)+'"><span><b>'+esc(p.full_name)+'</b><small>Giocatore già presente</small></span><b>SELEZIONA</b></button>'
- ).join(""):'<div class="notice">Nessun giocatore trovato. Usa <b>NUOVA REGISTRAZIONE</b>.</div>';
+ searchCache[kind].clear();(data||[]).forEach(p=>searchCache[kind].set(String(p.id),p));
+ box.innerHTML=(data||[]).length?(data||[]).map(p=>'<button type="button" class="person-result" data-select-person="'+kind+'" data-id="'+esc(p.id)+'"><span><b>'+esc(p.full_name)+'</b><small>'+(p.registration_status?esc(statusLabel(p.registration_status)):(Array.isArray(p.missing_fields)&&p.missing_fields.length?"Dati mancanti: "+p.missing_fields.length:"Anagrafica completa"))+'</small></span><b>SELEZIONA</b></button>').join(""):'<div class="notice">Nessun giocatore trovato. Usa <b>NUOVA REGISTRAZIONE</b>.</div>';
 }
-function readNew(kind){
- const get=n=>document.getElementById(kind+"_"+n)?.value.trim()||"";
- const obj={
-  firstName:get("firstName"),lastName:get("lastName"),birth:get("birth"),birthPlace:get("birthPlace"),
-  postalCode:get("postalCode"),residenceTown:get("residenceTown"),residenceProvince:get("residenceProvince").toUpperCase(),
-  phone:get("phone"),email:get("email").toLowerCase(),gender:get("gender"),level:get("level"),notes:get("notes")
- };
- const required=["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email","gender"];
- for(const k of required)if(!obj[k])throw new Error("Completa tutti i campi obbligatori.");
- if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(obj.email))throw new Error("Inserisci un indirizzo email valido.");
- return {kind:"new",data:obj};
+function readFields(kind,keys){
+ const obj={};for(const k of keys){const el=document.getElementById(kind+"_"+k);if(el)obj[k]=String(el.value||"").trim()}
+ if(obj.residenceProvince)obj.residenceProvince=obj.residenceProvince.toUpperCase();if(obj.email)obj.email=obj.email.toLowerCase();return obj;
 }
 function payloadFor(kind){
  const p=kind==="primary"?primary:partner;
  if(p.type==="existing"){
   if(!p.id)throw new Error(kind==="primary"?"Seleziona il tuo nominativo.":"Seleziona il partner.");
-  return {kind:"existing",player_id:p.id,data:readNew(kind).data};
+  if(p.status)return {kind:"existing",player_id:p.id,data:{}};
+  const data=readFields(kind,[...p.missing,"level","notes"]);
+  for(const k of p.missing)if(!data[k])throw new Error("Completa tutti i dati mancanti richiesti.");
+  if(data.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email))throw new Error("Inserisci un indirizzo email valido.");
+  return {kind:"existing",player_id:p.id,data};
  }
- return readNew(kind);
+ const required=["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email","gender"];
+ const data=readFields(kind,[...required,"level","notes"]);for(const k of required)if(!data[k])throw new Error("Completa tutti i campi obbligatori.");
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email))throw new Error("Inserisci un indirizzo email valido.");return {kind:"new",data};
 }
+async function refreshList(){const {data}=await sb.rpc("public_tournament_registration_list",{p_share_token:token});registrations=data||[]}
 async function submit(){
- const btn=document.getElementById("submitRegistration"),msg=document.getElementById("submitMessage");
- try{
-  btn.disabled=true;btn.textContent="INVIO IN CORSO...";
-  normalizeRegistrationMode();
-  const primaryPayload=payloadFor("primary");
-  const partnerPayload=mode==="pair"?payloadFor("partner"):null;
-  if(mode==="pair"&&primaryPayload.kind==="existing"&&partnerPayload.kind==="existing"&&primaryPayload.player_id===partnerPayload.player_id)throw new Error("Il giocatore e il partner devono essere persone diverse.");
-  const {data,error}=await sb.rpc("public_submit_tournament_registration_request",{
-   p_share_token:token,p_mode:mode,p_primary:primaryPayload,p_partner:partnerPayload
-  });
-  if(error)throw error;
-  document.getElementById("app").innerHTML='<div class="card success"><h2>RICHIESTA INVIATA</h2><p>'+esc(data.message||"La richiesta è stata inviata all’organizzatore.")+'</p><p>Puoi chiudere questa pagina.</p></div>';
- }catch(err){
-  msg.className="notice error";msg.textContent=err.message;
-  btn.disabled=false;btn.textContent="CONFERMA ISCRIZIONE";
- }
+ const btn=document.getElementById("submitRegistration"),msg=document.getElementById("submitMessage");try{
+  btn.disabled=true;btn.textContent="INVIO IN CORSO...";normalizeRegistrationMode();const primaryPayload=payloadFor("primary"),partnerPayload=mode==="pair"?payloadFor("partner"):null;
+  if(mode==="pair"&&primaryPayload.player_id&&primaryPayload.player_id===partnerPayload?.player_id)throw new Error("Il giocatore e il partner devono essere persone diverse.");
+  const {data,error}=await sb.rpc("public_submit_tournament_registration_request",{p_share_token:token,p_mode:mode,p_primary:primaryPayload,p_partner:partnerPayload});if(error)throw error;
+  await refreshList();document.getElementById("app").innerHTML='<div class="card success"><h2>'+(data.already_registered?'ISCRIZIONE GIÀ PRESENTE':'RICHIESTA INVIATA')+'</h2><p>'+esc(data.message||"")+'</p><p>Stato: <b>'+esc(statusLabel(data.status))+'</b></p><button class="secondary" onclick="location.reload()">VEDI ELENCO AGGIORNATO</button></div>';
+ }catch(err){msg.className="notice error";msg.textContent=err.message;btn.disabled=false;btn.textContent="CONFERMA ISCRIZIONE"}
 }
-document.addEventListener("input",e=>{
- const kind=e.target.getAttribute("data-search-person");
- if(kind){clearTimeout(e.target._t);e.target._t=setTimeout(()=>searchPlayers(kind,e.target.value),280)}
-});
+document.addEventListener("input",e=>{const kind=e.target.getAttribute("data-search-person");if(kind){clearTimeout(e.target._t);e.target._t=setTimeout(()=>searchPlayers(kind,e.target.value),250)}});
 document.addEventListener("click",e=>{
- const modeBtn=e.target.closest("[data-mode]");if(modeBtn){mode=modeBtn.dataset.mode;render();return}
- const typeBtn=e.target.closest("[data-person-type]");if(typeBtn){
-  const kind=typeBtn.dataset.personType,obj=kind==="primary"?primary:partner;
-  obj.type=typeBtn.dataset.type;obj.id=null;obj.name="";render();return
- }
- const select=e.target.closest("[data-select-person]");if(select){
-  const obj=select.dataset.selectPerson==="primary"?primary:partner;
-  obj.type="existing";obj.id=select.dataset.id;obj.name=select.dataset.name;render();return
- }
- const clear=e.target.closest("[data-clear-person]");if(clear){
-  const obj=clear.dataset.clearPerson==="primary"?primary:partner;obj.id=null;obj.name="";render();return
- }
+ const m=e.target.closest("[data-mode]");if(m){mode=m.dataset.mode;render();return}
+ const t=e.target.closest("[data-person-type]");if(t){const o=t.dataset.personType==="primary"?primary:partner;o.type=t.dataset.type;o.id=null;o.name="";o.missing=[];o.status=null;render();return}
+ const s=e.target.closest("[data-select-person]");if(s){const kind=s.dataset.selectPerson,o=kind==="primary"?primary:partner,p=searchCache[kind].get(String(s.dataset.id));if(!p)return;o.type="existing";o.id=String(p.id);o.name=p.full_name;o.missing=Array.isArray(p.missing_fields)?p.missing_fields:[];o.status=p.registration_status||null;render();return}
+ const c=e.target.closest("[data-clear-person]");if(c){const o=c.dataset.clearPerson==="primary"?primary:partner;o.id=null;o.name="";o.missing=[];o.status=null;render();return}
  if(e.target.id==="submitRegistration")submit();
 });
-loadTournament();
+load();
 </script>
 </body>
 </html>
