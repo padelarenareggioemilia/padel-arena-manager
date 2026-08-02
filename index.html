@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.1.3</title>
+<title>Padel Arena Manager 8.1.14</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1291,7 +1291,8 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 .pam-actions-content .primary,.pam-actions-content .secondary,.pam-actions-content .small,.pam-actions-content .upload-button{width:auto;min-width:150px;flex:1 1 170px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
 .pam-event-row-actions{margin-left:auto;min-width:170px}
 .pam-event-row-actions .pam-actions-content{min-width:240px;display:grid;grid-template-columns:1fr;position:absolute;right:0;z-index:25;background:#0b182a;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.38)}
-.pam-event-row-actions{position:relative}
+.pam-event-row-actions{position:relative;overflow:visible!important}
+.pam-event-row-actions[open]{overflow:visible!important;z-index:40}
 .pam-event-row-actions>summary{padding:9px 12px;background:#203754;border-radius:12px}
 .pam-event-row-actions[open]>summary{border-bottom:0}
 .pam-detail-menu .pam-actions-content{display:block;line-height:1.55;color:var(--muted)}
@@ -2233,13 +2234,20 @@ function pamEditEvent(id){
  const name=prompt("Nome torneo",e.name);if(name===null)return;
  const date=prompt("Data (AAAA-MM-GG)",e.date||"");if(date===null)return;
  const club=prompt("Circolo",e.club||"");if(club===null)return;
+ const normalizedClub=club.trim();
+ let customAddress=e.customAddress||"";
+ if(pamClubAllowsCustomAddress(normalizedClub)){
+  const addressPrompt=prompt("Indirizzo evento",customAddress);
+  if(addressPrompt===null)return;
+  customAddress=addressPrompt.trim();
+ }else customAddress="";
  const category=prompt("Categoria",e.category||"");if(category===null)return;
  const startTime=prompt("Orario di inizio (HH:MM)",e.startTime||"20:00");if(startTime===null)return;
  const timerDuration=prompt("Durata effettiva della partita / timer in minuti",String(e.timerDuration||e.matchDuration||15));if(timerDuration===null)return;
  const slotDuration=prompt("Intervallo tra gli inizi delle partite in minuti",String(e.slotDuration||e.matchDuration||20));if(slotDuration===null)return;
  e.name=name.trim()||e.name;
  e.date=date.trim();
- e.club=club.trim();
+ e.club=normalizedClub;
  e.customAddress=customAddress;
  e.category=category.trim();
  e.startTime=startTime.trim()||"20:00";

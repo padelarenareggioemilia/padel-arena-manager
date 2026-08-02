@@ -1,0 +1,13 @@
+PADEL ARENA MANAGER V8.1.14 — FIX DUPLICAZIONE E MENU
+
+Correzioni mirate:
+- Modifica dati del torneo duplicato: corretto errore "customAddress is not defined".
+- Se il circolo usa un indirizzo personalizzato, il campo viene richiesto e salvato correttamente.
+- Menu "Altre azioni": corretto il pannello che restava nascosto pur ruotando la freccia.
+- Nessuna modifica a tornei esistenti, risultati, iscritti, gettoni, aste, campionato o Supabase.
+
+INSTALLAZIONE
+1. Sostituire su GitHub tutti i file contenuti nel pacchetto.
+2. Conservare la cartella assets già presente nel repository.
+3. Non eseguire SQL su Supabase.
+4. Aprire index.html?v=8114.
