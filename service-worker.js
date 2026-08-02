@@ -1,4 +1,4 @@
-const CACHE='pam-v8-1-17-recupero-partecipanti';
+const CACHE='pam-v8-1-18-navigation';
 const CORE=[
  './','./index.html','./manifest.webmanifest','./public-registration.html',
  './player-registration.html','./captain-portal.html','./poster.html',

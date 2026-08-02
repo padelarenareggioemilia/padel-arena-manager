@@ -19,8 +19,8 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .missing-title{margin:12px 0 4px;color:var(--accent);font-weight:950}.complete-note{border-color:#4ade80;background:#0b2a20}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}.public-row{grid-template-columns:1fr}.status-pill{justify-self:start}}
 </style>
-</head>
-<body>
+<style id="pamUniversalPageNavStyle">.pam-page-nav{position:sticky;top:8px;z-index:9999;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:920px;margin:10px auto;padding:8px;border:1px solid #365474;border-radius:16px;background:rgba(7,17,31,.95);backdrop-filter:blur(12px)}.pam-page-nav button{min-height:44px;border:1px solid #365474;border-radius:12px;background:#17304e;color:#fff;font-weight:900}.pam-page-menu{position:fixed;inset:0;z-index:100000;background:rgba(3,11,22,.93);display:flex;justify-content:center;align-items:flex-start;padding:76px 14px}.pam-page-menu-card{width:min(460px,100%);background:#102139;border:1px solid #365477;border-radius:20px;padding:16px;color:#fff}.pam-page-menu-card button,.pam-page-menu-card a{display:block;width:100%;margin:8px 0;padding:13px;border:1px solid #365474;border-radius:12px;background:#17304e;color:#fff;text-align:center;text-decoration:none;font-weight:900}@media print{.pam-page-nav,.pam-page-menu{display:none!important}}</style></head>
+<body><div class="pam-page-nav"><button type="button" onclick="pamPageBack()">← Indietro</button><button type="button" onclick="pamPageHome()">⌂ Home</button><button type="button" onclick="pamPageMenu()">☰ Menu</button></div>
 <main>
  <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
@@ -129,5 +129,5 @@ document.addEventListener("click",e=>{
 });
 load();
 </script>
-</body>
+<script id="pamUniversalPageNavScript">function pamAppBase(){return location.href.split('?')[0].replace(/(?:captain-portal|player-registration|public-registration|poster)\.html$/i,'index.html')}function pamPageHome(){location.href=pamAppBase()}function pamPageBack(){if(history.length>1)history.back();else pamPageHome()}function pamPageMenu(){if(document.getElementById('pamPageMenu'))return;const d=document.createElement('div');d.id='pamPageMenu';d.className='pam-page-menu';d.innerHTML='<div class="pam-page-menu-card"><button onclick="document.getElementById(\'pamPageMenu\').remove()">Chiudi</button><a href="'+pamAppBase()+'">⌂ Home pubblica</a><a href="'+pamAppBase()+'?open=events">🎾 Tornei</a><a href="'+pamAppBase()+'?open=championship">🏆 Campionato</a><a href="'+pamAppBase()+'?login=1">🔐 Accedi</a></div>';document.body.appendChild(d)}</script></body>
 </html>

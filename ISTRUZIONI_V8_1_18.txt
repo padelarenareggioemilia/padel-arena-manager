@@ -1,0 +1,15 @@
+PADEL ARENA MANAGER V8.1.18 - NAVIGAZIONE UNIVERSALE E NUOVA SQUADRA
+
+Modifiche aggiuntive e non distruttive:
+- Barra Indietro, Home e Menu nelle pagine principali, pubbliche e riservate.
+- Menu differenziato in base al ruolo.
+- Indietro conserva la navigazione interna e torna alla Home se non esiste uno storico.
+- Conferma prima di uscire dal Builder con modifiche potenzialmente non salvate.
+- Pulsante CREA NUOVA SQUADRA visibile soltanto all'amministratore nel Campionato.
+- La nuova squadra entra automaticamente nell'elenco del Campionato e della Coppa Italia.
+- La Supercoppa resta riservata alle squadre che acquisiscono il diritto sportivo.
+
+Installazione:
+1. Caricare tutti i file su GitHub, mantenendo gli assets già presenti.
+2. Non eseguire SQL aggiuntivo.
+3. Aprire index.html?v=8118.
