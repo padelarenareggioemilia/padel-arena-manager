@@ -1,0 +1,13 @@
+FIX PUBLIC HOME ACCESSO V9 1.2.3
+
+PROBLEMA TROVATO
+Il codice delle funzioni Logout e Recupera iscrizione era stato inserito
+dentro un tag <script src="...">. Il browser ignora il codice scritto
+all'interno di un tag script che contiene l'attributo src.
+
+INSTALLAZIONE
+1. Su GitHub sostituisci soltanto public.html con quello presente nello ZIP.
+2. Fai Commit changes.
+3. Apri public.html?v=123.
+
+Non serve SQL aggiuntivo se hai già eseguito lo script della Build 1.2.2.

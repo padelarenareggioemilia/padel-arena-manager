@@ -4,7 +4,77 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AICS PADEL CHAMPIONSHIP</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{--blue:#164a95;--blue2:#082f68;--green:#009246;--red:#ce2b37;--bg:#f3f7fb;--panel:#fff;--soft:#eaf2fb;--text:#092d5d;--muted:#647c98;--line:#bfd0e2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:var(--text)}body:before{content:"";position:fixed;inset:0 0 auto;height:6px;background:linear-gradient(90deg,var(--green) 0 33.33%,#fff 33.33% 66.66%,var(--red) 66.66%);z-index:20}
+.shell{max-width:1180px;margin:auto;padding:18px 12px 70px}.hero,.card{border:1px solid var(--line);border-radius:20px;box-shadow:0 13px 28px rgba(8,47,104,.1)}.hero{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:15px}.brand{display:flex;gap:13px;align-items:center}.logo{width:100px;height:78px;object-fit:contain;background:#fff;border-radius:13px;padding:5px}.hero h1{margin:0}.card{background:#fff;padding:15px;margin:12px 0}.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.comp{border:1px solid var(--line);background:#fff;border-radius:17px;padding:14px;cursor:pointer;text-align:center;min-height:165px}.comp:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(8,47,104,.13)}.comp img{width:92px;height:92px;object-fit:contain}.comp strong{display:block;font-size:19px;margin-top:4px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tab{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:12px;padding:12px;font-weight:900;cursor:pointer}.tab.active{background:var(--blue);color:#fff}.fixture{display:grid;grid-template-columns:115px 1fr auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #dce6f0}.score{font-size:20px;font-weight:1000}.muted{color:var(--muted)}.small{font-size:12px}.notice{padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}.hidden{display:none!important}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:10px;border-bottom:1px solid #dce6f0;text-align:center}th{background:var(--blue);color:#fff}td:nth-child(2),th:nth-child(2){text-align:left}.group-title{padding:9px 12px;border-left:5px solid var(--green);background:var(--soft);border-radius:0 10px 10px 0}.btn{border:0;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+@media(max-width:800px){.grid5{grid-template-columns:1fr 1fr}.tabs{grid-template-columns:1fr 1fr}.fixture{grid-template-columns:1fr}.hero{align-items:flex-start}.logo{width:82px;height:64px}}
+
+.account-tools{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.account-tools h2{margin:0 0 8px}.account-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.account-tools input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}
+.account-status{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);margin-top:9px}
+.account-status.ok{background:#ebf8f0;border-color:#79bf90}.account-status.err{background:#fdecef;border-color:#dd7a85}
+@media(max-width:700px){.account-tools-grid{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="app-theme.css?v=980stable">
+</head>
+<body>
+<main class="shell">
+<header class="hero">
+  <div class="brand">
+    <img id="headerLogo" class="logo" src="assets/aics-logo.png" alt="AICS">
+    <div>
+      <h1 id="headerTitle">AICS PADEL CHAMPIONSHIP</h1>
+      <div id="headerSubtitle">Seleziona la competizione che desideri consultare</div>
+    </div>
+  </div>
+  <button id="headerButton" class="btn secondary" onclick="location.href='login.html?change=1&force=1&v=123'">Accedi al tuo account</button>
+</header>
+<section class="account-tools">
+  <div class="account-tools-grid">
+    <div>
+      <h2>Cambia account</h2>
+      <div class="muted small">Chiude completamente la sessione attiva e lascia aperta la pagina di accesso.</div>
+      <button class="btn secondary" style="margin-top:9px" onclick="logoutFromPublic()">Logout / Cambia account</button>
+    </div>
+    <div>
+      <h2>Sei un giocatore del campionato?</h2>
+      <div class="muted small">Inserisci l’indirizzo email comunicato al capitano per recuperare la tua anagrafica già approvata.</div>
+      <input id="playerRecoveryEmail" type="email" placeholder="Indirizzo email">
+      <button class="btn primary" style="margin-top:9px" onclick="recoverPlayerFromPublic()">Recupera la mia iscrizione</button>
+    </div>
+  </div>
+  <div id="accountPublicStatus" class="account-status hidden"></div>
+</section>
+
+
+<section id="landingView" class="card">
+  <div class="notice">Clicca sullo stemma per aprire calendario, risultati e classifica della singola competizione.</div>
+  <div class="grid5" id="competitionCards"></div>
+</section>
+
+<section id="competitionView" class="hidden">
+  <section class="card">
+    <div class="tabs">
+      <button class="tab" data-view="previous" onclick="setView('previous')">Giornata precedente</button>
+      <button class="tab active" data-view="current" onclick="setView('current')">Giornata in corso</button>
+      <button class="tab" data-view="next" onclick="setView('next')">Prossima giornata</button>
+      <button class="tab" data-view="standings" onclick="setView('standings')">Classifica</button>
+    </div>
+  </section>
+  <section class="card"><div id="content"><div class="notice">Caricamento…</div></div></section>
+</section>
+
+<div id="errorBox" class="notice hidden"></div>
+</main>
+
+<script>
+const cfg=window.PAM_V9_CONFIG;
+const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey);
+
 function publicAccountMessage(text,error=false){
   const box=document.getElementById('accountPublicStatus');
   if(!box)return;
@@ -48,77 +118,6 @@ async function recoverPlayerFromPublic(){
 }
 window.logoutFromPublic=logoutFromPublic;
 window.recoverPlayerFromPublic=recoverPlayerFromPublic;
-
-</script>
-<script src="config.js"></script>
-<style>
-:root{--blue:#164a95;--blue2:#082f68;--green:#009246;--red:#ce2b37;--bg:#f3f7fb;--panel:#fff;--soft:#eaf2fb;--text:#092d5d;--muted:#647c98;--line:#bfd0e2}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:var(--text)}body:before{content:"";position:fixed;inset:0 0 auto;height:6px;background:linear-gradient(90deg,var(--green) 0 33.33%,#fff 33.33% 66.66%,var(--red) 66.66%);z-index:20}
-.shell{max-width:1180px;margin:auto;padding:18px 12px 70px}.hero,.card{border:1px solid var(--line);border-radius:20px;box-shadow:0 13px 28px rgba(8,47,104,.1)}.hero{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:15px}.brand{display:flex;gap:13px;align-items:center}.logo{width:100px;height:78px;object-fit:contain;background:#fff;border-radius:13px;padding:5px}.hero h1{margin:0}.card{background:#fff;padding:15px;margin:12px 0}.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.comp{border:1px solid var(--line);background:#fff;border-radius:17px;padding:14px;cursor:pointer;text-align:center;min-height:165px}.comp:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(8,47,104,.13)}.comp img{width:92px;height:92px;object-fit:contain}.comp strong{display:block;font-size:19px;margin-top:4px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tab{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:12px;padding:12px;font-weight:900;cursor:pointer}.tab.active{background:var(--blue);color:#fff}.fixture{display:grid;grid-template-columns:115px 1fr auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #dce6f0}.score{font-size:20px;font-weight:1000}.muted{color:var(--muted)}.small{font-size:12px}.notice{padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}.hidden{display:none!important}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:10px;border-bottom:1px solid #dce6f0;text-align:center}th{background:var(--blue);color:#fff}td:nth-child(2),th:nth-child(2){text-align:left}.group-title{padding:9px 12px;border-left:5px solid var(--green);background:var(--soft);border-radius:0 10px 10px 0}.btn{border:0;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
-@media(max-width:800px){.grid5{grid-template-columns:1fr 1fr}.tabs{grid-template-columns:1fr 1fr}.fixture{grid-template-columns:1fr}.hero{align-items:flex-start}.logo{width:82px;height:64px}}
-
-.account-tools{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
-.account-tools h2{margin:0 0 8px}.account-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.account-tools input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}
-.account-status{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);margin-top:9px}
-.account-status.ok{background:#ebf8f0;border-color:#79bf90}.account-status.err{background:#fdecef;border-color:#dd7a85}
-@media(max-width:700px){.account-tools-grid{grid-template-columns:1fr}}
-</style>
-<link rel="stylesheet" href="app-theme.css?v=980stable">
-</head>
-<body>
-<main class="shell">
-<header class="hero">
-  <div class="brand">
-    <img id="headerLogo" class="logo" src="assets/aics-logo.png" alt="AICS">
-    <div>
-      <h1 id="headerTitle">AICS PADEL CHAMPIONSHIP</h1>
-      <div id="headerSubtitle">Seleziona la competizione che desideri consultare</div>
-    </div>
-  </div>
-  <button id="headerButton" class="btn secondary" onclick="location.href='login.html?change=1&v=121'">Accedi al tuo account</button>
-</header>
-<section class="account-tools">
-  <div class="account-tools-grid">
-    <div>
-      <h2>Cambia account</h2>
-      <div class="muted small">Chiude completamente la sessione attiva e lascia aperta la pagina di accesso.</div>
-      <button class="btn secondary" style="margin-top:9px" onclick="logoutFromPublic()">Logout / Cambia account</button>
-    </div>
-    <div>
-      <h2>Sei un giocatore del campionato?</h2>
-      <div class="muted small">Inserisci l’indirizzo email comunicato al capitano per recuperare la tua anagrafica già approvata.</div>
-      <input id="playerRecoveryEmail" type="email" placeholder="Indirizzo email">
-      <button class="btn primary" style="margin-top:9px" onclick="recoverPlayerFromPublic()">Recupera la mia iscrizione</button>
-    </div>
-  </div>
-  <div id="accountPublicStatus" class="account-status hidden"></div>
-</section>
-
-
-<section id="landingView" class="card">
-  <div class="notice">Clicca sullo stemma per aprire calendario, risultati e classifica della singola competizione.</div>
-  <div class="grid5" id="competitionCards"></div>
-</section>
-
-<section id="competitionView" class="hidden">
-  <section class="card">
-    <div class="tabs">
-      <button class="tab" data-view="previous" onclick="setView('previous')">Giornata precedente</button>
-      <button class="tab active" data-view="current" onclick="setView('current')">Giornata in corso</button>
-      <button class="tab" data-view="next" onclick="setView('next')">Prossima giornata</button>
-      <button class="tab" data-view="standings" onclick="setView('standings')">Classifica</button>
-    </div>
-  </section>
-  <section class="card"><div id="content"><div class="notice">Caricamento…</div></div></section>
-</section>
-
-<div id="errorBox" class="notice hidden"></div>
-</main>
-
-<script>
-const cfg=window.PAM_V9_CONFIG;
-const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey);
 const $=id=>document.getElementById(id);
 
 const labels={SERIE_A:'Serie A',SERIE_B:'Serie B',SERIE_C:'Serie C',COPPA_ITALIA:'Coppa Italia',SUPERCOPPA:'Supercoppa'};
