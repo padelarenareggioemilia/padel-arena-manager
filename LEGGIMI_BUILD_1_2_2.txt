@@ -1,0 +1,30 @@
+V9 STABLE BUILD 1.2.2 — ACCESSO DIRETTO DALLA HOME FREE
+
+AGGIUNTE NELLA SCHERMATA PUBBLICA
+1. Logout / Cambia account
+   - chiude la sessione Supabase;
+   - pulisce la sessione locale;
+   - apre il login senza reindirizzamenti automatici.
+
+2. Sei un giocatore del campionato?
+   - richiede l'indirizzo email;
+   - verifica in modo sicuro se esiste un'iscrizione approvata;
+   - apre la registrazione/recupero con l'email già compilata.
+
+INSTALLAZIONE
+1. Esegui SUPABASE_V9_STABLE_BUILD_1_2_2.sql.
+2. Su GitHub sostituisci:
+   - public.html
+   - player-account.html
+   - login.html
+3. Fai Commit changes.
+4. Apri public.html?v=122.
+
+TEST
+- Accedi come capitano.
+- Torna al portale pubblico.
+- Premi Logout / Cambia account.
+- Il login deve restare visibile.
+- Torna al portale pubblico.
+- Inserisci l'email di un giocatore approvato.
+- Deve aprirsi la pagina di recupero con l'email già inserita.
