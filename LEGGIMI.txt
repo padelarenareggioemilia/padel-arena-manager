@@ -1,17 +1,14 @@
-FIX DEFINITIVO HOME FREE — BUILD 1.2.4
+VERIFICA PUBBLICAZIONE V9 BUILD 1.2.5
 
-Sostituisci soltanto public.html su GitHub.
-Non serve SQL.
+Non sostituire niente per ora.
 
-Dopo il commit apri:
-public.html?v=124
+1. Carica nella RADICE del repository questi due nuovi file:
+   - test-v125.html
+   - public-v125.html
+2. Fai Commit changes.
+3. Apri:
+   https://padelarenareggioemilia.github.io/-padel-arena-manager-v9-test/test-v125.html
+4. Se compare “PUBBLICAZIONE GITHUB RIUSCITA”, apri:
+   https://padelarenareggioemilia.github.io/-padel-arena-manager-v9-test/public-v125.html
 
-CONTROLLO VISIVO
-Sotto il titolo deve comparire: BUILD 1.2.4
-
-Se non compare, GitHub sta ancora mostrando un file precedente o il file è stato caricato in una cartella diversa.
-
-FUNZIONI
-- Logout / Cambia account: chiude sessione e apre login.
-- Apri login diretto: collegamento di emergenza sempre visibile.
-- Recupera iscrizione giocatore tramite email.
+Se test-v125.html dà 404, il problema è ramo/cartella di GitHub Pages, non il codice né la cache.

@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AICS PADEL CHAMPIONSHIP</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+:root{--blue:#164a95;--blue2:#082f68;--green:#009246;--red:#ce2b37;--bg:#f3f7fb;--panel:#fff;--soft:#eaf2fb;--text:#092d5d;--muted:#647c98;--line:#bfd0e2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:var(--text)}body:before{content:"";position:fixed;inset:0 0 auto;height:6px;background:linear-gradient(90deg,var(--green) 0 33.33%,#fff 33.33% 66.66%,var(--red) 66.66%);z-index:20}
+.shell{max-width:1180px;margin:auto;padding:18px 12px 70px}.hero,.card{border:1px solid var(--line);border-radius:20px;box-shadow:0 13px 28px rgba(8,47,104,.1)}.hero{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:15px}.brand{display:flex;gap:13px;align-items:center}.logo{width:100px;height:78px;object-fit:contain;background:#fff;border-radius:13px;padding:5px}.hero h1{margin:0}.card{background:#fff;padding:15px;margin:12px 0}.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.comp{border:1px solid var(--line);background:#fff;border-radius:17px;padding:14px;cursor:pointer;text-align:center;min-height:165px}.comp:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(8,47,104,.13)}.comp img{width:92px;height:92px;object-fit:contain}.comp strong{display:block;font-size:19px;margin-top:4px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tab{border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:12px;padding:12px;font-weight:900;cursor:pointer}.tab.active{background:var(--blue);color:#fff}.fixture{display:grid;grid-template-columns:115px 1fr auto;gap:12px;align-items:center;padding:12px;border-bottom:1px solid #dce6f0}.score{font-size:20px;font-weight:1000}.muted{color:var(--muted)}.small{font-size:12px}.notice{padding:12px;border-radius:12px;background:var(--soft);border:1px solid var(--line)}.hidden{display:none!important}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:10px;border-bottom:1px solid #dce6f0;text-align:center}th{background:var(--blue);color:#fff}td:nth-child(2),th:nth-child(2){text-align:left}.group-title{padding:9px 12px;border-left:5px solid var(--green);background:var(--soft);border-radius:0 10px 10px 0}.btn{border:0;border-radius:10px;padding:10px 12px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+@media(max-width:800px){.grid5{grid-template-columns:1fr 1fr}.tabs{grid-template-columns:1fr 1fr}.fixture{grid-template-columns:1fr}.hero{align-items:flex-start}.logo{width:82px;height:64px}}
+
+.account-tools{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+.account-tools h2{margin:0 0 8px}.account-tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.account-tools input{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}
+.account-status{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--soft);margin-top:9px}
+.account-status.ok{background:#ebf8f0;border-color:#79bf90}.account-status.err{background:#fdecef;border-color:#dd7a85}
+@media(max-width:700px){.account-tools-grid{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="app-theme.css?v=980stable">
+</head>
+<body>
+<main class="shell">
+<header class="hero">
+  <div class="brand">
+    <img id="headerLogo" class="logo" src="assets/aics-logo.png" alt="AICS">
+    <div>
+      <h1 id="headerTitle">AICS PADEL CHAMPIONSHIP</h1>
+      <div id="headerSubtitle">Seleziona la competizione che desideri consultare</div><div style="margin-top:5px;font-size:11px;opacity:.85">BUILD 1.2.5</div>
+    </div>
+  </div>
+  <button id="headerButton" class="btn secondary" onclick="location.href='login.html?change=1&force=1&v=124'">Accedi al tuo account</button>
+</header>
+<section class="account-tools">
+  <div class="account-tools-grid">
+    <div>
+      <h2>Cambia account</h2>
+      <div class="muted small">Chiude completamente la sessione attiva e lascia aperta la pagina di accesso.</div>
+      <button class="btn secondary" style="margin-top:9px" onclick="logoutFromPublic()">Logout / Cambia account</button><a href="login.html?change=1&force=1&v=124" style="display:inline-block;margin:9px 0 0 9px;font-weight:800">Apri login diretto</a>
+    </div>
+    <div>
+      <h2>Sei un giocatore del campionato?</h2>
+      <div class="muted small">Inserisci l’indirizzo email comunicato al capitano per recuperare la tua anagrafica già approvata.</div>
+      <input id="playerRecoveryEmail" type="email" placeholder="Indirizzo email">
+      <button class="btn primary" style="margin-top:9px" onclick="recoverPlayerFromPublic()">Recupera la mia iscrizione</button>
+    </div>
+  </div>
+  <div id="accountPublicStatus" class="account-status hidden"></div>
+</section>
+
+
+<section id="landingView" class="card">
+  <div class="notice">Clicca sullo stemma per aprire calendario, risultati e classifica della singola competizione.</div>
+  <div class="grid5" id="competitionCards"></div>
+</section>
+
+<section id="competitionView" class="hidden">
+  <section class="card">
+    <div class="tabs">
+      <button class="tab" data-view="previous" onclick="setView('previous')">Giornata precedente</button>
+      <button class="tab active" data-view="current" onclick="setView('current')">Giornata in corso</button>
+      <button class="tab" data-view="next" onclick="setView('next')">Prossima giornata</button>
+      <button class="tab" data-view="standings" onclick="setView('standings')">Classifica</button>
+    </div>
+  </section>
+  <section class="card"><div id="content"><div class="notice">Caricamento…</div></div></section>
+</section>
+
+<div id="errorBox" class="notice hidden"></div>
+</main>
+
+<script>
+const cfg=window.PAM_V9_CONFIG;
+const sb=supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey);
+
+function publicAccountMessage(text,error=false){
+  const box=document.getElementById('accountPublicStatus');
+  if(!box)return;
+  box.textContent=text;
+  box.className='account-status '+(error?'err':'ok');
+  box.classList.remove('hidden');
+}
+
+async function logoutFromPublic(){
+  publicAccountMessage('Chiusura sessione in corso…');
+  try{ await sb.auth.signOut({scope:'global'}); }catch(e){}
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie.split(';').forEach(c=>{
+      document.cookie=c.replace(/^ +/,'').replace(/=.*/,'=;expires='+new Date(0).toUTCString()+';path=/');
+    });
+  }catch(e){}
+  setTimeout(()=>location.replace('login.html?change=1&force=1&v=124'),150);
+}
+
+async function recoverPlayerFromPublic(){
+  const field=document.getElementById('playerRecoveryEmail');
+  const email=(field?.value||'').trim().toLowerCase();
+  if(!email)return publicAccountMessage('Inserisci il tuo indirizzo email.',true);
+
+  publicAccountMessage('Controllo iscrizione in corso…');
+  try{
+    const check=await sb.rpc('check_player_registration_email',{p_email:email});
+    if(check.error)throw check.error;
+    if(!check.data?.found){
+      return publicAccountMessage('Nessuna iscrizione approvata trovata con questa email.',true);
+    }
+    sessionStorage.setItem('player_claim_email',email);
+    location.href='player-account.html?email='+encodeURIComponent(email)+'&v=124';
+  }catch(error){
+    publicAccountMessage(error.message||String(error),true);
+  }
+}
+window.logoutFromPublic=logoutFromPublic;
+window.recoverPlayerFromPublic=recoverPlayerFromPublic;
+
+const $=id=>document.getElementById(id);
+
+const labels={SERIE_A:'Serie A',SERIE_B:'Serie B',SERIE_C:'Serie C',COPPA_ITALIA:'Coppa Italia',SUPERCOPPA:'Supercoppa'};
+const logos={
+  SERIE_A:'assets/serie-a.png?v=12',
+  SERIE_B:'assets/serie-b.png?v=12',
+  SERIE_C:'assets/serie-c.png?v=12',
+  COPPA_ITALIA:'assets/coppa-italia.png?v=12',
+  SUPERCOPPA:'assets/supercoppa.png?v=12'
+};
+
+const code=new URLSearchParams(location.search).get('code');
+let teams=[],groups=[],members=[],fixtures=[],statuses=[],view='current';
+
+const esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]));
+function teamName(id,p){return teams.find(t=>t.id===id)?.name||p||'Da definire'}
+function teamLogo(id){return teams.find(t=>t.id===id)?.logo_url||''}
+function statusFor(id){return statuses.find(s=>s.fixture_id===id)?.workflow_data||{}}
+function resultFor(id){const w=statusFor(id);return w.result_data||w.result||w.match_result||null}
+function score(id){const r=resultFor(id);if(!r)return '';if(r.home_score!=null)return `${r.home_score} – ${r.away_score}`;return ''}
+function done(f){return Boolean(statusFor(f.id).homologated_at||resultFor(f.id))}
+function roundKey(f){return f.round_number||new Date(f.scheduled_at).toISOString().slice(0,10)}
+function rounds(){return [...new Set(fixtures.map(roundKey))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true}))}
+function selectedRound(){
+  const all=rounds();if(!all.length)return null;
+  const now=Date.now();
+  let idx=all.findIndex(r=>fixtures.filter(f=>roundKey(f)===r).some(f=>!done(f)&&new Date(f.scheduled_at).getTime()>=now-3*86400000));
+  if(idx<0)idx=all.length-1;
+  const off=view==='previous'?-1:view==='next'?1:0;
+  return all[Math.max(0,Math.min(all.length-1,idx+off))];
+}
+function fixtureHtml(f){
+  return `<div class="fixture">
+    <div class="small muted">${f.scheduled_at?new Date(f.scheduled_at).toLocaleString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Da definire'}</div>
+    <div><div>${teamLogo(f.home_team_id)?`<img src="${esc(teamLogo(f.home_team_id))}" style="width:30px;height:30px;object-fit:contain;vertical-align:middle;margin-right:6px">`:`<span style="display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#164a95;color:#fff;margin-right:6px;font-size:11px">${esc(teamName(f.home_team_id,f.home_placeholder).slice(0,2).toUpperCase())}</span>`}<b>${esc(teamName(f.home_team_id,f.home_placeholder))}</b></div><span class="muted">contro</span><div>${teamLogo(f.away_team_id)?`<img src="${esc(teamLogo(f.away_team_id))}" style="width:30px;height:30px;object-fit:contain;vertical-align:middle;margin-right:6px">`:`<span style="display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#164a95;color:#fff;margin-right:6px;font-size:11px">${esc(teamName(f.away_team_id,f.away_placeholder).slice(0,2).toUpperCase())}</span>`}<b>${esc(teamName(f.away_team_id,f.away_placeholder))}</b></div><div class="small muted">${esc(f.venue||'')}</div></div>
+    <div class="score">${score(f.id)||(done(f)?'Omologata':'Da giocare')}</div>
+  </div>`;
+}
+function standingsFor(group){
+  const ids=members.filter(m=>m.group_id===group.id).map(m=>m.team_id);
+  const rows=Object.fromEntries(ids.map(id=>[id,{id,g:0,v:0,n:0,p:0,mf:0,ms:0,pt:0}]));
+  fixtures.filter(f=>f.group_id===group.id&&done(f)).forEach(f=>{
+    const sc=score(f.id);if(!sc)return;
+    const [h,a]=sc.split('–').map(x=>Number(x.trim()));
+    if(Number.isNaN(h)||Number.isNaN(a))return;
+    const H=rows[f.home_team_id],A=rows[f.away_team_id];if(!H||!A)return;
+    H.g++;A.g++;H.mf+=h;H.ms+=a;A.mf+=a;A.ms+=h;
+    if(h>a){H.v++;A.p++;H.pt+=3}else if(a>h){A.v++;H.p++;A.pt+=3}else{H.n++;A.n++;H.pt++;A.pt++}
+  });
+  return Object.values(rows).sort((a,b)=>b.pt-a.pt||(b.mf-b.ms)-(a.mf-a.ms)||teamName(a.id).localeCompare(teamName(b.id)));
+}
+function render(){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  if(view==='standings'){
+    $('content').innerHTML=groups.map(g=>{
+      const rows=standingsFor(g);
+      return `<h3 class="group-title">${esc(g.group_name||'Girone')}</h3>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Squadra</th><th>G</th><th>V</th><th>N</th><th>P</th><th>MF</th><th>MS</th><th>Diff.</th><th>Pt</th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td><img src="${esc(teamLogo(r.id))}" style="width:30px;height:30px;object-fit:contain;vertical-align:middle;margin-right:6px">${esc(teamName(r.id))}</td><td>${r.g}</td><td>${r.v}</td><td>${r.n}</td><td>${r.p}</td><td>${r.mf}</td><td>${r.ms}</td><td>${r.mf-r.ms}</td><td><b>${r.pt}</b></td></tr>`).join('')}</tbody></table></div>`;
+    }).join('')||'<div class="notice">Classifica non disponibile.</div>';
+    return;
+  }
+  const round=selectedRound();
+  const list=fixtures.filter(f=>roundKey(f)===round).sort((a,b)=>new Date(a.scheduled_at)-new Date(b.scheduled_at));
+  $('content').innerHTML=list.length?list.map(fixtureHtml).join(''):'<div class="notice">Nessuna partita disponibile.</div>';
+}
+function setView(v){view=v;render()}
+async function loadLanding(){
+  const pub=await sb.from('public_championship_publication').select('*');
+  const publication=pub.error?[]:(pub.data||[]);
+  const isPublished=c=>{
+    const row=publication.find(x=>x.competition_code===c);
+    return row?row.is_published!==false:true;
+  };
+  const codes=['SERIE_A','SERIE_B','SERIE_C','COPPA_ITALIA','SUPERCOPPA'];
+  $('competitionCards').innerHTML=codes.map(c=>`
+    <button class="comp" onclick="location.href='competition-public.html?code=${encodeURIComponent(c)}'">
+      <img src="${logos[c]}" alt="${labels[c]}">
+      <strong>${labels[c]}</strong>
+      <div class="muted small">${isPublished(c)?'Apri competizione':'Non pubblicata'}</div>
+    </button>`).join('');
+}
+async function loadCompetition(){
+  $('landingView').classList.add('hidden');
+  $('competitionView').classList.remove('hidden');
+  $('headerTitle').textContent=labels[code]||code;
+  $('headerSubtitle').textContent='Calendario, risultati e classifiche';
+  $('headerLogo').src=logos[code]||'assets/aics-logo.png';
+  $('headerButton').textContent='← Competizioni';
+  $('headerButton').onclick=()=>location.href='public.html';
+
+  const [t,g,m,f,w]=await Promise.all([
+    sb.from('public_championship_teams').select('*'),
+    sb.from('public_championship_groups').select('*').eq('competition_code',code),
+    sb.from('public_championship_group_teams').select('*'),
+    sb.from('public_championship_fixtures').select('*').eq('competition_code',code).order('scheduled_at'),
+    sb.from('public_championship_status').select('*')
+  ]);
+  const e=t.error||g.error||m.error||f.error;
+  if(e){$('content').innerHTML=`<div class="notice">${esc(e.message)}</div>`;return}
+  teams=t.data||[];groups=g.data||[];members=m.data||[];fixtures=f.data||[];statuses=w.error?[]:(w.data||[]);
+  render();
+}
+window.setView=setView;
+if(code)loadCompetition();else loadLanding();
+</script>
+<script src="app-ui.js?v=980stable"></script>
+</body>
+</html>
