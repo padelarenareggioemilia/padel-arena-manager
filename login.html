@@ -148,25 +148,98 @@ label{color:var(--aics-blue-dark)!important}
 <script>
 const c=window.PAM_V9_CONFIG,s=supabase.createClient(c.supabaseUrl,c.supabasePublishableKey),$=i=>document.getElementById(i);
 function m(t,e=false){$('msg').textContent=t;$('msg').className='notice '+(e?'err':'ok');$('msg').classList.remove('hidden')}
-async function destinationForUser(userId){
+
+async function destinationForUser(user){
+  const userId=user.id;
+  const email=(user.email||'').trim().toLowerCase();
+
   const p=await s.from('profiles').select('role').eq('id',userId).maybeSingle();
+  if(p.error)throw p.error;
   if(p.data?.role==='admin')return 'index.html';
-  const r=await s.from('team_user_roles').select('role,team_id,active').eq('user_id',userId).eq('active',true);
-  if(r.error)throw r.error;
-  const roles=r.data||[];
-  const operational=roles.find(x=>['captain','secretary'].includes(x.role));
+
+  const roles=await s.from('team_user_roles')
+    .select('role,team_id,active')
+    .eq('user_id',userId)
+    .eq('active',true);
+  if(roles.error)throw roles.error;
+
+  const operational=(roles.data||[]).find(x=>['captain','secretary'].includes(x.role));
   if(operational)return `captain.html?team=${encodeURIComponent(operational.team_id)}`;
-  const player=roles.find(x=>x.role==='player');
-  if(player)return `player.html?team=${encodeURIComponent(player.team_id)}`;
+
+  const playerRole=(roles.data||[]).find(x=>x.role==='player');
+  if(playerRole)return `player.html?team=${encodeURIComponent(playerRole.team_id)}`;
+
+  if(email){
+    const captainTeam=await s.from('teams')
+      .select('id')
+      .ilike('captain_email',email)
+      .limit(1)
+      .maybeSingle();
+    if(!captainTeam.error && captainTeam.data?.id){
+      return `captain.html?team=${encodeURIComponent(captainTeam.data.id)}`;
+    }
+
+    const roster=await s.from('roster_requests')
+      .select('team_id,status')
+      .ilike('email',email)
+      .eq('status','approved')
+      .limit(1)
+      .maybeSingle();
+    if(!roster.error && roster.data?.team_id){
+      return `player.html?team=${encodeURIComponent(roster.data.team_id)}`;
+    }
+  }
+
   return 'public.html';
 }
-$('resetSession').onclick=async()=>{await s.auth.signOut();$('email').value='';$('password').value='';m('Sessione chiusa. Inserisci le credenziali corrette.');};
-$('login').onclick=async()=>{
-  const r=await s.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
-  if(r.error)return m(r.error.message,true);
-  try{location.href=await destinationForUser(r.data.user.id)}catch(e){m(e.message||String(e),true)}
+
+$('resetSession').onclick=async()=>{
+  await s.auth.signOut({scope:'local'});
+  localStorage.clear();
+  sessionStorage.clear();
+  $('email').value='';
+  $('password').value='';
+  m('Sessione chiusa. Inserisci le nuove credenziali.');
 };
-s.auth.getSession().then(async r=>{if(r.data.session)location.href=await destinationForUser(r.data.session.user.id)});</script><section class="card"><h2>Sei già stato approvato da una squadra?</h2><button class="btn secondary" onclick="location.href='player-account.html'">Registrati / Recupera la mia iscrizione</button></section></main>
+
+$('login').onclick=async()=>{
+  const email=$('email').value.trim();
+  const password=$('password').value;
+  if(!email||!password)return m('Inserisci email e password.',true);
+
+  await s.auth.signOut({scope:'local'});
+  const r=await s.auth.signInWithPassword({email,password});
+  if(r.error)return m(r.error.message,true);
+
+  try{
+    const destination=await destinationForUser(r.data.user);
+    location.replace(destination);
+  }catch(e){
+    m(e.message||String(e),true);
+  }
+};
+
+(async()=>{
+  const params=new URLSearchParams(location.search);
+  if(params.has('logout')||params.has('change')||params.has('force')){
+    await s.auth.signOut({scope:'local'});
+    localStorage.clear();
+    sessionStorage.clear();
+    m('Puoi accedere con un account diverso.');
+  }else{
+    const current=await s.auth.getSession();
+    if(current.data.session){
+      const box=document.createElement('div');
+      box.className='notice';
+      box.innerHTML=`È già attiva una sessione per <b>${current.data.session.user.email||'questo account'}</b>.<div class="actions" style="margin-top:8px"><button class="btn secondary" id="continueCurrent" type="button">Continua con questo account</button></div>`;
+      $('msg').before(box);
+      document.getElementById('continueCurrent').onclick=async()=>{
+        try{location.replace(await destinationForUser(current.data.session.user))}
+        catch(e){m(e.message||String(e),true)}
+      };
+    }
+  }
+})();</script><section class="card"><h2>Sei già stato approvato da una squadra?</h2><button class="btn secondary" onclick="location.href='player-account.html'">Registrati / Recupera la mia iscrizione</button></section></main>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

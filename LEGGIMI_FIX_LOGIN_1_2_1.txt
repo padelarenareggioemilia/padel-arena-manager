@@ -1,0 +1,27 @@
+V9 STABLE BUILD 1.2.1 — FIX LOGIN E CAMBIO ACCOUNT
+
+PROBLEMA RISOLTO
+La pagina login reindirizzava automaticamente la sessione capitano verso il
+portale pubblico prima che fosse possibile inserire altre credenziali.
+
+INSTALLAZIONE
+Non serve SQL.
+
+Su GitHub:
+1. Carica account-home.html.
+2. Sostituisci login.html.
+3. Sostituisci public.html.
+4. Sostituisci captain.html.
+5. Sostituisci player.html.
+6. Fai Commit changes.
+
+TEST DIRETTO
+Apri:
+login.html?change=1&v=121
+
+La pagina deve restare ferma sul login.
+Dopo l'accesso:
+- admin → index.html
+- capitano/segretario → captain.html della squadra
+- giocatore → player.html
+- utente senza ruolo → portale pubblico
