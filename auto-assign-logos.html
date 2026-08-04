@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Associazione automatica loghi</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script>
+<style>
+:root{--b:#164a95;--g:#009246;--r:#ce2b37;--bg:#f4f8fc;--line:#b9cde3;--text:#0a2e5e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui;color:var(--text)}
+main{max-width:1200px;margin:auto;padding:18px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;margin:12px 0}
+.btn{border:0;border-radius:10px;padding:9px 11px;font-weight:900;cursor:pointer}.primary{background:var(--b);color:#fff}.secondary{background:#fff;color:var(--b);border:1px solid var(--b)}.success{background:var(--g);color:#fff}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.row{display:grid;grid-template-columns:80px 1fr 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #dce6f0;padding:11px 0}.row img{width:70px;height:70px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#fff}.muted{color:#637b96}.notice{padding:11px;border:1px solid var(--line);border-radius:11px;background:#edf4fb}.ok{background:#ebf8f0;border-color:#79bf90}.err{background:#fdecef;border-color:#dd7a85}
+@media(max-width:700px){.row{grid-template-columns:70px 1fr}.row .action{grid-column:1/-1}}
+</style></head><body><main>
+<div class="actions"><button class="btn secondary" onclick="location.href='index.html'">← Home</button><button class="btn secondary" onclick="location.href='teams-archive.html'">Archivio squadre</button></div>
+<section class="card"><h1>Associazione automatica loghi squadre</h1><div class="notice">Questa pagina usa l'archivio di loghi già fornito. Le associazioni ad alta affidabilità possono essere applicate tutte insieme; le altre restano modificabili manualmente.</div><div class="actions"><button class="btn primary" onclick="loadAll()">Analizza squadre</button><button class="btn success" onclick="applyAllHighConfidence()">Applica abbinamenti sicuri</button></div><div id="msg" class="notice">Pronto.</div></section>
+<section class="card"><div id="list"></div></section>
+</main><script>
+const cfg=window.PAM_V9_CONFIG,s=supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey),$=id=>document.getElementById(id);
+let teams=[],library=[],matches=[];
+const esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]));
+function norm(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(asd|ssd|srl|societa|sportiva|padel|club|team|serie|a|b|c)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim()}
+function score(a,b){a=norm(a);b=norm(b);if(!a||!b)return 0;if(a===b)return 100;if(a.includes(b)||b.includes(a))return 88;const aa=new Set(a.split(' ')),bb=new Set(b.split(' '));const both=[...aa].filter(x=>bb.has(x)).length;return Math.round(100*both/Math.max(aa.size,bb.size))}
+function propose(team){let best=null;library.forEach(item=>{const sc=Math.max(score(team.name,item.team_hint),score(team.club_name,item.team_hint));if(!best||sc>best.score)best={...item,score:sc}});return best}
+function absolute(path){return new URL(path,location.href).href}
+function render(){matches=teams.map(team=>({team,proposal:propose(team)}));$('list').innerHTML=matches.map((m,i)=>`<div class="row"><img src="${m.proposal?esc(m.proposal.path):'assets/aics-logo.png'}"><div><b>${esc(m.team.name)}</b><div class="muted">${esc(m.team.club_name||'')}</div></div><div>${m.proposal?`Proposto: <b>${esc(m.proposal.team_hint)}</b><br><span class="muted">Affidabilità ${m.proposal.score}%</span>`:'Nessun logo proposto'}</div><div class="action">${m.proposal?`<button class="btn primary" onclick="applyOne(${i})">Associa</button>`:''}</div></div>`).join('')||'<div class="notice">Nessuna squadra.</div>'}
+async function loadAll(){const session=await s.auth.getSession();if(!session.data.session)return location.href='login.html';const [tr,lr]=await Promise.all([s.from('teams').select('*').order('name'),fetch('assets/team-logo-library.json?v=12').then(r=>r.json())]);if(tr.error){$('msg').textContent=tr.error.message;return}teams=tr.data||[];library=lr||[];render();$('msg').textContent=`Analizzate ${teams.length} squadre e ${library.length} loghi.`}
+async function applyOne(i){const m=matches[i];if(!m?.proposal)return;const r=await s.from('teams').update({logo_url:absolute(m.proposal.path),updated_at:new Date().toISOString()}).eq('id',m.team.id).select('id').maybeSingle();if(r.error||!r.data?.id){$('msg').textContent=r.error?.message||'Aggiornamento non confermato';$('msg').className='notice err';return}$('msg').textContent=`Logo associato a ${m.team.name}.`;$('msg').className='notice ok';m.team.logo_url=absolute(m.proposal.path)}
+async function applyAllHighConfidence(){let applied=0;for(let i=0;i<matches.length;i++){if(matches[i].proposal?.score>=80&&!matches[i].team.logo_url){await applyOne(i);applied++}}$('msg').textContent=`Applicati ${applied} abbinamenti sicuri.`;$('msg').className='notice ok'}
+window.loadAll=loadAll;window.applyOne=applyOne;window.applyAllHighConfidence=applyAllHighConfidence;loadAll();
+</script></body></html>

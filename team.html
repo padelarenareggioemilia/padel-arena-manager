@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#164a95">
+<title>AICS Padel Championship Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<style>
+
+:root{--bg:#06111f;--card:#10233b;--line:#294262;--text:#f8fafc;--muted:#a9bacd;--accent:#9dff25;--blue:#16a8ff;--danger:#ef4444}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 85% 0%,#123f61,transparent 35%),linear-gradient(180deg,#06101d,#07111f);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.shell{max-width:1150px;margin:auto;padding:16px 14px 80px}.hero{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}.brand{display:flex;align-items:center;gap:12px}.mark{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--blue));display:grid;place-items:center;color:#07111f;font-weight:1000}.muted{color:var(--muted)}
+.top,.card{background:#10233bf5;border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.nav,.actions,.filters{display:flex;gap:8px;flex-wrap:wrap}.btn{font:inherit;border:0;border-radius:12px;padding:12px 14px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#07111f}.secondary{background:#17304e;color:#fff;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:#fff}.ghost{background:transparent;color:#fff;border:1px solid #3c5d7d}.tiny{padding:7px 9px;font-size:12px}.hidden{display:none!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin:10px 0}label{display:block;font-size:13px;font-weight:800;margin-bottom:5px}input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #365474;background:#071523;color:#fff;font:inherit}.notice{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line);margin:10px 0}.ok{border-color:#4ade80;background:#0b2a20}.err{border-color:#ef4444;background:#351316}.preview{width:120px;height:120px;border-radius:16px;border:1px dashed #5c7f9f;display:grid;place-items:center;overflow:hidden}.preview img{width:100%;height:100%;object-fit:contain;background:#fff}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.kpi{background:#0b1e32;border:1px solid #315676;border-radius:16px;padding:14px}.kpi strong{display:block;font-size:24px;color:var(--accent)}
+.filter{background:#142f49;color:#fff;border:1px solid #416b91}.filter.active{background:var(--accent);color:#07111f;border-color:var(--accent)}
+.team{position:relative;display:grid;grid-template-columns:82px 1fr auto;gap:14px;align-items:center;padding:15px;border:1px solid #315271;border-radius:17px;background:#09182a;margin:10px 0}.logo{width:76px;height:76px;border-radius:15px;object-fit:contain;background:#fff;border:1px solid #40688d;padding:4px}.placeholder{width:76px;height:76px;border-radius:15px;display:grid;place-items:center;background:#17304e;font-size:28px}.meta{font-size:13px;color:var(--muted);line-height:1.55}
+.team-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.more-wrap{position:relative}.more-menu{position:absolute;right:0;top:44px;min-width:210px;background:#0b1a2b;border:1px solid #3f6385;border-radius:14px;padding:8px;z-index:15;box-shadow:0 16px 38px rgba(0,0,0,.35)}.more-menu button{width:100%;text-align:left;margin:3px 0}.more-menu .delete-item{font-size:12px;padding:8px 10px;background:transparent;color:#ff9ca6;border:1px solid rgba(239,68,68,.35)}
+.dialog{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px;z-index:100}.dialog-card{width:min(520px,100%);background:#10233b;border:1px solid #4c6b89;border-radius:20px;padding:18px}.dialog-card h2{margin-top:0}
+@media(max-width:760px){.grid2,.kpis{grid-template-columns:1fr}.team{grid-template-columns:62px 1fr}.logo,.placeholder{width:58px;height:58px}.team-actions{grid-column:1/-1}.team-actions .btn{flex:1}.hero{align-items:flex-start}.filters .btn{flex:1}}
+
+.detail-grid{display:grid;grid-template-columns:240px 1fr;gap:16px}.big-logo{width:220px;height:220px;border-radius:22px;object-fit:contain;background:#fff;padding:8px}@media(max-width:760px){.detail-grid{grid-template-columns:1fr}.big-logo{width:150px;height:150px}}
+
+
+:root{
+  --aics-blue:#164a95;
+  --aics-blue-dark:#082f68;
+  --aics-blue-soft:#2e6fba;
+  --italy-green:#009246;
+  --italy-red:#ce2b37;
+  --bg:#f4f8fc;
+  --panel:#ffffff;
+  --panel-soft:#edf4fb;
+  --text:#0a2e5e;
+  --muted:#627b97;
+  --line:#b9cde3;
+  --shadow:0 14px 34px rgba(8,47,104,.13);
+}
+html{background:var(--bg)}
+body{
+  color:var(--text)!important;
+  background:
+    linear-gradient(90deg,rgba(0,146,70,.05),transparent 23%,transparent 77%,rgba(206,43,55,.05)),
+    radial-gradient(circle at 50% 0%,rgba(22,74,149,.12),transparent 34%),
+    var(--bg)!important;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0 0 auto 0;
+  height:6px;
+  z-index:9999;
+  background:linear-gradient(90deg,var(--italy-green) 0 33.333%,#fff 33.333% 66.666%,var(--italy-red) 66.666%);
+}
+.hero{
+  background:linear-gradient(135deg,var(--aics-blue),var(--aics-blue-dark))!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.25)!important;
+  border-radius:24px!important;
+  padding:18px!important;
+  box-shadow:var(--shadow)!important;
+}
+.hero .muted{color:#d9e6f5!important}
+.brand-logo{
+  width:132px;
+  height:78px;
+  object-fit:contain;
+  padding:8px;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 10px 24px rgba(0,0,0,.14);
+}
+.mark{display:none!important}
+.top,.card,.comp,.group,.comp-card{
+  background:rgba(255,255,255,.98)!important;
+  color:var(--text)!important;
+  border:1px solid var(--line)!important;
+  box-shadow:var(--shadow)!important;
+}
+.primary{background:linear-gradient(135deg,var(--aics-blue-soft),var(--aics-blue))!important;color:#fff!important}
+.secondary{background:#fff!important;color:var(--aics-blue-dark)!important;border:1px solid var(--aics-blue-soft)!important}
+.blue{background:var(--aics-blue)!important;color:#fff!important}
+.danger{background:var(--italy-red)!important;color:#fff!important}
+.ghost{background:#fff!important;color:var(--aics-blue)!important;border:1px solid var(--line)!important}
+input,select,textarea{
+  background:#fff!important;
+  color:var(--text)!important;
+  border-color:var(--line)!important;
+}
+label{color:var(--aics-blue-dark)!important}
+.notice{background:var(--panel-soft)!important;color:var(--text)!important;border-color:var(--line)!important}
+.ok{background:#eaf8f0!important;border-color:var(--italy-green)!important}
+.err{background:#fdecef!important;border-color:var(--italy-red)!important}
+.kpi,.team,.fixture,.team-pill,.mini-team,.request{
+  background:#fff!important;
+  color:var(--text)!important;
+  border-color:var(--line)!important;
+  box-shadow:0 8px 20px rgba(8,47,104,.07)!important;
+}
+.kpi strong{color:var(--aics-blue)!important}
+.filter{background:#fff!important;color:var(--aics-blue-dark)!important;border:1px solid var(--line)!important}
+.filter.active{
+  color:#fff!important;
+  border-color:var(--aics-blue)!important;
+  background:linear-gradient(90deg,var(--italy-green),var(--aics-blue),var(--italy-red))!important;
+}
+.badge{background:#e8f1fb!important;color:var(--aics-blue-dark)!important;border-color:var(--line)!important}
+.logo,.big-logo,.mini-logo,.comp-logo,.comp img{background:#fff!important;border-color:#dce6f2!important}
+.placeholder{background:linear-gradient(135deg,#e8f1fb,#fff)!important;color:var(--aics-blue)!important}
+.more-menu,.dialog-card{background:#fff!important;color:var(--text)!important;border-color:var(--line)!important}
+.more-menu .delete-item{background:#fff4f5!important;color:var(--italy-red)!important}
+.tricolore{
+  height:5px;
+  border-radius:999px;
+  margin:10px 0 0;
+  background:linear-gradient(90deg,var(--italy-green) 0 33.333%,#fff 33.333% 66.666%,var(--italy-red) 66.666%);
+  border:1px solid #d7e3ef;
+}
+.section-ribbon{
+  display:inline-flex;
+  padding:7px 12px;
+  border-radius:999px;
+  font-weight:900;
+  color:var(--aics-blue-dark);
+  border:1px solid #d7e3ef;
+  background:linear-gradient(90deg,rgba(0,146,70,.12),rgba(255,255,255,.95),rgba(206,43,55,.12));
+}
+@media(max-width:800px){
+  .brand-logo{width:100px;height:62px}
+}
+
+.detail-grid{display:grid;grid-template-columns:240px 1fr;gap:18px;align-items:start}
+.big-logo{width:220px;height:220px;border-radius:22px;object-fit:contain;background:#fff;padding:8px;border:1px solid #dce6f2}
+.data-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.data-item{padding:12px;border:1px solid var(--line);border-radius:14px;background:#f8fbff}
+.data-item b{display:block;color:var(--aics-blue-dark);font-size:12px;margin-bottom:4px}
+.player-card{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;margin:8px 0}
+.player-photo{width:58px;height:74px;object-fit:cover;border-radius:10px;background:#edf4fb;border:1px solid var(--line)}
+.edit-logo-box{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;margin-bottom:14px}
+.edit-logo-preview{width:145px;height:145px;border:1px dashed var(--line);border-radius:18px;background:#f8fbff;display:grid;place-items:center;overflow:hidden;color:var(--muted);font-size:12px;font-weight:900}
+.edit-logo-preview img{width:100%;height:100%;object-fit:contain;background:#fff}
+.edit-logo-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+@media(max-width:760px){.edit-logo-box{grid-template-columns:1fr}.edit-logo-preview{width:130px;height:130px}}
+
+@media(max-width:760px){
+  .detail-grid,.data-grid{grid-template-columns:1fr}
+  .big-logo{width:150px;height:150px}
+  .player-card{grid-template-columns:52px 1fr}
+  .player-card>.badge{grid-column:1/-1}
+}
+
+.manual-player-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.manual-player-panel{border:1px solid var(--line);border-radius:16px;padding:14px;background:#f8fbfe}
+.roster-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #dce6f0}
+.roster-row:last-child{border-bottom:0}
+@media(max-width:800px){.manual-player-grid{grid-template-columns:1fr}}
+
+.admin-player-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.player-edit-overlay{position:fixed;inset:0;background:rgba(4,24,50,.62);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.player-edit-card{width:min(720px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.3)}
+.player-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-mini{padding:7px 9px!important;font-size:12px!important}
+@media(max-width:760px){.player-edit-grid{grid-template-columns:1fr}}
+</style>
+
+<link rel="icon" type="image/png" sizes="32x32" href="assets/aics-icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/aics-icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/aics-icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="application-name" content="AICS Padel Championship Manager">
+<meta name="apple-mobile-web-app-title" content="AICS Padel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AICS Padel Championship Manager">
+<meta property="og:description" content="Gestionale ufficiale AICS Padel Championship">
+<meta property="og:image" content="assets/aics-social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AICS Padel Championship Manager">
+<meta name="twitter:description" content="Gestionale ufficiale AICS Padel Championship">
+<meta name="twitter:image" content="assets/aics-social-preview.png">
+
+<link rel="stylesheet" href="app-theme.css?v=980stable">
+</head>
+<body>
+<main class="shell">
+  <div class="top">
+    <div class="nav">
+      <button class="btn secondary" onclick="location.href='index.html'">← Elenco squadre</button>
+      <button class="btn secondary" onclick="openTeamDashboard('matches')">Partite della squadra</button>
+      <button class="btn secondary" onclick="openTeamDashboard('standings')">Classifica del girone</button>
+    </div>
+    <div class="tricolore"></div>
+  </div>
+
+  <header class="hero">
+    <div class="brand">
+      <img class="brand-logo" src="assets/aics-logo.png" alt="AICS">
+      <div>
+        <h1 style="margin:0">Scheda tecnica squadra</h1>
+        <div class="muted">AICS Padel Championship 2027</div>
+      </div>
+    </div>
+  </header>
+  <div class="tricolore"></div>
+
+  <section id="teamBox" class="card">
+    <div class="notice">Caricamento della squadra in corso…</div>
+  </section>
+
+<div id="adminPlayerEditOverlay" class="player-edit-overlay hidden">
+  <div class="player-edit-card">
+    <div class="section-title"><div><h2 style="margin:0">Modifica giocatore</h2><div class="muted small">Modifica i dati del giocatore selezionato.</div></div><button type="button" class="btn secondary btn-mini" onclick="closeAdminPlayerEditor()">Chiudi</button></div>
+    <input type="hidden" id="editPlayerId">
+    <div class="player-edit-grid">
+      <div class="field"><label>Nuova foto tessera con sfondo bianco</label><input id="editPlayerPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+      <div class="field"><label>Nome *</label><input id="editPlayerFirstName"></div>
+      <div class="field"><label>Cognome *</label><input id="editPlayerLastName"></div>
+      <div class="field"><label>Data di nascita *</label><input id="editPlayerBirthDate" type="date"></div>
+      <div class="field"><label>Luogo di nascita *</label><input id="editPlayerBirthPlace"></div>
+      <div class="field"><label>Comune di residenza *</label><input id="editPlayerResidenceTown"></div>
+      <div class="field"><label>CAP *</label><input id="editPlayerPostalCode" maxlength="5"></div>
+      <div class="field"><label>Provincia *</label><input id="editPlayerProvince" maxlength="2"></div>
+      <div class="field"><label>Email *</label><input id="editPlayerEmail" type="email"></div>
+      <div class="field"><label>Telefono *</label><input id="editPlayerPhone"></div>
+      <div class="field"><label>Classifica FITP *</label><input id="editPlayerFitp"></div>
+      <div class="field"><label>Scadenza certificato medico *</label><input id="editPlayerMedical" type="date"></div>
+      <div class="field"><label>Stato</label><select id="editPlayerStatus"><option value="approved">Approvato</option><option value="pending">In attesa</option><option value="rejected">Rifiutato</option></select></div>
+    </div>
+    <div class="actions"><button id="saveAdminPlayerBtn" class="btn primary" onclick="saveAdminPlayer()">Salva modifiche</button><button class="btn secondary" onclick="closeAdminPlayerEditor()">Annulla</button></div>
+    <div id="editPlayerMsg" class="notice hidden"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+const cfg = window.PAM_V9_CONFIG;
+const sb = supabase.createClient(cfg.supabaseUrl, cfg.supabasePublishableKey);
+const params = new URLSearchParams(window.location.search);
+const teamId = params.get('id');
+const box = document.getElementById('teamBox');
+let currentTeam = null;
+let newLogoFile = null;
+let adminRosterCache=[];
+
+const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[ch]));
+
+function formatDate(value) {
+  if (!value) return 'Non indicata';
+  const d = new Date(value + 'T12:00:00');
+  return Number.isNaN(d.getTime()) ? esc(value) : d.toLocaleDateString('it-IT');
+}
+
+function formatTime(value) {
+  return value ? String(value).slice(0,5) : 'Da definire';
+}
+
+
+function normalizeDay(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  const days = {'lunedi':'Lunedì','lunedì':'Lunedì','martedi':'Martedì','martedì':'Martedì','mercoledi':'Mercoledì','mercoledì':'Mercoledì','giovedi':'Giovedì','giovedì':'Giovedì','venerdi':'Venerdì','venerdì':'Venerdì','sabato':'Sabato','domenica':'Domenica'};
+  return days[raw] || '';
+}
+function normalizeTime(value) {
+  const match = String(value || '').match(/(\d{1,2}):(\d{2})/);
+  if (!match) return '';
+  return String(match[1]).padStart(2,'0') + ':' + match[2];
+}
+function setEditMessage(text, error=false) {
+  const el = document.getElementById('editMessage');
+  el.textContent = text;
+  el.className = 'notice ' + (error ? 'err' : 'ok');
+  el.classList.remove('hidden');
+}
+function openInlineEditor() {
+  if (!currentTeam) return;
+  const editor = document.getElementById('inlineEditor');
+  editor.classList.remove('hidden');
+  document.getElementById('editName').value = currentTeam.name || '';
+  document.getElementById('editSeries').value = currentTeam.series || 'Serie C';
+  document.getElementById('editClub').value = currentTeam.club_name || '';
+  document.getElementById('editFiscal').value = currentTeam.club_fiscal_code || '';
+  document.getElementById('editAddress').value = currentTeam.club_address || '';
+  document.getElementById('editCity').value = currentTeam.club_city || '';
+  document.getElementById('editProvince').value = currentTeam.club_province || '';
+  document.getElementById('editCourt').value = currentTeam.home_court || '';
+  document.getElementById('editCaptain').value = currentTeam.captain_name || '';
+  document.getElementById('editCaptainEmail').value = currentTeam.captain_email || '';
+  document.getElementById('editCaptainPhone').value = currentTeam.captain_phone || '';
+  document.getElementById('editHomeDay').value = normalizeDay(currentTeam.home_match_day);
+  document.getElementById('editHomeTime').value = normalizeTime(currentTeam.home_match_time);
+  document.getElementById('editMatchSlotMinutes').value = String(currentTeam.match_slot_minutes || 120);
+  document.getElementById('editAccess').checked = currentTeam.captain_access_enabled !== false;
+  document.getElementById('editNotes').value = currentTeam.notes || '';
+  document.getElementById('editMessage').classList.add('hidden');
+
+  newLogoFile = null;
+  const logoInput = document.getElementById('editLogoFile');
+  if (logoInput) logoInput.value = '';
+  const logoPreview = document.getElementById('editLogoPreview');
+  const logoFileName = document.getElementById('editLogoFileName');
+  if (logoPreview) {
+    logoPreview.innerHTML = currentTeam.logo_url
+      ? `<img src="${esc(currentTeam.logo_url)}" alt="Logo attuale">`
+      : '<span>NESSUN LOGO</span>';
+  }
+  if (logoFileName) logoFileName.textContent = '';
+  const replaceButton = document.getElementById('replaceLogoBtn');
+  if (replaceButton) replaceButton.disabled = true;
+  const removeButton = document.getElementById('removeLogoBtn');
+  if (removeButton) removeButton.disabled = !currentTeam.logo_url;
+
+  editor.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function closeInlineEditor() { const editor=document.getElementById('inlineEditor'); if(editor) editor.classList.add('hidden'); }
+
+function previewTeamLogo(event) {
+  newLogoFile = event.target.files?.[0] || null;
+  const preview = document.getElementById('editLogoPreview');
+  const fileName = document.getElementById('editLogoFileName');
+
+  if (!newLogoFile) {
+    preview.innerHTML = currentTeam?.logo_url
+      ? `<img src="${esc(currentTeam.logo_url)}" alt="Logo attuale">`
+      : '<span>NESSUN LOGO</span>';
+    fileName.textContent = '';
+    return;
+  }
+
+  const allowed = ['image/jpeg','image/png','image/webp'];
+  if (!allowed.includes(newLogoFile.type)) {
+    newLogoFile = null;
+    event.target.value = '';
+    fileName.textContent = '';
+    setEditMessage('Formato non valido. Usa JPG, PNG o WEBP.', true);
+    return;
+  }
+
+  if (newLogoFile.size > 5 * 1024 * 1024) {
+    newLogoFile = null;
+    event.target.value = '';
+    fileName.textContent = '';
+    setEditMessage('Il logo non può superare 5 MB.', true);
+    return;
+  }
+
+  const url = URL.createObjectURL(newLogoFile);
+  preview.innerHTML = `<img src="${url}" alt="Anteprima nuovo logo">`;
+  fileName.textContent = newLogoFile.name;
+  const replaceButton = document.getElementById('replaceLogoBtn');
+  if (replaceButton) replaceButton.disabled = false;
+}
+
+
+async function replaceTeamLogoNow() {
+  if (!currentTeam) return;
+  if (!newLogoFile) {
+    setEditMessage('Seleziona prima il nuovo logo.', true);
+    return;
+  }
+
+  const button = document.getElementById('replaceLogoBtn');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Caricamento…';
+  }
+
+  try {
+    const newUrl = await uploadTeamLogo(currentTeam.id);
+
+    const update = await sb
+      .from('teams')
+      .update({
+        logo_url: newUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentTeam.id)
+      .select('id,logo_url')
+      .maybeSingle();
+
+    if (update.error) throw update.error;
+    if (!update.data?.logo_url) {
+      throw new Error('Il nuovo logo è stato caricato ma non è stato collegato alla squadra.');
+    }
+
+    currentTeam.logo_url = update.data.logo_url;
+    newLogoFile = null;
+
+    const input = document.getElementById('editLogoFile');
+    if (input) input.value = '';
+
+    const preview = document.getElementById('editLogoPreview');
+    if (preview) {
+      preview.innerHTML =
+        `<img src="${esc(update.data.logo_url)}?v=${Date.now()}" alt="Nuovo logo">`;
+    }
+
+    const fileName = document.getElementById('editLogoFileName');
+    if (fileName) fileName.textContent = '';
+
+    const removeButton = document.getElementById('removeLogoBtn');
+    if (removeButton) removeButton.disabled = false;
+
+    setEditMessage('Logo sostituito correttamente.');
+
+    setTimeout(() => {
+      window.location.replace(
+        'team.html?id=' + encodeURIComponent(currentTeam.id) + '&v=' + Date.now()
+      );
+    }, 700);
+  } catch (error) {
+    setEditMessage(
+      error?.message || 'Errore durante la sostituzione del logo.',
+      true
+    );
+    if (button) button.disabled = false;
+  } finally {
+    if (button) button.textContent = 'Sostituisci logo adesso';
+  }
+}
+
+async function removeTeamLogoNow() {
+  if (!currentTeam?.logo_url) {
+    setEditMessage('La squadra non ha un logo da rimuovere.', true);
+    return;
+  }
+
+  if (!confirm(
+    'Rimuovere il logo attuale della squadra? Potrai inserirne uno nuovo in qualsiasi momento.'
+  )) return;
+
+  try {
+    const update = await sb
+      .from('teams')
+      .update({
+        logo_url: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', currentTeam.id)
+      .select('id')
+      .maybeSingle();
+
+    if (update.error) throw update.error;
+
+    currentTeam.logo_url = null;
+    newLogoFile = null;
+
+    const input = document.getElementById('editLogoFile');
+    if (input) input.value = '';
+
+    const preview = document.getElementById('editLogoPreview');
+    if (preview) preview.innerHTML = '<span>NESSUN LOGO</span>';
+
+    const removeButton = document.getElementById('removeLogoBtn');
+    if (removeButton) removeButton.disabled = true;
+
+    const replaceButton = document.getElementById('replaceLogoBtn');
+    if (replaceButton) replaceButton.disabled = true;
+
+    setEditMessage('Logo rimosso correttamente.');
+
+    setTimeout(() => {
+      window.location.replace(
+        'team.html?id=' + encodeURIComponent(currentTeam.id) + '&v=' + Date.now()
+      );
+    }, 700);
+  } catch (error) {
+    setEditMessage(
+      error?.message || 'Errore durante la rimozione del logo.',
+      true
+    );
+  }
+}
+
+window.replaceTeamLogoNow = replaceTeamLogoNow;
+window.removeTeamLogoNow = removeTeamLogoNow;
+
+
+async function uploadTeamLogo(teamId) {
+  if (!newLogoFile) return currentTeam?.logo_url || null;
+  if (!newLogoFile.size) throw new Error('Il file del logo è vuoto.');
+  if (!['image/png','image/jpeg','image/webp'].includes(newLogoFile.type)) throw new Error('Usa PNG, JPG o WEBP.');
+
+  const originalExt = (newLogoFile.name.split('.').pop() || 'png').toLowerCase();
+  const ext = ['jpg','jpeg','png','webp'].includes(originalExt) ? originalExt : 'png';
+  const storagePath = `teams/${teamId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+
+  const upload = await sb.storage
+    .from('team-logos')
+    .upload(storagePath, newLogoFile, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: newLogoFile.type
+    });
+
+  if (upload.error) throw upload.error;
+
+  return sb.storage
+    .from('team-logos')
+    .getPublicUrl(storagePath)
+    .data
+    .publicUrl;
+}
+
+window.previewTeamLogo = previewTeamLogo;
+
+async function saveInlineEditor() {
+  if (!currentTeam) return;
+  const payload = {
+    name: document.getElementById('editName').value.trim(),
+    series: document.getElementById('editSeries').value,
+    club_name: document.getElementById('editClub').value.trim(),
+    club_fiscal_code: document.getElementById('editFiscal').value.trim(),
+    club_address: document.getElementById('editAddress').value.trim(),
+    club_city: document.getElementById('editCity').value.trim(),
+    club_province: document.getElementById('editProvince').value.trim().toUpperCase(),
+    home_court: document.getElementById('editCourt').value.trim(),
+    captain_name: document.getElementById('editCaptain').value.trim(),
+    captain_email: document.getElementById('editCaptainEmail').value.trim().toLowerCase(),
+    captain_phone: document.getElementById('editCaptainPhone').value.trim(),
+    home_match_day: document.getElementById('editHomeDay').value || null,
+    home_match_time: document.getElementById('editHomeTime').value || null,
+    match_slot_minutes: Number(document.getElementById('editMatchSlotMinutes').value || 120),
+    captain_access_enabled: document.getElementById('editAccess').checked,
+    notes: document.getElementById('editNotes').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+  if (!payload.name || !payload.captain_name || !payload.captain_email) return setEditMessage('Compila nome squadra, capitano ed email.', true);
+  try {
+    const logoUrl = await uploadTeamLogo(currentTeam.id);
+    if (logoUrl) payload.logo_url = logoUrl;
+
+    const result = await sb
+      .from('teams')
+      .update(payload)
+      .eq('id', currentTeam.id);
+
+    if (result.error) throw result.error;
+
+    setEditMessage(
+      newLogoFile
+        ? 'Squadra e logo aggiornati correttamente.'
+        : 'Squadra aggiornata correttamente.'
+    );
+
+    currentTeam = {...currentTeam, ...payload};
+    newLogoFile = null;
+
+    setTimeout(() => {
+      window.location.replace(
+        'team.html?id=' + encodeURIComponent(currentTeam.id) + '&v=931'
+      );
+    }, 600);
+  } catch (error) {
+    setEditMessage(error?.message || 'Errore durante il salvataggio del logo.', true);
+  }
+}
+window.openInlineEditor = openInlineEditor;
+window.closeInlineEditor = closeInlineEditor;
+window.saveInlineEditor = saveInlineEditor;
+
+
+function adminPlayerMessage(text,error=false){
+  const el=document.getElementById('adminPlayerMsg');
+  el.textContent=text;
+  el.className='notice '+(error?'err':'ok');
+  el.classList.remove('hidden');
+}
+function renderAdminRoster(items){
+  const host=document.getElementById('adminRosterList');
+  if(!host)return;
+  adminRosterCache=items||[];
+  host.innerHTML=adminRosterCache.map(p=>`
+    <div class="roster-row">
+      <div>
+        <b>${esc(p.first_name||'')} ${esc(p.last_name||'')}</b>
+        <div class="muted small">${esc(p.email||'Nessuna email')} · ${esc(p.phone||'Nessun telefono')} · ${esc(p.fitp_ranking||'FITP non indicata')}</div>
+        <div class="muted small">Certificato: ${esc(p.medical_certificate_expiry||'non indicato')} · Stato: ${esc(p.status||'approved')}</div>
+      </div>
+      <div class="admin-player-actions">
+        <button class="btn secondary btn-mini" onclick="openAdminPlayerEditor('${p.id}')">Modifica</button>
+        <button class="btn danger btn-mini" onclick="deleteAdminPlayer('${p.id}',${JSON.stringify(((p.first_name||'')+' '+(p.last_name||'')).trim())})">Elimina</button>
+      </div>
+    </div>`).join('')||'<div class="notice">Nessun giocatore presente.</div>';
+}
+async function reloadAdminRoster(){
+  if(!currentTeam?.id)return;
+  const r=await sb.from('roster_requests').select('*').eq('team_id',currentTeam.id).order('last_name',{ascending:true});
+  if(r.error)return adminPlayerMessage(r.error.message,true);
+  renderAdminRoster(r.data||[]);
+}
+
+async function uploadAdminPlayerPhoto(file){
+  if(!file)throw new Error('Carica la foto tessera con sfondo bianco.');
+  if(file.size>5*1024*1024)throw new Error('La foto non può superare 5 MB.');
+  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+  const safe=['jpg','jpeg','png','webp'].includes(ext)?ext:'jpg';
+  const path=`${currentTeam.id}/${crypto.randomUUID()}.${safe}`;
+  const up=await sb.storage.from('player-photos').upload(path,file,{contentType:file.type,upsert:false});
+  if(up.error)throw up.error;
+  return sb.storage.from('player-photos').getPublicUrl(path).data.publicUrl;
+}
+
+async function adminAddPlayer(){
+  if(!currentTeam?.id)return adminPlayerMessage('Squadra non caricata.',true);
+  const ids=['adminPlayerFirstName','adminPlayerLastName','adminPlayerBirthDate','adminPlayerBirthPlace','adminPlayerResidenceTown','adminPlayerPostalCode','adminPlayerProvince','adminPlayerEmail','adminPlayerPhone','adminPlayerFitp','adminPlayerMedical'];
+  const v=Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value.trim()]));
+  if(ids.some(id=>!v[id]))return adminPlayerMessage('Compila tutti i dati obbligatori.',true);
+  if(!/^\d{5}$/.test(v.adminPlayerPostalCode))return adminPlayerMessage('Il CAP deve contenere 5 cifre.',true);
+  const button=document.getElementById('adminAddPlayerBtn');
+  button.disabled=true;button.textContent='Inserimento in corso…';
+  try{
+    const photoUrl=await uploadAdminPlayerPhoto(document.getElementById('adminPlayerPhoto').files[0]);
+    const payload={
+      team_id:currentTeam.id,photo_url:photoUrl,
+      first_name:v.adminPlayerFirstName,last_name:v.adminPlayerLastName,
+      birth_date:v.adminPlayerBirthDate,birth_place:v.adminPlayerBirthPlace,
+      residence_town:v.adminPlayerResidenceTown,residence_postal_code:v.adminPlayerPostalCode,
+      residence_province:v.adminPlayerProvince.toUpperCase(),
+      email:v.adminPlayerEmail.toLowerCase(),phone:v.adminPlayerPhone,
+      fitp_ranking:v.adminPlayerFitp.toUpperCase(),
+      medical_certificate_expiry:v.adminPlayerMedical,
+      status:'approved',decided_at:new Date().toISOString(),
+      created_at:new Date().toISOString()
+    };
+    const r=await sb.from('roster_requests').insert(payload).select('id').maybeSingle();
+    if(r.error)throw r.error;
+    if(!r.data?.id)throw new Error('Inserimento non confermato dal database.');
+    ids.forEach(id=>document.getElementById(id).value='');
+    document.getElementById('adminPlayerPhoto').value='';
+    adminPlayerMessage(`${v.adminPlayerFirstName} ${v.adminPlayerLastName} inserito con profilo completo.`);
+    await reloadAdminRoster();
+  }catch(error){adminPlayerMessage(error.message||String(error),true)}
+  finally{button.disabled=false;button.textContent='Inserisci giocatore'}
+}
+
+function openAdminPlayerEditor(playerId){
+  const p=adminRosterCache.find(x=>x.id===playerId);
+  if(!p)return adminPlayerMessage('Giocatore non trovato. Aggiorna la pagina.',true);
+  editPlayerId.value=p.id;editPlayerFirstName.value=p.first_name||'';editPlayerLastName.value=p.last_name||'';editPlayerBirthDate.value=p.birth_date||'';editPlayerBirthPlace.value=p.birth_place||'';editPlayerResidenceTown.value=p.residence_town||'';editPlayerPostalCode.value=p.residence_postal_code||'';editPlayerProvince.value=p.residence_province||'';editPlayerEmail.value=p.email||'';editPlayerPhone.value=p.phone||'';editPlayerFitp.value=p.fitp_ranking||'';editPlayerMedical.value=p.medical_certificate_expiry||'';editPlayerStatus.value=p.status||'approved';editPlayerPhoto.value='';editPlayerMsg.classList.add('hidden');adminPlayerEditOverlay.classList.remove('hidden');
+}
+function closeAdminPlayerEditor(){adminPlayerEditOverlay.classList.add('hidden')}
+function editPlayerMessage(text,error=false){editPlayerMsg.textContent=text;editPlayerMsg.className='notice '+(error?'err':'ok');editPlayerMsg.classList.remove('hidden')}
+async function saveAdminPlayer(){
+  const playerId=editPlayerId.value;
+  const required={
+    first_name:editPlayerFirstName.value.trim(),
+    last_name:editPlayerLastName.value.trim(),
+    birth_date:editPlayerBirthDate.value,
+    birth_place:editPlayerBirthPlace.value.trim(),
+    residence_town:editPlayerResidenceTown.value.trim(),
+    residence_postal_code:editPlayerPostalCode.value.trim(),
+    residence_province:editPlayerProvince.value.trim().toUpperCase(),
+    email:editPlayerEmail.value.trim().toLowerCase(),
+    phone:editPlayerPhone.value.trim(),
+    fitp_ranking:editPlayerFitp.value.trim().toUpperCase(),
+    medical_certificate_expiry:editPlayerMedical.value,
+    status:editPlayerStatus.value
+  };
+  if(!playerId)return editPlayerMessage('Giocatore non selezionato.',true);
+  if(Object.values(required).some(v=>!v))return editPlayerMessage('Compila tutti i dati obbligatori.',true);
+  if(!/^\d{5}$/.test(required.residence_postal_code))return editPlayerMessage('Il CAP deve contenere 5 cifre.',true);
+  saveAdminPlayerBtn.disabled=true;saveAdminPlayerBtn.textContent='Salvataggio…';
+  try{
+    const payload={...required};
+    const photo=editPlayerPhoto.files[0];
+    if(photo) payload.photo_url=await uploadAdminPlayerPhoto(photo);
+    const r=await sb.from('roster_requests').update(payload).eq('id',playerId).eq('team_id',currentTeam.id).select('*').maybeSingle();
+    if(r.error)throw r.error;
+    if(!r.data?.id)throw new Error('Il database non ha confermato la modifica.');
+    await reloadAdminRoster();
+    editPlayerMessage('Giocatore aggiornato correttamente.');
+    setTimeout(closeAdminPlayerEditor,450);
+  }catch(e){editPlayerMessage(e.message||String(e),true)}
+  finally{saveAdminPlayerBtn.disabled=false;saveAdminPlayerBtn.textContent='Salva modifiche'}
+}
+async function deleteAdminPlayer(playerId,playerName){
+  if(!confirm(`Eliminare definitivamente ${playerName} dalla squadra?\n\nL’operazione non può essere annullata.`))return;
+  try{
+    const r=await sb.rpc('delete_player_safely',{p_player_id:playerId});
+    if(r.error)throw r.error;
+    adminPlayerMessage(r.data?.message||`${playerName} è stato eliminato dalla squadra.`);
+    await reloadAdminRoster();
+  }catch(e){adminPlayerMessage(e.message||String(e),true)}
+}
+window.openAdminPlayerEditor=openAdminPlayerEditor;window.closeAdminPlayerEditor=closeAdminPlayerEditor;window.saveAdminPlayer=saveAdminPlayer;window.deleteAdminPlayer=deleteAdminPlayer;
+
+async function copyLink(url) {
+  try {
+    await navigator.clipboard.writeText(url);
+    alert('Link copiato');
+  } catch {
+    prompt('Copia il link:', url);
+  }
+}
+
+async function init() {
+  if (!teamId) {
+    box.innerHTML = `
+      <div class="notice err">
+        <b>Identificativo della squadra mancante.</b><br>
+        Torna all’elenco e premi nuovamente “Apri”.
+      </div>
+      <button class="btn primary" onclick="location.href='index.html'">Torna alle squadre</button>`;
+    return;
+  }
+
+  const sessionResult = await sb.auth.getSession();
+  if (!sessionResult.data.session) {
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.href = 'login.html?return=' + returnUrl;
+    return;
+  }
+
+  const teamResult = await sb
+    .from('teams')
+    .select('*')
+    .eq('id', teamId)
+    .maybeSingle();
+
+  if (teamResult.error) {
+    box.innerHTML = `
+      <div class="notice err">
+        <b>Non riesco ad aprire la scheda tecnica.</b><br>
+        ${esc(teamResult.error.message)}
+      </div>
+      <button class="btn primary" onclick="location.href='index.html'">Torna alle squadre</button>`;
+    return;
+  }
+
+  if (!teamResult.data) {
+    box.innerHTML = `
+      <div class="notice err">
+        <b>Squadra non trovata.</b><br>
+        La squadra potrebbe essere stata rimossa oppure il collegamento non è valido.
+      </div>
+      <button class="btn primary" onclick="location.href='index.html'">Torna alle squadre</button>`;
+    return;
+  }
+
+  const team = teamResult.data;
+  currentTeam = team;
+
+  const rosterResult = await sb
+    .from('roster_requests')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending:false });
+
+  const requests = rosterResult.error ? [] : (rosterResult.data || []);
+
+  const captainUrl = new URL(
+    'captain.html?invite=' + encodeURIComponent(team.captain_invite_token || ''),
+    window.location.href
+  ).href;
+
+  const playerUrl = new URL(
+    'player.html?team=' + encodeURIComponent(team.player_invite_token || ''),
+    window.location.href
+  ).href;
+
+  box.innerHTML = `
+    <div class="detail-grid">
+      <div>
+        ${team.logo_url
+          ? `<img class="big-logo" src="${esc(team.logo_url)}" alt="Logo ${esc(team.name)}">`
+          : `<div class="big-logo placeholder" style="display:grid;place-items:center;font-size:50px">🏆</div>`}
+      </div>
+
+      <div>
+        <span class="section-ribbon">${esc(team.series || 'Serie da definire')}</span>
+        <h1>${esc(team.name)}</h1>
+        <div class="muted">${esc(team.club_name || 'Società non indicata')}</div>
+
+        <div class="data-grid">
+          <div class="data-item"><b>Campo di casa</b>${esc(team.home_court || 'Da definire')}</div>
+          <div class="data-item"><b>Partite casalinghe</b>${esc(team.home_match_day || 'Da definire')} · ${formatTime(team.home_match_time)}</div>
+          <div class="data-item"><b>Indirizzo</b>${esc(team.club_address || '')} ${esc(team.club_city || '')} ${esc(team.club_province || '')}</div>
+          <div class="data-item"><b>Codice fiscale / P. IVA</b>${esc(team.club_fiscal_code || 'Non indicato')}</div>
+          <div class="data-item"><b>Capitano</b>${esc(team.captain_name || 'Non indicato')}</div>
+          <div class="data-item"><b>Email capitano</b>${esc(team.captain_email || 'Non indicata')}</div>
+          <div class="data-item"><b>Telefono capitano</b>${esc(team.captain_phone || 'Non indicato')}</div>
+          <div class="data-item"><b>Accesso capitano</b>${team.captain_access_enabled === false ? 'Disabilitato' : 'Attivo'}</div>
+        </div>
+
+        <div class="actions" style="margin-top:16px">
+          <button class="btn primary" onclick="openInlineEditor()">Modifica squadra</button>
+          <button class="btn success" onclick="document.getElementById('manualPlayerPanel').scrollIntoView({behavior:'smooth'})">Aggiungi giocatore</button>
+          <button class="btn secondary" onclick='copyLink(${JSON.stringify(captainUrl)})'>Copia link capitano</button>
+          <button class="btn secondary" onclick='copyLink(${JSON.stringify(playerUrl)})'>Copia link giocatori</button>
+        </div>
+      </div>
+    </div>
+
+    <section id="manualPlayerPanel" class="card manual-player-panel" style="margin-top:18px">
+      <div class="section-title">
+        <div>
+          <h2 style="margin:0">Inserisci giocatore manualmente</h2>
+          <div class="muted">Il giocatore viene inserito direttamente nella rosa come approvato.</div>
+        </div>
+      </div>
+      <div class="manual-player-grid">
+        <div class="field"><label>Foto tessera con sfondo bianco *</label><input id="adminPlayerPhoto" type="file" accept="image/jpeg,image/png,image/webp"></div>
+        <div class="field"><label>Nome *</label><input id="adminPlayerFirstName"></div>
+        <div class="field"><label>Cognome *</label><input id="adminPlayerLastName"></div>
+        <div class="field"><label>Data di nascita *</label><input id="adminPlayerBirthDate" type="date"></div>
+        <div class="field"><label>Luogo di nascita *</label><input id="adminPlayerBirthPlace"></div>
+        <div class="field"><label>Comune di residenza *</label><input id="adminPlayerResidenceTown"></div>
+        <div class="field"><label>CAP *</label><input id="adminPlayerPostalCode" inputmode="numeric" maxlength="5"></div>
+        <div class="field"><label>Provincia *</label><input id="adminPlayerProvince" maxlength="2"></div>
+        <div class="field"><label>Email *</label><input id="adminPlayerEmail" type="email"></div>
+        <div class="field"><label>Telefono *</label><input id="adminPlayerPhone"></div>
+        <div class="field"><label>Classifica FITP *</label><input id="adminPlayerFitp"></div>
+        <div class="field"><label>Scadenza certificato medico *</label><input id="adminPlayerMedical" type="date"></div>
+      </div>
+      <div class="actions">
+        <button id="adminAddPlayerBtn" class="btn success" onclick="adminAddPlayer()">Inserisci giocatore</button>
+      </div>
+      <div id="adminPlayerMsg" class="notice hidden"></div>
+      <h3>Rosa attuale — Modifica ed elimina giocatori</h3>
+      <div id="adminRosterList"></div>
+    </section>
+
+    <section id="inlineEditor" class="card hidden" style="margin-top:18px">
+      <div class="section-title">
+        <div><h2 style="margin:0">Modifica squadra</h2><div class="muted">Le modifiche vengono salvate direttamente nel database.</div></div>
+        <button class="btn secondary" onclick="closeInlineEditor()">Chiudi</button>
+      </div>
+      <form id="editTeamForm" onsubmit="event.preventDefault();saveInlineEditor()">
+        <div class="edit-logo-box">
+          <div id="editLogoPreview" class="edit-logo-preview">NESSUN LOGO</div>
+          <div>
+            <div class="field">
+              <label>Logo della squadra</label>
+              <input
+                id="editLogoFile"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onchange="previewTeamLogo(event)"
+              >
+              <div id="editLogoFileName" class="edit-logo-help"></div>
+              <div class="actions" style="margin-top:10px">
+                <button
+                  id="replaceLogoBtn"
+                  class="btn primary"
+                  type="button"
+                  onclick="replaceTeamLogoNow()"
+                  disabled
+                >
+                  Sostituisci logo adesso
+                </button>
+                <button
+                  id="removeLogoBtn"
+                  class="btn danger"
+                  type="button"
+                  onclick="removeTeamLogoNow()"
+                >
+                  Rimuovi logo attuale
+                </button>
+              </div>
+              <div class="edit-logo-help">
+                Scegli un'immagine e premi <b>Sostituisci logo adesso</b>.
+                La modifica viene salvata immediatamente, senza dover salvare anche tutti gli altri dati.
+                Formati accettati: JPG, PNG e WEBP. Dimensione massima: 5 MB.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tricolore"></div>
+
+        <div class="grid2">
+          <div>
+            <div class="field"><label>Nome squadra *</label><input id="editName" required></div>
+            <div class="field"><label>Serie *</label><select id="editSeries"><option>Serie A</option><option>Serie B</option><option>Serie C</option></select></div>
+            <div class="field"><label>Club / società</label><input id="editClub"></div>
+            <div class="field"><label>Codice fiscale / P. IVA</label><input id="editFiscal"></div>
+            <div class="field"><label>Indirizzo</label><input id="editAddress"></div>
+            <div class="grid2"><div class="field"><label>Comune</label><input id="editCity"></div><div class="field"><label>Provincia</label><input id="editProvince" maxlength="2"></div></div>
+            <div class="field"><label>Campo di casa</label><input id="editCourt"></div>
+          </div>
+          <div>
+            <div class="field"><label>Capitano *</label><input id="editCaptain" required></div>
+            <div class="field"><label>Email capitano *</label><input id="editCaptainEmail" type="email" required></div>
+            <div class="field"><label>Telefono capitano</label><input id="editCaptainPhone"></div>
+            <div class="grid2">
+              <div class="field"><label>Giorno partite in casa</label><select id="editHomeDay"><option value="">Da definire</option><option>Lunedì</option><option>Martedì</option><option>Mercoledì</option><option>Giovedì</option><option>Venerdì</option><option>Sabato</option><option>Domenica</option></select></div>
+              <div class="field"><label>Orario partite in casa</label><input id="editHomeTime" type="time"></div>
+            </div>
+            <div class="field">
+              <label>Durata disponibilità impianto per gara</label>
+              <select id="editMatchSlotMinutes">
+                <option value="90">90 minuti</option>
+                <option value="120">120 minuti</option>
+                <option value="150">150 minuti</option>
+              </select>
+            </div>
+            <label class="notice"><input id="editAccess" type="checkbox" style="width:auto;margin-right:8px"> Accesso capitano attivo</label>
+            <div class="field"><label>Note</label><textarea id="editNotes"></textarea></div>
+          </div>
+        </div>
+        <div id="editMessage" class="notice hidden"></div>
+        <div class="actions"><button class="btn primary" type="submit">Salva modifiche</button><button class="btn secondary" type="button" onclick="closeInlineEditor()">Annulla</button></div>
+      </form>
+    </section>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+
+    <div class="section-title">
+      <div>
+        <h2 style="margin-bottom:3px">Giocatori e richieste</h2>
+        <div class="muted">${requests.length} richieste presenti</div>
+      </div>
+    </div>
+
+    ${requests.length
+      ? requests.map(player => `
+        <div class="player-card">
+          ${player.photo_url
+            ? `<img class="player-photo" src="${esc(player.photo_url)}" alt="Foto tessera">`
+            : `<div class="player-photo"></div>`}
+          <div>
+            <b>${esc(player.first_name)} ${esc(player.last_name)}</b>
+            <div class="muted small">${esc(player.email)} · ${esc(player.phone)}</div>
+            <div class="small">
+              FITP: <b>${esc(player.fitp_ranking || 'Non indicata')}</b> ·
+              Certificato: <b>${formatDate(player.medical_certificate_expiry)}</b>
+            </div>
+          </div>
+          <span class="badge">${esc(player.status || 'pending')}</span>
+        </div>
+      `).join('')
+      : `<div class="notice">Nessuna richiesta giocatore presente.</div>`}
+  `;
+  renderAdminRoster(requests);
+}
+
+window.copyLink = copyLink;
+init();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+
+<div style="position:fixed;right:8px;bottom:8px;z-index:9999;padding:4px 7px;border-radius:999px;background:#082f68;color:white;font:700 10px system-ui;opacity:.75">V9.7 STABLE</div>
+<script src="app-ui.js?v=980stable"></script>
+</body>
+</html>

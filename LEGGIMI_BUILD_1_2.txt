@@ -1,0 +1,23 @@
+AICS PADEL CHAMPIONSHIP — V9 STABLE BUILD 1.2
+
+NOVITÀ
+- Loghi ufficiali corretti per Serie A, Serie B, Serie C, Coppa Italia e Supercoppa.
+- Coppa Italia e Supercoppa accessibili chiaramente dalla gestione competizioni e dal calendario.
+- Selezione diretta della Supercoppa nella pagina calendario.
+- Archivio locale dei loghi già forniti dall'utente.
+- Nuova pagina auto-assign-logos.html per associare automaticamente i loghi alle squadre.
+- Registrazione/recupero account giocatore tramite la stessa email dell'anagrafica approvata.
+- Il giocatore ritrova la propria iscrizione senza ricompilare i dati.
+
+INSTALLAZIONE
+1. Esegui SUPABASE_V9_STABLE_BUILD_1_2.sql in Supabase.
+2. Sostituisci TUTTI i file GitHub con quelli presenti nel pacchetto.
+3. Carica integralmente la cartella assets.
+4. Fai Commit changes.
+5. Apri login.html?v=stable12.
+
+PAGINE UTILI
+- auto-assign-logos.html?v=stable12
+- player-account.html?v=stable12
+- competitions.html?v=stable12
+- calendar.html?v=stable12

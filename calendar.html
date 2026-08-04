@@ -1,0 +1,1562 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AICS Padel Championship Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><style>
+:root{--bg:#06111f;--panel:#10233b;--panel2:#09182a;--line:#315676;--text:#f8fafc;--muted:#a9bacd;--lime:#9dff25;--blue:#16a8ff;--red:#ef4444;--amber:#f6c453}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0%,#123f61,transparent 34%),linear-gradient(180deg,#06111f,#040b14);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.shell{max-width:1200px;margin:auto;padding:16px 14px 90px}.hero{display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:13px}.mark{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,var(--lime),var(--blue));display:grid;place-items:center;color:#07111f;font-weight:1000}.muted{color:var(--muted)}
+.card,.top{background:rgba(16,35,59,.97);border:1px solid var(--line);border-radius:20px;padding:16px;margin:12px 0}.nav,.actions,.filters{display:flex;gap:8px;flex-wrap:wrap}.btn{font:inherit;border:0;border-radius:12px;padding:12px 14px;font-weight:900;cursor:pointer}.primary{background:var(--lime);color:#07111f}.secondary{background:#17304e;color:#fff;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:#fff}.ghost{background:transparent;color:#fff;border:1px solid #3c5d7d}.blue{background:var(--blue);color:#06111f}.hidden{display:none!important}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.field{margin:9px 0}label{display:block;font-size:13px;font-weight:900;margin-bottom:5px}input,select,textarea{width:100%;padding:12px 13px;border-radius:12px;border:1px solid #365474;background:#071523;color:#fff;font:inherit}.notice{padding:12px;border-radius:13px;background:#09182a;border:1px solid var(--line);margin:10px 0}.ok{border-color:#4ade80;background:#0b2a20}.err{border-color:#ef4444;background:#351316}
+.comp-logo{width:125px;height:125px;object-fit:contain;background:#fff;border-radius:18px;padding:4px}.group{border:1px solid #3b5e80;background:#09182a;border-radius:18px;padding:14px;margin:10px 0}.team-pill{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:12px;background:#10233b;border:1px solid #315676;margin:7px 0}.fixture{display:grid;grid-template-columns:130px 1fr 180px 150px auto;gap:10px;align-items:center;padding:11px;border:1px solid #315676;border-radius:14px;background:#09182a;margin:8px 0}.small{font-size:12px}.badge{display:inline-flex;padding:6px 9px;border-radius:999px;background:#17304e;border:1px solid #416b91;font-size:12px;font-weight:900}.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px}
+@media(max-width:850px){.grid2,.grid3{grid-template-columns:1fr}.fixture{grid-template-columns:1fr}.fixture .btn{width:100%}.hero{align-items:flex-start}.comp-logo{width:95px;height:95px}}
+
+.conflict-overlay{position:fixed;inset:0;background:rgba(4,24,50,.62);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.conflict-card{width:min(980px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:22px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.32)}
+.conflict-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.conflict-match{padding:13px;border-radius:14px;background:#edf4fb;border:1px solid #bfd0e2;font-size:18px;font-weight:1000}
+.conflict-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.solution-card{border:1px solid #bfd0e2;border-radius:15px;padding:13px;background:#fff}
+.solution-card.ok{border-color:#6fbd8a;background:#f1fbf5}
+.solution-card.no{border-color:#d98a93;background:#fff5f6}
+.solution-card h3{margin:0 0 7px}
+.solution-card .reason{font-size:12px;color:#647c98;white-space:pre-line}
+.solution-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn-mini{padding:8px 10px!important;font-size:12px!important;border-radius:10px!important}
+.diagnostic-list{margin:0;padding-left:18px}
+.manual-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+@media(max-width:820px){.conflict-grid,.manual-grid{grid-template-columns:1fr}}
+
+.matchday-block{border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden;background:#fff}
+.matchday-head{width:100%;border:0;background:linear-gradient(90deg,#edf4fb,#f8fbfe);color:var(--text);padding:13px 15px;display:flex;justify-content:space-between;align-items:center;font:inherit;font-weight:1000;cursor:pointer;text-align:left}
+.matchday-count{font-size:12px;color:var(--muted);font-weight:900}
+.matchday-body{padding:0 12px 10px}
+.matchday-block.collapsed .matchday-body{display:none}
+</style><style>
+:root{
+  --aics-blue:#164a95;
+  --aics-blue-dark:#082f68;
+  --aics-blue-soft:#2e6fba;
+  --italy-green:#009246;
+  --italy-red:#ce2b37;
+  --bg:#f4f8fc;
+  --panel:#ffffff;
+  --panel-soft:#edf4fb;
+  --text:#0a2e5e;
+  --muted:#627b97;
+  --line:#b9cde3;
+  --shadow:0 14px 34px rgba(8,47,104,.13);
+}
+html{background:var(--bg)}
+body{
+  color:var(--text)!important;
+  background:
+    linear-gradient(90deg,rgba(0,146,70,.05),transparent 23%,transparent 77%,rgba(206,43,55,.05)),
+    radial-gradient(circle at 50% 0%,rgba(22,74,149,.12),transparent 34%),
+    var(--bg)!important;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0 0 auto 0;
+  height:6px;
+  z-index:9999;
+  background:linear-gradient(90deg,var(--italy-green) 0 33.333%,#fff 33.333% 66.666%,var(--italy-red) 66.666%);
+}
+.hero{
+  background:linear-gradient(135deg,var(--aics-blue),var(--aics-blue-dark))!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.25)!important;
+  border-radius:24px!important;
+  padding:18px!important;
+  box-shadow:var(--shadow)!important;
+}
+.hero .muted{color:#d9e6f5!important}
+.brand-logo{
+  width:132px;
+  height:78px;
+  object-fit:contain;
+  padding:8px;
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 10px 24px rgba(0,0,0,.14);
+}
+.mark{display:none!important}
+.top,.card,.comp,.group,.comp-card{
+  background:rgba(255,255,255,.98)!important;
+  color:var(--text)!important;
+  border:1px solid var(--line)!important;
+  box-shadow:var(--shadow)!important;
+}
+.primary{background:linear-gradient(135deg,var(--aics-blue-soft),var(--aics-blue))!important;color:#fff!important}
+.secondary{background:#fff!important;color:var(--aics-blue-dark)!important;border:1px solid var(--aics-blue-soft)!important}
+.blue{background:var(--aics-blue)!important;color:#fff!important}
+.danger{background:var(--italy-red)!important;color:#fff!important}
+.ghost{background:#fff!important;color:var(--aics-blue)!important;border:1px solid var(--line)!important}
+input,select,textarea{
+  background:#fff!important;
+  color:var(--text)!important;
+  border-color:var(--line)!important;
+}
+label{color:var(--aics-blue-dark)!important}
+.notice{background:var(--panel-soft)!important;color:var(--text)!important;border-color:var(--line)!important}
+.ok{background:#eaf8f0!important;border-color:var(--italy-green)!important}
+.err{background:#fdecef!important;border-color:var(--italy-red)!important}
+.kpi,.team,.fixture,.team-pill,.mini-team,.request{
+  background:#fff!important;
+  color:var(--text)!important;
+  border-color:var(--line)!important;
+  box-shadow:0 8px 20px rgba(8,47,104,.07)!important;
+}
+.kpi strong{color:var(--aics-blue)!important}
+.filter{background:#fff!important;color:var(--aics-blue-dark)!important;border:1px solid var(--line)!important}
+.filter.active{
+  color:#fff!important;
+  border-color:var(--aics-blue)!important;
+  background:linear-gradient(90deg,var(--italy-green),var(--aics-blue),var(--italy-red))!important;
+}
+.badge{background:#e8f1fb!important;color:var(--aics-blue-dark)!important;border-color:var(--line)!important}
+.logo,.big-logo,.mini-logo,.comp-logo,.comp img{background:#fff!important;border-color:#dce6f2!important}
+.placeholder{background:linear-gradient(135deg,#e8f1fb,#fff)!important;color:var(--aics-blue)!important}
+.more-menu,.dialog-card{background:#fff!important;color:var(--text)!important;border-color:var(--line)!important}
+.more-menu .delete-item{background:#fff4f5!important;color:var(--italy-red)!important}
+.tricolore{
+  height:5px;
+  border-radius:999px;
+  margin:10px 0 0;
+  background:linear-gradient(90deg,var(--italy-green) 0 33.333%,#fff 33.333% 66.666%,var(--italy-red) 66.666%);
+  border:1px solid #d7e3ef;
+}
+.section-ribbon{
+  display:inline-flex;
+  padding:7px 12px;
+  border-radius:999px;
+  font-weight:900;
+  color:var(--aics-blue-dark);
+  border:1px solid #d7e3ef;
+  background:linear-gradient(90deg,rgba(0,146,70,.12),rgba(255,255,255,.95),rgba(206,43,55,.12));
+}
+@media(max-width:800px){
+  .brand-logo{width:100px;height:62px}
+}
+</style>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/aics-icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/aics-icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/aics-icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="application-name" content="AICS Padel Championship Manager">
+<meta name="apple-mobile-web-app-title" content="AICS Padel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AICS Padel Championship Manager">
+<meta property="og:description" content="Gestionale ufficiale AICS Padel Championship">
+<meta property="og:image" content="assets/aics-social-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AICS Padel Championship Manager">
+<meta name="twitter:description" content="Gestionale ufficiale AICS Padel Championship">
+<meta name="twitter:image" content="assets/aics-social-preview.png">
+
+<link rel="stylesheet" href="app-theme.css?v=980stable">
+</head>
+<body><main class="shell">
+<div class="top">
+  <div class="nav">
+    <button class="btn secondary" onclick="history.back()">← Indietro</button>
+    <button class="btn secondary" onclick="location.href='index.html'">⌂ Home</button>
+    <button class="btn secondary" onclick="location.href='groups.html'">Gironi</button>
+    <button class="btn secondary" onclick="location.href='competitions.html'">Competizioni</button>
+    <button class="btn secondary" onclick="location.href='admin-control.html'">Controllo campionato</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="brand">
+    <img class="brand-logo" src="assets/aics-logo.png" alt="AICS">
+    <div>
+      <h1 style="margin:0">Calendario automatico</h1>
+      <div class="muted">V9.5.1 · Orari locali italiani verificati prima del salvataggio</div>
+    </div>
+  </div>
+</header>
+<div class="tricolore"></div>
+
+<section class="card">
+  <div class="grid3">
+    <div class="field">
+      <label>Competizione</label>
+      <select id="competition">
+        <option value="SERIE_A">Serie A</option>
+        <option value="SERIE_B">Serie B</option>
+        <option value="SERIE_C">Serie C</option>
+        <option value="COPPA_ITALIA">Coppa Italia</option>
+        <option value="SUPERCOPPA">Supercoppa</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Data di partenza</label>
+      <input id="startDate" type="date">
+    </div>
+    <div class="field">
+      <label>Intervallo giornate</label>
+      <select id="interval">
+        <option value="1">Ogni settimana</option>
+        <option value="2">Ogni 2 settimane</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="field">
+      <label>Formula del girone</label>
+      <select id="formula">
+        <option value="single">Solo andata</option>
+        <option value="double">Andata e ritorno</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Controllo dati squadre</label>
+      <button class="btn secondary" style="width:100%" onclick="validateTeams()">Controlla giorno, ora e campo</button>
+    </div>
+    <div class="field">
+      <label>Durata predefinita gara</label>
+      <select id="defaultSlotMinutes">
+        <option value="90">90 minuti</option>
+        <option value="120" selected>120 minuti</option>
+        <option value="150">150 minuti</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" onclick="previewCalendar()">Anteprima calendario</button><button id="confirmCalendarBtn" class="btn success hidden" onclick="confirmCalendar()">Conferma e salva calendario</button>
+    <button class="btn secondary" onclick="loadFixtures()">Aggiorna elenco</button>
+  </div>
+  <div class="notice">
+In caso di sovrapposizione l’app prova automaticamente, nell’ordine:
+<b>inversione casa/trasferta</b>, <b>settimana precedente</b>,
+<b>settimana successiva</b> e poi fino a quattro settimane di distanza,
+controllando anche le partite già presenti nelle altre competizioni.
+</div>
+<div id="msg" class="notice hidden"></div>
+</section>
+
+<section class="card"><details><summary style="font-weight:1000;cursor:pointer">⚙️ Azioni avanzate: festività, prefestivi e date escluse</summary><section class="card">
+  <div class="section-title">
+    <div>
+      <h2 style="margin:0">Festività, prefestivi e sospensioni</h2>
+      <div class="muted small">Le date escluse vengono saltate automaticamente sia dal campionato sia dalla Coppa Italia.</div>
+    </div>
+    <button class="btn secondary" onclick="addItalianHolidays()">Aggiungi festività italiane 2026–2027</button>
+  </div>
+
+  <div class="grid3">
+    <div class="field">
+      <label>Data esclusa</label>
+      <input id="blackoutDate" type="date">
+    </div>
+    <div class="field">
+      <label>Motivo</label>
+      <input id="blackoutReason" placeholder="Es. Natale, Pasqua, evento nazionale">
+    </div>
+    <div class="field">
+      <label>Applicazione</label>
+      <select id="blackoutCompetition">
+        <option value="ALL">Tutte le competizioni</option>
+        <option value="SERIE_A">Solo Serie A</option>
+        <option value="SERIE_B">Solo Serie B</option>
+        <option value="SERIE_C">Solo Serie C</option>
+        <option value="COPPA_ITALIA">Solo Coppa Italia</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" onclick="saveBlackout()">Aggiungi sospensione</button>
+  </div>
+  <div id="blackoutList"></div>
+</section></details></section>
+
+<section class="card">
+  <h2>Semifinali e finali all’Eden</h2>
+  <div class="notice">
+    All’Eden Padel Club vengono create solamente le <b>due semifinali e la finale</b>
+    con le quattro squadre qualificate dall’eventuale fase precedente.
+    Le fasi preliminari non vengono programmate automaticamente all’Eden.
+  </div>
+  <div class="grid3">
+    <div class="field">
+      <label>Fase finale</label>
+      <select id="finalType">
+        <option value="PLAYOFF">Playoff</option>
+        <option value="PLAYOUT">Playout</option>
+        <option value="COPPA">Coppa Italia</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Domenica semifinali</label>
+      <input id="finalStartDate" type="date">
+    </div>
+    <div class="field">
+      <label>Durata slot</label>
+      <select id="finalSlot">
+        <option value="120">2 ore</option>
+        <option value="90">1 ora e 30</option>
+        <option value="150">2 ore e 30</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn blue" onclick="generateFinalFour()">Genera semifinali e finale Eden</button>
+    <button class="btn secondary" onclick="generateSupercup()">Genera Supercoppa</button>
+  </div>
+</section>
+
+
+<section id="calendarPreviewCard" class="card hidden">
+  <div class="section-title">
+    <div>
+      <h2 style="margin:0">Anteprima calendario da salvare</h2>
+      <div class="muted small">Controlla squadra di casa, giorno, ora e campo. Solo dopo premi “Conferma e salva calendario”.</div>
+    </div>
+    <button class="btn secondary" onclick="clearCalendarPreview()">Annulla anteprima</button>
+  </div>
+  <div id="calendarPreview"></div>
+</section>
+
+<section class="card">
+  <div class="notice">
+    <b>REGOLA BASE — VALE PER TUTTE LE SQUADRE:</b>
+    giorno, ora e campo sono sempre quelli registrati nella scheda della squadra di casa.
+    La squadra in trasferta non impone mai il proprio giorno, il proprio orario o il proprio campo:
+    si adatta interamente alla squadra ospitante.
+    La regola viene verificata partita per partita durante la generazione,
+    dopo ogni soluzione automatica e nuovamente prima del salvataggio.
+  </div>
+  <div id="fixtures"></div>
+</section>
+
+<script>
+const c=window.PAM_V9_CONFIG;
+const s=supabase.createClient(c.supabaseUrl,c.supabasePublishableKey);
+const $=id=>document.getElementById(id);
+let teams=[],groups=[],members=[],fixtures=[],allFixtures=[],blackouts=[],pendingCalendar=[],activeConflict=null;
+
+const esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]));
+
+function msg(text,error=false){
+  $('msg').textContent=text;
+  $('msg').className='notice '+(error?'err':'ok');
+  $('msg').classList.remove('hidden');
+}
+
+async function guard(){
+  const q=await s.auth.getSession();
+  if(!q.data.session) location.href='login.html';
+}
+
+function dayIndex(day){
+  return {'Domenica':0,'Lunedì':1,'Martedì':2,'Mercoledì':3,'Giovedì':4,'Venerdì':5,'Sabato':6}[day];
+}
+
+function normalizeTime(value){
+  const match=String(value||'').match(/(\d{1,2}):(\d{2})/);
+  return match ? `${String(match[1]).padStart(2,'0')}:${match[2]}` : null;
+}
+
+function localDateTimeToISO(dateString,timeString){
+  const [y,m,d]=dateString.split('-').map(Number);
+  const [hh,mm]=timeString.split(':').map(Number);
+  const local=new Date(y,m-1,d,hh,mm,0,0);
+  if(Number.isNaN(local.getTime())) throw new Error(`Data o ora non valida: ${dateString} ${timeString}`);
+  return local.toISOString();
+}
+
+
+function fixtureRoundKey(f){
+  if(f.round_number!=null && f.round_number!=='') return Number(f.round_number);
+  if(f.scheduled_at) return new Date(f.scheduled_at).toISOString().slice(0,10);
+  return 'SENZA_GIORNATA';
+}
+function fixtureRoundLabel(key){
+  if(typeof key==='number' || /^\d+$/.test(String(key))) return `Giornata ${key}`;
+  if(key==='SENZA_GIORNATA') return 'Partite senza giornata';
+  const d=new Date(`${key}T12:00:00`);
+  return Number.isNaN(d.getTime())?String(key):d.toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+}
+function groupFixturesByRound(list){
+  const map=new Map();
+  (list||[]).forEach(f=>{
+    const key=fixtureRoundKey(f);
+    if(!map.has(key)) map.set(key,[]);
+    map.get(key).push(f);
+  });
+  return [...map.entries()].sort((a,b)=>{
+    if(typeof a[0]==='number' && typeof b[0]==='number') return a[0]-b[0];
+    return new Date(a[1][0]?.scheduled_at||0)-new Date(b[1][0]?.scheduled_at||0);
+  });
+}
+function groupedFixturesHtml(list,renderFixture){
+  return groupFixturesByRound(list).map(([key,items])=>`
+    <section class="matchday-block">
+      <button type="button" class="matchday-head" onclick="this.closest('.matchday-block').classList.toggle('collapsed')">
+        <span>${fixtureRoundLabel(key)}</span>
+        <span class="matchday-count">${items.length} ${items.length===1?'partita':'partite'} ▾</span>
+      </button>
+      <div class="matchday-body">
+        ${items.sort((a,b)=>new Date(a.scheduled_at||0)-new Date(b.scheduled_at||0)).map(renderFixture).join('')}
+      </div>
+    </section>
+  `).join('');
+}
+
+function localPartsFromISO(value){
+  const d=new Date(value);
+  const pad=n=>String(n).padStart(2,'0');
+  return {
+    date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+    time:`${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    weekday:['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'][d.getDay()]
+  };
+}
+
+function isoToLocalInput(value){
+  if(!value) return '';
+  const d=new Date(value);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatItalianDateTime(value){
+  if(!value) return 'Data da definire';
+  return new Intl.DateTimeFormat('it-IT',{
+    weekday:'long',day:'2-digit',month:'long',year:'numeric',
+    hour:'2-digit',minute:'2-digit'
+  }).format(new Date(value));
+}
+
+function dateKey(d){
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function isBlackout(date,competitionCode){
+  const key=dateKey(date);
+  return blackouts.some(b=>
+    b.blackout_date===key &&
+    (b.competition_code==='ALL'||b.competition_code===competitionCode)
+  );
+}
+
+function nextAllowedHomeDate(baseDate,team,roundOffset,competitionCode,intervalWeeks){
+  const targetDay=dayIndex(team.home_match_day);
+  const time=normalizeTime(team.home_match_time);
+  if(targetDay===undefined||!time) throw new Error(`Dati giorno/orario incompleti per ${team.name}`);
+
+  const base=new Date(baseDate+'T12:00:00');
+  base.setDate(base.getDate()+roundOffset*intervalWeeks*7);
+
+  while(base.getDay()!==targetDay) base.setDate(base.getDate()+1);
+
+  // Salta festività, prefestivi e sospensioni definite dall'organizzazione.
+  let safety=0;
+  while(isBlackout(base,competitionCode)){
+    base.setDate(base.getDate()+7);
+    if(++safety>80) throw new Error('Troppe date escluse: impossibile trovare una data disponibile.');
+  }
+
+  return localDateTimeToISO(dateKey(base),time);
+}
+
+
+function scheduleHomeFixture(baseDate,homeTeam,roundOffset,competitionCode,intervalWeeks){
+  // REGOLA UFFICIALE:
+  // giorno, ora e campo dipendono esclusivamente dalla squadra di casa.
+  // La squadra ospite si adatta sempre alla disponibilità della squadra ospitante.
+  if(!homeTeam) throw new Error('Squadra di casa non valida.');
+  return {
+    scheduledAt: nextAllowedHomeDate(
+      baseDate,
+      homeTeam,
+      roundOffset,
+      competitionCode,
+      intervalWeeks
+    ),
+    venue: homeTeam.home_court,
+    configuredDay: homeTeam.home_match_day,
+    configuredTime: normalizeTime(homeTeam.home_match_time)
+  };
+}
+
+
+function assertHomeRule(match){
+  if(match?._manual_exception===true)return true;
+  const home=teamById(match.home_team_id);
+  const away=teamById(match.away_team_id);
+
+  if(!home) throw new Error('Regola casa/trasferta: squadra di casa non trovata.');
+  if(!away) throw new Error('Regola casa/trasferta: squadra ospite non trovata.');
+
+  const local=localPartsFromISO(match.scheduled_at);
+  const expectedDay=home.home_match_day;
+  const expectedTime=normalizeTime(home.home_match_time);
+  const expectedVenue=String(home.home_court||'').trim();
+
+  if(local.weekday!==expectedDay){
+    throw new Error(
+      `ERRORE REGOLA BASE: ${home.name} è in casa, quindi deve giocare ${expectedDay}. `+
+      `Il calendario ha invece impostato ${local.weekday}.`
+    );
+  }
+
+  if(local.time!==expectedTime){
+    throw new Error(
+      `ERRORE REGOLA BASE: ${home.name} è in casa, quindi deve giocare alle ${expectedTime}. `+
+      `Il calendario ha invece impostato ${local.time}.`
+    );
+  }
+
+  if(String(match.venue||'').trim()!==expectedVenue){
+    throw new Error(
+      `ERRORE REGOLA BASE: il campo deve essere quello della squadra di casa ${home.name}: `+
+      `${expectedVenue||'non indicato'}.`
+    );
+  }
+
+  // Nessun controllo viene effettuato sul giorno/orario abituale della squadra ospite:
+  // in trasferta si adatta sempre alla squadra di casa.
+  return true;
+}
+
+function auditHomeAwayRules(matches){
+  const rows=[];
+  matches.forEach(match=>{
+    assertHomeRule(match);
+    const home=teamById(match.home_team_id);
+    const away=teamById(match.away_team_id);
+    rows.push({
+      match:`${home.name} – ${away.name}`,
+      home:home.name,
+      away:away.name,
+      rule:`${home.home_match_day} ${normalizeTime(home.home_match_time)} · ${home.home_court}`,
+      result:'OK'
+    });
+  });
+  return rows;
+}
+
+function roundRobin(arr){
+  const a=[...arr];
+  if(a.length%2) a.push(null);
+  const n=a.length,rounds=[];
+  for(let r=0;r<n-1;r++){
+    const pairs=[];
+    for(let i=0;i<n/2;i++){
+      const x=a[i],y=a[n-1-i];
+      if(x&&y) pairs.push(r%2?[y,x]:[x,y]);
+    }
+    rounds.push(pairs);
+    a.splice(1,0,a.pop());
+  }
+  return rounds;
+}
+
+async function fetchData(){
+  const code=$('competition').value;
+  const [tr,gr,mr,fr,afr,br]=await Promise.all([
+    s.from('teams').select('*'),
+    s.from('competition_groups').select('*').eq('competition_code',code).order('sort_order'),
+    s.from('competition_group_teams').select('*'),
+    s.from('fixtures').select('*').eq('competition_code',code).order('scheduled_at'),
+    s.from('fixtures').select('*').order('scheduled_at'),
+    s.from('calendar_blackouts').select('*').order('blackout_date')
+  ]);
+  if(tr.error||gr.error||mr.error||fr.error||afr.error||br.error) throw (tr.error||gr.error||mr.error||fr.error||afr.error||br.error);
+  teams=tr.data||[];
+  groups=gr.data||[];
+  members=(mr.data||[]).filter(m=>groups.some(g=>g.id===m.group_id));
+  fixtures=fr.data||[];
+  allFixtures=afr.data||[];
+  blackouts=br.data||[];
+}
+
+function teamsInCurrentCompetition(){
+  const ids=new Set(members.map(m=>m.team_id));
+  return teams.filter(t=>ids.has(t.id));
+}
+
+function validateTeams(showSuccess=true){
+  const invalid=teamsInCurrentCompetition().filter(t=>
+    !t.home_match_day ||
+    !normalizeTime(t.home_match_time) ||
+    !String(t.home_court||'').trim()
+  );
+  if(invalid.length){
+    msg(
+      'Calendario non generato. Completa giorno, ora e campo di casa per: '+
+      invalid.map(t=>t.name).join(', '),
+      true
+    );
+    return false;
+  }
+  if(showSuccess) msg('Tutte le squadre hanno giorno, ora e campo di casa corretti.');
+  return true;
+}
+
+
+function normalizeFacility(value){
+  return String(value||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+function facilityKey(team,venue){
+  const address=[team?.club_address,team?.club_city,team?.club_province]
+    .map(normalizeFacility).filter(Boolean).join('|');
+  return address || normalizeFacility(venue||team?.home_court);
+}
+function matchDurationMinutes(team){
+  const specific=Number(team?.match_slot_minutes||0);
+  return specific>0?specific:Number($('defaultSlotMinutes').value||120);
+}
+function detectFacilityConflicts(matches){
+  const conflicts=[];
+  for(let i=0;i<matches.length;i++){
+    for(let j=i+1;j<matches.length;j++){
+      const a=matches[i],b=matches[j];
+      if(!a._facility_key||a._facility_key!==b._facility_key) continue;
+      const aStart=new Date(a.scheduled_at).getTime();
+      const bStart=new Date(b.scheduled_at).getTime();
+      const aEnd=aStart+a._duration_minutes*60000;
+      const bEnd=bStart+b._duration_minutes*60000;
+      if(aStart<bEnd&&bStart<aEnd) conflicts.push({a,b});
+    }
+  }
+  return conflicts;
+}
+function conflictDescription(c){
+  return `${c.a._home_name} – ${c.a._away_name} (${c.a._local_weekday} ${c.a._local_date} ${c.a._local_time}) si sovrappone a ${c.b._home_name} – ${c.b._away_name} (${c.b._local_weekday} ${c.b._local_date} ${c.b._local_time}) nello stesso impianto/indirizzo.`;
+}
+
+
+function teamById(id){
+  return teams.find(team=>team.id===id);
+}
+
+function enrichExistingFixture(fixture){
+  const home=teamById(fixture.home_team_id);
+  const away=teamById(fixture.away_team_id);
+  const local=fixture.scheduled_at?localPartsFromISO(fixture.scheduled_at):{date:'',time:'',weekday:''};
+  return {
+    ...fixture,
+    _home_name:home?.name||fixture.home_placeholder||'Squadra',
+    _away_name:away?.name||fixture.away_placeholder||'Squadra',
+    _facility_key:facilityKey(home,fixture.venue),
+    _facility_label:[fixture.venue,home?.club_address,home?.club_city].filter(Boolean).join(' · '),
+    _duration_minutes:matchDurationMinutes(home),
+    _local_date:local.date,
+    _local_time:local.time,
+    _local_weekday:local.weekday
+  };
+}
+
+function overlaps(a,b){
+  if(!a.scheduled_at||!b.scheduled_at) return false;
+  const aStart=new Date(a.scheduled_at).getTime();
+  const bStart=new Date(b.scheduled_at).getTime();
+  const aEnd=aStart+(a._duration_minutes||120)*60000;
+  const bEnd=bStart+(b._duration_minutes||120)*60000;
+  return aStart<bEnd && bStart<aEnd;
+}
+
+function hasFacilityConflict(match,others){
+  return others.some(other=>
+    other!==match &&
+    match._facility_key &&
+    match._facility_key===other._facility_key &&
+    overlaps(match,other)
+  );
+}
+
+function hasTeamConflict(match,others){
+  return others.some(other=>{
+    if(other===match||!overlaps(match,other)) return false;
+    const ids=[match.home_team_id,match.away_team_id].filter(Boolean);
+    return ids.includes(other.home_team_id)||ids.includes(other.away_team_id);
+  });
+}
+
+function updateMatchSchedule(match,home,away,scheduledAt,resolution){
+  const local=localPartsFromISO(scheduledAt);
+  match.home_team_id=home.id;
+  match.away_team_id=away.id;
+  match.scheduled_at=scheduledAt;
+  match.venue=home.home_court;
+  match._home_name=home.name;
+  match._away_name=away.name;
+  match._configured_day=home.home_match_day;
+  match._configured_time=normalizeTime(home.home_match_time);
+  match._local_date=local.date;
+  match._local_time=local.time;
+  match._local_weekday=local.weekday;
+  match._facility_key=facilityKey(home,home.home_court);
+  match._facility_label=[home.home_court,home.club_address,home.club_city].filter(Boolean).join(' · ');
+  match._duration_minutes=matchDurationMinutes(home);
+  match._resolution=resolution;
+  assertHomeRule(match);
+}
+
+function candidateAtWeekOffset(match,home,away,weekOffset,competitionCode){
+  const current=new Date(match.scheduled_at);
+  current.setDate(current.getDate()+weekOffset*7);
+  const base=dateKey(current);
+  const schedule=scheduleHomeFixture(base,home,0,competitionCode,1);
+  return {home,away,scheduledAt:schedule.scheduledAt};
+}
+
+function candidateSwapHome(match,competitionCode){
+  const newHome=teamById(match.away_team_id);
+  const newAway=teamById(match.home_team_id);
+  if(!newHome||!newAway) return null;
+
+  const current=new Date(match.scheduled_at);
+  const roundBase=dateKey(current);
+  const schedule=scheduleHomeFixture(roundBase,newHome,0,competitionCode,1);
+  return {home:newHome,away:newAway,scheduledAt:schedule.scheduledAt};
+}
+
+function candidateIsValid(candidate,match,working,existing){
+  if(!candidate) return false;
+  const test={...match};
+  updateMatchSchedule(test,candidate.home,candidate.away,candidate.scheduledAt,'test');
+  const others=[
+    ...working.filter(item=>item!==match),
+    ...existing
+  ];
+  return !hasFacilityConflict(test,others) && !hasTeamConflict(test,others);
+}
+
+function autoResolveConflicts(payload,competitionCode){
+  // Le gare di girone della competizione corrente verranno sostituite:
+  // non devono quindi essere considerate come occupazioni già esistenti.
+  const existing=allFixtures
+    .filter(f=>!(f.competition_code===competitionCode && f.phase==='Girone'))
+    .map(enrichExistingFixture);
+
+  const resolved=[];
+  const unresolved=[];
+
+  for(const match of payload){
+    const others=[...payload.filter(item=>item!==match),...existing];
+    if(!hasFacilityConflict(match,others) && !hasTeamConflict(match,others)) continue;
+
+    const originalHome=teamById(match.home_team_id);
+    const originalAway=teamById(match.away_team_id);
+    let solution=null;
+
+    // 1. Prima soluzione: invertire casa/trasferta.
+    const swapped=candidateSwapHome(match,competitionCode);
+    if(candidateIsValid(swapped,match,payload,existing)){
+      solution={
+        ...swapped,
+        label:`Casa/trasferta invertite: ${originalAway.name} gioca in casa`
+      };
+    }
+
+    // 2. Seconda soluzione: settimana precedente.
+    if(!solution){
+      const previous=candidateAtWeekOffset(match,originalHome,originalAway,-1,competitionCode);
+      if(candidateIsValid(previous,match,payload,existing)){
+        solution={...previous,label:'Partita anticipata di una settimana'};
+      }
+    }
+
+    // 3. Terza soluzione: settimana successiva.
+    if(!solution){
+      const next=candidateAtWeekOffset(match,originalHome,originalAway,1,competitionCode);
+      if(candidateIsValid(next,match,payload,existing)){
+        solution={...next,label:'Partita posticipata di una settimana'};
+      }
+    }
+
+    // 4. Ricerca estesa: fino a quattro settimane prima/dopo.
+    if(!solution){
+      for(let distance=2;distance<=4&&!solution;distance++){
+        for(const offset of [-distance,distance]){
+          const candidate=candidateAtWeekOffset(match,originalHome,originalAway,offset,competitionCode);
+          if(candidateIsValid(candidate,match,payload,existing)){
+            solution={
+              ...candidate,
+              label:offset<0
+                ? `Partita anticipata di ${Math.abs(offset)} settimane`
+                : `Partita posticipata di ${offset} settimane`
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    if(solution){
+      updateMatchSchedule(
+        match,
+        solution.home,
+        solution.away,
+        solution.scheduledAt,
+        solution.label
+      );
+      resolved.push(match);
+    }else{
+      unresolved.push(match);
+    }
+  }
+
+  // Verifica finale completa dopo tutte le correzioni.
+  const finalFacility=detectFacilityConflicts([...payload,...existing]);
+  const finalTeam=payload.filter(match=>
+    hasTeamConflict(match,[
+      ...payload.filter(item=>item!==match),
+      ...existing
+    ])
+  );
+
+  return {
+    resolved,
+    unresolved,
+    remainingFacilityConflicts:finalFacility.filter(c=>payload.includes(c.a)||payload.includes(c.b)),
+    remainingTeamConflicts:finalTeam,
+    existing
+  };
+}
+
+
+function dateOnlyFromISO(value){
+  const d=new Date(value);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function timeOnlyFromISO(value){
+  const d=new Date(value);
+  const pad=n=>String(n).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function teamScheduleSummary(team){
+  return `${team?.home_match_day||'giorno non impostato'} ${normalizeTime(team?.home_match_time)||'ora non impostata'} · ${team?.home_court||'campo non impostato'}`;
+}
+function explainConflict(match,payload,existing){
+  const home=teamById(match.home_team_id);
+  const away=teamById(match.away_team_id);
+  const reasons=[];
+  const checks=[];
+
+  checks.push('Inversione casa/trasferta');
+  checks.push('Settimana precedente');
+  checks.push('Settimana successiva');
+  checks.push('Ricerca fino a quattro settimane prima e dopo');
+  checks.push('Conflitti con campionato e Coppa Italia');
+  checks.push('Conflitti di squadra e di impianto');
+
+  const all=[...payload.filter(x=>x!==match),...existing];
+  const sameFacility=all.filter(other=>other._facility_key===match._facility_key&&overlaps(match,other));
+  const sameTeam=all.filter(other=>overlaps(match,other)&&[
+    match.home_team_id,match.away_team_id
+  ].some(id=>id===other.home_team_id||id===other.away_team_id));
+
+  if(sameFacility.length){
+    reasons.push(`Impianto occupato da ${sameFacility.map(x=>`${x._home_name} – ${x._away_name}`).join(', ')}`);
+  }
+  if(sameTeam.length){
+    reasons.push(`Una delle due squadre ha già un’altra gara nello stesso intervallo.`);
+  }
+  if(home)reasons.push(`${home.name}: disponibilità ${teamScheduleSummary(home)}.`);
+  if(away)reasons.push(`${away.name}: è in trasferta e si adatta completamente a giorno, ora e campo della squadra di casa.`);
+  if(!reasons.length)reasons.push('Nessuno slot libero trovato entro i limiti impostati.');
+
+  return {reasons,checks};
+}
+function solutionCard(title,ok,description,actionLabel,actionJs){
+  return `<div class="solution-card ${ok?'ok':'no'}">
+    <h3>${ok?'✅':'✖'} ${esc(title)}</h3>
+    <div class="reason">${esc(description)}</div>
+    ${ok?`<div class="solution-actions"><button class="btn success btn-mini" onclick="${actionJs}">${esc(actionLabel)}</button></div>`:''}
+  </div>`;
+}
+function openConflictAssistant(match,payload,existing,attempts){
+  activeConflict={match,payload,existing,attempts};
+  const home=teamById(match.home_team_id);
+  const away=teamById(match.away_team_id);
+  $('conflictMatch').textContent=`${home?.name||match._home_name} – ${away?.name||match._away_name}`;
+
+  const details=explainConflict(match,payload,existing);
+  $('conflictReasons').innerHTML=details.reasons.map(x=>`<li>${esc(x)}</li>`).join('');
+  $('conflictChecks').innerHTML=details.checks.map(x=>`<li>${esc(x)}</li>`).join('');
+
+  const cards=[];
+  attempts.forEach((a,index)=>{
+    cards.push(solutionCard(
+      a.title,
+      a.ok,
+      a.ok?a.description:a.reason,
+      'Applica',
+      `applySuggestedConflictSolution(${index})`
+    ));
+  });
+  $('conflictSolutions').innerHTML=cards.join('');
+
+  $('manualHomeTeam').innerHTML=`
+    <option value="${home?.id||''}">${esc(home?.name||'Squadra di casa')}</option>
+    <option value="${away?.id||''}">${esc(away?.name||'Squadra ospite')}</option>`;
+  $('manualDate').value=dateOnlyFromISO(match.scheduled_at);
+  $('manualTime').value=timeOnlyFromISO(match.scheduled_at);
+  $('manualVenue').value=match.venue||home?.home_court||'';
+
+  $('conflictAssistantMsg').classList.add('hidden');
+  $('conflictAssistant').classList.remove('hidden');
+}
+function closeConflictAssistant(){
+  $('conflictAssistant').classList.add('hidden');
+}
+function assistantMsg(text,error=false){
+  const box=$('conflictAssistantMsg');
+  box.textContent=text;
+  box.className='notice '+(error?'err':'ok');
+  box.classList.remove('hidden');
+}
+function createSuggestionAttempts(match,payload,existing,competitionCode){
+  const attempts=[];
+  const home=teamById(match.home_team_id);
+  const away=teamById(match.away_team_id);
+
+  const swap=candidateSwapHome(match,competitionCode);
+  attempts.push({
+    title:'Inverti casa e trasferta',
+    ok:candidateIsValid(swap,match,payload,existing),
+    candidate:swap,
+    description:swap?`${away?.name||'Squadra ospite'} gioca in casa il ${localPartsFromISO(swap.scheduledAt).date} alle ${localPartsFromISO(swap.scheduledAt).time}.`:'',
+    reason:'Anche il campo della squadra ospite risulta occupato o una squadra ha già una gara.'
+  });
+
+  [-1,1,-2,2,-3,3,-4,4].forEach(offset=>{
+    const c=candidateAtWeekOffset(match,home,away,offset,competitionCode);
+    const ok=candidateIsValid(c,match,payload,existing);
+    attempts.push({
+      title:offset<0?`Anticipa di ${Math.abs(offset)} settimana/e`:`Posticipa di ${offset} settimana/e`,
+      ok,candidate:c,
+      description:c?`Nuova data: ${localPartsFromISO(c.scheduledAt).weekday} ${localPartsFromISO(c.scheduledAt).date} ore ${localPartsFromISO(c.scheduledAt).time}.`:'',
+      reason:'Lo slot proposto è occupato o crea un conflitto con un’altra gara.'
+    });
+  });
+  return attempts;
+}
+function applySuggestedConflictSolution(index){
+  if(!activeConflict)return;
+  const attempt=activeConflict.attempts[index];
+  if(!attempt?.ok||!attempt.candidate)return;
+  const {match}=activeConflict;
+  updateMatchSchedule(
+    match,
+    attempt.candidate.home,
+    attempt.candidate.away,
+    attempt.candidate.scheduledAt,
+    attempt.title
+  );
+  assistantMsg('Soluzione applicata.');
+  closeConflictAssistant();
+  setTimeout(completeConflictPayload,100);
+}
+function applyManualConflictSolution(){
+  if(!activeConflict)return;
+  const homeId=$('manualHomeTeam').value;
+  const home=teamById(homeId);
+  const away=teamById(
+    homeId===activeConflict.match.home_team_id
+      ? activeConflict.match.away_team_id
+      : activeConflict.match.home_team_id
+  );
+  if(!home||!away)return assistantMsg('Squadre non valide.',true);
+  if(!$('manualDate').value||!$('manualTime').value||!$('manualVenue').value.trim()){
+    return assistantMsg('Inserisci data, ora e campo.',true);
+  }
+
+  const scheduledAt=localDateTimeToISO($('manualDate').value,$('manualTime').value);
+  const test={...activeConflict.match};
+  // Eccezione amministratore: data/ora/campo possono essere scelti manualmente.
+  test.home_team_id=home.id;
+  test.away_team_id=away.id;
+  test.scheduled_at=scheduledAt;
+  test._home_name=home.name;
+  test._away_name=away.name;
+  test._configured_day=home.home_match_day;
+  test._configured_time=normalizeTime(home.home_match_time);
+  const manualLocal=localPartsFromISO(scheduledAt);
+  test._local_date=manualLocal.date;
+  test._local_time=manualLocal.time;
+  test._local_weekday=manualLocal.weekday;
+  test._duration_minutes=matchDurationMinutes(home);
+  test._resolution='ECCEZIONE AMMINISTRATORE';
+  test._manual_exception=true;
+  test.venue=$('manualVenue').value.trim();
+  test._facility_key=facilityKey(home,test.venue);
+  test._facility_label=[test.venue,home.club_address,home.club_city].filter(Boolean).join(' · ');
+
+  const others=[
+    ...activeConflict.payload.filter(x=>x!==activeConflict.match),
+    ...activeConflict.existing
+  ];
+  if(hasFacilityConflict(test,others)||hasTeamConflict(test,others)){
+    return assistantMsg('La soluzione manuale crea ancora un conflitto. Scegli un altro giorno, orario o campo.',true);
+  }
+
+  Object.assign(activeConflict.match,test);
+  assistantMsg('Eccezione manuale applicata e mantenuta nell’anteprima.');
+  closeConflictAssistant();
+  setTimeout(completeConflictPayload,100);
+}
+function openHomeTeamEditor(){
+  if(!activeConflict)return;
+  location.href=`team.html?id=${encodeURIComponent(activeConflict.match.home_team_id)}&return=calendar`;
+}
+function openAwayTeamEditor(){
+  if(!activeConflict)return;
+  location.href=`team.html?id=${encodeURIComponent(activeConflict.match.away_team_id)}&return=calendar`;
+}
+window.closeConflictAssistant=closeConflictAssistant;
+window.applySuggestedConflictSolution=applySuggestedConflictSolution;
+window.applyManualConflictSolution=applyManualConflictSolution;
+window.openHomeTeamEditor=openHomeTeamEditor;
+window.openAwayTeamEditor=openAwayTeamEditor;
+
+async function buildCalendarPayload(){
+  if(!$('startDate').value) throw new Error('Inserisci la data di partenza.');
+  await fetchData();
+  if(!groups.length) throw new Error('Prima devi creare i gironi.');
+  if(!validateTeams(false)) throw new Error('Correggi prima i dati delle squadre indicati sopra.');
+
+  const formula=$('formula').value;
+  const intervalWeeks=Number($('interval').value);
+  const code=$('competition').value;
+  const payload=[];
+
+  for(const group of groups){
+    const groupTeams=members
+      .filter(member=>member.group_id===group.id)
+      .map(member=>teams.find(team=>team.id===member.team_id))
+      .filter(Boolean);
+
+    const rounds=roundRobin(groupTeams);
+
+    const appendRound=(pairs,roundNumber,roundOffset,reverse=false)=>{
+      pairs.forEach(([first,second])=>{
+        const home=reverse?second:first;
+        const away=reverse?first:second;
+        const homeSchedule=scheduleHomeFixture(
+          $('startDate').value,
+          home,
+          roundOffset,
+          code,
+          intervalWeeks
+        );
+        const configuredTime=homeSchedule.configuredTime;
+        const scheduledAt=homeSchedule.scheduledAt;
+        const local=localPartsFromISO(scheduledAt);
+
+        payload.push({
+          competition_code:code,
+          phase:'Girone',
+          group_id:group.id,
+          round_number:roundNumber,
+          home_team_id:home.id,
+          away_team_id:away.id,
+          scheduled_at:scheduledAt,
+          venue:homeSchedule.venue,
+          _home_name:home.name,
+          _away_name:away.name,
+          _configured_day:home.home_match_day,
+          _configured_time:configuredTime,
+          _local_date:local.date,
+          _local_time:local.time,
+          _local_weekday:local.weekday,
+          _facility_key:facilityKey(home,home.home_court),
+          _facility_label:[home.home_court,home.club_address,home.club_city].filter(Boolean).join(' · '),
+          _duration_minutes:matchDurationMinutes(home)
+        });
+
+        // Controllo obbligatorio per ogni singola partita.
+        assertHomeRule(payload[payload.length-1]);
+      });
+    };
+
+    rounds.forEach((pairs,index)=>{
+      appendRound(pairs,index+1,index,false);
+    });
+
+    if(formula==='double'){
+      rounds.forEach((pairs,index)=>{
+        appendRound(pairs,rounds.length+index+1,rounds.length+index,true);
+      });
+    }
+  }
+
+  const resolution=autoResolveConflicts(payload,code);
+  if(
+    resolution.unresolved.length ||
+    resolution.remainingFacilityConflicts.length ||
+    resolution.remainingTeamConflicts.length
+  ){
+    const conflictMatch=
+      resolution.unresolved[0] ||
+      resolution.remainingTeamConflicts[0] ||
+      resolution.remainingFacilityConflicts[0]?.a;
+
+    const attempts=createSuggestionAttempts(
+      conflictMatch,
+      payload,
+      resolution.existing||[],
+      code
+    );
+
+    openConflictAssistant(
+      conflictMatch,
+      payload,
+      resolution.existing||[],
+      attempts
+    );
+
+    const err=new Error('CONFLICT_ASSISTANT_OPENED');
+    err.isConflictAssistant=true;
+    throw err;
+  }
+
+  // Verifica finale dell'intero calendario: vale per tutte le squadre e tutte le competizioni.
+  auditHomeAwayRules(payload);
+  payload._resolvedCount=resolution.resolved.length;
+  return payload;
+}
+
+
+function renderPendingCalendar(){
+  const renderPreviewMatch=match=>`
+    <div class="fixture">
+      <span class="badge">G${match.round_number}</span>
+      <div>
+        <b>${esc(match._home_name)}</b>
+        <span class="muted"> contro </span>
+        <b>${esc(match._away_name)}</b>
+        <div class="small">
+          ${match._manual_exception
+            ? `<b>ECCEZIONE AMMINISTRATORE</b><br>`
+            : `Scheda casa: <b>${esc(match._configured_day)} ${esc(match._configured_time)}</b><br>`}
+          Calendario: <b>${esc(match._local_weekday)} ${new Date(match._local_date+'T12:00:00').toLocaleDateString('it-IT')} ore ${esc(match._local_time)}</b><br>
+          Campo: <b>${esc(match.venue)}</b><br>
+          Impianto/indirizzo controllato: <b>${esc(match._facility_label||match.venue)}</b><br>
+          Durata considerata: <b>${match._duration_minutes} minuti</b>
+        </div>
+      </div>
+      <div class="notice ${match._resolution?'warn':'ok'}">
+        ${match._resolution?esc(match._resolution):'COINCIDE · NESSUN CONFLITTO'}
+      </div>
+    </div>
+  `;
+  $('calendarPreview').innerHTML=groupedFixturesHtml(pendingCalendar,renderPreviewMatch);
+
+  $('calendarPreviewCard').classList.remove('hidden');
+  $('confirmCalendarBtn').classList.remove('hidden');
+  const solved=pendingCalendar.filter(match=>match._resolution).length;
+  msg(`Anteprima pronta: ${pendingCalendar.length} partite. ${solved} variazioni applicate. Premi “Conferma e salva calendario” per renderle definitive.`);
+  $('calendarPreviewCard').scrollIntoView({behavior:'smooth'});
+}
+
+function completeConflictPayload(){
+  if(!activeConflict)return false;
+  const payload=activeConflict.payload;
+  const existing=activeConflict.existing||[];
+  const code=$('competition').value;
+
+  const resolution=autoResolveConflicts(payload,code);
+  if(
+    resolution.unresolved.length ||
+    resolution.remainingFacilityConflicts.length ||
+    resolution.remainingTeamConflicts.length
+  ){
+    const next=
+      resolution.unresolved.find(x=>x!==activeConflict.match) ||
+      resolution.remainingTeamConflicts.find(x=>x!==activeConflict.match) ||
+      resolution.remainingFacilityConflicts.find(x=>x.a!==activeConflict.match)?.a;
+
+    if(next){
+      const attempts=createSuggestionAttempts(next,payload,existing,code);
+      openConflictAssistant(next,payload,existing,attempts);
+      return false;
+    }
+  }
+
+  pendingCalendar=payload;
+  renderPendingCalendar();
+  return true;
+}
+
+async function previewCalendar(){
+  try{
+    pendingCalendar=await buildCalendarPayload();
+
+    renderPendingCalendar();
+  }catch(error){
+    pendingCalendar=[];
+    $('calendarPreviewCard').classList.add('hidden');
+    $('confirmCalendarBtn').classList.add('hidden');
+    if(error?.isConflictAssistant||error?.message==='CONFLICT_ASSISTANT_OPENED')return;
+    msg(error.message||String(error),true);
+  }
+}
+
+function clearCalendarPreview(){
+  pendingCalendar=[];
+  $('calendarPreview').innerHTML='';
+  $('calendarPreviewCard').classList.add('hidden');
+  $('confirmCalendarBtn').classList.add('hidden');
+}
+
+async function confirmCalendar(){
+  if(!pendingCalendar.length) return msg('Prima genera l’anteprima.',true);
+
+  const formula=$('formula').value==='single'?'solo andata':'andata e ritorno';
+  if(!confirm(
+    `Salvare ${pendingCalendar.length} partite (${formula})? `+
+    `Le vecchie partite di fase Girone della competizione verranno sostituite.`
+  )) return;
+
+  try{
+    const code=$('competition').value;
+    const deletion=await s.from('fixtures')
+      .delete()
+      .eq('competition_code',code)
+      .eq('phase','Girone');
+    if(deletion.error) throw deletion.error;
+
+    const cleanPayload=pendingCalendar.map(match=>{
+      const copy={...match};
+      Object.keys(copy).filter(key=>key.startsWith('_')).forEach(key=>delete copy[key]);
+      return copy;
+    });
+
+    const insertion=await s.from('fixtures').insert(cleanPayload);
+    if(insertion.error) throw insertion.error;
+
+    msg(`Calendario ${formula} salvato correttamente: ${cleanPayload.length} partite.`);
+    clearCalendarPreview();
+    await loadFixtures();
+  }catch(error){
+    msg(error.message||String(error),true);
+  }
+}
+
+async function saveBlackout(){
+  const date=$('blackoutDate').value;
+  if(!date) return msg('Inserisci la data da escludere.',true);
+  const row={
+    blackout_date:date,
+    reason:$('blackoutReason').value.trim()||'Sospensione organizzazione',
+    competition_code:$('blackoutCompetition').value
+  };
+  const r=await s.from('calendar_blackouts').upsert(row,{onConflict:'blackout_date,competition_code'});
+  if(r.error) return msg(r.error.message,true);
+  $('blackoutDate').value='';
+  $('blackoutReason').value='';
+  msg('Data di sospensione salvata.');
+  loadBlackouts();
+}
+
+async function deleteBlackout(id){
+  if(!confirm('Eliminare questa sospensione?')) return;
+  const r=await s.from('calendar_blackouts').delete().eq('id',id);
+  if(r.error) return msg(r.error.message,true);
+  loadBlackouts();
+}
+
+async function loadBlackouts(){
+  const r=await s.from('calendar_blackouts').select('*').order('blackout_date');
+  if(r.error) return msg(r.error.message,true);
+  blackouts=r.data||[];
+  $('blackoutList').innerHTML=blackouts.map(b=>`
+    <div class="team-pill">
+      <div>
+        <b>${new Date(b.blackout_date+'T12:00:00').toLocaleDateString('it-IT')}</b>
+        <div class="muted small">${esc(b.reason)} · ${esc(b.competition_code==='ALL'?'Tutte le competizioni':b.competition_code)}</div>
+      </div>
+      <button class="btn danger" onclick="deleteBlackout('${b.id}')">Elimina</button>
+    </div>
+  `).join('')||'<div class="notice">Nessuna sospensione inserita.</div>';
+}
+
+async function addItalianHolidays(){
+  const holidays=[
+    ['2026-11-01','Tutti i Santi'],['2026-12-07','Prefestivo Immacolata'],
+    ['2026-12-08','Immacolata'],['2026-12-24','Vigilia di Natale'],
+    ['2026-12-25','Natale'],['2026-12-26','Santo Stefano'],
+    ['2026-12-31','San Silvestro'],['2027-01-01','Capodanno'],
+    ['2027-01-05','Prefestivo Epifania'],['2027-01-06','Epifania'],
+    ['2027-03-27','Sabato di Pasqua'],['2027-03-28','Pasqua'],
+    ['2027-03-29','Lunedì dell’Angelo'],['2027-04-24','Prefestivo 25 aprile'],
+    ['2027-04-25','Festa della Liberazione'],['2027-05-01','Festa dei Lavoratori'],
+    ['2027-06-02','Festa della Repubblica']
+  ].map(([blackout_date,reason])=>({blackout_date,reason,competition_code:'ALL'}));
+
+  const r=await s.from('calendar_blackouts').upsert(holidays,{onConflict:'blackout_date,competition_code'});
+  if(r.error) return msg(r.error.message,true);
+  msg('Festività e principali prefestivi 2026–2027 aggiunti. Puoi modificarli liberamente.');
+  loadBlackouts();
+}
+
+function nextSunday(dateString){
+  const d=new Date(dateString+'T10:00:00');
+  while(d.getDay()!==0) d.setDate(d.getDate()+1);
+  while(isBlackout(d,$('competition').value)) d.setDate(d.getDate()+7);
+  return d;
+}
+
+async function generateFinalFour(){
+  try{
+    const code=$('competition').value;
+    const type=$('finalType').value;
+    const base=$('finalStartDate').value;
+    if(!base) return msg('Inserisci la domenica di partenza delle semifinali.',true);
+    await fetchData();
+
+    let phases;
+    if(type==='COPPA'){
+      if(code!=='COPPA_ITALIA') return msg('Per le finali di Coppa seleziona Coppa Italia come competizione.',true);
+      phases=['Semifinale Coppa','Finale Coppa'];
+    }else{
+      if(code==='COPPA_ITALIA') return msg('Per playoff o playout seleziona una Serie.',true);
+      phases=[`Semifinale ${type==='PLAYOFF'?'Playoff':'Playout'}`,`Finale ${type==='PLAYOFF'?'Playoff':'Playout'}`];
+    }
+
+    const oldPhases=type==='COPPA'
+      ? ['Semifinale Coppa','Finale Coppa','Semifinale','Finale']
+      : [`Semifinale ${type==='PLAYOFF'?'Playoff':'Playout'}`,`Finale ${type==='PLAYOFF'?'Playoff':'Playout'}`];
+
+    await s.from('fixtures').delete()
+      .eq('competition_code',code)
+      .in('phase',oldPhases);
+
+    const semis=nextSunday(base);
+    const slot=Number($('finalSlot').value);
+    const semi1=new Date(semis); semi1.setHours(10,0,0,0);
+    const semi2=new Date(semi1); semi2.setMinutes(semi2.getMinutes()+slot);
+
+    const finalDate=new Date(semis);
+    finalDate.setDate(finalDate.getDate()+7);
+    while(isBlackout(finalDate,code)) finalDate.setDate(finalDate.getDate()+7);
+    finalDate.setHours(10,0,0,0);
+
+    const items=[
+      {
+        competition_code:code,phase:phases[0],
+        home_placeholder:'Qualificata 1',away_placeholder:'Qualificata 4',
+        scheduled_at:semi1.toISOString(),venue:'Eden Padel Club'
+      },
+      {
+        competition_code:code,phase:phases[0],
+        home_placeholder:'Qualificata 2',away_placeholder:'Qualificata 3',
+        scheduled_at:semi2.toISOString(),venue:'Eden Padel Club'
+      },
+      {
+        competition_code:code,phase:phases[1],
+        home_placeholder:'Vincente Semifinale 1',away_placeholder:'Vincente Semifinale 2',
+        scheduled_at:finalDate.toISOString(),venue:'Eden Padel Club'
+      }
+    ];
+
+    const r=await s.from('fixtures').insert(items);
+    if(r.error) throw r.error;
+    msg('Create soltanto le due semifinali e la finale all’Eden.');
+    loadFixtures();
+  }catch(error){
+    msg(error.message||String(error),true);
+  }
+}
+
+async function generateSupercup(){
+  try{
+    const base=$('finalStartDate').value;
+    if(!base) return msg('Inserisci la domenica della Supercoppa.',true);
+    await fetchData();
+    const d=nextSunday(base);
+    d.setHours(10,0,0,0);
+    await s.from('fixtures').delete().eq('competition_code','SUPERCOPPA');
+    const r=await s.from('fixtures').insert({
+      competition_code:'SUPERCOPPA',
+      phase:'Finale',
+      home_placeholder:'Vincitrice Campionato',
+      away_placeholder:'Vincitrice Coppa Italia',
+      scheduled_at:d.toISOString(),
+      venue:'Eden Padel Club'
+    });
+    if(r.error) throw r.error;
+    msg('Supercoppa generata.');
+  }catch(error){
+    msg(error.message||String(error),true);
+  }
+}
+
+async function loadFixtures(){
+  try{
+    await fetchData();
+    const byId=Object.fromEntries(teams.map(t=>[t.id,t.name]));
+    $('fixtures').innerHTML=fixtures.map(f=>`
+      <div class="fixture">
+        <span class="badge">${esc(f.phase)}${f.round_number?' · G'+f.round_number:''}</span>
+        <div>
+          <b>${esc(byId[f.home_team_id]||f.home_placeholder||'Da definire')}</b><br>
+          <span class="muted">contro</span><br>
+          <b>${esc(byId[f.away_team_id]||f.away_placeholder||'Da definire')}</b>
+          <div class="muted small">${esc(formatItalianDateTime(f.scheduled_at))}</div>
+        </div>
+        <input type="datetime-local"
+          value="${isoToLocalInput(f.scheduled_at)}"
+          onchange="updateFixture('${f.id}','scheduled_at',this.value)">
+        <input value="${esc(f.venue||'')}"
+          onchange="updateFixture('${f.id}','venue',this.value)">
+        <div class="actions">
+          <button class="btn secondary" onclick="location.href='match-center.html?id=${f.id}'">Gestisci gara</button>
+          <button class="btn danger" onclick="deleteFixture('${f.id}')">Elimina</button>
+        </div>
+      </div>
+    `).join('')||'<div class="notice">Nessuna partita programmata.</div>';
+  }catch(error){
+    msg(error.message||String(error),true);
+  }
+}
+
+async function updateFixture(id,key,value){
+  const payload={updated_at:new Date().toISOString()};
+  payload[key]=key==='scheduled_at'&&value
+    ? new Date(
+        Number(value.slice(0,4)),
+        Number(value.slice(5,7))-1,
+        Number(value.slice(8,10)),
+        Number(value.slice(11,13)),
+        Number(value.slice(14,16))
+      ).toISOString()
+    : value;
+
+  const r=await s.from('fixtures')
+    .update(payload)
+    .eq('id',id)
+    .select('id,scheduled_at,venue')
+    .maybeSingle();
+
+  if(r.error){
+    alert('Modifica non salvata: '+r.error.message);
+    return loadFixtures();
+  }
+  if(!r.data?.id){
+    alert('Modifica non salvata: il database non ha confermato l’aggiornamento. Verifica i permessi amministratore.');
+    return loadFixtures();
+  }
+
+  const expected=payload[key];
+  const actual=r.data[key];
+  const matches=key==='scheduled_at'
+    ? Math.abs(new Date(actual).getTime()-new Date(expected).getTime())<60000
+    : String(actual||'')===String(expected||'');
+
+  if(!matches){
+    alert('Il database ha restituito un valore diverso da quello inserito. La modifica non è stata accettata.');
+    return loadFixtures();
+  }
+
+  msg('Modifica della partita salvata correttamente.');
+  const local=fixtures.find(f=>f.id===id);
+  if(local)Object.assign(local,r.data);
+}
+
+async function deleteFixture(id){
+  if(!confirm('Eliminare questa partita?')) return;
+  const r=await s.from('fixtures').delete().eq('id',id);
+  if(r.error) alert(r.error.message);
+  else loadFixtures();
+}
+
+const competitionFromUrl=new URLSearchParams(location.search).get('competition');
+if(competitionFromUrl && [...$('competition').options].some(o=>o.value===competitionFromUrl)){
+  $('competition').value=competitionFromUrl;
+}
+$('competition').onchange=()=>{clearCalendarPreview();loadFixtures()};
+$('formula').onchange=clearCalendarPreview;
+$('startDate').onchange=clearCalendarPreview;
+$('interval').onchange=clearCalendarPreview;
+guard().then(()=>Promise.all([loadFixtures(),loadBlackouts()]));
+</script>
+
+<div id="conflictAssistant" class="conflict-overlay hidden">
+  <div class="conflict-card">
+    <div class="conflict-head">
+      <div>
+        <h2 style="margin:0">Assistente intelligente calendari</h2>
+        <div class="muted small">Analisi del conflitto e soluzioni applicabili.</div>
+      </div>
+      <button type="button" class="btn secondary btn-mini" onclick="closeConflictAssistant()">Chiudi</button>
+    </div>
+
+    <div id="conflictMatch" class="conflict-match" style="margin-top:12px"></div>
+
+    <div class="grid2" style="margin-top:12px">
+      <div class="notice">
+        <b>Perché non riesco?</b>
+        <ul id="conflictReasons" class="diagnostic-list"></ul>
+      </div>
+      <div class="notice">
+        <b>Controlli già eseguiti</b>
+        <ul id="conflictChecks" class="diagnostic-list"></ul>
+      </div>
+    </div>
+
+    <h3>Soluzioni disponibili</h3>
+    <div id="conflictSolutions" class="conflict-grid"></div>
+
+    <h3>Imposta un’eccezione manuale</h3>
+    <div class="manual-grid">
+      <div class="field"><label>Casa</label><select id="manualHomeTeam"></select></div>
+      <div class="field"><label>Data</label><input id="manualDate" type="date"></div>
+      <div class="field"><label>Ora</label><input id="manualTime" type="time"></div>
+      <div class="field"><label>Campo</label><input id="manualVenue"></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn primary" onclick="applyManualConflictSolution()">Applica eccezione manuale</button>
+      <button type="button" class="btn secondary" onclick="openHomeTeamEditor()">Modifica disponibilità squadra di casa</button>
+      <button type="button" class="btn secondary" onclick="openAwayTeamEditor()">Modifica disponibilità squadra ospite</button>
+    </div>
+
+    <div id="conflictAssistantMsg" class="notice hidden"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+
+<script>
+(async()=>{
+  try{
+    if('serviceWorker' in navigator){
+      const registrations=await navigator.serviceWorker.getRegistrations();
+      for(const registration of registrations) await registration.update();
+    }
+    if('caches' in window){
+      const keys=await caches.keys();
+      for(const key of keys){
+        if(key!=='aics-padel-v951') await caches.delete(key);
+      }
+    }
+  }catch(e){}
+})();
+</script>
+
+<div style="position:fixed;right:8px;bottom:8px;z-index:9999;padding:4px 7px;border-radius:999px;background:#082f68;color:white;font:700 10px system-ui;opacity:.75">V9.7 STABLE</div>
+<script src="app-ui.js?v=980stable"></script>
+</body></html>
