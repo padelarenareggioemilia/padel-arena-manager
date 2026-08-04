@@ -1,14 +1,19 @@
-VERIFICA PUBBLICAZIONE V9 BUILD 1.2.5
+V9 BUILD 1.3.0 — ACCESSO INTEGRATO NELLA HOME FREE
 
-Non sostituire niente per ora.
+Questa correzione non dipende più da login.html.
 
-1. Carica nella RADICE del repository questi due nuovi file:
-   - test-v125.html
-   - public-v125.html
+INSTALLAZIONE
+1. Sostituisci soltanto public.html nella radice del repository corretto:
+   padelarenareggioemilia/padel-arena-manager
 2. Fai Commit changes.
 3. Apri:
-   https://padelarenareggioemilia.github.io/-padel-arena-manager-v9-test/test-v125.html
-4. Se compare “PUBBLICAZIONE GITHUB RIUSCITA”, apri:
-   https://padelarenareggioemilia.github.io/-padel-arena-manager-v9-test/public-v125.html
+   https://padelarenareggioemilia.github.io/padel-arena-manager/public.html?v=130
 
-Se test-v125.html dà 404, il problema è ramo/cartella di GitHub Pages, non il codice né la cache.
+CONTROLLO
+Sotto il titolo deve apparire BUILD 1.3.0.
+
+FUNZIONAMENTO
+- Accedi al tuo account apre una finestra nella stessa pagina.
+- Il login indirizza Admin, Capitano, Segretario e Giocatore alla propria area.
+- Logout / Cambia account chiude la sessione e riapre il modulo.
+- Recupero iscrizione giocatore tramite email resta disponibile.
