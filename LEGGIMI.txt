@@ -1,19 +1,20 @@
-V9 BUILD 1.3.0 — ACCESSO INTEGRATO NELLA HOME FREE
+V9 BUILD 1.3.1 — FIX ACCESSO BLOCCATO
 
-Questa correzione non dipende più da login.html.
+Problema:
+Il pulsante restava su "Accesso in corso" senza mostrare dove si fermava.
 
-INSTALLAZIONE
-1. Sostituisci soltanto public.html nella radice del repository corretto:
-   padelarenareggioemilia/padel-arena-manager
+Correzione:
+- timeout di 12 secondi sul login;
+- timeout di 10 secondi sul controllo ruolo;
+- messaggi distinti tra credenziali e apertura area;
+- fallback ad account-home.html se il ruolo non viene letto;
+- il pulsante si riattiva sempre in caso di errore.
+
+Installazione:
+1. Sostituisci soltanto public.html nella root del repository.
 2. Fai Commit changes.
 3. Apri:
-   https://padelarenareggioemilia.github.io/padel-arena-manager/public.html?v=130
+   https://padelarenareggioemilia.github.io/padel-arena-manager/public.html?v=131
 
-CONTROLLO
-Sotto il titolo deve apparire BUILD 1.3.0.
-
-FUNZIONAMENTO
-- Accedi al tuo account apre una finestra nella stessa pagina.
-- Il login indirizza Admin, Capitano, Segretario e Giocatore alla propria area.
-- Logout / Cambia account chiude la sessione e riapre il modulo.
-- Recupero iscrizione giocatore tramite email resta disponibile.
+Controllo visivo:
+Sotto il titolo deve comparire BUILD 1.3.1.
