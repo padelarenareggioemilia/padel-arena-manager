@@ -1,0 +1,37 @@
+PADEL ARENA MANAGER V8.1.20 — SALDI GETTONI DALLO STORICO
+
+BASE
+Parte dalla V8.1.19 e mantiene il recupero anagrafica.
+
+CAUSA INDIVIDUATA
+Una vecchia migrazione della Tappa 2 maschile continuava a forzare saldi storici ad ogni avvio
+(es. Fontanesi 16, Balia 35, Ionel 18, Verzini 13).
+Inoltre un nuovo torneo prendeva il saldo dall'anagrafica senza verificare l'ultima tappa giocata.
+
+CORREZIONE
+- La vecchia migrazione Tappa 2 è ora eseguibile una sola volta.
+- Il saldo precedente viene ricavato dalla più recente tappa Rodeo a gettoni già giocata.
+- Prima viene cercato lo stesso ID del giocatore.
+- Se l'ID è cambiato dopo il recupero anagrafica, viene usato il nome normalizzato come fallback.
+- Il valore recuperato è il saldo finale reale della tappa precedente.
+- I tornei a gettoni ancora senza risultati e senza aste vengono riallineati automaticamente.
+- I tornei già iniziati non vengono alterati automaticamente.
+
+CONTROLLO ATTESO PER LA 4° TAPPA MASCHILE
+Carnevali: 22
+Fontanesi: 22
+Balia: 47
+Verzini: 36
+Ionel Marcel: 21
+
+INSTALLAZIONE
+1. Nel repository V8 sostituisci SOLO index.html.
+2. Commit changes.
+3. NON eseguire SQL.
+4. Apri index.html?v=8120.
+5. Accedi come ADMIN e attendi il caricamento.
+6. Apri 4° Tappa Maschile > Gettoni.
+7. NON rigenerare le partite.
+
+NON TOCCA
+Partite, calendario, risultati, aste già svolte, classifiche, pagamenti, fasi finali e V9.

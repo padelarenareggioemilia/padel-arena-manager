@@ -1308,7 +1308,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 }
 
 
-/* V8.1.19 - RECUPERO ANAGRAFICA + NAVIGAZIONE UNIVERSALE */
+/* V8.1.20 - SALDI GETTONI STORICO + RECUPERO ANAGRAFICA */
 .pam-universal-nav{position:sticky;top:8px;z-index:8500;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 auto 12px;padding:8px;border:1px solid #315271;border-radius:16px;background:rgba(7,17,31,.94);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(0,0,0,.25)}
 .pam-universal-nav button{min-height:44px;border:1px solid #365474;border-radius:12px;background:#17304e;color:#fff;font-weight:900}.pam-universal-nav button:hover{border-color:var(--club-accent)}
 .pam-universal-menu{position:fixed;inset:0;z-index:100500;background:rgba(3,11,22,.92);display:flex;align-items:flex-start;justify-content:center;padding:74px 14px 24px;overflow:auto}
@@ -1341,6 +1341,8 @@ if(!window.supabase){
 </script>
 
 <!-- V8.1.19: recupero non distruttivo dei giocatori orfani dai playerSnapshots. -->
+
+<!-- V8.1.20: saldo precedente ricavato dalla più recente tappa Rodeo giocata. -->
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -1847,6 +1849,8 @@ function seedParticipants(){
 seedParticipants();
 
 function applyMaleTokenBalancesTappa2(){
+ state.migrations=state.migrations||{};
+ if(state.migrations.maleTokensTappa2)return;
  const balances={
   "Corrado Verzini":13,
   "Ivan Gianferrari":36,
@@ -2192,9 +2196,15 @@ async function pamCloudLoad(initial,forceReplace){
  }else{
   pamCloudReady=true;
  }
- if(pamRecoveredPlayers>0&&pamIsAdmin()){
+ const pamRepairedTokenBalances=pamRepairPendingTournamentCarriedBalances();
+ if((pamRecoveredPlayers>0||pamRepairedTokenBalances>0)&&pamIsAdmin()){
   await pamCloudSyncAll();
-  setTimeout(function(){pamToast("Recuperati "+pamRecoveredPlayers+" giocatori rimasti agganciati ai tornei e ripristinati in anagrafica.","success")},250);
+  setTimeout(function(){
+   const parts=[];
+   if(pamRecoveredPlayers>0)parts.push("recuperati "+pamRecoveredPlayers+" giocatori in anagrafica");
+   if(pamRepairedTokenBalances>0)parts.push("riallineati "+pamRepairedTokenBalances+" saldi gettoni dallo storico");
+   pamToast(parts.join(" · ")+".","success");
+  },250);
  }
  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
  localStorage.setItem(KEY,JSON.stringify(state));
@@ -2410,8 +2420,7 @@ function pamRegenerateTournament(id){
  e.payments=defaultPayments(ids,e.entryFee||0);
  e.ledger={};
  ids.forEach(function(pid){
-  const p=playerById(pid);
-  e.ledger[pid]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0};
+  e.ledger[pid]={carried:pamLatestHistoricalTokenBalance(pid,e),spent:0,podium:0};
  });
  pamResetEventGeneratedData(e);
  if(e.competitionType==="fixed_pairs"){
@@ -2615,7 +2624,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.19 · Recupero anagrafica</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.20 · Saldi gettoni storico</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3477,6 +3486,76 @@ function defaultPayments(ids,fee){
  ids.forEach(function(id){out[id]={fee:Number(fee)||0,paid:false,method:"",notes:""}});
  return out;
 }
+
+function pamEventPlayerName(e,id){
+ const p=playerById(id);
+ if(p)return playerName(p);
+ const s=e&&e.playerSnapshots&&e.playerSnapshots[String(id)];
+ return s?String((s.firstName||"")+" "+(s.lastName||"")).trim():"";
+}
+function pamEventDateValue(e){
+ const d=String((e&&e.date)||"");
+ const t=String((e&&e.startTime)||"00:00");
+ const ms=Date.parse(d+"T"+t+":00");
+ return Number.isFinite(ms)?ms:0;
+}
+function pamEventHasPlayedResults(e){
+ return !!(e&&(e.matches||[]).some(function(m){
+  return m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined;
+ }));
+}
+function pamLedgerHasSpendingOrPodium(e){
+ if(!e)return false;
+ if(Object.values(e.ledger||{}).some(function(l){
+  return Number(l&&l.spent||0)>0||Number(l&&l.podium||0)>0;
+ }))return true;
+ for(let n=1;n<=4;n++){
+  const a=e.finalStages&&e.finalStages["auction"+n]&&e.finalStages["auction"+n].spending;
+  if(a&&Object.values(a).some(function(v){return Number(v||0)>0}))return true;
+ }
+ return false;
+}
+function pamLatestHistoricalTokenBalance(playerId,currentEvent){
+ const p=playerById(playerId);
+ const targetKey=registryTokenKey(p?playerName(p):pamEventPlayerName(currentEvent,playerId));
+ if(!targetKey)return Math.max(0,Number((p&&p.tokenBalance)||0));
+ const currentDate=pamEventDateValue(currentEvent)||Infinity;
+ const candidates=(state.events||[]).filter(function(ev){
+  return ev&&ev!==currentEvent&&ev.competitionType==="rodeo_tokens"&&
+   pamEventHasPlayedResults(ev)&&pamEventDateValue(ev)<currentDate;
+ }).sort(function(a,b){return pamEventDateValue(b)-pamEventDateValue(a)});
+ for(const ev of candidates){
+  let historicalId=(ev.playerIds||[]).find(function(id){return String(id)===String(playerId)})||null;
+  if(historicalId===null){
+   historicalId=(ev.playerIds||[]).find(function(id){
+    return registryTokenKey(pamEventPlayerName(ev,id))===targetKey;
+   })||null;
+  }
+  if(historicalId!==null){
+   const row=standings(ev).find(function(r){return String(r.id)===String(historicalId)});
+   if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
+  }
+ }
+ return Math.max(0,Number((p&&p.tokenBalance)||0));
+}
+function pamRepairPendingTournamentCarriedBalances(){
+ let changed=0;
+ (state.events||[]).forEach(function(e){
+  if(!e||e.competitionType!=="rodeo_tokens")return;
+  if(pamEventHasPlayedResults(e)||pamLedgerHasSpendingOrPodium(e))return;
+  e.ledger=e.ledger||{};
+  (e.playerIds||[]).forEach(function(id){
+   const expected=pamLatestHistoricalTokenBalance(id,e);
+   e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};
+   if(Number(e.ledger[id].carried||0)!==Number(expected||0)){
+    e.ledger[id].carried=Number(expected||0);
+    changed++;
+   }
+  });
+ });
+ return changed;
+}
+
 function createEvent(){
  const msg=document.getElementById("eventMessage");
  try{
@@ -3488,7 +3567,7 @@ function createEvent(){
   const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,auctionCount:d.auctionCount,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
   const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
   if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
-  event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
+  event.playerIds.forEach(function(id){event.ledger[id]={carried:pamLatestHistoricalTokenBalance(id,event),spent:0,podium:0}});
   state.events.unshift(event);state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();pamToast("Torneo salvato e pronto per essere condiviso","success");
  }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
 }
@@ -4616,10 +4695,14 @@ function commitBalances(){
  const rows=standings(e);
  rows.forEach(function(r){
   const p=playerById(r.id);
-  if(p)p.tokenBalance=Math.max(0,Number(r.balance)||0);
+  if(p){
+   p.tokenBalance=Math.max(0,Number(r.balance)||0);
+   e.playerSnapshots=e.playerSnapshots||{};
+   e.playerSnapshots[String(r.id)]=pamPlayerSnapshot(p);
+  }
  });
  save();
- alert("Saldi gettoni aggiornati nell’anagrafica.");
+ alert("Saldi finali salvati nell’anagrafica e disponibili come saldo precedente per la prossima tappa.");
  render();
 }
 
