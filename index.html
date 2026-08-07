@@ -1308,7 +1308,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 }
 
 
-/* V8.1.18 - NAVIGAZIONE UNIVERSALE */
+/* V8.1.19 - RECUPERO ANAGRAFICA + NAVIGAZIONE UNIVERSALE */
 .pam-universal-nav{position:sticky;top:8px;z-index:8500;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 auto 12px;padding:8px;border:1px solid #315271;border-radius:16px;background:rgba(7,17,31,.94);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(0,0,0,.25)}
 .pam-universal-nav button{min-height:44px;border:1px solid #365474;border-radius:12px;background:#17304e;color:#fff;font-weight:900}.pam-universal-nav button:hover{border-color:var(--club-accent)}
 .pam-universal-menu{position:fixed;inset:0;z-index:100500;background:rgba(3,11,22,.92);display:flex;align-items:flex-start;justify-content:center;padding:74px 14px 24px;overflow:auto}
@@ -1339,6 +1339,8 @@ if(!window.supabase){
  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
+
+<!-- V8.1.19: recupero non distruttivo dei giocatori orfani dai playerSnapshots. -->
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -1899,14 +1901,64 @@ function pamIsUserEditing(){
 function pamProtectCurrentEdit(ms){
  pamLocalEditUntil=Math.max(pamLocalEditUntil,Date.now()+(Number(ms)||5000));
 }
+function pamPlayerSnapshot(p){
+ if(!p)return null;
+ return {
+  id:String(p.id||""),firstName:p.firstName||"",lastName:p.lastName||"",
+  phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",
+  photoUrl:p.photoUrl||"",birth:p.birth||"",birthPlace:p.birthPlace||"",
+  postalCode:p.postalCode||"",residenceTown:p.residenceTown||"",
+  residenceProvince:p.residenceProvince||"",notes:p.notes||"",
+  tokenBalance:Number(p.tokenBalance||0)
+ };
+}
 function pamEnsureEventPlayerSnapshots(){
  (state.events||[]).forEach(function(e){
   e.playerSnapshots=e.playerSnapshots||{};
   (e.playerIds||[]).forEach(function(id){
    const p=(state.players||[]).find(function(x){return String(x.id)===String(id)});
-   if(p)e.playerSnapshots[String(id)]={id:String(id),firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""};
+   if(p)e.playerSnapshots[String(id)]=pamPlayerSnapshot(p);
   });
  });
+}
+function pamRecoverOrphanTournamentPlayers(){
+ state.players=Array.isArray(state.players)?state.players:[];
+ const known=new Set(state.players.map(function(p){return String(p.id)}));
+ let recovered=0;
+ (state.events||[]).forEach(function(e){
+  e.playerSnapshots=e.playerSnapshots||{};
+  (e.playerIds||[]).forEach(function(id){
+   const key=String(id||"");
+   if(!key||known.has(key))return;
+   const snap=e.playerSnapshots[key];
+   if(!snap)return;
+   const p={
+    id:key,firstName:snap.firstName||"",lastName:snap.lastName||"",
+    phone:snap.phone||"",email:snap.email||"",gender:snap.gender||"",level:snap.level||"",
+    photoUrl:snap.photoUrl||"",birth:snap.birth||"",birthPlace:snap.birthPlace||"",
+    postalCode:snap.postalCode||"",residenceTown:snap.residenceTown||"",
+    residenceProvince:snap.residenceProvince||"",notes:snap.notes||("Recuperato automaticamente dal torneo: "+(e.name||"Torneo")),
+    tokenBalance:Number(snap.tokenBalance||0),recoveredFromTournament:true
+   };
+   if(!String(p.firstName||p.lastName||"").trim())return;
+   state.players.push(p);known.add(key);recovered++;
+  });
+ });
+ return recovered;
+}
+function pamTournamentPlayerPool(e){
+ const map=new Map();
+ (state.players||[]).forEach(function(p){if(p&&p.id!=null)map.set(String(p.id),p)});
+ if(e){
+  e.playerSnapshots=e.playerSnapshots||{};
+  (e.playerIds||[]).forEach(function(id){
+   const key=String(id||"");
+   if(!key||map.has(key))return;
+   const snap=e.playerSnapshots[key];
+   if(snap)map.set(key,Object.assign({id:key,recoveredFromSnapshot:true},snap));
+  });
+ }
+ return Array.from(map.values());
 }
 function save(){
  pamEnsureEventPlayerSnapshots();
@@ -2132,12 +2184,17 @@ async function pamCloudLoad(initial,forceReplace){
  });
  if(forceReplace||initial||remotePlayers.length)state.players=remotePlayers;
  if(forceReplace||initial||remoteEvents.length)state.events=remoteEvents;
+ const pamRecoveredPlayers=pamRecoverOrphanTournamentPlayers();
  pamEnsureEventPlayerSnapshots();
  if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
   pamCloudReady=true;
   await pamCloudSyncAll();
  }else{
   pamCloudReady=true;
+ }
+ if(pamRecoveredPlayers>0&&pamIsAdmin()){
+  await pamCloudSyncAll();
+  setTimeout(function(){pamToast("Recuperati "+pamRecoveredPlayers+" giocatori rimasti agganciati ai tornei e ripristinati in anagrafica.","success")},250);
  }
  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
  localStorage.setItem(KEY,JSON.stringify(state));
@@ -2287,7 +2344,7 @@ function pamTournamentPlayersModal(id){
  function drawRows(){
   const q=normalizeName((overlay.querySelector("#pamTournamentPlayerSearch")||{}).value||"");
   const onlySelected=overlay.dataset.onlySelected==="1";
-  const rows=(state.players||[]).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).filter(function(p){
+  const rows=pamTournamentPlayerPool(e).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).filter(function(p){
    if(onlySelected&&!selected.has(String(p.id)))return false;
    return !q||normalizeName([playerName(p),p.phone,p.email].join(" ")).includes(q);
   }).map(function(p){
@@ -2558,7 +2615,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.18 · Navigazione universale</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.19 · Recupero anagrafica</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -2631,9 +2688,32 @@ function pamSaveChampTeam(id,patch){
  all[id]=Object.assign({},all[id]||{},patch||{});
  localStorage.setItem(PAM_CHAMP_TEAMS_KEY,JSON.stringify(all));
 }
-function pamCaptainPortalUrl(team){
+function pamCaptainPortalUrl(team,tokenOverride){
  const base=location.href.split("?")[0].replace(/index\.html?$/i,"").replace(/\/$/,"");
- return base+"/captain-portal.html?invite="+encodeURIComponent(team.inviteToken);
+ const token=tokenOverride||team?.inviteToken||team?.invite_token||"";
+ return base+"/captain-portal.html?invite="+encodeURIComponent(token);
+}
+async function pamPrepareCaptainPortal(team){
+ if(!team)throw new Error("Squadra non trovata.");
+ if(!pamIsAdmin()||!PAM_SESSION)throw new Error("Accedi come amministratore per preparare il portale capitano.");
+ let token=String(team.inviteToken||team.invite_token||"").trim();
+ if(!token)token=(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):(Date.now().toString(16)+Math.random().toString(16).slice(2)));
+ const lookup=await sb.from("championship_teams").select("id,invite_token,access_enabled").eq("id",team.id).maybeSingle();
+ if(lookup.error)throw lookup.error;
+ if(lookup.data){
+  token=String(lookup.data.invite_token||token);
+  const upd=await sb.from("championship_teams").update({invite_token:token,access_enabled:true,updated_at:new Date().toISOString()}).eq("id",team.id).select("id,invite_token").single();
+  if(upd.error)throw upd.error;
+  token=String(upd.data?.invite_token||token);
+ }else{
+  const row={id:team.id,team_name:team.teamName||"Squadra",series:team.series||"",club_legal_name:team.clubLegalName||"",club_tax_id:team.clubTaxId||"",club_address:team.clubAddress||"",club_postal_code:team.clubPostalCode||"",club_town:team.clubTown||"",club_province:team.clubProvince||"",club_phone:team.clubPhone||"",club_email:team.clubEmail||"",home_court_address:team.homeCourtAddress||"",home_day:team.homeDay||"",home_time:team.homeTime||"",captain_name:team.captainName||"",captain_email:team.captainEmail||"",captain_phone:team.captainPhone||"",access_enabled:true,invite_token:token,roster_status:team.rosterStatus||"Da compilare",status:team.status||"Iscritta",updated_at:new Date().toISOString()};
+  const ins=await sb.from("championship_teams").insert(row).select("id,invite_token").single();
+  if(ins.error)throw ins.error;
+  token=String(ins.data?.invite_token||token);
+ }
+ pamSaveChampTeam(team.id,{inviteToken:token,captainAccessEnabled:true});
+ team.inviteToken=token;team.captainAccessEnabled=true;
+ return pamCaptainPortalUrl(team,token);
 }
 function pamSeriesCount(label){
  return pamChampTeams().filter(function(t){return String(t.series).includes(label)}).length;
@@ -2769,13 +2849,12 @@ async function pamToggleTeamAccess(id,forced){
 }
 async function pamShareTeamInvite(id){
  const t=pamChampTeam(id);if(!t)return;
- if(!t.captainAccessEnabled){pamToast("Prima devi abilitare l’accesso per questa squadra.","error");return}
- const url=pamCaptainPortalUrl(t);
- const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
  try{
+  const url=await pamPrepareCaptainPortal(t);
+  const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
   if(navigator.share){await navigator.share({title:"Accesso squadra "+t.teamName,text:text,url:url})}
-  else{await navigator.clipboard.writeText(text);pamToast("Messaggio e link copiati negli appunti.","success")}
- }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a condividere il link: "+err.message,"error")}
+  else{await navigator.clipboard.writeText(text);pamToast("Accesso abilitato: messaggio e link copiati negli appunti.","success")}
+ }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a preparare il portale capitano: "+err.message,"error")}
 }
 async function pamSaveChampTeamForm(id){
  const patch={};
@@ -4688,7 +4767,7 @@ document.addEventListener("click",function(ev){
  const toggleChamp=ev.target.closest("[data-toggle-team-access]");if(toggleChamp){pamToggleTeamAccess(toggleChamp.getAttribute("data-toggle-team-access"));return}
  const shareChamp=ev.target.closest("[data-share-team-invite]");if(shareChamp){pamShareTeamInvite(shareChamp.getAttribute("data-share-team-invite"));return}
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
- const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(t)window.open(pamCaptainPortalUrl(t)+"&preview=1","_blank");return}
+ const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(!t){pamToast("Squadra non trovata.","error");return}pamPrepareCaptainPortal(t).then(function(url){window.open(url+"&preview=1","_blank")}).catch(function(err){pamToast("Non riesco ad aprire il portale capitano: "+err.message,"error")});return}
 
  const compBtn=ev.target.closest("[data-champ-competition]");if(compBtn){state.champCompetition=compBtn.getAttribute("data-champ-competition");save();render();return}
  const saveSuper=ev.target.closest("[data-save-supercup]");if(saveSuper){pamSaveAicsCompetitionState({championshipWinner:document.getElementById("pamChampionshipWinner")?.value||"",cupWinner:document.getElementById("pamCupWinner")?.value||""});pamToast("Finaliste di Supercoppa salvate.","success");render();return}
@@ -4948,7 +5027,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.1.18-navigation",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=8.1.19-captain-link",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

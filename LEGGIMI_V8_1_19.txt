@@ -1,0 +1,39 @@
+PADEL ARENA MANAGER V8.1.19 — RECUPERO ANAGRAFICA GIOCATORI
+
+BASE
+- Parte dalla V8.1.18 già in uso.
+- Mantiene navigazione universale e tutte le funzioni esistenti.
+
+PROBLEMA CORRETTO
+- Un torneo può conservare tutti i partecipanti mentre l'anagrafica ne mostra solo una parte.
+- Gli ID mancanti restano nel torneo e nei playerSnapshots, ma non sono più presenti nell'anagrafica players.
+
+COSA FA IL FIX
+- Recupera automaticamente i giocatori mancanti dai playerSnapshots dei tornei.
+- Li reinserisce nell'anagrafica con LO STESSO ID già usato da torneo, classifica, pagamenti e partite.
+- Se sei ADMIN e Supabase è connesso, li risalva automaticamente nella tabella players.
+- La finestra Partecipanti mostra sempre anche gli iscritti ancora disponibili negli snapshot del torneo.
+- Da ora gli snapshot salvano anche nascita, residenza, CAP, provincia, note e saldo gettoni quando disponibili.
+
+NON TOCCA
+- partite
+- risultati
+- classifiche
+- timer
+- aste
+- gettoni
+- pagamenti
+- fasi finali
+- V9
+
+INSTALLAZIONE
+1. Nel repository V8 sostituisci SOLO index.html con quello di questo pacchetto.
+2. Fai Commit changes.
+3. NON eseguire SQL.
+4. Apri index.html?v=8119.
+5. Accedi come amministratore e attendi il caricamento Supabase.
+6. Apri Giocatori: i nominativi recuperabili devono essere tornati in anagrafica.
+7. Apri il torneo e Partecipanti: il numero visualizzato deve coincidere con i partecipanti effettivi.
+
+IMPORTANTE
+NON premere “Salva partecipanti e rigenera partite” per recuperare i giocatori. Il recupero avviene automaticamente e non richiede rigenerazione.
