@@ -1,0 +1,46 @@
+PADEL ARENA MANAGER — V8.1.22 LAB GUIDATA
+
+QUESTA NON SOSTITUISCE LA V8 OPERATIVA.
+Il file si chiama index-v8-lab.html apposta.
+
+COME PROVARLA SENZA RISCHI
+1. Carica index-v8-lab.html NELLO STESSO repository della V8.
+2. NON rinominare e NON cancellare il tuo index.html attuale.
+3. Apri .../index-v8-lab.html?v=8122
+4. La prima apertura copia i dati locali della V8 in una memoria LAB separata.
+5. In modalità LAB l'upload Supabase è disattivato: le prove restano sul dispositivo/browser.
+6. Se non ti piace, elimina index-v8-lab.html e la V8 originale non è stata modificata.
+
+NOVITÀ 1 — CLASSIFICA CIRCUITO GETTONI
+Nuovo pulsante “Gettoni” nella barra inferiore.
+Mostra per tutto il circuito:
+- saldo corrente di ogni giocatore;
+- tornei disputati;
+- gettoni generati;
+- gettoni spesi.
+IMPORTANTE: non somma i saldi finali delle tappe, perché il saldo precedente viene già riportato
+nella tappa successiva. Usa invece il saldo più recente disponibile per ogni giocatore.
+
+NOVITÀ 2 — ASTE GUIDATE
+Dopo eliminatorie/quarti, quando rimangono 8 qualificati:
+- i primi 4 diventano automaticamente i compratori;
+- ognuno acquista uno dei successivi 4;
+- il collaboratore sceglie “chi compra chi” e inserisce il costo;
+- il costo viene scalato automaticamente;
+- lo stesso compratore non può comprare due volte;
+- lo stesso giocatore non può essere acquistato due volte;
+- completati 4 acquisti, le semifinali vengono generate automaticamente;
+- incrocio automatico delle coppie: testa di serie 1 contro 4, 2 contro 3.
+
+DOPO LE SEMIFINALI
+Nell’ultima asta:
+- i 2 finalisti meglio classificati diventano compratori;
+- acquistano gli altri 2;
+- dopo il secondo acquisto la finale viene creata automaticamente.
+
+SICUREZZA
+- Se una semifinale/finale ha già un risultato, l'asta viene bloccata e non può ricomporla.
+- Ogni acquisto può essere annullato prima di inserire risultati.
+- La formula a 6 partecipanti resta invariata perché era già automatica.
+- Con 10, 12 e 16 partecipanti rimangono invariati gli automatismi eliminatori già esistenti.
+- Nessun SQL necessario per questa prova.
