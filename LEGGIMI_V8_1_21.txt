@@ -1,0 +1,17 @@
+V8.1.21 — RECUPERA SALDI DALL'ULTIMA TAPPA
+
+1. Sostituisci SOLO index.html nel repository V8.
+2. Commit changes.
+3. Apri index.html?v=8121.
+4. In Torneo > Gettoni premi “↻ Recupera saldi dall’ultima tappa”.
+
+Il comando modifica SOLO Saldo precedente.
+NON tocca calendario, partite, risultati, partecipanti, spese o podio.
+NON rigenerare le partite.
+
+Valori già verificati attesi:
+Carnevali 22
+Fontanesi 22
+Balia 47
+Verzini 36
+Ionel Marcel 21
