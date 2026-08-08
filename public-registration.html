@@ -5,7 +5,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111F">
 <title>Iscrizione torneo · Padel Arena Manager</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+(function(){
+ function injectPublicExtras(){
+  try{
+   const root=document.querySelector(".app")||document.body;
+   if(!root||document.getElementById("pamPubExtrasV821"))return;
+   const eventObj=(typeof event!=="undefined"&&event)||(window.currentEvent)||(window.eventData)||null;
+   const reqs=(window.registrationRequests)||(window.requests)||(window.currentRequests)||[];
+   const box=document.createElement("div");box.id="pamPubExtrasV821";
+   box.innerHTML=pamPubRegisteredList(eventObj,reqs)+pamPubContactButtons(eventObj);
+   const cards=root.querySelectorAll(".card");
+   if(cards.length>1)cards[1].after(box);else root.appendChild(box);
+  }catch(e){console.warn("Public extras:",e)}
+ }
+ setTimeout(injectPublicExtras,600);
+ new MutationObserver(function(){setTimeout(injectPublicExtras,50)}).observe(document.documentElement,{childList:true,subtree:true});
+})();
+
+</script>
 <style>
 :root{--bg:#07111f;--card:#10233b;--line:#294262;--text:#f8fafc;--muted:#a9bacd;--accent:#9dff25;--blue:#16a8ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0%,#123f61,transparent 35%),linear-gradient(180deg,#06101d,#07111f);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;min-height:100vh}
@@ -17,6 +35,16 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 </style>
+
+<style>
+.pub-contact-box,.pub-registered-box{background:#11223b;border:1px solid #31537b;border-radius:18px;padding:16px;margin:14px 0}
+.pub-contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pub-contact-btn{display:block;text-align:center;padding:13px;border-radius:12px;background:#203754;color:#fff;text-decoration:none;font-weight:900}
+.pub-registered-item{padding:10px 0;border-bottom:1px solid #31537b;font-weight:800}
+.pub-registered-item:last-child{border-bottom:0}
+@media(max-width:600px){.pub-contact-actions{grid-template-columns:1fr}}
+</style>
+
 </head>
 <body>
 <main>
@@ -24,6 +52,39 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
+
+function pamPubOrganizerPhone(eventObj){
+ return String(
+  (eventObj&&(eventObj.organizerPhone||eventObj.contactPhone||eventObj.phone))||
+  window.PAM_ORGANIZER_PHONE||""
+ ).replace(/\D/g,"");
+}
+function pamPubOrganizerEmail(eventObj){
+ return String(
+  (eventObj&&(eventObj.organizerEmail||eventObj.contactEmail||eventObj.email))||
+  window.PAM_ORGANIZER_EMAIL||""
+ ).trim();
+}
+function pamPubContactButtons(eventObj){
+ const phone=pamPubOrganizerPhone(eventObj),email=pamPubOrganizerEmail(eventObj);
+ let html='<div class="pub-contact-box"><h3>Contatta organizzatore</h3><div class="pub-contact-actions">';
+ if(phone)html+='<a class="pub-contact-btn" href="https://wa.me/'+phone+'?text='+encodeURIComponent("Ciao, ti contatto per "+(eventObj&&eventObj.name||"il torneo Padel Arena"))+'">WhatsApp</a>';
+ if(email)html+='<a class="pub-contact-btn" href="mailto:'+encodeURIComponent(email)+'?subject='+encodeURIComponent("Informazioni torneo "+(eventObj&&eventObj.name||"Padel Arena"))+'">Email</a>';
+ if(!phone&&!email)html+='<span class="muted">Contatti organizzatore non configurati.</span>';
+ return html+'</div></div>';
+}
+function pamPubRegisteredList(eventObj,requests){
+ const accepted=(requests||[]).filter(function(r){
+  return String(r.status||"").toLowerCase()==="accepted"||String(r.status||"").toLowerCase()==="accettata";
+ });
+ if(!accepted.length)return '<div class="pub-registered-box"><h3>Giocatori iscritti</h3><div class="muted">Nessun iscritto confermato.</div></div>';
+ const items=accepted.map(function(r){
+  const name=(r.playerName||r.name||[r.firstName,r.lastName].filter(Boolean).join(" ")||"Giocatore");
+  return '<div class="pub-registered-item">'+String(name).replace(/</g,"&lt;")+'</div>';
+ }).join("");
+ return '<div class="pub-registered-box"><h3>Giocatori iscritti ('+accepted.length+')</h3>'+items+'</div>';
+}
+
 const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}});

@@ -1,0 +1,23 @@
+V8.2.1 LAB — FIX TEST COMPLETO
+
+CORREZIONI VERIFICATE
+- deduplica account stesso nome/cognome solo se telefono/email/dati anagrafici non sono in conflitto;
+- saldi gettoni non sommati ciecamente;
+- deduplica prima della sincronizzazione/upsert;
+- checkbox selezione giocatori presente;
+- Visualizza giocatori selezionati;
+- WhatsApp / Email / PDF / Excel / CSV;
+- pagina pubblica con elenco iscritti;
+- pagina pubblica con contatti organizzatore;
+- pulsante Elimina richiesta compatto;
+- versione visibile V8.2.1 LAB · TEST COMPLETO;
+- caricamento Supabase paginato e logout preservato.
+
+CARICARE SU GITHUB:
+1. index-v8-lab.html
+2. public-registration.html
+
+NON TOCCARE index.html.
+
+LINK TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8210
