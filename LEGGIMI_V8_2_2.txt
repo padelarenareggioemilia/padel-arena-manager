@@ -1,0 +1,31 @@
+V8.2.2 LAB · TEST 3
+
+CORREZIONI
+- ricerca giocatori per comunicazioni rifatta come modulo indipendente;
+- selezione giocatori funzionante;
+- WhatsApp, Email, PDF, Excel, CSV collegati ai selezionati;
+- foto inseribile nella nuova anagrafica;
+- campo "Categoria circuito" rinominato in "Sesso";
+- correzione automatica degli import con Nome completo e Cognome vuoto:
+  esempio Lignola Francesco -> Cognome Lignola / Nome Francesco;
+- deduplica solo se telefono/email/data e altri dati anagrafici non sono in conflitto;
+- gettoni non sommati ciecamente;
+- link iscrizione corretto anche da index-v8-lab.html;
+- pagina pubblica ricostruita dalla versione stabile;
+- elenco iscritti nella pagina pubblica;
+- contatto WhatsApp/email organizzatore;
+- organizzatore configurabile per ogni singolo torneo;
+- organizzatore modificabile anche su torneo già creato.
+
+INSTALLAZIONE
+GitHub:
+1) index-v8-lab.html
+2) public-registration.html
+NON toccare index.html.
+
+SUPABASE:
+eseguire una volta database/SUPABASE_V8_2_2_PUBLIC.sql
+Serve per mostrare elenco iscritti e contatti organizzatore nella pagina pubblica.
+
+LINK TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8220
