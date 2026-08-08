@@ -1,0 +1,35 @@
+PADEL ARENA MANAGER — V8.1.29 LAB SYNC STABILE
+
+OBIETTIVO
+Correggere l'oscillazione dell'archivio osservata nei test:
+3181 -> 35 giocatori, 5 -> 0 tornei, pagina che "traballa" e messaggi
+"recuperati X giocatori in anagrafica".
+
+CORREZIONI
+- caricamento Supabase paginato a blocchi da 1000;
+- una sola sincronizzazione completa alla volta;
+- snapshot atomico: state.players/state.events vengono sostituiti solo DOPO
+  che tutte le pagine sono state scaricate;
+- snapshot vuoti rifiutati se nella sessione esiste già un archivio stabile;
+- un solo render al termine del caricamento completo;
+- refresh realtime accorpati con debounce;
+- import Eden automatico disabilitato in LAB;
+- vecchi recuperi automatici non devono modificare la LAB;
+- mantiene la cache leggera introdotta nella V8.1.27;
+- V8 operativa index.html NON modificata;
+- nessun SQL aggiuntivo richiesto.
+
+INSTALLAZIONE
+Caricare SOLO index-v8-lab.html su GitHub.
+NON toccare index.html.
+
+LINK TEST
+index-v8-lab.html?v=8129
+
+TEST
+1. Aprire la LAB e attendere SUPABASE CONNESSO.
+2. Annotare numero giocatori e tornei.
+3. Attendere 60 secondi senza toccare nulla: la pagina non deve traballare.
+4. Ricaricare 3 volte.
+5. Il numero giocatori/tornei deve restare stabile.
+6. Non devono comparire toast periodici "recuperati X giocatori".

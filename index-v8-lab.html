@@ -1330,7 +1330,7 @@ if(!window.supabase){
 
 <style>
 body.pam-lab:before{
- content:"V8.1.27 LAB · NON PERMANENTE";
+ content:"V8.1.29 LAB · NON PERMANENTE";
  position:fixed;top:8px;right:8px;z-index:10050;
  background:#7c3aed;color:#fff;border:1px solid #a78bfa;
  border-radius:999px;padding:6px 10px;font:800 10px system-ui;
@@ -1628,8 +1628,8 @@ async function pamBootAuth(){
 
 const PAM_LAB_MODE=true;
 const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8127";
-const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126"];
+const KEY="pam_v8_lab_8129";
+const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128"];
 PAM_OLD_LAB_KEYS.forEach(function(k){
  try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
 });
@@ -2033,6 +2033,7 @@ function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
 function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
 let pamEdenImportRunning=false;
 async function pamImportEdenClients(){
+ if(PAM_LAB_MODE)return {added:0,updated:0,skipped:true};
  if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
  pamEdenImportRunning=true;
  try{
@@ -2189,7 +2190,7 @@ async function pamForceUploadLocal(){
 async function pamForceDownloadCloud(){
  if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
  pamToast("Scaricamento archivio online...");
- await pamCloudLoad(false,true);
+ await pamScheduleStableCloudReload();
  await pamRefreshSyncPanel();
  pamToast("Archivio online scaricato.","success");
 }
@@ -2222,7 +2223,7 @@ function pamSyncPanelHtml(){
  if(!PAM_SESSION)return"";
  return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
   '<h2>☁️ Archivio condiviso</h2>'+
-  '<div class="muted"><b>Fonte archivio: Supabase.</b> La LAB conserva nel browser solo impostazioni leggere dell’interfaccia, non l’intera anagrafica.</div>'+
+  '<div class="muted"><b>Fonte archivio: Supabase completo.</b> Snapshot atomico: la pagina viene aggiornata solo quando l’archivio è stato caricato interamente. La LAB conserva nel browser solo impostazioni leggere dell’interfaccia, non l’intera anagrafica.</div>'+
   '<div class="pam-sync-grid">'+
    '<div class="pam-sync-stat"><span>Giocatori caricati</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
    '<div class="pam-sync-stat"><span>Tornei caricati</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
@@ -2243,43 +2244,108 @@ function pamSyncPanelHtml(){
  '</section>';
 }
 
-async function pamCloudLoad(initial,forceReplace){
- const [playersRes,eventsRes]=await Promise.all([
-  sb.from("players").select("id,data,photo_url").order("updated_at",{ascending:true}),
-  sb.from("tournaments").select("id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at").order("event_date",{ascending:false})
- ]);
- if(playersRes.error)throw playersRes.error;
- if(eventsRes.error)throw eventsRes.error;
- const remotePlayers=(playersRes.data||[]).map(function(r){return Object.assign({},r.data||{},{id:r.id,photoUrl:r.photo_url||((r.data||{}).photoUrl)||""})});
- const remoteEvents=(eventsRes.data||[]).map(function(r){
-  return Object.assign({},r.data||{},{
-   id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
-   club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
-   competitionType:r.competition_type||((r.data||{}).competitionType)||"",
-   logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
-  });
- });
- if(forceReplace||initial||remotePlayers.length)state.players=remotePlayers;
- if(forceReplace||initial||remoteEvents.length)state.events=remoteEvents;
- state.__playersSource="Supabase";
- state.__cloudPlayersCount=remotePlayers.length;
- state.__cloudEventsCount=remoteEvents.length;
- if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
-  pamCloudReady=true;
-  await pamCloudSyncAll();
- }else{
-  pamCloudReady=true;
+let pamCloudLoadPromise=null;
+let pamCloudSnapshotReady=false;
+let pamLastStablePlayerCount=0;
+let pamLastStableEventCount=0;
+
+async function pamFetchAllRows(table,columns,orderColumn,ascending){
+ const pageSize=1000;
+ let from=0;
+ let all=[];
+ while(true){
+  let q=sb.from(table).select(columns).range(from,from+pageSize-1);
+  if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
+  const res=await q;
+  if(res.error)throw res.error;
+  const rows=res.data||[];
+  all=all.concat(rows);
+  if(rows.length<pageSize)break;
+  from+=pageSize;
+  if(from>=100000)throw new Error("Archivio oltre il limite di sicurezza di 100.000 record.");
  }
- if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
- pamPersistLocalState();
- if(!pamIsUserEditing()){
-  const y=window.scrollY;
-  render();
-  pamApplyRole();
-  requestAnimationFrame(function(){window.scrollTo(0,y)});
- }
- setTimeout(pamRefreshSyncPanel,50);
+ return all;
 }
+
+async function pamCloudLoad(initial,forceReplace){
+ // Una sola sincronizzazione completa alla volta.
+ if(pamCloudLoadPromise)return pamCloudLoadPromise;
+
+ pamCloudLoadPromise=(async function(){
+  const [playerRows,eventRows]=await Promise.all([
+   pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true),
+   pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false)
+  ]);
+
+  const remotePlayers=playerRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
+   });
+  });
+  const remoteEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
+   });
+  });
+
+  // Anti-sovrascrittura: uno snapshot vuoto/parziale non può cancellare
+  // un archivio stabile già caricato durante la stessa sessione.
+  if(pamCloudSnapshotReady){
+   if(remotePlayers.length===0 && pamLastStablePlayerCount>0)
+    throw new Error("Snapshot giocatori vuoto rifiutato: archivio stabile preservato.");
+   if(remoteEvents.length===0 && pamLastStableEventCount>0)
+    throw new Error("Snapshot tornei vuoto rifiutato: archivio stabile preservato.");
+  }
+
+  // COMMIT ATOMICO: state cambia soltanto qui, a caricamento completo concluso.
+  state.players=remotePlayers;
+  state.events=remoteEvents;
+  state.__playersSource="Supabase completo";
+  state.__cloudPlayersCount=remotePlayers.length;
+  state.__cloudEventsCount=remoteEvents.length;
+  pamLastStablePlayerCount=remotePlayers.length;
+  pamLastStableEventCount=remoteEvents.length;
+  pamCloudSnapshotReady=true;
+  pamCloudReady=true;
+
+  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))
+   state.currentEventId=null;
+
+  pamPersistLocalState();
+
+  // Un solo render al termine dello snapshot.
+  if(!pamIsUserEditing()){
+   const y=window.scrollY;
+   render();
+   pamApplyRole();
+   requestAnimationFrame(function(){window.scrollTo(0,y)});
+  }
+  setTimeout(pamRefreshSyncPanel,50);
+  return {players:remotePlayers.length,events:remoteEvents.length};
+ })();
+
+ try{
+  return await pamCloudLoadPromise;
+ }finally{
+  pamCloudLoadPromise=null;
+ }
+}
+
+let pamRealtimeReloadTimer=null;
+function pamScheduleStableCloudReload(){
+ clearTimeout(pamRealtimeReloadTimer);
+ pamRealtimeReloadTimer=setTimeout(function(){
+  if(!PAM_SESSION||!pamCloudReady)return;
+  pamCloudLoad(false,true).catch(function(err){
+   console.warn("Aggiornamento realtime rimandato:",err);
+  });
+ },1500);
+}
+
 function pamSubscribeRealtime(){
  if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
  const refreshFromCloud=function(){
@@ -2289,7 +2355,7 @@ function pamSubscribeRealtime(){
     pamRemoteRefreshTimer=setTimeout(attempt,1200);
     return;
    }
-   if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true);
+   if(!pamUploading&&PAM_SESSION)pamScheduleStableCloudReload();
   };
   pamRemoteRefreshTimer=setTimeout(attempt,700);
  };
@@ -2304,7 +2370,7 @@ function pamSubscribeRealtime(){
   .subscribe(function(status){pamSetConnectionState(status==="SUBSCRIBED")});
  clearInterval(window.__pamCloudRefreshInterval);
  window.__pamCloudRefreshInterval=setInterval(function(){
-  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamScheduleStableCloudReload().catch(function(err){pamSetConnectionState(false);console.error(err)});
  },30000);
 }
 function pamToast(message,type){
@@ -2676,7 +2742,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.27 LAB · Storage stabile</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.29 LAB · Sync stabile</span></div>'+
  '</div>';
 }
 function nav(){
