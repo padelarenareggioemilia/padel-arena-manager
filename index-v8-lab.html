@@ -1321,99 +1321,28 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+document.addEventListener("input",function(ev){
+ if(ev.target&&ev.target.id==="pamRecoverySearch"){
+  pamRecoveryPlayerSearch=ev.target.value||"";clearTimeout(window.__pamRS);
+  window.__pamRS=setTimeout(function(){render();const x=document.getElementById("pamRecoverySearch");if(x){x.focus();x.value=pamRecoveryPlayerSearch}},180);
+ }
+});
+document.addEventListener("change",function(ev){
+ if(ev.target&&ev.target.id==="pamRecoveryFilter"){pamRecoveryPlayerFilter=ev.target.value||"all";render();const s=document.getElementById("pamRecoveryFilter");if(s)s.value=pamRecoveryPlayerFilter}
+});
+document.addEventListener("click",function(ev){
+ if(ev.target.closest("[data-recovery-csv]")){ev.preventDefault();pamRecoveryCsv();return}
+ if(ev.target.closest("[data-recovery-email]")){ev.preventDefault();pamRecoveryEmail();return}
+ if(ev.target.closest("[data-recovery-wa]")){ev.preventDefault();pamRecoveryWhatsapp();return}
+},true);
+
+</script>
 <script>
 if(!window.supabase){
  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
-
-<style>
-body.pam-lab:before{
- content:"V8.1.32 LAB · NON PERMANENTE";
- position:fixed;top:8px;right:8px;z-index:10050;
- background:#7c3aed;color:#fff;border:1px solid #a78bfa;
- border-radius:999px;padding:6px 10px;font:800 10px system-ui;
- box-shadow:0 6px 22px rgba(0,0,0,.28)
-}
-.pam-circuit-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
-.pam-circuit-kpi{padding:14px;border:1px solid var(--line);border-radius:16px;background:#0b182a}
-.pam-circuit-kpi strong{display:block;font-size:24px;color:var(--accent)}
-.pam-guide{border:1px solid #7657c7;background:linear-gradient(135deg,#17102e,#0b182a);border-radius:18px;padding:14px;margin:12px 0}
-.pam-guide-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
-.pam-guide-step{display:inline-flex;padding:5px 9px;border-radius:999px;background:#5b21b6;color:#fff;font-size:11px;font-weight:900}
-.pam-purchases{display:grid;gap:8px;margin:10px 0}
-.pam-purchase{display:grid;grid-template-columns:1fr auto 1fr auto auto;gap:8px;align-items:center;padding:10px;border:1px solid #4b3b76;border-radius:13px;background:#111c2d}
-.pam-purchase .arrow{color:#a78bfa;font-weight:1000}
-.pam-guide-form{display:grid;grid-template-columns:1fr 1fr 120px auto;gap:9px;align-items:end;margin-top:12px}
-.pam-ready{padding:11px;border-radius:12px;background:#10351f;border:1px solid #2d8a4d;margin:10px 0}
-.pam-wait{padding:11px;border-radius:12px;background:#33280c;border:1px solid #9a771d;margin:10px 0}
-.pam-auto-match{border-left:5px solid #7c3aed}
-@media(max-width:700px){
- .app{padding-bottom:78px}
- nav{position:fixed!important;bottom:0;left:0;right:0;z-index:9998;margin:0!important;border-radius:18px 18px 0 0!important}
- nav>div{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:2px!important}
- nav button{padding:8px 2px!important;font-size:10px!important;min-width:0!important}
- .pam-main-header{padding:10px!important;margin-bottom:8px!important}
- .pam-main-header .brand h1{font-size:18px!important}
- .pam-main-header .brand small{display:none}
- .pam-main-header .pam-host-mini{display:none!important}
- .card{padding:12px!important;margin:8px 0!important}
- .table{font-size:12px!important}
- .pam-circuit-kpis{grid-template-columns:1fr 1fr 1fr}
- .pam-circuit-kpi{padding:10px}.pam-circuit-kpi strong{font-size:19px}
- .pam-guide-form{grid-template-columns:1fr!important}
- .pam-purchase{grid-template-columns:1fr auto 1fr!important}
- .pam-purchase .cost,.pam-purchase button{grid-column:auto}
- .pam-actions-menu>summary{padding:10px 12px!important}
-}
-</style>
-
-
-<style>
-.pam-wa-box{border:1px solid #1f8f55;background:linear-gradient(135deg,#0d2d20,#0b182a);border-radius:18px;padding:14px;margin:12px 0}
-.pam-wa-box h2{margin:0 0 4px}
-.pam-wa-player{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-.pam-wa-player:last-child{border-bottom:0}
-.pam-wa-chip{display:inline-flex;padding:5px 8px;border-radius:999px;background:#123b29;border:1px solid #2ca66a;font-size:11px;font-weight:900}
-@media(max-width:700px){.pam-wa-player{grid-template-columns:1fr}.pam-wa-player button{width:100%}}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<style>
-.pam-player-tools{border:1px solid #334155;background:#0b182a;border-radius:18px;padding:14px;margin:10px 0 14px}
-.pam-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.pam-filter-btn{border:1px solid #40516b;background:#101d31;color:#dfe9f7;border-radius:12px;padding:10px 8px;font-weight:900;cursor:pointer}
-.pam-filter-btn.active{background:#7c3aed;border-color:#a78bfa;color:#fff}
-.pam-player-selectbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
-.pam-player-selectbar .count{font-weight:1000;color:#9dff25;margin-right:auto}
-.pam-player-row-select{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center}
-.pam-player-check{width:22px;height:22px}
-.pam-bulk-box{border:1px solid #1f8f55;background:linear-gradient(135deg,#0d2d20,#0b182a);border-radius:16px;padding:12px;margin:12px 0}
-.pam-export-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.pam-export-actions button{flex:1;min-width:120px}
-@media(max-width:700px){
- .pam-filter-grid{grid-template-columns:1fr 1fr}
- .pam-player-row-select{grid-template-columns:30px 1fr}
- .pam-player-row-select .row-actions{grid-column:2}
- .pam-export-actions{display:grid;grid-template-columns:1fr 1fr}
- .pam-export-actions button{width:100%;min-width:0}
-}
-</style>
-
-
-<style>
-.pam-player-tools .field{margin-bottom:10px}
-#pamPlayerSearch,#pamPlayerFilterSelect{width:100%;min-height:46px;font-size:16px}
-@media(max-width:700px){
- .pam-player-tools{position:relative}
- .pam-player-selectbar{display:grid;grid-template-columns:1fr 1fr}
- .pam-player-selectbar .count{grid-column:1/-1}
- .pam-player-selectbar button:last-child{grid-column:1/-1}
-}
-</style>
-
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -1430,7 +1359,6 @@ body.pam-lab:before{
 
 
 window.addEventListener("error",function(ev){
- if(document.querySelector(".pam-main-header")||document.querySelector("nav")){console.error("Errore runtime:",ev.error||ev.message);return;}
  const root=document.getElementById("root");
  if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di avvio</h2><p>L’app non è riuscita a partire.</p><pre style="white-space:pre-wrap">'+String(ev.message||"Errore sconosciuto")+'</pre><p>Ricarica la pagina. Se il messaggio resta, invia uno screenshot di questa schermata.</p></div>';
 });
@@ -1500,68 +1428,7 @@ async function pamLogout(){
  if(pamRealtimeChannel){await sb.removeChannel(pamRealtimeChannel);pamRealtimeChannel=null}
  document.getElementById("pamRoleBadge")?.remove();
  document.getElementById("pamLogoutBtn")?.remove();
- 
-document.addEventListener("click",function(ev){
- const el=ev.target.closest("[data-action],[data-email-player],[data-edit-player],[data-player-filter]");
- if(!el)return;
-
- const action=el.getAttribute("data-action");
-
- if(el.hasAttribute("data-email-player")){
-  ev.preventDefault();
-  pamEmailPlayer(el.getAttribute("data-email-player"));
-  return;
- }
-
- if(el.hasAttribute("data-edit-player")){
-  ev.preventDefault();
-  editPlayer(el.getAttribute("data-edit-player"));
-  return;
- }
-
- if(el.hasAttribute("data-player-filter")){
-  ev.preventDefault();
-  pamSetPlayerFilter(el.getAttribute("data-player-filter"));
-  return;
- }
-
- if(action==="select-filtered-players"){
-  ev.preventDefault();pamSelectFilteredPlayers();return;
- }
- if(action==="deselect-filtered-players"){
-  ev.preventDefault();pamSelectNoneFiltered();return;
- }
- if(action==="clear-player-selection"){
-  ev.preventDefault();pamClearPlayerSelection();return;
- }
- if(action==="bulk-whatsapp-selected"){
-  ev.preventDefault();
-  state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();
-  save();
-  pamBulkWhatsappSelected();
-  return;
- }
- if(action==="bulk-email-selected"){
-  ev.preventDefault();
-  state.bulkEmailSubject=(document.getElementById("pamBulkEmailSubject")?.value||"").trim();
-  state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();
-  save();
-  pamBulkEmailSelected();
-  return;
- }
- if(action==="export-players-pdf"){
-  ev.preventDefault();pamExportPlayersPdf();return;
- }
- if(action==="export-players-xlsx"){
-  ev.preventDefault();pamExportPlayersXlsx();return;
- }
- if(action==="export-players-csv"){
-  ev.preventDefault();pamExportPlayersCsv();return;
- }
-},true);
-
-document.body.classList.add("pam-lab");
-pamRenderPublicHome();
+ pamRenderPublicHome();
 }
 async function pamGetProfile(user){
  const {data,error}=await sb.from("profiles").select("id,email,role,display_name").eq("id",user.id).maybeSingle();
@@ -1604,10 +1471,7 @@ async function pamStartSession(session){
   pamToast("Accesso effettuato. Aggiornamento dati online in corso…","success");
 
   pamCloudLoad(true,true).then(async function(){
-   if(pamIsAdmin()&&!PAM_LAB_MODE){
-    const imported=await pamImportEdenClients();
-    if(imported&&(imported.added||imported.updated))pamToast("Anagrafiche Eden integrate: "+imported.added+" nuove, "+imported.updated+" aggiornate. I gettoni esistenti sono rimasti invariati.","success");
-   }
+   // RECOVERY: nessuna integrazione automatica di anagrafiche.
    pamSubscribeRealtime();
    pamOpenSharedTournamentFromUrl();
    pamToast("Dati online aggiornati","success");
@@ -1615,12 +1479,7 @@ async function pamStartSession(session){
   }).catch(function(err){
    console.error(err);
    pamSetConnectionState(false);
-   const msg=String(err&&err.message||err||"");
-   if(/quota|QuotaExceeded/i.test(msg)){
-    pamToast("Accesso riuscito. La vecchia cache LAB era piena; questa versione usa una cache leggera. Ricarica una volta la pagina.","error");
-   }else{
-    pamToast("Accesso riuscito. Sincronizzazione Supabase momentaneamente non disponibile: "+msg,"error");
-   }
+   pamToast("Accesso riuscito. Sincronizzazione momentaneamente non disponibile: "+(err.message||err),"error");
   });
  }catch(err){
   console.error(err);
@@ -1632,26 +1491,16 @@ async function pamStartSession(session){
 
 const PAM_PUBLIC_DATA={tournaments:[],matches:[],standings:[],lineups:[],series:"Tutte"};
 function pamPublicEsc(v){return String(v??"").replace(/[&<>\"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
-function pamPublicBase(){return location.href.split("?")[0].replace(/index\.html?$/i,"").replace(/\/$/,"")}
+function pamPublicBase(){return location.href.split("?")[0].replace(/index(?:-v8-lab)?\.html?$/i,"").replace(/\/$/,"")}
 function pamPublicRegistrationUrl(t){return pamPublicBase()+"/public-registration.html?tournament="+encodeURIComponent(t.share_token||"")}
 function pamPublicPosterUrl(t){return pamPublicBase()+"/poster.html?tournament="+encodeURIComponent(t.share_token||"")}
 function pamPublicDate(v){if(!v)return "Data da definire";try{return new Date(v+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}catch(_){return v}}
 function pamPublicFormatType(v){return String(v||"TORNEO").replaceAll("_"," ").toUpperCase()}
 function pamPublicLogo(t){return t.logo_url||"assets/padel-arena-manager-logo.png"}
-
-function pamPublicOrganizerWhatsappUrl(t){
- const phone=pamWhatsappPhone(t&&t.organizer_phone||"");
- if(!phone)return "";
- const msg="Ciao, vorrei informazioni sull’evento "+String(t&&t.name||"Padel Arena Manager")+".";
- return "https://wa.me/"+phone+"?text="+encodeURIComponent(msg);
-}
-
 function pamPublicEventCard(t){
  const open=t.registration_open!==false,available=Number(t.available_places??0),wait=t.waitlist_enabled!==false;
  const action=open?'<a class="primary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>':wait?'<a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">LISTA D’ATTESA</a>':'<span class="secondary wide" style="opacity:.7">ISCRIZIONI CHIUSE</span>';
- return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+
- (t.organizer_phone?'<a class="secondary" style="border-color:#1f9d55;color:#167c43" target="_blank" rel="noopener" href="'+pamPublicEsc(pamPublicOrganizerWhatsappUrl(t))+'">💬 ORGANIZZATORE</a>':'')+(t.organizer_email?'<a class="secondary" style="border-color:#3b82f6;color:#2563eb" href="'+pamPublicEsc(pamOrganizerEmailUrl(t))+'">✉️ EMAIL ORGANIZZATORE</a>':'')+
- '<a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
+ return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
 }
 function pamPublicUpcomingHtml(){return PAM_PUBLIC_DATA.tournaments.length?PAM_PUBLIC_DATA.tournaments.map(pamPublicEventCard).join(""):'<div class="pam-public-empty" style="grid-column:1/-1">Al momento non sono pubblicati tornei in programma.</div>'}
 function pamPublicMatchesHtml(){const rows=PAM_PUBLIC_DATA.matches.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,12).map(m=>'<div class="pam-public-match"><div><b>'+pamPublicEsc(pamPublicDate(m.event_date))+'</b><div class="pam-public-muted">'+pamPublicEsc(m.start_time||'')+'</div></div><div><b>'+pamPublicEsc(m.home_team_name||'Da definire')+'</b><div class="pam-public-muted">vs '+pamPublicEsc(m.away_team_name||'Da definire')+' · '+pamPublicEsc(m.series||'')+'</div></div><div class="pam-public-score">'+(m.home_score==null?'–':pamPublicEsc(m.home_score))+' : '+(m.away_score==null?'–':pamPublicEsc(m.away_score))+'</div></div>').join(''):'<div class="pam-public-empty">Calendario e risultati saranno pubblicati dall’organizzazione.</div>'}
@@ -1699,13 +1548,7 @@ async function pamBootAuth(){
 }
 
 
-const PAM_LAB_MODE=true;
-const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8132";
-const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129","pam_v8_lab_8130","pam_v8_lab_8131"];
-PAM_OLD_LAB_KEYS.forEach(function(k){
- try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
-});
+const KEY="pam_v071";
 const SEEDED_PLAYERS=[
  {firstName:"Andrea",lastName:"Spina",gender:"Maschile",tokenBalance:3},
  {firstName:"Antonio",lastName:"Stirparo",gender:"Maschile",tokenBalance:6},
@@ -1886,53 +1729,17 @@ function freshState(){return{view:"home",tab:"matches",players:[],events:[],curr
  pairsPerGroup:4,
  finalsOption:"top2",
  auctionCount:2,
- organizerPhone:"",
  selected:[]
 }}}
 let state;
 let pamLocalEditUntil=0;
-function pamCompactUiState(source){
- const s=source||{};
- return {
-  view:s.view||"home",
-  tab:s.tab||"matches",
-  currentEventId:s.currentEventId||null,
-  draft:s.draft||freshState().draft,
-  playerFilter:s.playerFilter||"all",
-  selectedPlayerIds:Array.isArray(s.selectedPlayerIds)?s.selectedPlayerIds.slice(0,500):[],
-  bulkWhatsappMessage:s.bulkWhatsappMessage||"",
-  bulkEmailSubject:s.bulkEmailSubject||"Comunicazione Padel Arena Manager",
-  champTeamId:s.champTeamId||null,
-  players:[],
-  events:[]
- };
-}
-function pamReadLocalUiState(){
- try{
-  const raw=localStorage.getItem(KEY)||sessionStorage.getItem(KEY);
-  return raw?Object.assign(freshState(),JSON.parse(raw)):freshState();
- }catch(_){return freshState()}
-}
-function pamPersistLocalState(){
- const payload=JSON.stringify(pamCompactUiState(state));
- try{
-  localStorage.setItem(KEY,payload);
-  return true;
- }catch(err){
-  try{sessionStorage.setItem(KEY,payload)}catch(_){}
-  console.warn("Cache locale LAB non disponibile:",err);
-  return false;
- }
-}
-state=pamReadLocalUiState();
+try{state=JSON.parse(localStorage.getItem(KEY))||freshState()}catch(e){state=freshState()}
 if(!state.draft)state.draft=freshState().draft;
 if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
 if(state.draft.fee===undefined)state.draft.fee=25;
 if(!state.draft.pairsPerGroup)state.draft.pairsPerGroup=4;
 if(!state.draft.finalsOption)state.draft.finalsOption="top2";
 if(!state.draft.auctionCount)state.draft.auctionCount=2;
-if(state.draft.organizerPhone===undefined)state.draft.organizerPhone="";
-if(state.draft.organizerEmail===undefined)state.draft.organizerEmail="";
 if(state.draft.returnLeg===undefined)state.draft.returnLeg=false;
 if(state.draft.eliminationReturnLeg===undefined)state.draft.eliminationReturnLeg=false;
 if(state.draft.semifinalReturnLeg===undefined)state.draft.semifinalReturnLeg=false;
@@ -1996,7 +1803,6 @@ const importedRegistryNames=["Adamelli Marco", "Agosti Cinzia", "aguilar hugo", 
 function registryTokenKey(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/).filter(Boolean).sort().join("|");
 }
-if(!PAM_LAB_MODE){
 const existingRegistryKeys=new Set((state.players||[]).map(function(p){return registryTokenKey(playerName(p))}));
 importedRegistryNames.forEach(function(fullName){
  const key=registryTokenKey(fullName);
@@ -2020,7 +1826,6 @@ importedRegistryNames.forEach(function(fullName){
  existingRegistryKeys.add(key);
 });
 save();
-}
 
 function normalizeName(s){return String(s||"").trim().toLocaleLowerCase("it-IT").replace(/\s+/g," ")}
 function seedParticipants(){
@@ -2097,7 +1902,7 @@ function pamProtectCurrentEdit(ms){
 }
 function save(){
  pamProtectCurrentEdit(5000);
- pamPersistLocalState();
+ localStorage.setItem(KEY,JSON.stringify(state));
  if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
@@ -2106,7 +1911,6 @@ function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
 function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
 let pamEdenImportRunning=false;
 async function pamImportEdenClients(){
- if(PAM_LAB_MODE)return {added:0,updated:0,skipped:true};
  if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
  pamEdenImportRunning=true;
  try{
@@ -2177,10 +1981,6 @@ function pamScheduleCloudSync(){
  pamSyncTimer=setTimeout(pamCloudSyncAll,650);
 }
 async function pamCloudSyncAll(){
- if(PAM_LAB_MODE){
-  pamPersistLocalState();
-  return;
- }
  if(!pamCloudReady||!PAM_SESSION||pamUploading)return;
  pamUploading=true;
  try{
@@ -2210,7 +2010,7 @@ async function pamCloudSyncAll(){
     if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
    }
   }
-  pamPersistLocalState();
+  localStorage.setItem(KEY,JSON.stringify(state));
   pamSetConnectionState(true);
  }catch(err){
   console.error("Sincronizzazione Supabase:",err);
@@ -2232,13 +2032,6 @@ window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_S
 window.addEventListener("offline",function(){pamSetConnectionState(false)});
 
 
-
-function pamStorageDiagnostic(){
- let labBytes=0;
- try{labBytes=(localStorage.getItem(KEY)||"").length*2}catch(_){}
- return {labKB:(labBytes/1024).toFixed(1)};
-}
-
 async function pamGetCloudCounts(){
  const [p,e]=await Promise.all([
   sb.from("players").select("id",{count:"exact",head:true}),
@@ -2249,7 +2042,6 @@ async function pamGetCloudCounts(){
  return{players:p.count||0,events:e.count||0};
 }
 async function pamForceUploadLocal(){
- if(PAM_LAB_MODE){pamToast("Modalità LAB: upload cloud disattivato. La V8 operativa non viene modificata.","error");return;}
  if(!pamIsAdmin()){pamToast("Solo l'amministratore può trasferire l'archivio locale.","error");return}
  if(!confirm("Trasferire su Supabase tutti i giocatori e i tornei presenti su questo dispositivo? I record con lo stesso ID verranno aggiornati."))return;
  pamToast("Trasferimento archivio locale in corso...");
@@ -2263,7 +2055,7 @@ async function pamForceUploadLocal(){
 async function pamForceDownloadCloud(){
  if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
  pamToast("Scaricamento archivio online...");
- await pamScheduleStableCloudReload();
+ await pamCloudLoad(false,true);
  await pamRefreshSyncPanel();
  pamToast("Archivio online scaricato.","success");
 }
@@ -2281,10 +2073,7 @@ async function pamRefreshSyncPanel(){
   if(cp)cp.textContent=c.players;
   if(ce)ce.textContent=c.events;
   const log=document.getElementById("pamSyncLog");
-  if(log){
-   const d=pamStorageDiagnostic();
-   log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT")+" · Cache LAB "+d.labKB+" KB · V8 operativa non modificata";
-  }
+  if(log)log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT");
   pamSetConnectionState(true);
  }catch(err){
   const log=document.getElementById("pamSyncLog");
@@ -2296,10 +2085,10 @@ function pamSyncPanelHtml(){
  if(!PAM_SESSION)return"";
  return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
   '<h2>☁️ Archivio condiviso</h2>'+
-  '<div class="muted"><b>Fonte archivio: Supabase completo.</b> Snapshot atomico: la pagina viene aggiornata solo quando l’archivio è stato caricato interamente. La LAB conserva nel browser solo impostazioni leggere dell’interfaccia, non l’intera anagrafica.</div>'+
+  '<div class="muted">Confronta i dati salvati sul dispositivo con quelli presenti su Supabase.</div>'+
   '<div class="pam-sync-grid">'+
-   '<div class="pam-sync-stat"><span>Giocatori caricati</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
-   '<div class="pam-sync-stat"><span>Tornei caricati</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Giocatori sul dispositivo</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei sul dispositivo</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
    '<div class="pam-sync-stat"><span>Stato</span><b style="font-size:17px">'+(navigator.onLine?"CONNESSO":"OFFLINE")+'</b></div>'+
   '</div>'+
   '<div class="pam-sync-grid">'+
@@ -2307,7 +2096,6 @@ function pamSyncPanelHtml(){
    '<div class="pam-sync-stat"><span>Tornei online</span><b id="pamCloudEvents">…</b></div>'+
    '<div class="pam-sync-stat"><span>Account</span><b style="font-size:15px">'+esc(PAM_PROFILE?.role||"")+'</b></div>'+
   '</div>'+
-  '<div class="notice success"><b>Storage LAB protetto:</b> giocatori e tornei vengono ricaricati da Supabase e non vengono più duplicati integralmente nel browser.</div>'+
   '<div class="pam-sync-actions">'+
    '<button class="secondary" data-action="cloud-check">Aggiorna conteggi</button>'+
    (pamIsAdmin()?'<button class="primary" data-action="cloud-upload-local">Carica questo dispositivo online</button>':'')+
@@ -2318,107 +2106,45 @@ function pamSyncPanelHtml(){
 }
 
 let pamCloudLoadPromise=null;
-let pamCloudSnapshotReady=false;
-let pamLastStablePlayerCount=0;
-let pamLastStableEventCount=0;
-
+let pamStableSnapshot={players:0,events:0};
 async function pamFetchAllRows(table,columns,orderColumn,ascending){
- const pageSize=1000;
- let from=0;
- let all=[];
+ const pageSize=1000;let from=0,all=[];
  while(true){
   let q=sb.from(table).select(columns).range(from,from+pageSize-1);
   if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
-  const res=await q;
-  if(res.error)throw res.error;
-  const rows=res.data||[];
-  all=all.concat(rows);
+  const res=await q;if(res.error)throw res.error;
+  const rows=res.data||[];all=all.concat(rows);
   if(rows.length<pageSize)break;
-  from+=pageSize;
-  if(from>=100000)throw new Error("Archivio oltre il limite di sicurezza di 100.000 record.");
+  from+=pageSize;if(from>=100000)throw new Error("Limite archivio superato.");
  }
  return all;
 }
-
 async function pamCloudLoad(initial,forceReplace){
- // Una sola sincronizzazione completa alla volta.
  if(pamCloudLoadPromise)return pamCloudLoadPromise;
-
  pamCloudLoadPromise=(async function(){
   const [playerRows,eventRows]=await Promise.all([
    pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true),
    pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false)
   ]);
-
-  const remotePlayers=playerRows.map(function(r){
-   return Object.assign({},r.data||{},{
-    id:r.id,
-    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
-   });
-  });
-  const remoteEvents=eventRows.map(function(r){
-   return Object.assign({},r.data||{},{
-    id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
-    club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
-    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
-    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
-   });
-  });
-
-  // Anti-sovrascrittura: uno snapshot vuoto/parziale non può cancellare
-  // un archivio stabile già caricato durante la stessa sessione.
-  if(pamCloudSnapshotReady){
-   if(remotePlayers.length===0 && pamLastStablePlayerCount>0)
-    throw new Error("Snapshot giocatori vuoto rifiutato: archivio stabile preservato.");
-   if(remoteEvents.length===0 && pamLastStableEventCount>0)
-    throw new Error("Snapshot tornei vuoto rifiutato: archivio stabile preservato.");
-  }
-
-  // COMMIT ATOMICO: state cambia soltanto qui, a caricamento completo concluso.
-  state.players=remotePlayers;
-  state.events=remoteEvents;
-  state.__playersSource="Supabase completo";
-  state.__cloudPlayersCount=remotePlayers.length;
-  state.__cloudEventsCount=remoteEvents.length;
-  pamLastStablePlayerCount=remotePlayers.length;
-  pamLastStableEventCount=remoteEvents.length;
-  pamCloudSnapshotReady=true;
-  pamCloudReady=true;
-
-  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))
-   state.currentEventId=null;
-
+  const remotePlayers=playerRows.map(function(r){return Object.assign({},r.data||{},{id:r.id,photoUrl:r.photo_url||((r.data||{}).photoUrl)||""})});
+  const remoteEvents=eventRows.map(function(r){return Object.assign({},r.data||{},{
+   id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
+   club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
+   competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+   logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
+  })});
+  if(pamStableSnapshot.players>0&&remotePlayers.length===0)throw new Error("Snapshot giocatori vuoto rifiutato.");
+  if(pamStableSnapshot.events>0&&remoteEvents.length===0)throw new Error("Snapshot tornei vuoto rifiutato.");
+  state.players=remotePlayers;state.events=remoteEvents;
+  state.__playersSource="Supabase completo";state.__cloudPlayersCount=remotePlayers.length;state.__cloudEventsCount=remoteEvents.length;
+  pamStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};pamCloudReady=true;
+  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
   pamPersistLocalState();
-
-  // Un solo render al termine dello snapshot.
-  if(!pamIsUserEditing()){
-   const y=window.scrollY;
-   render();
-   pamApplyRole();
-   requestAnimationFrame(function(){window.scrollTo(0,y)});
-  }
-  setTimeout(pamRefreshSyncPanel,50);
-  return {players:remotePlayers.length,events:remoteEvents.length};
+  if(!pamIsUserEditing()){const y=window.scrollY;render();pamApplyRole();requestAnimationFrame(function(){window.scrollTo(0,y)})}
+  setTimeout(pamRefreshSyncPanel,50);return pamStableSnapshot;
  })();
-
- try{
-  return await pamCloudLoadPromise;
- }finally{
-  pamCloudLoadPromise=null;
- }
+ try{return await pamCloudLoadPromise}finally{pamCloudLoadPromise=null}
 }
-
-let pamRealtimeReloadTimer=null;
-function pamScheduleStableCloudReload(){
- clearTimeout(pamRealtimeReloadTimer);
- pamRealtimeReloadTimer=setTimeout(function(){
-  if(!PAM_SESSION||!pamCloudReady)return;
-  pamCloudLoad(false,true).catch(function(err){
-   console.warn("Aggiornamento realtime rimandato:",err);
-  });
- },1500);
-}
-
 function pamSubscribeRealtime(){
  if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
  const refreshFromCloud=function(){
@@ -2428,7 +2154,7 @@ function pamSubscribeRealtime(){
     pamRemoteRefreshTimer=setTimeout(attempt,1200);
     return;
    }
-   if(!pamUploading&&PAM_SESSION)pamScheduleStableCloudReload();
+   if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true);
   };
   pamRemoteRefreshTimer=setTimeout(attempt,700);
  };
@@ -2443,7 +2169,7 @@ function pamSubscribeRealtime(){
   .subscribe(function(status){pamSetConnectionState(status==="SUBSCRIBED")});
  clearInterval(window.__pamCloudRefreshInterval);
  window.__pamCloudRefreshInterval=setInterval(function(){
-  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamScheduleStableCloudReload().catch(function(err){pamSetConnectionState(false);console.error(err)});
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
  },30000);
 }
 function pamToast(message,type){
@@ -2528,8 +2254,6 @@ function pamEditEvent(id){
  const club=prompt("Circolo",e.club||"");if(club===null)return;
  const category=prompt("Categoria",e.category||"");if(category===null)return;
  const startTime=prompt("Orario di inizio (HH:MM)",e.startTime||"20:00");if(startTime===null)return;
- const organizerPhone=prompt("WhatsApp organizzatore (solo numeri, anche con +39)",e.organizerPhone||"");if(organizerPhone===null)return;
- const organizerEmail=prompt("Email organizzatore",e.organizerEmail||"");if(organizerEmail===null)return;
  const timerDuration=prompt("Durata effettiva della partita / timer in minuti",String(e.timerDuration||e.matchDuration||15));if(timerDuration===null)return;
  const slotDuration=prompt("Intervallo tra gli inizi delle partite in minuti",String(e.slotDuration||e.matchDuration||20));if(slotDuration===null)return;
  e.name=name.trim()||e.name;
@@ -2538,8 +2262,6 @@ function pamEditEvent(id){
  e.customAddress=customAddress;
  e.category=category.trim();
  e.startTime=startTime.trim()||"20:00";
- e.organizerPhone=organizerPhone.trim();
- e.organizerEmail=organizerEmail.trim();
  e.timerDuration=Math.max(1,Number(timerDuration)||15);
  e.slotDuration=Math.max(e.timerDuration,Number(slotDuration)||20);
  e.matchDuration=e.slotDuration;
@@ -2800,7 +2522,7 @@ function pamOpenSharedTournamentFromUrl(){
  const token=new URLSearchParams(location.search).get("tournament");
  if(!token)return;
  const e=state.events.find(function(x){return x.shareToken===token});
- if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";pamPersistLocalState();render();pamApplyRole()}
+ if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";localStorage.setItem(KEY,JSON.stringify(state));render();pamApplyRole()}
 }
 
 function setView(v){state.view=v;save();render()}
@@ -2815,24 +2537,11 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.32 LAB · Fix funzioni</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.4 · Correzioni iscrizioni</span></div>'+
  '</div>';
 }
-
-function competitionTypeLabel(v){
- const key=String(v||"").trim();
- const labels={
-  rodeo_tokens:"Rodeo Tokens",
-  rodeo_simple:"Rodeo semplice",
-  fixed_pairs:"Coppie fisse",
-  championship:"Campionato",
-  tournament:"Torneo"
- };
- return labels[key]||key.replace(/_/g," ").replace(/\b\w/g,function(c){return c.toUpperCase()})||"Torneo";
-}
-
 function nav(){
- return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="token-circuit">🪙<br>Gettoni</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
+ return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
 }
 function home(){
  const playerCount=state.players.length;
@@ -2843,7 +2552,7 @@ function home(){
    '<img class="pam-v5-welcome-logo" src="assets/padel-arena-manager-logo.png" alt="Padel Arena Manager">'+
    '<div><span class="pam-v5-kicker">PADEL · TECNOLOGIA · ORGANIZZAZIONE</span><h2>Buonasera Francesco.</h2><p>Gestisci tornei, campionati, club e giocatori da un’unica applicazione, con l’identità blu notte, blu elettrico e verde fluo del logo.</p></div>'+
   '</section>'+
-  '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Archivio caricato da Supabase</small></div><div class="pam-v5-status-grid">'+
+  '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Dati disponibili sul dispositivo</small></div><div class="pam-v5-status-grid">'+
    '<div class="pam-v5-stat"><i>🎾</i><b>'+eventCount+'</b><span>TORNEI SALVATI</span></div>'+
    '<div class="pam-v5-stat"><i>🏆</i><b>35</b><span>SQUADRE ISCRITTE</span></div>'+
    '<div class="pam-v5-stat"><i>🏟️</i><b>23</b><span>CLUB COINVOLTI</span></div>'+
@@ -2945,43 +2654,6 @@ function pamSeriesLogo(series){
  return "assets/aics-serie-c-2027.png";
 }
 
-
-function pamTokenEventDate(e){
- const d=Date.parse(String(e&&e.date||"")+"T"+String(e&&e.startTime||"00:00")+":00");
- return Number.isFinite(d)?d:0;
-}
-function pamCircuitTokenRows(){
- const events=(state.events||[]).filter(function(e){return e&&e.competitionType==="rodeo_tokens"});
- return (state.players||[]).map(function(p){
-  const playedEvents=events.filter(function(e){return (e.playerIds||[]).some(function(id){return String(id)===String(p.id)})})
-   .sort(function(a,b){return pamTokenEventDate(a)-pamTokenEventDate(b)});
-  let current=Math.max(0,Number(p.tokenBalance||0)),earned=0,spent=0,lastEvent="";
-  playedEvents.forEach(function(e){
-   const row=standings(e).find(function(r){return String(r.id)===String(p.id)});
-   const l=e.ledger&&e.ledger[p.id]||{spent:0,podium:0};
-   if(row){
-    current=Math.max(0,Number(row.balance||0));
-    earned+=3+Number(row.points||0)+Number(row.bonus||0)+Number(l.podium||0);
-    spent+=Number(l.spent||0);
-    lastEvent=e.name||"Torneo";
-   }
-  });
-  return {id:p.id,name:playerName(p),balance:current,tournaments:playedEvents.length,earned:earned,spent:spent,lastEvent:lastEvent};
- }).filter(function(r){return r.tournaments>0||r.balance>0})
- .sort(function(a,b){return b.balance-a.balance||b.earned-a.earned||a.name.localeCompare(b.name,"it")});
-}
-function circuitTokensView(){
- const rows=pamCircuitTokenRows(),events=(state.events||[]).filter(function(e){return e&&e.competitionType==="rodeo_tokens"});
- const totalPlayers=rows.length,totalEvents=events.length,totalTokens=rows.reduce(function(s,r){return s+Number(r.balance||0)},0);
- const body=rows.map(function(r,i){
-  return '<tr><td><b>'+(i+1)+'</b></td><td><b>'+esc(r.name)+'</b><div class="muted">'+esc(r.lastEvent||"")+'</div></td><td><b>'+r.balance+'</b></td><td>'+r.tournaments+'</td><td>+'+r.earned+'</td><td>-'+r.spent+'</td></tr>';
- }).join("");
- return header("Classifica Circuito Gettoni","Saldo reale complessivo, senza sommare più volte i riporti delle tappe")+
- '<div class="notice success"><b>Come viene calcolata:</b> per ogni giocatore viene preso il saldo più recente disponibile nel circuito. I saldi finali delle singole tappe non vengono sommati tra loro, perché contengono già il riporto della tappa precedente.</div>'+
- '<div class="pam-circuit-kpis"><div class="pam-circuit-kpi"><strong>'+totalPlayers+'</strong>Giocatori</div><div class="pam-circuit-kpi"><strong>'+totalEvents+'</strong>Tornei gettoni</div><div class="pam-circuit-kpi"><strong>'+totalTokens+'</strong>Gettoni attuali</div></div>'+
- '<div class="card table-wrap"><table class="table"><thead><tr><th>Pos.</th><th>Giocatore</th><th>Saldo circuito</th><th>Tornei</th><th>Generati</th><th>Spesi</th></tr></thead><tbody>'+body+'</tbody></table></div>';
-}
-
 function championshipView(){
  const teams=pamChampTeams();
  return header("AICS Padel Championship 2027","Gestione campionato")+
@@ -3068,261 +2740,272 @@ async function pamSaveChampTeamForm(id){
 }
 
 
-if(!state.playerFilter)state.playerFilter="all";
-if(state.playerSearch===undefined)state.playerSearch="";
-if(!Array.isArray(state.selectedPlayerIds))state.selectedPlayerIds=[];
-
-function pamPlayerAge(p){
- const raw=p&&p.birth;if(!raw)return null;
- const d=new Date(raw);if(Number.isNaN(d.getTime()))return null;
- const now=new Date();
- let age=now.getFullYear()-d.getFullYear();
- const m=now.getMonth()-d.getMonth();
- if(m<0||(m===0&&now.getDate()<d.getDate()))age--;
- return age;
+let pamRecoveryPlayerFilter="all",pamRecoveryPlayerSearch="";
+function pamRecoveryBirth(p){return p&&(p.birth||p.birthDate)||""}
+function pamRecoveryAge(p){
+ const v=pamRecoveryBirth(p);if(!v)return null;
+ const d=new Date(v+"T12:00:00");if(Number.isNaN(d.getTime()))return null;
+ const n=new Date();let a=n.getFullYear()-d.getFullYear(),md=n.getMonth()-d.getMonth();
+ if(md<0||(md===0&&n.getDate()<d.getDate()))a--;return a;
 }
-function pamPlayerGenderKey(p){
- const g=String(p&&p.gender||"").trim().toLowerCase();
- if(g.startsWith("m"))return "male";
- if(g.startsWith("f"))return "female";
- return "";
+function pamRecoveryIncomplete(p){
+ return !String(p.firstName||"").trim()||!String(p.lastName||"").trim()||!pamRecoveryBirth(p)||!String(p.phone||"").trim();
 }
-function pamPlayerIncomplete(p){
- const required=["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email"];
- return required.some(function(k){return !String(p&&p[k]||"").trim()});
-}
-function pamPlayerHasTokens(p){
- return Number(p&&p.tokenBalance||0)>0;
-}
-function pamPlayerMatchesFilter(p,filter){
- const age=pamPlayerAge(p),g=pamPlayerGenderKey(p);
- if(filter==="male")return g==="male";
- if(filter==="female")return g==="female";
- if(filter==="incomplete")return pamPlayerIncomplete(p);
- if(filter==="u16")return age!==null&&age<16;
- if(filter==="u30")return age!==null&&age<30;
- if(filter==="o30")return age!==null&&age>=30;
- if(filter==="o55")return age!==null&&age>=55;
- if(filter==="tokens")return pamPlayerHasTokens(p);
+function pamRecoveryMatches(p){
+ const f=pamRecoveryPlayerFilter,a=pamRecoveryAge(p),g=String(p.gender||"").toLowerCase();
+ if(f==="male"&&!g.includes("masch"))return false;
+ if(f==="female"&&!g.includes("femm"))return false;
+ if(f==="incomplete"&&!pamRecoveryIncomplete(p))return false;
+ if(f==="u16"&&!(a!==null&&a<16))return false;
+ if(f==="u30"&&!(a!==null&&a<30))return false;
+ if(f==="o30"&&!(a!==null&&a>=30))return false;
+ if(f==="o55"&&!(a!==null&&a>=55))return false;
+ if(f==="tokens"&&!(Number(p.tokenBalance||0)>0))return false;
+ const q=pamRecoveryPlayerSearch.toLowerCase().trim();
+ if(q&&!([p.firstName,p.lastName,playerName(p),p.phone,p.email,p.birthPlace,p.residenceTown,p.residenceProvince].join(" ").toLowerCase().includes(q)))return false;
  return true;
 }
-function pamPlayerSearchHaystack(p){
- return [
-  p&&p.firstName,
-  p&&p.lastName,
-  playerName(p),
-  p&&p.phone,
-  p&&p.email,
-  p&&p.residenceTown,
-  p&&p.residenceProvince
- ].map(function(v){return String(v||"").toLowerCase().trim()}).join(" ");
+function pamRecoveryVisiblePlayers(){return state.players.filter(pamRecoveryMatches)}
+function pamRecoveryCsv(){
+ const rows=pamRecoveryVisiblePlayers();if(!rows.length)return pamToast("Nessun giocatore da esportare.","error");
+ const data=[["Nome","Cognome","Data nascita","Telefono","Email","Sesso","Gettoni"]].concat(rows.map(function(p){return[p.firstName||"",p.lastName||"",pamRecoveryBirth(p),p.phone||"",p.email||"",p.gender||"",Number(p.tokenBalance||0)]}));
+ const csv=data.map(function(r){return r.map(function(v){return '"'+String(v).replaceAll('"','""')+'"'}).join(";")}).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download="giocatori.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
 }
-function pamFilteredPlayers(){
- const filter=state.playerFilter||"all";
- const q=String(state.playerSearch||"").toLowerCase().trim();
- return (state.players||[]).filter(function(p){
-  if(!pamPlayerMatchesFilter(p,filter))return false;
-  if(!q)return true;
-  return pamPlayerSearchHaystack(p).includes(q);
- });
+function pamRecoveryEmail(){
+ const emails=pamRecoveryVisiblePlayers().map(function(p){return String(p.email||"").trim()}).filter(Boolean);
+ if(!emails.length)return pamToast("Nessuna email disponibile.","error");
+ location.href="mailto:?bcc="+encodeURIComponent(emails.join(","))+"&subject="+encodeURIComponent("Comunicazione Padel Arena");
 }
-function pamSelectedPlayers(){
- const ids=new Set((state.selectedPlayerIds||[]).map(String));
- return (state.players||[]).filter(function(p){return ids.has(String(p.id))});
-}
-function pamPlayerFilterLabel(k){
- return {all:"Tutti",male:"Solo maschi",female:"Solo donne",incomplete:"Account incompleti",u16:"Under 16",u30:"Under 30",o30:"Over 30",o55:"Over 55",tokens:"Con gettoni"}[k]||"Tutti";
-}
-function pamSetPlayerFilter(filter){
- state.playerFilter=filter||"all";save();render();
-}
-function pamTogglePlayerSelection(id,checked){
- const set=new Set((state.selectedPlayerIds||[]).map(String));
- if(checked)set.add(String(id));else set.delete(String(id));
- state.selectedPlayerIds=[...set];save();
- const count=document.getElementById("pamSelectedCount");
- if(count)count.textContent=state.selectedPlayerIds.length+" selezionati";
-}
-function pamSelectFilteredPlayers(){
- const set=new Set((state.selectedPlayerIds||[]).map(String));
- pamFilteredPlayers().forEach(function(p){set.add(String(p.id))});
- state.selectedPlayerIds=[...set];save();render();
-}
-function pamClearPlayerSelection(){
- state.selectedPlayerIds=[];save();render();
-}
-function pamSelectNoneFiltered(){
- const visible=new Set(pamFilteredPlayers().map(function(p){return String(p.id)}));
- state.selectedPlayerIds=(state.selectedPlayerIds||[]).filter(function(id){return !visible.has(String(id))});
- save();render();
-}
-function pamPlayerExportRows(){
- const selected=pamSelectedPlayers();
- return selected.map(function(p){
-  return {
-   "Nome":p.firstName||"",
-   "Cognome":p.lastName||"",
-   "Sesso":p.gender||"",
-   "Data di nascita":p.birth||"",
-   "Età":pamPlayerAge(p)===null?"":pamPlayerAge(p),
-   "Luogo di nascita":p.birthPlace||"",
-   "Comune":p.residenceTown||"",
-   "Provincia":p.residenceProvince||"",
-   "CAP":p.postalCode||"",
-   "Telefono":p.phone||"",
-   "Email":p.email||"",
-   "Livello":p.level||"",
-   "Gettoni":Number(p.tokenBalance||0)
-  };
- });
-}
-function pamDownloadBlob(content,type,filename){
- const blob=new Blob([content],{type:type});
- const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;
- document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1200);
-}
-function pamExportPlayersCsv(){
- const rows=pamPlayerExportRows();if(!rows.length)return pamToast("Seleziona almeno un giocatore.","error");
- const headers=Object.keys(rows[0]);
- const csv=[headers].concat(rows.map(function(r){return headers.map(function(h){return r[h]})}))
-  .map(function(row){return row.map(function(v){const s=String(v??"");return '"'+s.replace(/"/g,'""')+'"'}).join(";")}).join("\n");
- pamDownloadBlob("\ufeff"+csv,"text/csv;charset=utf-8","giocatori_selezionati.csv");
-}
-function pamExportPlayersXlsx(){
- const rows=pamPlayerExportRows();if(!rows.length)return pamToast("Seleziona almeno un giocatore.","error");
- if(!window.XLSX){
-  pamToast("Modulo Excel non disponibile: preparo un CSV compatibile con Excel.","error");
-  return pamExportPlayersCsv();
- }
- const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
- XLSX.utils.book_append_sheet(wb,ws,"Giocatori");
- XLSX.writeFile(wb,"giocatori_selezionati.xlsx");
-}
-function pamExportPlayersPdf(){
- const rows=pamPlayerExportRows();if(!rows.length)return pamToast("Seleziona almeno un giocatore.","error");
- const headers=Object.keys(rows[0]);
- const tr=rows.map(function(r){return "<tr>"+headers.map(function(h){return "<td>"+esc(r[h])+"</td>"}).join("")+"</tr>"}).join("");
- const html='<!doctype html><html><head><meta charset="utf-8"><title>Giocatori selezionati</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{font-size:22px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>Padel Arena Manager · Giocatori selezionati</h1><p>Filtro: '+esc(pamPlayerFilterLabel(state.playerFilter||"all"))+' · Totale: '+rows.length+'</p><table><thead><tr>'+headers.map(function(h){return "<th>"+esc(h)+"</th>"}).join("")+'</tr></thead><tbody>'+tr+'</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>';
- const w=window.open("","_blank");
- if(w){w.document.write(html);w.document.close();return}
- const blob=new Blob([html],{type:"text/html;charset=utf-8"});
- const url=URL.createObjectURL(blob);
- location.href=url;
- setTimeout(function(){URL.revokeObjectURL(url)},5000);
-}
-
-function pamBulkEmailSelected(){
- const players=pamSelectedPlayers().filter(function(p){return pamEmailAddress(p.email)});
- if(!players.length)return pamToast("Nessun giocatore selezionato con email disponibile.","error");
- const emails=players.map(function(p){return pamEmailAddress(p.email)}).join(",");
- const subject=(document.getElementById("pamBulkEmailSubject")?.value||"Comunicazione Padel Arena Manager").trim();
- const body=(document.getElementById("pamBulkMessage")?.value||"").trim();
- location.href=pamMailtoUrl("",subject,body,emails);
-}
-function pamEmailPlayer(id){
- const p=playerById(id);if(!p||!pamEmailAddress(p.email))return pamToast("Email non disponibile.","error");
- location.href=pamMailtoUrl(p.email,"Comunicazione Padel Arena Manager","Ciao "+playerName(p)+",\n\n","");
-}
-
-function pamBulkWhatsappMessage(p){
- const base=(document.getElementById("pamBulkMessage")?.value||"").trim();
- return base||("Ciao "+playerName(p)+", comunicazione da Padel Arena Manager.");
-}
-function pamBulkWhatsappSelected(){
- const players=pamSelectedPlayers().filter(function(p){return pamWhatsappPhone(p.phone)});
- if(!players.length)return pamToast("Nessun giocatore selezionato con numero WhatsApp valido.","error");
- const msg=(document.getElementById("pamBulkMessage")?.value||"").trim();
- state.bulkWhatsappQueue=players.map(function(p){return p.id});
- state.bulkWhatsappMessage=msg;
- save();
- pamOpenNextBulkWhatsapp();
-}
-function pamOpenNextBulkWhatsapp(){
- const queue=Array.isArray(state.bulkWhatsappQueue)?state.bulkWhatsappQueue:[];
- if(!queue.length)return pamToast("Comunicazioni WhatsApp completate.","success");
- const id=queue.shift(),p=playerById(id);
- state.bulkWhatsappQueue=queue;save();
- if(!p||!pamWhatsappPhone(p.phone))return pamOpenNextBulkWhatsapp();
- const base=String(state.bulkWhatsappMessage||"").trim();
- const msg=base?base.replace(/\{nome\}/gi,playerName(p)):("Ciao "+playerName(p)+", comunicazione da Padel Arena Manager.");
- location.href=pamWhatsappUrl(p.phone,msg);
- setTimeout(function(){
-  if((state.bulkWhatsappQueue||[]).length){
-   const ok=confirm("WhatsApp aperto per "+playerName(p)+".\n\nDopo aver inviato il messaggio, vuoi aprire il prossimo giocatore?");
-   if(ok)pamOpenNextBulkWhatsapp();
-  }else{
-   pamToast("Ultimo destinatario aperto su WhatsApp.","success");
-  }
- },500);
+function pamRecoveryWhatsapp(){
+ const rows=pamRecoveryVisiblePlayers().filter(function(p){return String(p.phone||"").trim()});
+ if(!rows.length)return pamToast("Nessun numero WhatsApp disponibile.","error");
+ const msg=prompt("Messaggio WhatsApp","Ciao, comunicazione Padel Arena:");if(msg===null)return;
+ const p=rows[0],num=String(p.phone).replace(/\D/g,"");location.href="https://wa.me/"+num+"?text="+encodeURIComponent(msg);
 }
 
 function playersView(){
- const filter=state.playerFilter||"all",filtered=pamFilteredPlayers();
- const selectedSet=new Set((state.selectedPlayerIds||[]).map(String));
- const filters=[
-  ["all","Tutti i giocatori"],["male","Solo maschi"],["female","Solo donne"],
-  ["incomplete","Account incompleti"],["u16","Under 16"],["u30","Under 30"],
-  ["o30","Over 30"],["o55","Over 55"],["tokens","Giocatori con gettoni"]
- ];
- const filterOptions=filters.map(function(x){
-  const count=(state.players||[]).filter(function(p){return pamPlayerMatchesFilter(p,x[0])}).length;
-  return '<option value="'+x[0]+'" '+(filter===x[0]?"selected":"")+'>'+esc(x[1])+' ('+count+')</option>';
- }).join("");
- const rows=filtered.map(function(p){
-  const age=pamPlayerAge(p),incomplete=pamPlayerIncomplete(p),checked=selectedSet.has(String(p.id));
-  return '<div class="card pam-player-row-select"><input class="pam-player-check" type="checkbox" data-player-select="'+p.id+'" '+(checked?"checked":"")+'>'+
-   '<div><b>'+esc(playerName(p))+'</b>'+
-   '<div class="muted">'+esc(p.phone||"telefono mancante")+' · '+esc(p.email||"email mancante")+
-   (age!==null?' · '+age+' anni':'')+(Number(p.tokenBalance||0)>0?' · 🪙 '+Number(p.tokenBalance||0):'')+'</div>'+
-   (incomplete?'<span class="badge" style="background:#7a2d2d;color:#fff">Account incompleto</span>':'')+'</div>'+
-   '<div class="row-actions"><button class="secondary" data-email-player="'+p.id+'">✉️ Email</button><button class="secondary" data-edit-player="'+p.id+'">Modifica</button></div></div>';
- }).join("");
- return header("Giocatori","Ricerca rapida, filtri, selezione multipla, comunicazioni ed esportazioni")+
- '<section class="pam-player-tools"><h2 style="margin-top:0">Cerca e filtra</h2>'+
- '<div class="field"><label>Cerca giocatore</label><input id="pamPlayerSearch" type="search" autocomplete="off" placeholder="Nome, cognome, telefono o email" value="'+esc(state.playerSearch||"")+'"></div>'+
- '<div class="field"><label>Filtro giocatori</label><select id="pamPlayerFilterSelect">'+filterOptions+'</select></div>'+
- '<div class="pam-player-selectbar"><span id="pamSelectedCount" class="count">'+(state.selectedPlayerIds||[]).length+' selezionati</span>'+
- '<button class="secondary" data-action="select-filtered-players">Seleziona tutti i risultati</button>'+
- '<button class="secondary" data-action="deselect-filtered-players">Deseleziona risultati</button>'+
- '<button class="secondary" data-action="clear-player-selection">Azzera selezione</button></div></section>'+
- '<section class="pam-bulk-box"><h2 style="margin-top:0">Comunicazione ai giocatori selezionati</h2>'+
- '<div class="muted">Scrivi il testo. Puoi usare <b>{nome}</b> per inserire automaticamente il nome del destinatario.</div>'+
- '<div class="field"><label>Oggetto email</label><input id="pamBulkEmailSubject" value="'+esc(state.bulkEmailSubject||"Comunicazione Padel Arena Manager")+'" placeholder="Oggetto email"></div>'+
- '<div class="field"><textarea id="pamBulkMessage" rows="4" placeholder="Ciao {nome}, ti comunichiamo che...">'+esc(state.bulkWhatsappMessage||"")+'</textarea></div>'+
- '<div class="pam-export-actions"><button class="primary" data-action="bulk-whatsapp-selected">💬 WhatsApp selezionati</button><button class="primary" data-action="bulk-email-selected">✉️ Email selezionati (CCN)</button></div>'+
- '<div class="notice">Per WhatsApp i destinatari vengono aperti uno alla volta. Per email i selezionati vengono inseriti in CCN/BCC.</div>'+
- '<div class="pam-export-actions"><button class="secondary" data-action="export-players-pdf">PDF</button><button class="secondary" data-action="export-players-xlsx">Excel</button><button class="secondary" data-action="export-players-csv">CSV</button></div></section>'+
- '<div class="notice"><b>'+filtered.length+'</b> risultati · Filtro: <b>'+esc(pamPlayerFilterLabel(filter))+'</b>'+(state.playerSearch?' · Ricerca: <b>'+esc(state.playerSearch)+'</b>':'')+'</div>'+
- rows;
+ const orderedPlayers=state.players.filter(pamRecoveryMatches).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const rows=orderedPlayers.length?orderedPlayers.map(function(p,i){
+  const searchText=[playerName(p),p.phone,p.email,(p.alternatePhones||[]).join(" "),(p.alternateEmails||[]).join(" "),p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
+  return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><img class="player-avatar" src="'+esc(pamPlayerPhoto(p))+'" alt="'+esc(playerName(p))+'"><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
+  '<div class="muted">'+
+  ((p.birth||p.birthDate)?'Nato/a il '+esc(p.birth||p.birthDate)+' · ':'Data di nascita non compilata · ')+(p.birthPlace?'a '+esc(p.birthPlace):'Luogo di nascita non compilato')+
+  ' · '+(p.postalCode?'CAP '+esc(p.postalCode):'CAP non compilato')+
+  ' · '+(p.residenceTown?esc(p.residenceTown):'Comune non compilato')+
+  (p.residenceProvince?' ('+esc(p.residenceProvince)+')':' · Provincia non compilata')+
+  '</div></div><label class="upload-button player-photo-control">Foto<input type="file" accept="image/*" data-player-photo="'+p.id+'"></label><button class="small" data-edit-player="'+p.id+'">Modifica</button></div>'
+ }).join(""):'<div class="muted">Nessun cliente presente.</div>';
+ return header("Anagrafica clienti","Crea una volta, riutilizza sempre")+
+ '<div class="card"><h2>Cerca, filtra e comunica</h2><div class="field"><label>Ricerca giocatore</label><input id="pamRecoverySearch" type="search" placeholder="Nome, cognome, telefono o email" value="'+esc(pamRecoveryPlayerSearch)+'"></div><div class="field"><label>Filtro</label><select id="pamRecoveryFilter"><option value="all">Tutti i giocatori</option><option value="male">Solo maschi</option><option value="female">Solo donne</option><option value="incomplete">Account incompleti</option><option value="u16">Under 16</option><option value="u30">Under 30</option><option value="o30">Over 30</option><option value="o55">Over 55</option><option value="tokens">Giocatori con gettoni</option></select></div><div class="row"><button class="secondary" data-recovery-csv>CSV / Excel</button><button class="secondary" data-recovery-email>Email CCN</button><button class="secondary" data-recovery-wa>WhatsApp</button></div><div class="notice"><b>'+orderedPlayers.length+'</b> risultati. Le anagrafiche incomplete vengono segnalate ma non corrette automaticamente.</div></div>'+
+ '<div class="card"><h2>Nuovo cliente / giocatore</h2><div id="playerMessage"></div>'+
+ '<div class="row"><div class="field"><label>Nome</label><input id="pFirst"></div><div class="field"><label>Cognome</label><input id="pLast"></div></div>'+
+ '<div class="row"><div class="field"><label>Telefono</label><input id="pPhone"></div><div class="field"><label>Email</label><input id="pEmail" type="email"></div></div>'+
+ '<div class="row"><div class="field"><label>Data di nascita</label><input id="pBirth" type="date"></div><div class="field"><label>Luogo di nascita</label><input id="pBirthPlace"></div></div>'+
+ '<div class="row"><div class="field"><label>CAP</label><input id="pPostalCode" inputmode="numeric" maxlength="5"></div><div class="field"><label>Comune di residenza</label><input id="pResidenceTown"></div><div class="field"><label>Provincia</label><input id="pResidenceProvince" maxlength="2" placeholder="Es. RE"></div></div>'+
+ '<div class="row"><div class="field"><label>Livello / categoria</label><input id="pLevel" placeholder="Es. NC, 4ª, principiante"></div><div class="field"><label>Categoria circuito</label><select id="pGender"><option>Maschile</option><option>Femminile</option></select></div><div class="field"><label>Saldo gettoni attuale</label><input id="pTokens" type="number" min="0" value="0"></div></div>'+
+ '<div class="field"><label>Note</label><textarea id="pNotes"></textarea></div>'+
+ '<button class="primary" data-action="save-player">Salva anagrafica</button></div>'+
+ '<div class="card"><h2>Clienti esistenti ('+state.players.length+')</h2>'+
+ '<div class="field print-hide"><label>Cerca giocatore o giocatrice</label><input id="playerSearchInput" type="search" placeholder="Scrivi nome, cognome, telefono, comune..." autocomplete="off"></div>'+
+ '<div id="playerSearchCount" class="muted print-hide">'+state.players.length+' nominativi visualizzati</div>'+
+ '<div id="playerSearchRows">'+rows+'</div></div>';
+}
+function savePlayer(){
+ const msg=document.getElementById("playerMessage");
+ try{
+  const first=document.getElementById("pFirst").value.trim();
+  const last=document.getElementById("pLast").value.trim();
+  if(!first||!last)throw new Error("nome e cognome sono obbligatori");
+  const p={id:uid("p"),firstName:first,lastName:last,phone:document.getElementById("pPhone").value.trim(),email:document.getElementById("pEmail").value.trim(),birth:document.getElementById("pBirth").value,birthPlace:document.getElementById("pBirthPlace").value.trim(),postalCode:document.getElementById("pPostalCode").value.trim(),residenceTown:document.getElementById("pResidenceTown").value.trim(),residenceProvince:document.getElementById("pResidenceProvince").value.trim().toUpperCase(),level:document.getElementById("pLevel").value.trim(),notes:document.getElementById("pNotes").value.trim(),gender:document.getElementById("pGender").value,tokenBalance:Math.max(0,Number(document.getElementById("pTokens").value)||0)};
+  state.players.push(p);save();render();
+ }catch(e){
+  console.error("Errore generazione competizione:",e);
+  if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}
+  alert("Impossibile generare le partite: "+e.message);
+ }
+}
+
+let pamQuickPlayerContext=null;
+
+
+function pamCurrentModalSelectedIds(){
+ const overlay=document.getElementById("pamTournamentPlayersOverlay");
+ if(!overlay)return null;
+ return Array.from(overlay.querySelectorAll("[data-tournament-player]:checked"))
+  .map(function(x){return x.getAttribute("data-tournament-player")});
+}
+
+function pamOpenQuickPlayer(context){
+ pamQuickPlayerContext=context||{};
+ document.getElementById("pamQuickPlayerOverlay")?.remove();
+ const category=(context&&context.category)||state.draft.category||"Maschile";
+ const overlay=document.createElement("div");
+ overlay.id="pamQuickPlayerOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card pam-quick-player-card">'+
+  '<div class="pam-modal-head"><div><h2>Nuova anagrafica rapida</h2><div class="muted">Il giocatore sarà salvato nell’anagrafica generale e inserito direttamente nel torneo.</div></div><button class="secondary" data-close-quick-player>Chiudi</button></div>'+
+  '<div id="pamQuickPlayerMessage"></div>'+
+  '<div class="row"><div class="field"><label>Nome *</label><input id="pamQuickFirst" autocomplete="off"></div><div class="field"><label>Cognome *</label><input id="pamQuickLast" autocomplete="off"></div></div>'+
+  '<div class="row"><div class="field"><label>Telefono</label><input id="pamQuickPhone" inputmode="tel"></div><div class="field"><label>Email</label><input id="pamQuickEmail" type="email"></div></div>'+
+  '<div class="row"><div class="field"><label>Categoria</label><select id="pamQuickGender"><option '+(category==="Maschile"?"selected":"")+'>Maschile</option><option '+(category==="Femminile"?"selected":"")+'>Femminile</option></select></div><div class="field"><label>Saldo gettoni</label><input id="pamQuickTokens" type="number" min="0" value="0"></div></div>'+
+  '<div class="row"><div class="field"><label>Livello</label><input id="pamQuickLevel" placeholder="Es. principiante, NC, 4ª"></div><div class="field"><label>Comune</label><input id="pamQuickTown"></div></div>'+
+  '<button class="primary" data-save-quick-player>Salva e inserisci nel torneo</button>'+
+ '</div>';
+ document.body.appendChild(overlay);
+ setTimeout(function(){document.getElementById("pamQuickFirst")?.focus()},50);
+}
+
+function pamSaveQuickPlayer(){
+ const first=document.getElementById("pamQuickFirst").value.trim();
+ const last=document.getElementById("pamQuickLast").value.trim();
+ const msg=document.getElementById("pamQuickPlayerMessage");
+ if(!first||!last){
+  msg.className="notice error";msg.textContent="Nome e cognome sono obbligatori.";return;
+ }
+ const duplicate=state.players.find(function(p){
+  return normalizeName(playerName(p))===normalizeName(first+" "+last);
+ });
+ if(duplicate){
+  msg.className="notice error";
+  msg.innerHTML='Esiste già <b>'+esc(playerName(duplicate))+'</b>. Usa il giocatore esistente oppure correggi il nome.';
+  return;
+ }
+ const p={
+  id:uid("p"),firstName:first,lastName:last,
+  phone:document.getElementById("pamQuickPhone").value.trim(),
+  email:document.getElementById("pamQuickEmail").value.trim(),
+  birth:"",birthPlace:"",postalCode:"",
+  residenceTown:document.getElementById("pamQuickTown").value.trim(),
+  residenceProvince:"",
+  level:document.getElementById("pamQuickLevel").value.trim(),
+  notes:"Inserito rapidamente durante la gestione di un torneo",
+  gender:document.getElementById("pamQuickGender").value,
+  tokenBalance:Math.max(0,Number(document.getElementById("pamQuickTokens").value)||0)
+ };
+ state.players.push(p);
+ const ctx=pamQuickPlayerContext||{};
+ if(ctx.mode==="new-event"){
+  if(ctx.replaceId)state.draft.selected=state.draft.selected.filter(function(id){return id!==ctx.replaceId});
+  if(!state.draft.selected.includes(p.id))state.draft.selected.push(p.id);
+  save();document.getElementById("pamQuickPlayerOverlay")?.remove();render();
+ }else if(ctx.mode==="pair-partner"){
+  if(!state.draft.selected.includes(p.id))state.draft.selected.push(p.id);
+  pamAssignPartner(ctx.primaryPlayerId,p.id);
+  document.getElementById("pamQuickPlayerOverlay")?.remove();
+ }else if(ctx.mode==="existing-event"){
+  const e=state.events.find(function(x){return x.id===ctx.eventId});
+  if(e){
+   let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
+   if(ctx.replaceId)base=base.filter(function(id){return id!==ctx.replaceId});
+   if(!base.includes(p.id))base.push(p.id);
+   e.playerIds=Array.from(new Set(base));
+   save();
+  }
+  document.getElementById("pamQuickPlayerOverlay")?.remove();
+  pamTournamentPlayersModal(ctx.eventId);
+ }else{
+  save();document.getElementById("pamQuickPlayerOverlay")?.remove();render();
+ }
+ pamToast("Nuova anagrafica inserita.","success");
+}
+
+function pamOpenReplacePlayer(context){
+ const old=playerById(context.replaceId);if(!old)return;
+ document.getElementById("pamReplacePlayerOverlay")?.remove();
+ const currentIds=context.mode==="new-event"?(state.draft.selected||[]):((state.events.find(function(e){return e.id===context.eventId})||{}).playerIds||[]);
+ const candidates=state.players.filter(function(p){return p.id!==old.id&&!currentIds.includes(p.id)})
+  .sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const rows=candidates.map(function(p){
+  return '<button class="pam-replacement-row" data-replacement-player="'+p.id+'">'+
+   '<img src="'+esc(pamPlayerPhoto(p))+'" alt=""><span><b>'+esc(playerName(p))+'</b><small>'+esc(p.gender||"Categoria non indicata")+(p.level?" · "+esc(p.level):"")+'</small></span>'+
+  '</button>';
+ }).join("")||'<div class="notice">Non ci sono altri giocatori disponibili.</div>';
+ const overlay=document.createElement("div");
+ overlay.id="pamReplacePlayerOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card">'+
+  '<div class="pam-modal-head"><div><h2>Sostituisci giocatore</h2><div class="muted">Stai sostituendo <b>'+esc(playerName(old))+'</b>.</div></div><button class="secondary" data-close-replace-player>Chiudi</button></div>'+
+  '<div class="pam-replace-actions"><button class="primary" data-replace-with-new>➕ Crea un nuovo giocatore</button></div>'+
+  '<div class="field"><label>Oppure cerca un giocatore già esistente</label><input id="pamReplacementSearch" type="search" placeholder="Nome o cognome"></div>'+
+  '<div class="pam-replacement-list">'+rows+'</div>'+
+ '</div>';
+ document.body.appendChild(overlay);
+ overlay.dataset.context=JSON.stringify(context);
+ overlay.querySelector("#pamReplacementSearch").addEventListener("input",function(ev){
+  const q=normalizeName(ev.target.value);
+  overlay.querySelectorAll(".pam-replacement-row").forEach(function(row){
+   row.style.display=!q||normalizeName(row.textContent).includes(q)?"grid":"none";
+  });
+ });
+}
+
+function pamApplyReplacement(newId){
+ const overlay=document.getElementById("pamReplacePlayerOverlay");if(!overlay)return;
+ const ctx=JSON.parse(overlay.dataset.context||"{}");
+ if(ctx.mode==="new-event"){
+  state.draft.selected=(state.draft.selected||[]).map(function(id){return id===ctx.replaceId?newId:id});
+  state.draft.selected=Array.from(new Set(state.draft.selected));
+  save();overlay.remove();render();
+ }else if(ctx.mode==="existing-event"){
+  const e=state.events.find(function(x){return x.id===ctx.eventId});if(!e)return;
+  let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
+  base=base.map(function(id){return id===ctx.replaceId?newId:id});
+  e.playerIds=Array.from(new Set(base));
+  save();overlay.remove();pamTournamentPlayersModal(e.id);
+ }
+ pamToast("Giocatore sostituito. Ricorda di rigenerare le partite.","success");
 }
 
 function editPlayer(id){
- const p=state.players.find(function(x){return String(x.id)===String(id)});
- if(!p){pamToast("Giocatore non trovato.","error");return}
-
- const first=prompt("Nome",p.firstName||"");if(first===null)return;
- const last=prompt("Cognome",p.lastName||"");if(last===null)return;
+ const p=state.players.find(function(x){return x.id===id});if(!p)return;
+ const first=prompt("Nome",p.firstName);if(first===null)return;
+ const last=prompt("Cognome",p.lastName);if(last===null)return;
  const phone=prompt("Telefono",p.phone||"");if(phone===null)return;
  const email=prompt("Email",p.email||"");if(email===null)return;
+ const birth=prompt("Data di nascita (AAAA-MM-GG)",p.birth||p.birthDate||"");if(birth===null)return;
  const birthPlace=prompt("Luogo di nascita",p.birthPlace||"");if(birthPlace===null)return;
  const postalCode=prompt("CAP",p.postalCode||"");if(postalCode===null)return;
  const residenceTown=prompt("Comune di residenza",p.residenceTown||"");if(residenceTown===null)return;
  const residenceProvince=prompt("Provincia",p.residenceProvince||"");if(residenceProvince===null)return;
-
- p.firstName=first.trim();
- p.lastName=last.trim();
- p.phone=phone.trim();
- p.email=email.trim();
- p.birthPlace=birthPlace.trim();
- p.postalCode=postalCode.trim();
- p.residenceTown=residenceTown.trim();
- p.residenceProvince=residenceProvince.trim().toUpperCase();
-
- save();
- render();
- pamToast("Giocatore aggiornato.","success");
+ p.firstName=first.trim();p.lastName=last.trim();p.phone=phone.trim();p.email=email.trim();
+ p.birth=birth.trim();p.birthDate=birth.trim();p.birthPlace=birthPlace.trim();p.postalCode=postalCode.trim();p.residenceTown=residenceTown.trim();p.residenceProvince=residenceProvince.trim().toUpperCase();
+ save();render();
 }
-
+function competitionTypeLabel(v){
+ return v==="rodeo_simple"?"RODEO SEMPLICE":v==="fixed_pairs"?"Coppie fisse":"Rodeo a gettoni";
+}
+function pamMinutes(time){
+ const parts=String(time||"00:00").split(":").map(Number);return (parts[0]||0)*60+(parts[1]||0);
+}
+function pamEstimateDraft(d,participantCount){
+ const n=Math.max(0,Number(participantCount||d.maxParticipants||0));
+ const courts=Math.max(1,Number(d.courts)||1),slot=Math.max(1,Number(d.slotDuration||20));
+ let matches=0;
+ if(d.competitionType==="fixed_pairs"){
+  const pairs=Math.floor(n/2), per=Math.max(3,Number(d.pairsPerGroup)||4), groups=Math.max(1,Math.ceil(pairs/per));
+  const base=Math.ceil(pairs/groups); matches=groups*(base*(base-1)/2);
+ }else matches=n>3?(n in {6:1,8:1,10:1,12:1,16:1}?n:Math.max(4,n)):0;
+ if(d.returnLeg)matches*=2;
+ const rounds=Math.ceil(matches/courts);
+ const finals=(d.competitionType==="fixed_pairs"?3:4)*slot;
+ const minutes=rounds*slot+finals;
+ const start=new Date((d.date||new Date().toISOString().slice(0,10))+"T"+(d.startTime||"20:00")+":00");
+ const predicted=new Date(start.getTime()+minutes*60000);
+ const end=new Date((d.endDate||d.date)+"T"+(d.endTime||"23:00")+":00");
+ return {matches,minutes,predicted,available:Math.round((end-start)/60000),delta:Math.round((end-predicted)/60000)};
+}
+function pamFeasibilityHtml(d){
+ const r=pamEstimateDraft(d,Number(d.maxParticipants)||Number(d.selected?.length)||0);
+ const cls=r.delta>=20?"success":r.delta>=0?"":"error";
+ const label=r.delta>=20?"NEI TEMPI":r.delta>=0?"AL LIMITE":"FUORI TEMPO";
+ return '<div class="notice '+cls+'" id="pamFeasibilityBox"><b>'+label+'</b><br>Stima con '+Number(d.maxParticipants||0)+' partecipanti: '+r.matches+' partite iniziali, termine previsto alle <b>'+r.predicted.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"})+'</b>. '+(r.delta>=0?'Margine: '+r.delta+' minuti.':'Sforamento: '+Math.abs(r.delta)+' minuti.')+'</div>';
+}
+function pamPosterUrl(e){
+ const base=location.href.split("?")[0].split("#")[0].replace(/index\.html$/i,"");
+ return base+"poster.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
 function newEventView(){
  const d=state.draft;
  const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
@@ -3334,9 +3017,7 @@ function newEventView(){
  (d.competitionType==='rodeo_tokens'?'<div class="row"><div class="field"><label>Numero di aste</label><select id="eAuctionCount">'+[1,2,3,4].map(function(x){return '<option value="'+x+'" '+(Number(d.auctionCount||2)===x?'selected':'')+'>'+x+(x===1?' ASTA':' ASTE')+'</option>'}).join('')+'</select><div class="muted">Ogni asta avrà una schermata separata e il saldo gettoni sarà ricalcolato dopo ogni salvataggio.</div></div></div>':'')+'</div>'+
  '<div class="card"><h2>2. Luogo e orari</h2><div class="row"><div class="field"><label>Centro ospitante</label><select id="eClub">'+Object.keys(CLUBS).map(x=>'<option value="'+esc(x)+'" '+(x===d.club?'selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label>Campi disponibili</label><select id="eCourts">'+[1,2,3,4,5,6].map(x=>'<option '+(Number(d.courts)===x?'selected':'')+'>'+x+'</option>').join('')+'</select></div></div><div id="pamCustomAddressWrap" class="field '+(pamClubAllowsCustomAddress(d.club)?'':'hidden')+'"><label>Indirizzo evento</label><input id="eCustomAddress" value="'+esc(d.customAddress||'')+'"></div>'+
  '<div class="row"><div class="field"><label>Data inizio</label><input id="eDate" type="date" value="'+esc(d.date)+'"></div><div class="field"><label>Ora inizio</label><input id="eStartTime" type="time" value="'+esc(d.startTime||'20:00')+'"></div><div class="field"><label>Data fine</label><input id="eEndDate" type="date" value="'+esc(d.endDate||d.date)+'"></div><div class="field"><label>Ora fine</label><input id="eEndTime" type="time" value="'+esc(d.endTime||'23:00')+'"></div></div>'+
- '<div class="row"><div class="field"><label>Timer partita (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||15)+'"></div><div class="field"><label>Nuova partita ogni (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||20)+'"></div></div>'+
- '<div class="field"><label>WhatsApp organizzatore</label><input id="eOrganizerPhone" type="tel" inputmode="tel" placeholder="Es. 3276910287" value="'+esc(d.organizerPhone||'')+'"><div class="muted">Questo numero sarà visibile agli utenti solo come pulsante “Scrivi all’organizzatore”. Puoi cambiarlo per ogni evento.</div></div>'+
- '<div class="field"><label>Email organizzatore</label><input id="eOrganizerEmail" type="email" placeholder="esempio@dominio.it" value="'+esc(d.organizerEmail||'')+'"><div class="muted">Gli utenti potranno aprire la propria app email con destinatario e oggetto già compilati.</div></div>'+pamFeasibilityHtml(d)+'</div>'+
+ '<div class="row"><div class="field"><label>Timer partita (minuti)</label><input id="eTimerDuration" type="number" min="1" value="'+Number(d.timerDuration||15)+'"></div><div class="field"><label>Nuova partita ogni (minuti)</label><input id="eSlotDuration" type="number" min="1" value="'+Number(d.slotDuration||20)+'"></div></div>'+pamFeasibilityHtml(d)+'</div>'+
  '<div class="card"><h2>3. Iscrizioni pubbliche</h2><div class="row"><div class="field"><label>Numero minimo</label><input id="eMinParticipants" type="number" min="0" value="'+Number(d.minParticipants||0)+'"></div><div class="field"><label>Numero massimo</label><input id="eMaxParticipants" type="number" min="1" value="'+Number(d.maxParticipants||16)+'"></div><div class="field"><label>Quota (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div><div class="row"><div class="field"><label>Gestione richieste</label><select id="eRegistrationMode"><option value="automatic" '+(d.registrationMode==='automatic'?'selected':'')+'>ACCETTA AUTOMATICAMENTE</option><option value="approval" '+(d.registrationMode==='approval'?'selected':'')+'>RICHIEDI APPROVAZIONE</option></select></div><div class="field"><label>Lista d’attesa</label><select id="eWaitlistEnabled"><option value="yes" '+(d.waitlistEnabled?'selected':'')+'>ATTIVA</option><option value="no" '+(!d.waitlistEnabled?'selected':'')+'>DISATTIVA</option></select></div><div class="field"><label>Stato iscrizioni</label><select id="eRegistrationOpen"><option value="yes" '+(d.registrationOpen?'selected':'')+'>APERTE</option><option value="no" '+(!d.registrationOpen?'selected':'')+'>CHIUSE</option></select></div></div><div class="row"><div class="field"><label>Chiusura iscrizioni</label><input id="eRegistrationCloseDate" type="date" value="'+esc(d.registrationCloseDate||d.date)+'"></div><div class="field"><label>Ora chiusura</label><input id="eRegistrationCloseTime" type="time" value="'+esc(d.registrationCloseTime||d.startTime||'20:00')+'"></div></div></div>'+
  '<div class="card create-event-toolbar"><div><b>Giocatori già inseriti: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">Non sono obbligatori: puoi pubblicare il torneo con zero iscritti.</div></div><button class="primary create-event-top-button" data-action="create-event">SALVA E PUBBLICA</button></div><div id="eventMessage"></div>'+
  '<div class="card"><h2>4. Inserimento manuale facoltativo</h2><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Nome o cognome..." autocomplete="off"></div><button class="primary" data-quick-player-new-event>➕ Nuovo giocatore</button></div><div class="row print-hide"><button class="secondary" type="button" data-toggle-selected-only>'+(d.showSelectedOnly?'Mostra tutti i giocatori':'Mostra solo i giocatori selezionati')+'</button><button class="secondary" type="button" data-deselect-all-players>Deseleziona tutti</button></div><div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>';
@@ -3714,10 +3395,10 @@ function createEvent(){
  try{
   const d=state.draft;
   d.name=pamFormValue("eName",state.draft.name).trim();d.description=document.getElementById("eDescription").value.trim();d.date=pamFormValue("eDate",state.draft.date);d.endDate=document.getElementById("eEndDate").value;d.endTime=document.getElementById("eEndTime").value;d.startTime=pamFormValue("eStartTime",state.draft.startTime)||"20:00";
-  d.club=pamFormValue("eClub",state.draft.club);d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.organizerPhone=(document.getElementById("eOrganizerPhone")?.value||"").trim();d.organizerEmail=(document.getElementById("eOrganizerEmail")?.value||"").trim();d.category=pamFormValue("eCategory",state.draft.category);d.competitionType=pamFormValue("eCompetitionType",state.draft.competitionType);d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(pamFormValue("eCourts",state.draft.courts))||1);d.fee=Math.max(0,Number(pamFormValue("eFee",state.draft.fee))||0);d.timerDuration=Math.max(1,Number(pamFormValue("eTimerDuration",state.draft.timerDuration))||15);d.slotDuration=Math.max(d.timerDuration,Number(pamFormValue("eSlotDuration",state.draft.slotDuration))||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";d.auctionCount=d.competitionType==="rodeo_tokens"?Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||2)):0;
+  d.club=pamFormValue("eClub",state.draft.club);d.customAddress=pamClubAllowsCustomAddress(d.club)?(document.getElementById("eCustomAddress")?.value.trim()||""):"";d.category=pamFormValue("eCategory",state.draft.category);d.competitionType=pamFormValue("eCompetitionType",state.draft.competitionType);d.posterTheme=document.getElementById("ePosterTheme").value;d.courts=Math.max(1,Number(pamFormValue("eCourts",state.draft.courts))||1);d.fee=Math.max(0,Number(pamFormValue("eFee",state.draft.fee))||0);d.timerDuration=Math.max(1,Number(pamFormValue("eTimerDuration",state.draft.timerDuration))||15);d.slotDuration=Math.max(d.timerDuration,Number(pamFormValue("eSlotDuration",state.draft.slotDuration))||20);d.matchDuration=d.slotDuration;d.minParticipants=Math.max(0,Number(document.getElementById("eMinParticipants").value)||0);d.maxParticipants=Math.max(1,Number(document.getElementById("eMaxParticipants").value)||16);d.registrationMode=document.getElementById("eRegistrationMode").value;d.waitlistEnabled=document.getElementById("eWaitlistEnabled").value==="yes";d.registrationOpen=document.getElementById("eRegistrationOpen").value==="yes";d.registrationCloseDate=document.getElementById("eRegistrationCloseDate").value;d.registrationCloseTime=document.getElementById("eRegistrationCloseTime").value||"20:00";d.auctionCount=d.competitionType==="rodeo_tokens"?Math.min(4,Math.max(1,Number(document.getElementById("eAuctionCount")?.value)||2)):0;
   if(!d.name)throw new Error("inserisci il nome del torneo");if(!d.date||!d.endDate)throw new Error("inserisci data di inizio e fine");if(d.maxParticipants<d.minParticipants)throw new Error("il numero massimo non può essere inferiore al minimo");
   const feasibility=pamEstimateDraft(d,d.maxParticipants);if(feasibility.delta<0&&!confirm("Con i parametri attuali il torneo potrebbe terminare "+Math.abs(feasibility.delta)+" minuti oltre l’orario impostato. Vuoi salvarlo comunque?"))return;
-  const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,organizerPhone:d.organizerPhone||"",organizerEmail:d.organizerEmail||"",category:d.category,competitionType:d.competitionType,auctionCount:d.auctionCount,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
+  const event={id:uid("e"),shareToken:pamUuid(),name:d.name,date:d.date,endDate:d.endDate,endTime:d.endTime,startTime:d.startTime,description:d.description,club:d.club,customAddress:d.customAddress,category:d.category,competitionType:d.competitionType,auctionCount:d.auctionCount,posterTheme:d.posterTheme,courts:d.courts,entryFee:d.fee,minParticipants:d.minParticipants,maxParticipants:d.maxParticipants,registrationCapacity:d.maxParticipants,registrationMode:d.registrationMode,waitlistEnabled:d.waitlistEnabled,registrationOpen:d.registrationOpen,registrationCloseDate:d.registrationCloseDate,registrationCloseTime:d.registrationCloseTime,status:"published",matchMode:"timed",matchDuration:d.slotDuration,timerDuration:d.timerDuration,slotDuration:d.slotDuration,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,timers:{},playerIds:d.selected.slice(),payments:defaultPayments(d.selected.slice(),d.fee),fixedPairRegistrations:JSON.parse(JSON.stringify(d.fixedPairRegistrations||{})),matches:[],ledger:{},finalStages:{elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}}};
   const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
   if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
@@ -3769,11 +3450,11 @@ function eventView(){
   if([6,8,10,12,16].includes(n)){
    for(let i=1;i<=auctionCount;i++)tabDefs.push(["auction"+i,auctionCount===1?"Asta unica":("Asta "+i)]);
   }
-  tabDefs.push(["tokens","Gettoni"],["whatsapp","💬 WhatsApp"],["payments","Pagamenti"],["players","Giocatori"]);
+  tabDefs.push(["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]);
  }else if(e.competitionType==="rodeo_simple"){
-  tabDefs=[["matches","Partite"],["standings","Classifica"],["simplefinals","Fasi finali"],["whatsapp","💬 WhatsApp"],["payments","Pagamenti"],["players","Giocatori"]];
+  tabDefs=[["matches","Partite"],["standings","Classifica"],["simplefinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];
  }else{
-  tabDefs=[["matches","Partite"],["pairstandings","Classifiche gironi"],["pairs","Coppie"],["fixedfinals","Fasi finali"],["whatsapp","💬 WhatsApp"],["payments","Pagamenti"],["players","Giocatori"]];
+  tabDefs=[["matches","Partite"],["pairstandings","Classifiche gironi"],["pairs","Coppie"],["fixedfinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];
  }
  const tabs=tabDefs.map(function(t){return'<button data-tab="'+t[0]+'" class="'+(state.tab===t[0]?"on":"")+'">'+t[1]+'</button>'}).join("");
  let body=
@@ -3781,7 +3462,6 @@ function eventView(){
   state.tab==="elimination"?eliminationView(e):
   /^auction[1-4]$/.test(state.tab)?auctionView(e,Number(state.tab.replace("auction",""))):
   state.tab==="tokens"?tokensView(e):
-  state.tab==="whatsapp"?pamWhatsappEventView(e):
   state.tab==="payments"?paymentsView(e):
   state.tab==="simplefinals"?simpleFinalsView(e):
   state.tab==="pairstandings"?pairStandingsView(e):
@@ -4639,7 +4319,7 @@ function auction1View(e){
    const spent=Number(fs.auction1.spending[id])||0;
    return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+spent+'" data-auction1-spend="'+id+'"></td><td><b>'+(available-spent)+'</b></td></tr>';
   }).join("");
-  return '<div class="notice success"><b>Rodeo a 6:</b> questa formula era già automatica e resta invariata.</div>'+
+  return '<div class="notice"><b>Rodeo a 6:</b> asta unica, eliminatoria 3°+6° contro 4°+5°, poi finale automatica.</div>'+
    '<div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+spendRows+'</tbody></table></div>'+
    '<button class="primary" data-action="save-auction1">Salva asta</button><div style="height:12px"></div>'+sixKnockoutView(e,"tokens");
  }
@@ -4649,19 +4329,23 @@ function auction1View(e){
   const msg=n===16?"Prima completa tutti i quarti di finale.":(n===8?"Impossibile caricare gli 8 finalisti.":"Prima completa l’eliminatoria.");
   return '<div class="notice error">'+msg+'</div>';
  }
- pamAutoComposeGuidedAuction(e,1);
- const panel=pamGuidedAuctionPanel(e,1);
- const complete=pamAuctionData(e,1).purchases.length===4;
- if(!complete)return panel+'<div class="notice"><b>Regola automatica:</b> i primi 4 qualificati sono i compratori; ciascuno acquista uno dei successivi 4. Quando tutti gli acquisti sono confermati, le semifinali vengono create con incrocio 1–4 e 2–3.</div>';
+ const spendRows=qualified.map(function(id){
+  const available=auctionBalanceBefore(e,id)+(Number(fs.auction1.spending[id])||0),spent=Number(fs.auction1.spending[id])||0;
+  return '<tr><td><b>'+esc(playerName(playerById(id)))+'</b></td><td>'+available+'</td><td><input type="number" min="0" max="'+available+'" value="'+spent+'" data-auction1-spend="'+id+'"></td><td><b>'+(available-spent)+'</b></td></tr>';
+ }).join("");
  const semis=fs.semifinals.map(function(m,index){
   const stage="semi"+(index+1),base=(e.matches||[]).length+1+index*(e.semifinalReturnLeg?2:1);
+  const selectors='<div class="row"><div class="field"><label>Coppia A - giocatore 1</label><select data-team-stage="'+stage+'" data-side="A" data-pos="0">'+stagePlayerOptions(qualified,m.teamA[0])+'</select></div><div class="field"><label>Coppia A - giocatore 2</label><select data-team-stage="'+stage+'" data-side="A" data-pos="1">'+stagePlayerOptions(qualified,m.teamA[1])+'</select></div></div>'+
+  '<div class="row"><div class="field"><label>Coppia B - giocatore 1</label><select data-team-stage="'+stage+'" data-side="B" data-pos="0">'+stagePlayerOptions(qualified,m.teamB[0])+'</select></div><div class="field"><label>Coppia B - giocatore 2</label><select data-team-stage="'+stage+'" data-side="B" data-pos="1">'+stagePlayerOptions(qualified,m.teamB[1])+'</select></div></div>';
   const cards=stageLegCard(e,stage,m,"Semifinale "+(index+1),1,base,index+1,"semifinal")+
    (e.semifinalReturnLeg?stageLegCard(e,stage,m,"Semifinale "+(index+1),2,base+1,index+1,"semifinal"):"");
   const t=stageAggregate(e,stage,m),w=stageWinnerTeam(e,stage,m);
-  const summary=t?(t.a===t.b?'<div class="notice error">Totale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>':'<div class="notice success">Finalisti: <b>'+esc(names(w))+'</b></div>'):"";
-  return cards+summary;
+  const summary=t?(t.a===t.b?'<div class="notice error">Totale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>':'<div class="notice success">Totale semifinale: <b>'+t.a+' - '+t.b+'</b><br>Finalisti: <b>'+esc(names(w))+'</b></div>'):"";
+  return '<div class="card"><h2>Composizione semifinale '+(index+1)+'</h2>'+selectors+'</div>'+cards+summary;
  }).join("");
- return panel+'<div class="notice success"><b>Semifinali generate automaticamente.</b> Il collaboratore deve solo inserire i risultati.</div>'+semis;
+ return '<div class="notice"><b>Prima asta:</b> inserisci i gettoni spesi e componi le semifinali.</div>'+
+ '<div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+spendRows+'</tbody></table></div>'+
+ '<button class="primary" data-action="save-auction1">Salva prima asta</button><div style="height:12px"></div>'+semis;
 }
 function semifinalWinners(e){
  const fs=ensureFinalStages(e),out=[];
@@ -4675,139 +4359,10 @@ function semifinalWinners(e){
 function pamAuctionCount(e){return Math.min(4,Math.max(1,Number(e.auctionCount)||2))}
 function pamAuctionData(e,which){
  const fs=ensureFinalStages(e),key="auction"+which;
- if(!fs[key])fs[key]={spending:{},purchases:[]};
+ if(!fs[key])fs[key]={spending:{}};
  if(!fs[key].spending)fs[key].spending={};
- if(!Array.isArray(fs[key].purchases))fs[key].purchases=[];
  return fs[key];
 }
-
-function pamRankIds(e,ids){
- const pos={};standings(e).forEach(function(r,i){pos[String(r.id)]=i});
- return ids.slice().sort(function(a,b){return (pos[String(a)]??999)-(pos[String(b)]??999)});
-}
-function pamGuidedAuctionConfig(e,which){
- if(!e||e.competitionType!=="rodeo_tokens"||e.playerIds.length===6)return null;
- const count=pamAuctionCount(e);
- if(which===1){
-  const ids=semifinalQualified(e);
-  if(ids.length!==8)return null;
-  const ordered=pamRankIds(e,ids);
-  return {kind:"semifinals",label:"Semifinali",eligible:ordered,buyers:ordered.slice(0,4),targets:ordered.slice(4),required:4};
- }
- if(which===count){
-  const ids=semifinalWinners(e);
-  if(ids.length!==4)return null;
-  const ordered=pamRankIds(e,ids);
-  return {kind:"final",label:"Finale",eligible:ordered,buyers:ordered.slice(0,2),targets:ordered.slice(2),required:2};
- }
- return null;
-}
-function pamStageHasResult(m){
- return !!(m&&[m.score1,m.score2,m.score1R,m.score2R].some(function(v){return v!==null&&v!==undefined}));
-}
-function pamGuidedStageLocked(e,kind){
- const fs=ensureFinalStages(e);
- if(kind==="semifinals")return fs.semifinals.some(pamStageHasResult);
- if(kind==="final")return pamStageHasResult(fs.final);
- return false;
-}
-function pamRecalcAuctionLedger(e){
- const count=pamAuctionCount(e);
- e.playerIds.forEach(function(id){
-  e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};
-  let total=0;for(let i=1;i<=count;i++)total+=Number(pamAuctionData(e,i).spending[id])||0;
-  e.ledger[id].spent=total;
- });
-}
-function pamAuctionAvailable(e,which,id){
- const row=standings(e).find(function(x){return String(x.id)===String(id)});
- const old=Number(pamAuctionData(e,which).spending[id])||0;
- return Math.max(0,Number(row&&row.balance||0)+old);
-}
-function pamAutoComposeGuidedAuction(e,which){
- const cfg=pamGuidedAuctionConfig(e,which),auction=pamAuctionData(e,which);
- if(!cfg||auction.purchases.length!==cfg.required)return false;
- const order={};cfg.buyers.forEach(function(id,i){order[String(id)]=i});
- const purchases=auction.purchases.slice().sort(function(a,b){return order[String(a.buyerId)]-order[String(b.buyerId)]});
- const pairs=purchases.map(function(p){return [p.buyerId,p.targetId]});
- const fs=ensureFinalStages(e);
- if(cfg.kind==="semifinals"){
-  if(pamGuidedStageLocked(e,"semifinals"))return false;
-  fs.semifinals[0].teamA=pairs[0].slice();fs.semifinals[0].teamB=pairs[3].slice();
-  fs.semifinals[1].teamA=pairs[1].slice();fs.semifinals[1].teamB=pairs[2].slice();
-  fs.semifinals.forEach(function(m){m.score1=null;m.score2=null;m.score1R=null;m.score2R=null});
-  return true;
- }
- if(cfg.kind==="final"){
-  if(pamGuidedStageLocked(e,"final"))return false;
-  fs.final.teamA=pairs[0].slice();fs.final.teamB=pairs[1].slice();
-  fs.final.score1=null;fs.final.score2=null;fs.final.score1R=null;fs.final.score2R=null;
-  return true;
- }
- return false;
-}
-function pamGuidedAuctionPanel(e,which){
- const cfg=pamGuidedAuctionConfig(e,which);
- if(!cfg)return "";
- const auction=pamAuctionData(e,which);
- const usedBuyers=new Set(auction.purchases.map(function(p){return String(p.buyerId)}));
- const usedTargets=new Set(auction.purchases.map(function(p){return String(p.targetId)}));
- const locked=pamGuidedStageLocked(e,cfg.kind);
- const buyerOpts=cfg.buyers.filter(function(id){return !usedBuyers.has(String(id))}).map(function(id){
-  return '<option value="'+id+'">'+esc(playerName(playerById(id)))+' · disponibili '+pamAuctionAvailable(e,which,id)+'</option>';
- }).join("");
- const targetOpts=cfg.targets.filter(function(id){return !usedTargets.has(String(id))}).map(function(id){
-  return '<option value="'+id+'">'+esc(playerName(playerById(id)))+'</option>';
- }).join("");
- const purchases=auction.purchases.length?'<div class="pam-purchases">'+auction.purchases.map(function(p){
-  return '<div class="pam-purchase"><b>'+esc(playerName(playerById(p.buyerId)))+'</b><span class="arrow">→ compra →</span><b>'+esc(playerName(playerById(p.targetId)))+'</b><span class="cost">'+Number(p.cost||0)+' 🪙</span>'+
-   (!locked?'<button class="secondary" data-action="guided-auction-undo" data-guided-which="'+which+'" data-buyer-id="'+p.buyerId+'">Annulla</button>':'')+'</div>';
- }).join("")+'</div>':'<div class="notice">Nessun acquisto ancora registrato.</div>';
- const complete=auction.purchases.length===cfg.required;
- const status=complete?'<div class="pam-ready"><b>✓ '+cfg.label+' pronte.</b> Le coppie e gli incontri sono stati composti automaticamente.</div>':
-  '<div class="pam-wait"><b>'+auction.purchases.length+' / '+cfg.required+' acquisti confermati.</b> Registra il prossimo acquisto.</div>';
- const form=complete||locked?"":'<div class="pam-guide-form">'+
-  '<div class="field"><label>Giocatore che compra</label><select id="guidedBuyer'+which+'"><option value="">-- scegli --</option>'+buyerOpts+'</select></div>'+
-  '<div class="field"><label>Giocatore acquistato</label><select id="guidedTarget'+which+'"><option value="">-- scegli --</option>'+targetOpts+'</select></div>'+
-  '<div class="field"><label>Gettoni pagati</label><input id="guidedCost'+which+'" type="number" min="0" value="0"></div>'+
-  '<button class="primary" data-action="guided-auction-confirm" data-guided-which="'+which+'">Conferma acquisto</button></div>';
- return '<section class="pam-guide"><div class="pam-guide-head"><div><span class="pam-guide-step">PROCEDURA GUIDATA</span><h2 style="margin:7px 0 3px">Asta '+which+' → '+cfg.label+'</h2><div class="muted">Il collaboratore deve soltanto indicare chi compra chi e quanti gettoni paga.</div></div><b>'+auction.purchases.length+'/'+cfg.required+'</b></div>'+purchases+status+form+'</section>';
-}
-async function pamConfirmGuidedAuction(which){
- const e=currentEvent(),cfg=pamGuidedAuctionConfig(e,which);if(!cfg)return;
- if(pamGuidedStageLocked(e,cfg.kind))return pamToast("Gli incontri hanno già un risultato: l’asta non può più modificare le coppie.","error");
- const buyer=document.getElementById("guidedBuyer"+which)?.value||"";
- const target=document.getElementById("guidedTarget"+which)?.value||"";
- const cost=Math.max(0,Number(document.getElementById("guidedCost"+which)?.value)||0);
- if(!buyer||!target)return pamToast("Seleziona sia il compratore sia il giocatore acquistato.","error");
- if(buyer===target)return pamToast("Un giocatore non può acquistare se stesso.","error");
- const auction=pamAuctionData(e,which);
- if(auction.purchases.some(function(p){return String(p.buyerId)===String(buyer)}))return pamToast("Questo compratore ha già effettuato il suo acquisto.","error");
- if(auction.purchases.some(function(p){return String(p.targetId)===String(target)}))return pamToast("Questo giocatore è già stato acquistato.","error");
- const available=pamAuctionAvailable(e,which,buyer);
- if(cost>available)return pamToast("Gettoni insufficienti: disponibili "+available+".","error");
- auction.purchases.push({buyerId:buyer,targetId:target,cost:cost,confirmedAt:new Date().toISOString()});
- auction.spending[buyer]=cost;
- pamRecalcAuctionLedger(e);
- const composed=pamAutoComposeGuidedAuction(e,which);
- save();
- render();
- pamToast(composed?"Asta completata: incontri creati automaticamente.":"Acquisto registrato. Inserisci il successivo.","success");
-}
-function pamUndoGuidedAuction(which,buyerId){
- const e=currentEvent(),cfg=pamGuidedAuctionConfig(e,which);if(!cfg)return;
- if(pamGuidedStageLocked(e,cfg.kind))return pamToast("Non puoi annullare l’asta dopo l’inserimento di un risultato.","error");
- const auction=pamAuctionData(e,which);
- auction.purchases=auction.purchases.filter(function(p){return String(p.buyerId)!==String(buyerId)});
- auction.spending[buyerId]=0;
- pamRecalcAuctionLedger(e);
- const fs=ensureFinalStages(e);
- if(cfg.kind==="semifinals")fs.semifinals.forEach(function(m){m.teamA=[];m.teamB=[];m.score1=null;m.score2=null;m.score1R=null;m.score2R=null});
- if(cfg.kind==="final"){fs.final.teamA=[];fs.final.teamB=[];fs.final.score1=null;fs.final.score2=null;fs.final.score1R=null;fs.final.score2R=null}
- pamAutoComposeGuidedAuction(e,which);
- save();render();pamToast("Acquisto annullato. Puoi reinserirlo.","success");
-}
-
 function pamAuctionRows(e,which,ids,label){
  const auction=pamAuctionData(e,which);
  return '<div class="card table-wrap"><table class="table"><thead><tr><th>'+esc(label||"Giocatore")+'</th><th>Disponibili</th><th>Spesi</th><th>Residui</th></tr></thead><tbody>'+ids.map(function(id){
@@ -4839,48 +4394,17 @@ function auctionView(e,which){
  if(which===1){
   const first=auction1View(e);
   if(e.playerIds.length===6)return first;
-  if(count===1){
-   const finalists=semifinalWinners(e);
-   if(finalists.length===4){
-    const a=pamAuctionData(e,1);
-    // Con asta unica la composizione delle semifinali resta quella già generata;
-    // la finale usa automaticamente le coppie vincitrici, senza ricomporle.
-    const fs=ensureFinalStages(e),wins=fs.semifinals.map(function(m,i){return stageWinnerTeam(e,"semi"+(i+1),m)}).filter(function(x){return x.length===2});
-    if(wins.length===2&&!pamStageHasResult(fs.final)){fs.final.teamA=wins[0].slice();fs.final.teamB=wins[1].slice()}
-    return first+'<div style="height:12px"></div>'+pamFinalOnlyAutoView(e);
-   }
-  }
-  return first;
+  return count===1?first+'<div style="height:14px"></div><div class="notice"><b>Asta unica:</b> dopo le semifinali puoi comporre qui la finale senza una seconda asta.</div>'+pamFinalOnlyView(e):first;
  }
  if(e.playerIds.length===6){
   const ids=standings(e).map(function(x){return x.id});
-  return '<div class="notice"><b>Asta '+which+' di '+count+':</b> saldo residuo aggiornato automaticamente.</div>'+pamAuctionRows(e,which,ids,"Giocatore");
+  return '<div class="notice"><b>Asta '+which+' di '+count+':</b> inserisci i gettoni spesi. Il saldo residuo viene aggiornato automaticamente.</div>'+pamAuctionRows(e,which,ids,"Giocatore");
  }
  const finalists=semifinalWinners(e);
  if(finalists.length!==4)return '<div class="notice error">Prima completa entrambe le semifinali.</div>';
- if(which<count){
-  return '<div class="notice"><b>Asta intermedia '+which+' di '+count+':</b> questa eventuale asta mantiene la logica esistente e aggiorna solo i gettoni.</div>'+pamAuctionRows(e,which,finalists,"Finalista");
- }
- pamAutoComposeGuidedAuction(e,which);
- const panel=pamGuidedAuctionPanel(e,which);
- const complete=pamAuctionData(e,which).purchases.length===2;
- return panel+(complete?'<div class="notice success"><b>Finale generata automaticamente.</b> Inserisci soltanto il risultato.</div>'+pamFinalOnlyAutoView(e):
-  '<div class="notice"><b>Ultima asta:</b> i 2 finalisti meglio classificati acquistano uno dei successivi 2. Al secondo acquisto la finale viene composta automaticamente.</div>');
-}
-function pamFinalOnlyAutoView(e){
- const fs=ensureFinalStages(e),m=fs.final;
- if(!validateStageTeams(m))return '<div class="notice error">Finale non ancora composta.</div>';
- const base=(e.matches||[]).length+3+(e.semifinalReturnLeg?2:0);
- const cards=stageLegCard(e,"final",m,"Finale",1,base,1,"final")+(e.finalReturnLeg?stageLegCard(e,"final",m,"Finale",2,base+1,1,"final"):"");
- const t=stageAggregate(e,"final",m);let summary="";
- if(t){
-  if(t.a===t.b)summary='<div class="notice error">Totale finale in parità: <b>'+t.a+' - '+t.b+'</b>.</div>';
-  else{
-   const winners=t.a>t.b?m.teamA:m.teamB,seconds=t.a>t.b?m.teamB:m.teamA;
-   summary='<div class="notice success">Vincitori: <b>'+esc(names(winners))+'</b><br>Secondi: <b>'+esc(names(seconds))+'</b></div>';
-  }
- }
- return cards+summary;
+ const rows=pamAuctionRows(e,which,finalists,"Finalista");
+ if(which<count)return '<div class="notice"><b>Asta '+which+' di '+count+':</b> inserisci i gettoni spesi. Il saldo residuo verrà aggiornato e riportato nell’asta successiva.</div>'+rows;
+ return '<div class="notice"><b>Asta '+which+' di '+count+':</b> ultima asta. Inserisci i gettoni spesi e componi la finale.</div>'+rows+'<div style="height:14px"></div>'+pamFinalOnlyView(e);
 }
 function auction2View(e){
  const fs=ensureFinalStages(e),finalists=semifinalWinners(e);
@@ -4971,7 +4495,7 @@ async function saveAuction(which){
   e.ledger[id].spent=total;
  });
  pamProtectCurrentEdit(8000);
- pamPersistLocalState();
+ localStorage.setItem(KEY,JSON.stringify(state));
  try{
   if(pamCloudReady&&PAM_SESSION)await pamCloudSyncAll();
   pamToast("Asta "+which+" salvata. Saldo gettoni aggiornato.","success");
@@ -4988,89 +4512,6 @@ function updateStageTeam(select){
  m[key][pos]=select.value;
  save();
 }
-
-function pamWhatsappPhone(raw){
- let n=String(raw||"").replace(/[^\d+]/g,"");
- if(!n)return "";
- if(n.startsWith("00"))n="+"+n.slice(2);
- if(n.startsWith("+"))return n.slice(1);
- if(n.startsWith("39"))return n;
- if(n.startsWith("3"))return "39"+n;
- return n;
-}
-
-function pamEmailAddress(raw){return String(raw||"").trim()}
-function pamMailtoUrl(to,subject,body,bcc){
- const params=[];
- if(subject)params.push("subject="+encodeURIComponent(subject));
- if(body)params.push("body="+encodeURIComponent(body));
- if(bcc)params.push("bcc="+encodeURIComponent(bcc));
- return "mailto:"+(to||"")+(params.length?"?"+params.join("&"):"");
-}
-function pamOrganizerEmailUrl(t){
- const email=pamEmailAddress(t&&t.organizer_email||t&&t.organizerEmail||"");
- if(!email)return "";
- return pamMailtoUrl(email,"Informazioni evento: "+String(t&&t.name||"Padel Arena Manager"),"Ciao, vorrei informazioni sull’evento "+String(t&&t.name||"Padel Arena Manager")+".","");
-}
-
-function pamWhatsappUrl(phone,message){
- const n=pamWhatsappPhone(phone);if(!n)return "";
- return "https://wa.me/"+n+"?text="+encodeURIComponent(message||"");
-}
-function pamNextPlayerMatch(e,id){
- return (e.matches||[]).filter(function(m){
-  if(m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined)return false;
-  return (m.t1||[]).concat(m.t2||[]).some(function(pid){return String(pid)===String(id)});
- }).sort(function(a,b){
-  return String(a.startTime||"").localeCompare(String(b.startTime||""));
- })[0]||null;
-}
-function pamTournamentLocation(e){
- const c=clubInfo(e.club);
- return e.customAddress||(c&&c.address)||e.club||"";
-}
-function pamWhatsappMessage(e,p,kind){
- const m=pamNextPlayerMatch(e,p.id);
- const name=playerName(p),loc=pamTournamentLocation(e);
- const court=m?(m.court||m.field||m.courtNumber||""):"";
- const time=m?(m.startTime||""):"";
- const tournament=e.name||"torneo";
- if(kind==="registration"){
-  return "Ciao "+name+", ti confermiamo l’iscrizione a "+tournament+"."+(loc?" Sede: "+loc+".":"")+" A presto!";
- }
- if(kind==="change"){
-  return "Ciao "+name+", aggiornamento organizzativo per "+tournament+". Controlla il nuovo programma nell’app o contattaci per conferma.";
- }
- return "Ciao "+name+", promemoria per "+tournament+"."+(time?" La tua prossima partita è alle "+time:"")+(court?" sul campo "+court:"")+"."+(loc?" Sede: "+loc+".":"")+" Buon torneo!";
-}
-function pamOpenWhatsappPlayer(eventId,playerId,kind){
- const e=(state.events||[]).find(function(x){return String(x.id)===String(eventId)});
- const p=playerById(playerId);
- if(!e||!p)return;
- if(!pamWhatsappPhone(p.phone)){
-  pamToast("Numero WhatsApp non disponibile per "+playerName(p)+".","error");return;
- }
- location.href=pamWhatsappUrl(p.phone,pamWhatsappMessage(e,p,kind||"reminder"));
-}
-function pamWhatsappEventView(e){
- const template=String(e.whatsappTemplate||"reminder");
- const options=
-  '<option value="reminder" '+(template==="reminder"?"selected":"")+'>Promemoria prossima partita</option>'+
-  '<option value="registration" '+(template==="registration"?"selected":"")+'>Conferma iscrizione</option>'+
-  '<option value="change" '+(template==="change"?"selected":"")+'>Cambio programma / avviso</option>';
- const rows=(e.playerIds||[]).map(function(id){
-  const p=playerById(id);if(!p)return "";
-  const next=pamNextPlayerMatch(e,id);
-  const meta=next?((next.startTime||"orario da definire")+(next.court?" · Campo "+next.court:"")):"Nessuna partita futura trovata";
-  return '<div class="pam-wa-player"><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"numero mancante")+' · '+esc(meta)+'</div></div>'+
-   '<button class="primary" data-action="wa-player" data-event-id="'+e.id+'" data-player-id="'+id+'">Apri WhatsApp</button></div>';
- }).join("");
- return '<section class="pam-wa-box"><span class="pam-wa-chip">WHATSAPP SEMI-AUTOMATICO</span><h2>Comunicazioni torneo</h2>'+
- '<div class="field"><label>Tipo di messaggio</label><select id="waTemplate">'+options+'</select></div>'+
- '<div class="notice">La V8 prepara automaticamente nome, torneo e, quando disponibile, orario e campo della prossima partita. WhatsApp si apre già compilato: l’invio resta sempre manuale.</div></section>'+
- '<div class="card">'+rows+'</div>';
-}
-
 function eventPlayersView(e){
  return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
 }
@@ -5245,21 +4686,10 @@ document.addEventListener("click",function(ev){
   if(a==="save-result")saveResult(action);
   if(a==="edit-result")editResult(action.getAttribute("data-match-id"));
   if(a==="commit-balances")commitBalances();
-  if(a==="wa-player"){
-   const e=currentEvent();
-   pamOpenWhatsappPlayer(
-    action.getAttribute("data-event-id"),
-    action.getAttribute("data-player-id"),
-    e&&e.whatsappTemplate||"reminder"
-   );
-   return;
-  }
   if(a==="save-stage-result")saveStageResult(action);
   if(a==="edit-stage-result")editStageResult(action.getAttribute("data-stage"),action.getAttribute("data-leg"));
   if(a==="save-auction1")saveAuction(1);
   if(a==="save-auction2")saveAuction(2);
-  if(a==="guided-auction-confirm"){pamConfirmGuidedAuction(Number(action.getAttribute("data-guided-which")));return}
-  if(a==="guided-auction-undo"){pamUndoGuidedAuction(Number(action.getAttribute("data-guided-which")),action.getAttribute("data-buyer-id"));return}
   const auctionButton=action.closest("[data-save-auction]");if(auctionButton){saveAuction(Number(auctionButton.getAttribute("data-save-auction")));return}
   if(a==="print-pdf")printCurrentPage();
   if(a==="save-simple-result")saveSimpleResult(action);
@@ -5268,26 +4698,6 @@ document.addEventListener("click",function(ev){
   if(a==="edit-six-result")editSixResult(action.getAttribute("data-six-id"),action.getAttribute("data-six-type"));
   return;
  }
- 
- const pf=ev.target.closest("[data-player-filter]");
- if(pf){pamSetPlayerFilter(pf.getAttribute("data-player-filter"));return}
- const emailPlayer=ev.target.closest("[data-email-player]");
- if(emailPlayer){pamEmailPlayer(emailPlayer.getAttribute("data-email-player"));return}
- const playerSelect=ev.target.closest("[data-player-select]");
- if(playerSelect){pamTogglePlayerSelection(playerSelect.getAttribute("data-player-select"),playerSelect.checked);return}
- const bulkAction=ev.target.closest("[data-action]");
- if(bulkAction){
-  const ba=bulkAction.getAttribute("data-action");
-  if(ba==="select-filtered-players"){pamSelectFilteredPlayers();return}
-  if(ba==="deselect-filtered-players"){pamSelectNoneFiltered();return}
-  if(ba==="clear-player-selection"){pamClearPlayerSelection();return}
-  if(ba==="bulk-email-selected"){state.bulkEmailSubject=(document.getElementById("pamBulkEmailSubject")?.value||"").trim();state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();save();pamBulkEmailSelected();return}
-  if(ba==="bulk-whatsapp-selected"){state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();save();pamBulkWhatsappSelected();return}
-  if(ba==="export-players-pdf"){pamExportPlayersPdf();return}
-  if(ba==="export-players-xlsx"){pamExportPlayersXlsx();return}
-  if(ba==="export-players-csv"){pamExportPlayersCsv();return}
- }
-
  const open=ev.target.closest("[data-open-event]");if(open){state.currentEventId=open.getAttribute("data-open-event");state.view="event";state.tab="matches";save();render();return}
  const del=ev.target.closest("[data-delete-event]");if(del){deleteEvent(del.getAttribute("data-delete-event"));return}
  const edit=ev.target.closest("[data-edit-player]");if(edit){editPlayer(edit.getAttribute("data-edit-player"));return}
@@ -5311,7 +4721,7 @@ document.addEventListener("input",function(ev){
   const id=ev.target.getAttribute("data-player-id")||ev.target.getAttribute("data-auction"+which+"-spend");
   if(which&&id){
    pamAuctionData(e,which).spending[id]=Math.max(0,Number(ev.target.value)||0);
-   pamPersistLocalState();
+   localStorage.setItem(KEY,JSON.stringify(state));
   }
   return;
  }
@@ -5353,42 +4763,7 @@ function pamFormYes(id,fallback){
  const el=document.getElementById(id);
  return el?el.value==="yes":Boolean(fallback);
 }
-document.addEventListener("input",function(ev){
- const search=ev.target.closest("#pamPlayerSearch");
- if(search){
-  state.playerSearch=search.value||"";
-  clearTimeout(window.__pamPlayerSearchTimer);
-  window.__pamPlayerSearchTimer=setTimeout(function(){
-   save();
-   render();
-   const input=document.getElementById("pamPlayerSearch");
-   if(input){
-    input.focus();
-    try{input.setSelectionRange(input.value.length,input.value.length)}catch(_){}
-   }
-  },180);
-  return;
- }
-});
-
 document.addEventListener("change",function(ev){
- const playerFilterSelect=ev.target.closest("#pamPlayerFilterSelect");
- if(playerFilterSelect){
-  state.playerFilter=playerFilterSelect.value||"all";
-  save();render();return;
- }
-
- const bulkSubject=ev.target.closest("#pamBulkEmailSubject");
- if(bulkSubject){state.bulkEmailSubject=bulkSubject.value||"";save();return}
- const bulkMsg=ev.target.closest("#pamBulkMessage");
- if(bulkMsg){state.bulkWhatsappMessage=bulkMsg.value||"";save();return}
-
- const waTemplate=ev.target.closest("#waTemplate");
- if(waTemplate){
-  const e=currentEvent();
-  if(e){e.whatsappTemplate=waTemplate.value;save();render()}
-  return;
- }
  pamProtectCurrentEdit(8000);
  const logoInput=ev.target.closest("[data-team-logo-upload]");if(logoInput&&logoInput.files&&logoInput.files[0]){
   const id=logoInput.getAttribute("data-team-logo-upload"),file=logoInput.files[0];
@@ -5531,7 +4906,7 @@ function pamApplyDynamicTheme(){
 
 function render(){
  document.body.classList.remove("pam-public-mode");
- let body=state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="token-circuit"?circuitTokensView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ let body=state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
  pamApplyDynamicTheme();
 }

@@ -1,0 +1,27 @@
+V8 RECOVERY 1.0 LAB
+Ricostruita dalla V8 stabile, non dalla 1.32.
+
+Ripristina/conserva:
+- logout;
+- selezione giocatori e “Mostra solo i giocatori selezionati”;
+- data di nascita;
+- iscrizione pubblica;
+- funzioni torneo della V8 stabile.
+
+Corregge:
+- caricamento Supabase completo a pagine da 1000;
+- snapshot atomico;
+- nessun import automatico Eden;
+- link public-registration da index-v8-lab.html;
+- ricerca e filtri a tendina;
+- CSV compatibile Excel, Email CCN, WhatsApp.
+
+Non corregge automaticamente nome/cognome ambigui.
+
+CARICARE SU GITHUB:
+- index-v8-lab.html
+- public-registration.html
+NON TOCCARE index.html.
+
+TEST:
+index-v8-lab.html?v=recovery10

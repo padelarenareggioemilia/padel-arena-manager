@@ -16,9 +16,6 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .search-results{display:grid;gap:8px;margin-top:8px}.person-result{display:flex;justify-content:space-between;align-items:center;text-align:left;background:#09182a;color:white;border:1px solid #365474}.person-result span{display:block}.person-result small{color:var(--muted)}.selected-person{padding:12px;border:2px solid var(--accent);border-radius:14px;background:#0d291d}
 .required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
-
-.wa-organizer{display:block;text-align:center;text-decoration:none;background:#1f9d55;color:#fff;border-radius:14px;padding:14px 16px;font-weight:1000;margin-top:12px}
-.wa-organizer:hover{filter:brightness(1.05)}
 </style>
 </head>
 <body>
@@ -37,30 +34,6 @@ let primary={type:"existing",id:null,name:""};
 let partner={type:"existing",id:null,name:""};
 
 const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-
-function waPhone(raw){
- let n=String(raw||"").replace(/[^\d+]/g,"");
- if(n.startsWith("00"))n="+"+n.slice(2);
- if(n.startsWith("+"))n=n.slice(1);
- if(n&&n.startsWith("3")&&!n.startsWith("39"))n="39"+n;
- return n;
-}
-
-function organizerEmailUrl(){
- const email=String(tournament&&tournament.organizer_email||"").trim();
- if(!email)return "";
- const subject="Informazioni evento: "+String(tournament&&tournament.name||"Padel Arena Manager");
- const body="Ciao, vorrei informazioni sull’evento "+String(tournament&&tournament.name||"Padel Arena Manager")+".";
- return "mailto:"+email+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
-}
-
-function organizerWaUrl(){
- const n=waPhone(tournament&&tournament.organizer_phone||"");
- if(!n)return "";
- const msg="Ciao, vorrei informazioni sull’evento "+String(tournament&&tournament.name||"Padel Arena Manager")+".";
- return "https://wa.me/"+n+"?text="+encodeURIComponent(msg);
-}
-
 async function loadTournament(){
  if(!token){showError("Link di iscrizione non valido.");return}
  const {data,error}=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
@@ -109,7 +82,6 @@ function render(){
  document.getElementById("app").innerHTML=
  '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
- (tournament.organizer_phone?'<a class="wa-organizer" target="_blank" rel="noopener" href="'+esc(organizerWaUrl())+'">💬 SCRIVI ALL’ORGANIZZATORE SU WHATSAPP</a>':'')+(tournament.organizer_email?'<a class="wa-organizer" style="background:#2563eb" href="'+esc(organizerEmailUrl())+'">✉️ INVIA EMAIL ALL’ORGANIZZATORE</a>':'')+
  '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
  (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
   '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+
@@ -162,7 +134,7 @@ async function submit(){
    p_share_token:token,p_mode:mode,p_primary:primaryPayload,p_partner:partnerPayload
   });
   if(error)throw error;
-  document.getElementById("app").innerHTML='<div class="card success"><h2>RICHIESTA INVIATA</h2><p>'+esc(data.message||"La richiesta è stata inviata all’organizzatore.")+'</p>'+(tournament.organizer_phone?'<a class="wa-organizer" target="_blank" rel="noopener" href="'+esc(organizerWaUrl())+'">💬 SCRIVI ALL’ORGANIZZATORE</a>':'')+'<p>Puoi chiudere questa pagina.</p></div>';
+  document.getElementById("app").innerHTML='<div class="card success"><h2>RICHIESTA INVIATA</h2><p>'+esc(data.message||"La richiesta è stata inviata all’organizzatore.")+'</p><p>Puoi chiudere questa pagina.</p></div>';
  }catch(err){
   msg.className="notice error";msg.textContent=err.message;
   btn.disabled=false;btn.textContent="CONFERMA ISCRIZIONE";
