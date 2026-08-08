@@ -2139,7 +2139,7 @@ async function pamCloudLoad(initial,forceReplace){
   state.__playersSource="Supabase completo";state.__cloudPlayersCount=remotePlayers.length;state.__cloudEventsCount=remoteEvents.length;
   pamStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};pamCloudReady=true;
   if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
-  pamPersistLocalState();
+  saveState();
   if(!pamIsUserEditing()){const y=window.scrollY;render();pamApplyRole();requestAnimationFrame(function(){window.scrollTo(0,y)})}
   setTimeout(pamRefreshSyncPanel,50);return pamStableSnapshot;
  })();
