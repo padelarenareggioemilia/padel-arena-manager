@@ -1,0 +1,17 @@
+V8.1.26 LAB — EMAIL
+
+Nuove funzioni:
+- email al singolo giocatore;
+- email a tutti i giocatori selezionati usando CCN/BCC;
+- oggetto e testo modificabili;
+- email dell'organizzatore configurabile per ogni torneo;
+- pulsante pubblico “Invia email all'organizzatore”.
+
+L'app apre il programma email del dispositivo (Gmail, Mail, Outlook ecc.).
+L'invio finale resta sempre manuale.
+
+Per la pagina pubblica:
+1. carica public-registration.html
+2. esegui database/SUPABASE_V8_1_26_EMAIL.sql
+
+La LAB resta separata dall'index.html operativo.
