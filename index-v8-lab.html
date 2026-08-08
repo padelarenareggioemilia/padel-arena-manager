@@ -2021,15 +2021,22 @@ async function pamCloudSyncAll(){
  }
 }
 
-function pamSetConnectionState(ok){
+function pamSetConnectionState(ok,mode){
  const badge=document.getElementById("pamRoleBadge");
  if(!badge)return;
- badge.textContent=pamRoleLabel()+(ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
- badge.title=ok?("Ultima sincronizzazione: "+new Date().toLocaleTimeString("it-IT")):"Connessione a Supabase non disponibile";
+ const suffix=ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO";
+ badge.textContent=pamRoleLabel()+suffix;
+ let detail="";
+ if(ok&&mode==="realtime")detail="Realtime attivo";
+ else if(ok&&mode==="polling")detail="Cloud attivo · controllo aggiornamenti ogni 10 secondi";
+ else if(ok)detail="Cloud sincronizzato";
+ else detail="Connessione a Supabase non disponibile";
+ badge.title=detail+(ok?" · "+new Date().toLocaleTimeString("it-IT"):"");
  badge.style.background=ok?"#071a2b":"#7f1d1d";
+ badge.dataset.syncMode=mode||"";
 }
-window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
-window.addEventListener("offline",function(){pamSetConnectionState(false)});
+window.addEventListener("online",function(){if(PAM_SESSION)pamCloudLoad(false,true).catch(function(){pamSetConnectionState(false,"offline")})});
+window.addEventListener("offline",function(){pamSetConnectionState(false,"offline")});
 
 
 async function pamGetCloudCounts(){
@@ -2141,7 +2148,7 @@ async function pamCloudLoad(initial,forceReplace){
   if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
   saveState();
   if(!pamIsUserEditing()){const y=window.scrollY;render();pamApplyRole();requestAnimationFrame(function(){window.scrollTo(0,y)})}
-  setTimeout(pamRefreshSyncPanel,50);return pamStableSnapshot;
+  pamSetConnectionState(true,"cloud");setTimeout(pamRefreshSyncPanel,50);return pamStableSnapshot;
  })();
  try{return await pamCloudLoadPromise}finally{pamCloudLoadPromise=null}
 }
@@ -2166,11 +2173,23 @@ function pamSubscribeRealtime(){
     const openTeam=document.querySelector('[data-admin-roster-area]');
     if(openTeam&&openTeam.dataset.teamId) pamLoadAdminRoster(openTeam.dataset.teamId);
   })
-  .subscribe(function(status){pamSetConnectionState(status==="SUBSCRIBED")});
+  .subscribe(function(status){
+   if(status==="SUBSCRIBED"){
+    pamSetConnectionState(true,"realtime");
+   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+    // Il polling resta attivo: segnaliamo il problema realtime ma non blocchiamo i dati.
+    console.warn("Realtime Supabase:",status);
+    pamSetConnectionState(navigator.onLine,"polling");
+   }
+  });
  clearInterval(window.__pamCloudRefreshInterval);
  window.__pamCloudRefreshInterval=setInterval(function(){
-  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
- },30000);
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new"){
+   pamCloudLoad(false,true).catch(function(err){
+    console.warn("Controllo cloud temporaneamente non riuscito:",err);
+   });
+  }
+ },10000);
 }
 function pamToast(message,type){
  const n=document.createElement("div");

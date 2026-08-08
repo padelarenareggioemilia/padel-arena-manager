@@ -1,6 +1,17 @@
-V8 RECOVERY 1.01 — FIX SYNC
-Correzione mirata: pamPersistLocalState() -> saveState().
-Nessun'altra funzione della Recovery 1.0 è stata modificata.
+V8 RECOVERY 1.02 — SYNC REALE
 
-Se public-registration.html è già online, su GitHub sostituisci SOLO index-v8-lab.html.
-Poi apri index-v8-lab.html?v=recovery101
+Correzione mirata della sincronizzazione.
+
+- Una lettura completa Supabase riuscita imposta SUPABASE CONNESSO.
+- Lo stato realtime non mette più l'app in rosso durante gli stati intermedi.
+- Realtime resta attivo quando disponibile.
+- In aggiunta c'è un controllo cloud ogni 10 secondi.
+- Se il realtime cade ma il cloud è raggiungibile, gli aggiornamenti continuano
+  ad arrivare tramite polling.
+- Nessuna modifica alle anagrafiche, filtri, tornei o iscrizioni.
+
+CARICARE SU GITHUB SOLO:
+index-v8-lab.html
+
+TEST:
+index-v8-lab.html?v=recovery102
