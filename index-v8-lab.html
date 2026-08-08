@@ -1330,7 +1330,7 @@ if(!window.supabase){
 
 <style>
 body.pam-lab:before{
- content:"V8.1.30 LAB · NON PERMANENTE";
+ content:"V8.1.31 LAB · NON PERMANENTE";
  position:fixed;top:8px;right:8px;z-index:10050;
  background:#7c3aed;color:#fff;border:1px solid #a78bfa;
  border-radius:999px;padding:6px 10px;font:800 10px system-ui;
@@ -1640,8 +1640,8 @@ async function pamBootAuth(){
 
 const PAM_LAB_MODE=true;
 const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8130";
-const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129"];
+const KEY="pam_v8_lab_8131";
+const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129","pam_v8_lab_8130"];
 PAM_OLD_LAB_KEYS.forEach(function(k){
  try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
 });
@@ -2754,7 +2754,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.30 LAB · Ricerca giocatori</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.31 LAB · Fix giocatore</span></div>'+
  '</div>';
 }
 function nav(){
@@ -3214,6 +3214,34 @@ function playersView(){
  '<div class="notice"><b>'+filtered.length+'</b> risultati · Filtro: <b>'+esc(pamPlayerFilterLabel(filter))+'</b>'+(state.playerSearch?' · Ricerca: <b>'+esc(state.playerSearch)+'</b>':'')+'</div>'+
  rows;
 }
+
+function editPlayer(id){
+ const p=state.players.find(function(x){return String(x.id)===String(id)});
+ if(!p){pamToast("Giocatore non trovato.","error");return}
+
+ const first=prompt("Nome",p.firstName||"");if(first===null)return;
+ const last=prompt("Cognome",p.lastName||"");if(last===null)return;
+ const phone=prompt("Telefono",p.phone||"");if(phone===null)return;
+ const email=prompt("Email",p.email||"");if(email===null)return;
+ const birthPlace=prompt("Luogo di nascita",p.birthPlace||"");if(birthPlace===null)return;
+ const postalCode=prompt("CAP",p.postalCode||"");if(postalCode===null)return;
+ const residenceTown=prompt("Comune di residenza",p.residenceTown||"");if(residenceTown===null)return;
+ const residenceProvince=prompt("Provincia",p.residenceProvince||"");if(residenceProvince===null)return;
+
+ p.firstName=first.trim();
+ p.lastName=last.trim();
+ p.phone=phone.trim();
+ p.email=email.trim();
+ p.birthPlace=birthPlace.trim();
+ p.postalCode=postalCode.trim();
+ p.residenceTown=residenceTown.trim();
+ p.residenceProvince=residenceProvince.trim().toUpperCase();
+
+ save();
+ render();
+ pamToast("Giocatore aggiornato.","success");
+}
+
 function newEventView(){
  const d=state.draft;
  const eligible=state.players.filter(function(p){return d.category==="Misto"||!p.gender||p.gender===d.category}).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});

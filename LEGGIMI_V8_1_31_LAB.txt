@@ -1,0 +1,24 @@
+PADEL ARENA MANAGER — V8.1.31 LAB FIX GIOCATORE
+
+PROBLEMA CORRETTO
+Aprendo/modificando un giocatore compariva:
+ReferenceError: Can't find variable: editPlayer
+
+CAUSA
+La funzione editPlayer originale della V8 era stata persa quando la vista Giocatori
+era stata sostituita nelle versioni LAB con filtri, selezione multipla ed esportazioni.
+
+CORREZIONE
+- ripristinata editPlayer;
+- mantiene ricerca giocatori;
+- mantiene filtri a tendina;
+- mantiene selezione multipla;
+- mantiene WhatsApp, email, PDF, Excel, CSV;
+- mantiene tutte le correzioni di sincronizzazione stabile della V8.1.29/1.30.
+
+INSTALLAZIONE
+Caricare SOLO index-v8-lab.html.
+NON toccare index.html operativo.
+
+LINK TEST
+index-v8-lab.html?v=8131
