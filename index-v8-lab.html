@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager 8.1.3</title>
+<title>Padel Arena Manager V8.2 LAB COMPLETA</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1291,7 +1291,8 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 .pam-actions-content .primary,.pam-actions-content .secondary,.pam-actions-content .small,.pam-actions-content .upload-button{width:auto;min-width:150px;flex:1 1 170px;text-align:center;display:inline-flex;align-items:center;justify-content:center}
 .pam-event-row-actions{margin-left:auto;min-width:170px}
 .pam-event-row-actions .pam-actions-content{min-width:240px;display:grid;grid-template-columns:1fr;position:absolute;right:0;z-index:25;background:#0b182a;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.38)}
-.pam-event-row-actions{position:relative}
+.pam-event-row-actions{position:relative;overflow:visible!important}
+.pam-event-row-actions[open]{overflow:visible!important;z-index:40}
 .pam-event-row-actions>summary{padding:9px 12px;background:#203754;border-radius:12px}
 .pam-event-row-actions[open]>summary{border-bottom:0}
 .pam-detail-menu .pam-actions-content{display:block;line-height:1.55;color:var(--muted)}
@@ -1306,6 +1307,17 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
  .pam-event-row-actions .pam-actions-content{position:static;min-width:0;box-shadow:none}
 }
 
+
+/* V8.1.18 - NAVIGAZIONE UNIVERSALE */
+.pam-universal-nav{position:sticky;top:8px;z-index:8500;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 auto 12px;padding:8px;border:1px solid #315271;border-radius:16px;background:rgba(7,17,31,.94);backdrop-filter:blur(14px);box-shadow:0 10px 28px rgba(0,0,0,.25)}
+.pam-universal-nav button{min-height:44px;border:1px solid #365474;border-radius:12px;background:#17304e;color:#fff;font-weight:900}.pam-universal-nav button:hover{border-color:var(--club-accent)}
+.pam-universal-menu{position:fixed;inset:0;z-index:100500;background:rgba(3,11,22,.92);display:flex;align-items:flex-start;justify-content:center;padding:74px 14px 24px;overflow:auto}
+.pam-universal-menu-card{width:min(520px,100%);background:#102139;border:1px solid #365477;border-radius:22px;padding:18px;color:#fff;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.pam-universal-menu-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.pam-universal-menu-head h2{margin:0;text-align:left!important}
+.pam-universal-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.pam-universal-menu-grid button{min-height:52px;border:1px solid #365474;border-radius:13px;background:#17304e;color:#fff;font-weight:900}.pam-universal-menu-grid .primary{color:#07111f!important}
+.pam-new-team-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pam-new-team-form .field{margin:0}.pam-new-team-form .full{grid-column:1/-1}
+@media(max-width:700px){.pam-universal-nav{top:4px;margin-bottom:10px}.pam-universal-menu-grid,.pam-new-team-form{grid-template-columns:1fr}.pam-new-team-form .full{grid-column:auto}}
+@media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1323,18 +1335,39 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 document.addEventListener("input",function(ev){
- if(ev.target&&ev.target.id==="pamRecoverySearch"){
-  pamRecoveryPlayerSearch=ev.target.value||"";clearTimeout(window.__pamRS);
-  window.__pamRS=setTimeout(function(){render();const x=document.getElementById("pamRecoverySearch");if(x){x.focus();x.value=pamRecoveryPlayerSearch}},180);
+ if(ev.target&&ev.target.id==="pamSearchV82"){
+  pamPlayerSearchV82=ev.target.value||"";
+  clearTimeout(window.__pamV82SearchTimer);
+  window.__pamV82SearchTimer=setTimeout(function(){
+   render();
+   const x=document.getElementById("pamSearchV82");
+   const s=document.getElementById("pamFilterV82");
+   if(s)s.value=pamPlayerFilterV82;
+   if(x){x.focus();try{x.setSelectionRange(x.value.length,x.value.length)}catch(_){ }}
+  },180);
  }
 });
 document.addEventListener("change",function(ev){
- if(ev.target&&ev.target.id==="pamRecoveryFilter"){pamRecoveryPlayerFilter=ev.target.value||"all";render();const s=document.getElementById("pamRecoveryFilter");if(s)s.value=pamRecoveryPlayerFilter}
+ if(ev.target&&ev.target.id==="pamFilterV82"){
+  pamPlayerFilterV82=ev.target.value||"all";render();
+  const s=document.getElementById("pamFilterV82");if(s)s.value=pamPlayerFilterV82;return;
+ }
+ if(ev.target&&ev.target.matches(".v82-player-check")){
+  const id=String(ev.target.getAttribute("data-v82-player-id")||"");
+  if(ev.target.checked)pamSelectedPlayerIdsV82.add(id);else pamSelectedPlayerIdsV82.delete(id);
+  return;
+ }
 });
 document.addEventListener("click",function(ev){
- if(ev.target.closest("[data-recovery-csv]")){ev.preventDefault();pamRecoveryCsv();return}
- if(ev.target.closest("[data-recovery-email]")){ev.preventDefault();pamRecoveryEmail();return}
- if(ev.target.closest("[data-recovery-wa]")){ev.preventDefault();pamRecoveryWhatsapp();return}
+ if(ev.target.closest("[data-v82-select-all]")){ev.preventDefault();pamToggleAllVisibleV82(true);return}
+ if(ev.target.closest("[data-v82-clear-visible]")){ev.preventDefault();pamToggleAllVisibleV82(false);return}
+ if(ev.target.closest("[data-v82-show-selected]")){ev.preventDefault();pamShowSelectedOnlyV82=!pamShowSelectedOnlyV82;render();return}
+ if(ev.target.closest("[data-v82-clear-all]")){ev.preventDefault();pamSelectedPlayerIdsV82.clear();pamShowSelectedOnlyV82=false;render();return}
+ if(ev.target.closest("[data-v82-wa]")){ev.preventDefault();pamWhatsappSelectedV82();return}
+ if(ev.target.closest("[data-v82-email]")){ev.preventDefault();pamEmailVisibleV82();return}
+ if(ev.target.closest("[data-v82-pdf]")){ev.preventDefault();pamExportPdfV82();return}
+ if(ev.target.closest("[data-v82-xlsx]")){ev.preventDefault();pamExportExcelV82();return}
+ if(ev.target.closest("[data-v82-csv]")){ev.preventDefault();pamDownloadCsvV82();return}
 },true);
 
 </script>
@@ -1343,6 +1376,16 @@ if(!window.supabase){
  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
+
+<style>
+#pamSearchV82,#pamFilterV82{min-height:46px;font-size:16px}
+.v82-player-check{width:22px;height:22px;flex:0 0 auto}
+@media(max-width:700px){
+ .card .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .card .row>*{margin-bottom:0}
+}
+</style>
+
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -1471,8 +1514,8 @@ async function pamStartSession(session){
   pamToast("Accesso effettuato. Aggiornamento dati online in corso…","success");
 
   pamCloudLoad(true,true).then(async function(){
-   // RECOVERY: nessuna integrazione automatica di anagrafiche.
-   pamSubscribeRealtime();
+   /* V8.2 LAB: import Eden automatico disattivato per proteggere le anagrafiche. */
+pamSubscribeRealtime();
    pamOpenSharedTournamentFromUrl();
    pamToast("Dati online aggiornati","success");
    setTimeout(pamRefreshSyncPanel,100);
@@ -1491,7 +1534,11 @@ async function pamStartSession(session){
 
 const PAM_PUBLIC_DATA={tournaments:[],matches:[],standings:[],lineups:[],series:"Tutte"};
 function pamPublicEsc(v){return String(v??"").replace(/[&<>\"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
-function pamPublicBase(){return location.href.split("?")[0].replace(/index(?:-v8-lab)?\.html?$/i,"").replace(/\/$/,"")}
+function pamPublicBase(){
+ return location.href.split("?")[0]
+  .replace(/index(?:-v8-lab)?\.html?$/i,"")
+  .replace(/\/$/,"");
+}
 function pamPublicRegistrationUrl(t){return pamPublicBase()+"/public-registration.html?tournament="+encodeURIComponent(t.share_token||"")}
 function pamPublicPosterUrl(t){return pamPublicBase()+"/poster.html?tournament="+encodeURIComponent(t.share_token||"")}
 function pamPublicDate(v){if(!v)return "Data da definire";try{return new Date(v+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}catch(_){return v}}
@@ -1500,7 +1547,7 @@ function pamPublicLogo(t){return t.logo_url||"assets/padel-arena-manager-logo.pn
 function pamPublicEventCard(t){
  const open=t.registration_open!==false,available=Number(t.available_places??0),wait=t.waitlist_enabled!==false;
  const action=open?'<a class="primary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>':wait?'<a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">LISTA D’ATTESA</a>':'<span class="secondary wide" style="opacity:.7">ISCRIZIONI CHIUSE</span>';
- return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
+ return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">VEDI ISCRITTI</a><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary wide" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
 }
 function pamPublicUpcomingHtml(){return PAM_PUBLIC_DATA.tournaments.length?PAM_PUBLIC_DATA.tournaments.map(pamPublicEventCard).join(""):'<div class="pam-public-empty" style="grid-column:1/-1">Al momento non sono pubblicati tornei in programma.</div>'}
 function pamPublicMatchesHtml(){const rows=PAM_PUBLIC_DATA.matches.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,12).map(m=>'<div class="pam-public-match"><div><b>'+pamPublicEsc(pamPublicDate(m.event_date))+'</b><div class="pam-public-muted">'+pamPublicEsc(m.start_time||'')+'</div></div><div><b>'+pamPublicEsc(m.home_team_name||'Da definire')+'</b><div class="pam-public-muted">vs '+pamPublicEsc(m.away_team_name||'Da definire')+' · '+pamPublicEsc(m.series||'')+'</div></div><div class="pam-public-score">'+(m.home_score==null?'–':pamPublicEsc(m.home_score))+' : '+(m.away_score==null?'–':pamPublicEsc(m.away_score))+'</div></div>').join(''):'<div class="pam-public-empty">Calendario e risultati saranno pubblicati dall’organizzazione.</div>'}
@@ -1900,13 +1947,23 @@ function pamIsUserEditing(){
 function pamProtectCurrentEdit(ms){
  pamLocalEditUntil=Math.max(pamLocalEditUntil,Date.now()+(Number(ms)||5000));
 }
+function pamEnsureEventPlayerSnapshots(){
+ (state.events||[]).forEach(function(e){
+  e.playerSnapshots=e.playerSnapshots||{};
+  (e.playerIds||[]).forEach(function(id){
+   const p=(state.players||[]).find(function(x){return String(x.id)===String(id)});
+   if(p)e.playerSnapshots[String(id)]={id:String(id),firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""};
+  });
+ });
+}
 function save(){
+ pamEnsureEventPlayerSnapshots();
  pamProtectCurrentEdit(5000);
  localStorage.setItem(KEY,JSON.stringify(state));
  if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
-function playerName(p){return (p.firstName+" "+p.lastName).trim()}
+function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
 function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
 function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
 let pamEdenImportRunning=false;
@@ -2021,22 +2078,15 @@ async function pamCloudSyncAll(){
  }
 }
 
-function pamSetConnectionState(ok,mode){
+function pamSetConnectionState(ok){
  const badge=document.getElementById("pamRoleBadge");
  if(!badge)return;
- const suffix=ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO";
- badge.textContent=pamRoleLabel()+suffix;
- let detail="";
- if(ok&&mode==="realtime")detail="Realtime attivo";
- else if(ok&&mode==="polling")detail="Cloud attivo · controllo aggiornamenti ogni 10 secondi";
- else if(ok)detail="Cloud sincronizzato";
- else detail="Connessione a Supabase non disponibile";
- badge.title=detail+(ok?" · "+new Date().toLocaleTimeString("it-IT"):"");
+ badge.textContent=pamRoleLabel()+(ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.title=ok?("Ultima sincronizzazione: "+new Date().toLocaleTimeString("it-IT")):"Connessione a Supabase non disponibile";
  badge.style.background=ok?"#071a2b":"#7f1d1d";
- badge.dataset.syncMode=mode||"";
 }
-window.addEventListener("online",function(){if(PAM_SESSION)pamCloudLoad(false,true).catch(function(){pamSetConnectionState(false,"offline")})});
-window.addEventListener("offline",function(){pamSetConnectionState(false,"offline")});
+window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
+window.addEventListener("offline",function(){pamSetConnectionState(false)});
 
 
 async function pamGetCloudCounts(){
@@ -2113,44 +2163,101 @@ function pamSyncPanelHtml(){
 }
 
 let pamCloudLoadPromise=null;
-let pamStableSnapshot={players:0,events:0};
+let pamCloudStableSnapshot={players:0,events:0};
+let pamCloudLastOkAt=0;
+
 async function pamFetchAllRows(table,columns,orderColumn,ascending){
- const pageSize=1000;let from=0,all=[];
+ const pageSize=1000;
+ let from=0,all=[];
  while(true){
   let q=sb.from(table).select(columns).range(from,from+pageSize-1);
   if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
-  const res=await q;if(res.error)throw res.error;
-  const rows=res.data||[];all=all.concat(rows);
+  const res=await q;
+  if(res.error)throw res.error;
+  const rows=res.data||[];
+  all=all.concat(rows);
   if(rows.length<pageSize)break;
-  from+=pageSize;if(from>=100000)throw new Error("Limite archivio superato.");
+  from+=pageSize;
+  if(from>=100000)throw new Error("Limite di sicurezza archivio superato.");
  }
  return all;
 }
+
+function pamSyncLabel(ok,mode){
+ const badge=document.getElementById("pamRoleBadge");
+ if(!badge)return;
+ badge.textContent=pamRoleLabel()+(ok?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.style.background=ok?"#071a2b":"#7f1d1d";
+ badge.title=ok
+  ? ((mode==="realtime"?"Realtime attivo":"Cloud attivo")+
+     (pamCloudLastOkAt?" · "+new Date(pamCloudLastOkAt).toLocaleTimeString("it-IT"):""))
+  : "Connessione Supabase non disponibile";
+}
+
 async function pamCloudLoad(initial,forceReplace){
  if(pamCloudLoadPromise)return pamCloudLoadPromise;
+
  pamCloudLoadPromise=(async function(){
   const [playerRows,eventRows]=await Promise.all([
    pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true),
    pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false)
   ]);
-  const remotePlayers=playerRows.map(function(r){return Object.assign({},r.data||{},{id:r.id,photoUrl:r.photo_url||((r.data||{}).photoUrl)||""})});
-  const remoteEvents=eventRows.map(function(r){return Object.assign({},r.data||{},{
-   id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",
-   club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",
-   competitionType:r.competition_type||((r.data||{}).competitionType)||"",
-   logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status
-  })});
-  if(pamStableSnapshot.players>0&&remotePlayers.length===0)throw new Error("Snapshot giocatori vuoto rifiutato.");
-  if(pamStableSnapshot.events>0&&remoteEvents.length===0)throw new Error("Snapshot tornei vuoto rifiutato.");
-  state.players=remotePlayers;state.events=remoteEvents;
-  state.__playersSource="Supabase completo";state.__cloudPlayersCount=remotePlayers.length;state.__cloudEventsCount=remoteEvents.length;
-  pamStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};pamCloudReady=true;
-  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
-  saveState();
-  if(!pamIsUserEditing()){const y=window.scrollY;render();pamApplyRole();requestAnimationFrame(function(){window.scrollTo(0,y)})}
-  pamSetConnectionState(true,"cloud");setTimeout(pamRefreshSyncPanel,50);return pamStableSnapshot;
+
+  const remotePlayers=playerRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
+   });
+  });
+
+  const remoteEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    name:r.name,
+    event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,
+    status:r.status
+   });
+  });
+
+  if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
+   throw new Error("Snapshot giocatori vuoto rifiutato.");
+  if(pamCloudStableSnapshot.events>0 && remoteEvents.length===0)
+   throw new Error("Snapshot tornei vuoto rifiutato.");
+
+  state.players=remotePlayers;
+  state.events=remoteEvents;
+  state.__playersSource="Supabase completo";
+  state.__cloudPlayersCount=remotePlayers.length;
+  state.__cloudEventsCount=remoteEvents.length;
+
+  pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+  pamCloudLastOkAt=Date.now();
+  pamCloudReady=true;
+  pamSyncLabel(true,"cloud");
+
+  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))
+   state.currentEventId=null;
+
+  if(typeof saveState==="function")saveState();
+
+  if(!pamIsUserEditing()){
+   const y=window.scrollY;
+   render();
+   pamApplyRole();
+   requestAnimationFrame(function(){window.scrollTo(0,y)});
+  }
+  setTimeout(pamRefreshSyncPanel,50);
+  return pamCloudStableSnapshot;
  })();
- try{return await pamCloudLoadPromise}finally{pamCloudLoadPromise=null}
+
+ try{return await pamCloudLoadPromise}
+ finally{pamCloudLoadPromise=null}
 }
 function pamSubscribeRealtime(){
  if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
@@ -2175,20 +2282,15 @@ function pamSubscribeRealtime(){
   })
   .subscribe(function(status){
    if(status==="SUBSCRIBED"){
-    pamSetConnectionState(true,"realtime");
+    pamCloudLastOkAt=Date.now();
+    pamSyncLabel(true,"realtime");
    }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
-    // Il polling resta attivo: segnaliamo il problema realtime ma non blocchiamo i dati.
     console.warn("Realtime Supabase:",status);
-    pamSetConnectionState(navigator.onLine,"polling");
    }
   });
  clearInterval(window.__pamCloudRefreshInterval);
  window.__pamCloudRefreshInterval=setInterval(function(){
-  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new"){
-   pamCloudLoad(false,true).catch(function(err){
-    console.warn("Controllo cloud temporaneamente non riuscito:",err);
-   });
-  }
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
  },10000);
 }
 function pamToast(message,type){
@@ -2271,13 +2373,20 @@ function pamEditEvent(id){
  const name=prompt("Nome torneo",e.name);if(name===null)return;
  const date=prompt("Data (AAAA-MM-GG)",e.date||"");if(date===null)return;
  const club=prompt("Circolo",e.club||"");if(club===null)return;
+ const normalizedClub=club.trim();
+ let customAddress=e.customAddress||"";
+ if(pamClubAllowsCustomAddress(normalizedClub)){
+  const addressPrompt=prompt("Indirizzo evento",customAddress);
+  if(addressPrompt===null)return;
+  customAddress=addressPrompt.trim();
+ }else customAddress="";
  const category=prompt("Categoria",e.category||"");if(category===null)return;
  const startTime=prompt("Orario di inizio (HH:MM)",e.startTime||"20:00");if(startTime===null)return;
  const timerDuration=prompt("Durata effettiva della partita / timer in minuti",String(e.timerDuration||e.matchDuration||15));if(timerDuration===null)return;
  const slotDuration=prompt("Intervallo tra gli inizi delle partite in minuti",String(e.slotDuration||e.matchDuration||20));if(slotDuration===null)return;
  e.name=name.trim()||e.name;
  e.date=date.trim();
- e.club=club.trim();
+ e.club=normalizedClub;
  e.customAddress=customAddress;
  e.category=category.trim();
  e.startTime=startTime.trim()||"20:00";
@@ -2290,42 +2399,29 @@ function pamEditEvent(id){
 function pamTournamentPlayersModal(id){
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  document.getElementById("pamTournamentPlayersOverlay")?.remove();
- const overlay=document.createElement("div");
- overlay.id="pamTournamentPlayersOverlay";
- overlay.className="pam-modal-overlay";
- const selected=new Set(e.playerIds||[]);
- const rows=state.players.slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).map(function(p){
-  return '<div class="pam-player-choice">'+
-   '<input type="checkbox" data-tournament-player="'+p.id+'" '+(selected.has(p.id)?"checked":"")+'>'+
-   '<img src="'+esc(pamPlayerPhoto(p))+'" alt="">'+
-   '<span><b>'+esc(playerName(p))+'</b><small>'+(p.gender?esc(p.gender):"")+'</small></span>'+
-   '<div class="pam-player-choice-actions"><button type="button" class="small" data-rename-tournament-player="'+p.id+'">Rinomina</button>'+
-   (selected.has(p.id)?'<button type="button" class="small" data-replace-existing-event-player="'+p.id+'" data-event-id="'+e.id+'">Sostituisci</button>':'')+
-   '</div></div>';
- }).join("");
- overlay.innerHTML='<div class="pam-modal-card">'+
-  '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Aggiungi, togli o sostituisci i giocatori. Poi rigenera le partite.</div><div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
-  '<div class="notice error"><b>Attenzione:</b> rigenerando le partite verranno cancellati risultati, timer e fasi finali già compilate. I saldi generali dei giocatori non vengono cancellati.</div>'+
-  '<div class="pam-inline-create"><div class="field"><label>Cerca giocatore</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome o cognome"></div>'+
-  '<button class="primary" data-quick-player-existing-event="'+id+'">➕ Nuova anagrafica e inserisci</button></div>'+
-  '<div class="pam-player-choice-list">'+rows+'</div>'+
-  '<div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+id+'">Salva partecipanti e rigenera partite</button></div>'+
- '</div>';
- document.body.appendChild(overlay);
- const search=overlay.querySelector("#pamTournamentPlayerSearch");
- search.addEventListener("input",function(){
-  const q=normalizeName(search.value);
-  overlay.querySelectorAll(".pam-player-choice").forEach(function(row){
-   row.style.display=!q||normalizeName(row.textContent).includes(q)?"grid":"none";
-  });
- });
- overlay.querySelectorAll("[data-tournament-player]").forEach(function(cb){
-  cb.addEventListener("change",function(){
-   const count=overlay.querySelectorAll("[data-tournament-player]:checked").length;
-   const badge=overlay.querySelector("#pamTournamentSelectedCount");
-   if(badge)badge.textContent=count+" selezionati";
-  });
- });
+ const overlay=document.createElement("div");overlay.id="pamTournamentPlayersOverlay";overlay.className="pam-modal-overlay";
+ const selected=new Set((e.playerIds||[]).map(String));
+ function drawRows(){
+  const q=normalizeName((overlay.querySelector("#pamTournamentPlayerSearch")||{}).value||"");
+  const onlySelected=overlay.dataset.onlySelected==="1";
+  const rows=(state.players||[]).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).filter(function(p){
+   if(onlySelected&&!selected.has(String(p.id)))return false;
+   return !q||normalizeName([playerName(p),p.phone,p.email].join(" ")).includes(q);
+  }).map(function(p){
+   const checked=selected.has(String(p.id));
+   return '<div class="pam-player-choice"><input type="checkbox" data-tournament-player="'+esc(p.id)+'" '+(checked?'checked':'')+'><img src="'+esc(pamPlayerPhoto(p))+'" alt=""><span><b>'+esc(playerName(p))+'</b><small>'+esc(p.gender||"")+(p.level?' · '+esc(p.level):'')+'</small></span><div class="pam-player-choice-actions"><button type="button" class="small" data-rename-tournament-player="'+esc(p.id)+'">Rinomina</button>'+(checked?'<button type="button" class="small" data-replace-existing-event-player="'+esc(p.id)+'" data-event-id="'+esc(e.id)+'">Sostituisci</button>':'')+'</div></div>';
+  }).join("");
+  const list=overlay.querySelector("#pamTournamentPlayerList");if(list)list.innerHTML=rows||'<div class="notice">Nessun nominativo corrispondente.</div>';
+  const badge=overlay.querySelector("#pamTournamentSelectedCount");if(badge)badge.textContent=selected.size+" selezionati";
+  const toggle=overlay.querySelector("[data-modal-toggle-selected]");if(toggle)toggle.textContent=onlySelected?"Mostra tutti i giocatori":"Mostra solo i giocatori selezionati";
+  overlay.querySelectorAll("[data-tournament-player]").forEach(function(cb){cb.addEventListener("change",function(){const id=String(cb.getAttribute("data-tournament-player"));if(cb.checked)selected.add(id);else selected.delete(id);drawRows()})});
+ }
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Cerca e seleziona giocatori già presenti oppure crea una nuova anagrafica.</div><div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div><div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica esistente</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome, cognome, telefono o email"></div><button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div><div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button><button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div><div class="pam-player-choice-list" id="pamTournamentPlayerList"></div><div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button></div></div>';
+ document.body.appendChild(overlay);overlay.__pamSelected=selected;overlay.dataset.onlySelected="0";
+ overlay.querySelector("#pamTournamentPlayerSearch").addEventListener("input",drawRows);
+ overlay.querySelector("[data-modal-toggle-selected]").addEventListener("click",function(){overlay.dataset.onlySelected=overlay.dataset.onlySelected==="1"?"0":"1";drawRows()});
+ overlay.querySelector("[data-modal-deselect-all]").addEventListener("click",function(){if(!selected.size){pamToast("Non ci sono giocatori selezionati.","error");return}if(!confirm("Deselezionare tutti i giocatori del torneo? Questa operazione non rigenera ancora le partite."))return;selected.clear();drawRows();pamToast("Selezione azzerata. Premi Salva partecipanti per confermare.","success")});
+ drawRows();
 }
 function pamRenameTournamentPlayer(playerId){
  const p=playerById(playerId);if(!p)return;
@@ -2359,7 +2455,7 @@ function pamResetEventGeneratedData(e){
 function pamRegenerateTournament(id){
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  const overlay=document.getElementById("pamTournamentPlayersOverlay");
- const ids=Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
+ const ids=overlay&&overlay.__pamSelected?Array.from(overlay.__pamSelected):Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
  if(e.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(ids.length)){
   pamToast("Hai selezionato "+ids.length+" giocatori. Per il Rodeo a gettoni sono ammessi 6, 8, 10, 12 oppure 16 giocatori.","error");return;
  }
@@ -2393,14 +2489,20 @@ function pamRegenerateTournament(id){
 
 function pamRegistrationPersonName(person){
  if(!person)return "Giocatore";
+ const d=person.data||person;
  if(person.kind==="existing"){
   const pid=String(person.player_id||person.playerId||person.id||"");
-  const p=(state.players||[]).find(function(x){return String(x.id)===pid});
+  const p=playerById(pid);
   if(p)return playerName(p);
-  return person.name||person.full_name||"Giocatore già presente";
+  const payloadName=((d.firstName||d.first_name||"")+" "+(d.lastName||d.last_name||"")).trim();
+  return payloadName||person.name||person.full_name||"Giocatore già presente";
  }
- const d=person.data||person;
  return ((d.firstName||d.first_name||"")+" "+(d.lastName||d.last_name||"")).trim()||"Nuovo giocatore";
+}
+function pamRegistrationIdentityKey(r){
+ const first=pamRegistrationPersonName(r.primary_payload);
+ const second=r.mode==="pair"?pamRegistrationPersonName(r.partner_payload):"";
+ return normalizeName([first,second].filter(Boolean).sort().join("|"));
 }
 function pamRegistrationStatusLabel(status){
  return {
@@ -2427,41 +2529,50 @@ async function pamOpenRegistrations(id){
  document.body.appendChild(overlay);
 
  const res=await sb.from("public_registrations")
-  .select("id,mode,status,primary_payload,partner_payload,created_at")
+  .select("id,mode,status,primary_payload,partner_payload,primary_player_id,partner_player_id,created_at")
   .eq("tournament_id",String(e.id))
   .order("created_at",{ascending:true});
 
  const body=document.getElementById("pamRegistrationsBody");
  if(!body)return;
- if(res.error){
-  body.innerHTML='<div class="notice error">Esegui il file <b>SUPABASE_ISCRIZIONI_PUBBLICHE_431.sql</b> nel SQL Editor di Supabase.<br>'+esc(res.error.message)+'</div>';
-  return;
- }
- const rows=res.data||[];
- if(!rows.length){
-  body.innerHTML='<div class="notice">Non è ancora arrivata nessuna richiesta.</div>';
-  return;
- }
+ if(res.error){body.innerHTML='<div class="notice error">'+esc(res.error.message)+'</div>';return}
+ const allRows=res.data||[];
+ if(!allRows.length){body.innerHTML='<div class="notice">Non è ancora arrivata nessuna richiesta.</div>';return}
+ const groups=new Map();
+ allRows.forEach(function(r){
+  const key=pamRegistrationIdentityKey(r)||String(r.id);
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(r);
+ });
+ const rows=[];
+ groups.forEach(function(list){
+  list.sort(function(a,b){
+   const rank={accepted:1,imported:1,waitlist:2,new:3,rejected:4};
+   return (rank[a.status]||9)-(rank[b.status]||9)||new Date(b.created_at)-new Date(a.created_at);
+  });
+  const main=list[0];main.__duplicates=list.slice(1);rows.push(main);
+ });
+ rows.sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at)});
  const counts=rows.reduce(function(a,r){a[r.status]=(a[r.status]||0)+1;return a},{});
- body.innerHTML=
-  '<div class="pam-registration-summary">'+rows.length+' richieste · '+
-  (counts.new||0)+' da valutare · '+(counts.accepted||0)+' accettate · '+(counts.waitlist||0)+' in attesa</div>'+
-  rows.map(function(r){
+ body.innerHTML='<div class="pam-registration-summary">'+rows.length+' persone/coppie · '+(allRows.length-rows.length)+' richieste duplicate nascoste · '+(counts.new||0)+' da valutare · '+(counts.accepted||0)+' accettate · '+(counts.waitlist||0)+' in attesa</div>'+rows.map(function(r){
    const first=pamRegistrationPersonName(r.primary_payload);
    const partner=r.mode==="pair"?pamRegistrationPersonName(r.partner_payload):"";
    const pending=r.status==="new"||r.status==="waitlist";
-   return '<div class="item pam-registration-row">'+
-    '<div class="grow"><b>'+esc(first)+(partner?' / '+esc(partner):'')+'</b>'+
-    '<div class="muted">'+(r.mode==="pair"?"ISCRIZIONE IN COPPIA":"ISCRIZIONE INDIVIDUALE")+
-    ' · '+new Date(r.created_at).toLocaleString("it-IT")+'</div>'+
-    '<span class="pill pam-status-'+esc(r.status)+'">'+esc(pamRegistrationStatusLabel(r.status))+'</span></div>'+
-    (pending?'<div class="pam-request-actions">'+
-      '<button class="primary" data-process-registration="'+r.id+'" data-action="accepted" data-event-id="'+e.id+'">ACCETTA</button>'+
-      '<button class="secondary" data-process-registration="'+r.id+'" data-action="waitlist" data-event-id="'+e.id+'">LISTA D’ATTESA</button>'+
-      '<button class="danger" data-process-registration="'+r.id+'" data-action="rejected" data-event-id="'+e.id+'">RIFIUTA</button>'+
-     '</div>':'')+
-   '</div>';
+   const duplicateCount=(r.__duplicates||[]).length;
+   return '<div class="item pam-registration-row"><div class="grow"><b>'+esc(first)+(partner?' / '+esc(partner):'')+'</b><div class="muted">'+(r.mode==="pair"?"ISCRIZIONE IN COPPIA":"ISCRIZIONE INDIVIDUALE")+' · '+new Date(r.created_at).toLocaleString("it-IT")+'</div><span class="pill pam-status-'+esc(r.status)+'">'+esc(pamRegistrationStatusLabel(r.status))+'</span>'+(duplicateCount?'<div class="notice error" style="margin-top:8px">'+duplicateCount+' richiesta/e duplicata/e rilevata/e.</div>':'')+'</div>'+
+    '<div class="pam-request-actions">'+(pending?'<button class="primary" data-process-registration="'+r.id+'" data-action="accepted" data-event-id="'+e.id+'">ACCETTA</button><button class="secondary" data-process-registration="'+r.id+'" data-action="waitlist" data-event-id="'+e.id+'">LISTA D’ATTESA</button><button class="danger" data-process-registration="'+r.id+'" data-action="rejected" data-event-id="'+e.id+'">RIFIUTA</button>':'')+'<button class="danger" data-delete-registration="'+r.id+'" data-event-id="'+e.id+'">ELIMINA RICHIESTA</button>'+(duplicateCount?'<button class="secondary" data-delete-duplicate-registrations="'+(r.__duplicates||[]).map(function(x){return x.id}).join(',')+'" data-event-id="'+e.id+'">ELIMINA DUPLICATI</button>':'')+'</div></div>';
   }).join("");
+}
+async function pamDeleteRegistration(ids,eventId){
+ if(!pamIsAdmin()){pamToast("Solo l’amministratore può eliminare le richieste.","error");return}
+ const list=String(ids||"").split(",").filter(Boolean);if(!list.length)return;
+ if(!confirm(list.length>1?"Eliminare definitivamente le richieste duplicate selezionate?":"Eliminare definitivamente questa richiesta di iscrizione?"))return;
+ for(const id of list){
+  const res=await sb.rpc("admin_delete_public_registration",{p_registration_id:String(id)});
+  if(res.error){pamToast("Eliminazione non riuscita: "+res.error.message,"error");return}
+ }
+ pamToast(list.length>1?"Richieste duplicate eliminate.":"Richiesta eliminata.","success");
+ pamOpenRegistrations(eventId);
 }
 async function pamSetRegistrationCapacity(eventId){
  const e=state.events.find(function(x){return x.id===eventId});if(!e)return;
@@ -2496,6 +2607,8 @@ async function pamProcessRegistration(registrationId,action,eventId){
   if(!ids.length&&Array.isArray(result.player_ids))ids=result.player_ids.filter(Boolean).map(String);
   current.playerIds=current.playerIds||[];
   ids.forEach(function(id){if(!current.playerIds.includes(id))current.playerIds.push(id)});
+  current.playerSnapshots=current.playerSnapshots||{};
+  ids.forEach(function(id){const p=playerById(id);if(p)current.playerSnapshots[String(id)]={id:String(id),firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""}});
   if(current.competitionType==="fixed_pairs"&&ids.length===2){
    current.fixedPairRegistrations=current.fixedPairRegistrations||{};
    current.fixedPairRegistrations[ids[0]]={mode:"pair",partnerId:ids[1]};
@@ -2544,8 +2657,14 @@ function pamOpenSharedTournamentFromUrl(){
  if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";localStorage.setItem(KEY,JSON.stringify(state));render();pamApplyRole()}
 }
 
-function setView(v){state.view=v;save();render()}
+const PAM_VIEW_HISTORY=[];
+function pamCurrentNavState(){return {view:state.view||"home",tab:state.tab||"",eventId:state.currentEventId||"",teamId:state.champTeamId||""}}
+function pamPushViewHistory(){const x=pamCurrentNavState(),last=PAM_VIEW_HISTORY[PAM_VIEW_HISTORY.length-1];if(!last||JSON.stringify(last)!==JSON.stringify(x))PAM_VIEW_HISTORY.push(x);if(PAM_VIEW_HISTORY.length>40)PAM_VIEW_HISTORY.shift()}
+function setView(v){if(v!==state.view)pamPushViewHistory();state.view=v;save();render()}
 function setTab(v){state.tab=v;save();render()}
+function pamGoHome(){if(state.view==="new"&&!confirm("Hai modifiche non salvate. Vuoi tornare alla Home?"))return;PAM_VIEW_HISTORY.length=0;state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save();render()}
+function pamGoBack(){if(state.view==="new"&&!confirm("Hai modifiche non salvate. Vuoi uscire comunque?"))return;const prev=PAM_VIEW_HISTORY.pop();if(prev){state.view=prev.view;state.tab=prev.tab;state.currentEventId=prev.eventId||null;state.champTeamId=prev.teamId||null;save();render();return}if(state.view!=="home"){state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save();render();return}history.length>1?history.back():pamGoHome()}
+
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
  const c=e?clubInfo(e.club):null;
@@ -2556,9 +2675,32 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.4 · Correzioni iscrizioni</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">v8.1.18 · Navigazione universale</span></div>'+
  '</div>';
 }
+function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
+function pamOpenUniversalMenu(){
+ const admin=pamIsAdmin();
+ const items=[['⌂ Home','home'],['🎾 Tornei','events'],['🏆 Campionato','championship']];
+ if(admin){items.push(['👥 Giocatori','players'],['＋ Nuovo torneo','new']);}
+ let html='<div class="pam-universal-menu" id="pamUniversalMenu"><div class="pam-universal-menu-card"><div class="pam-universal-menu-head"><h2>Menu</h2><button class="secondary" data-close-global-menu>Chiudi</button></div><div class="pam-universal-menu-grid">';
+ html+=items.map(function(x){return '<button type="button" data-global-view="'+x[1]+'">'+x[0]+'</button>'}).join('');
+ if(admin)html+='<button type="button" class="primary" data-create-champ-team>＋ Nuova squadra</button>';
+ html+='<button type="button" data-action="print-pdf">📄 PDF / Condividi</button><button type="button" data-global-logout>Esci</button></div></div></div>';
+ document.body.insertAdjacentHTML('beforeend',html);
+}
+
+function pamOrganizerWhatsappV82(eventObj){
+ const phone=String(
+  (eventObj&&(eventObj.organizerPhone||eventObj.phone||eventObj.contactPhone))||
+  (state.settings&&(state.settings.organizerPhone||state.settings.contactPhone))||
+  ""
+ ).replace(/\D/g,"");
+ if(!phone)return pamToast("Numero organizzatore non configurato.","error");
+ const name=(eventObj&&eventObj.name)||"evento Padel Arena";
+ location.href="https://wa.me/"+phone+"?text="+encodeURIComponent("Ciao, ti contatto per "+name+".");
+}
+
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
 }
@@ -2597,12 +2739,15 @@ function home(){
 
 const PAM_CHAMPIONSHIP_TEAMS = [{"id":"aics2027_01","submissionDate":"7/20/2026 13:05:09","teamName":"FIFTEEN RACQUET CLUB","clubLegalName":"FIFTEEN RACQUET CLUB","clubTaxId":"03127460347","clubAddress":"VIA RENZO PEZZANI 47A","clubPostalCode":"43029","clubTown":"TRAVERSETOLO","clubProvince":"PARMA","clubPhone":"3488204373","clubEmail":"nicola77.fagetti@gmail.com","homeCourtAddress":"VIA RENZO PEZZANI 47 43029 TRAVERSETOLO (PR)","homeDay":"Domenica","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"GOFFREDO GATTI","captainBirthDate":"1969-07-02","captainBirthPlace":"PARMA","captainResidence":"SAN POLO D'ENZA","captainPhone":"334/6260938","captainEmail":"goffredo.gatti@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"eb641f337adbd7e419b29c653e1d3b2b"},{"id":"aics2027_02","submissionDate":"7/21/2026 9:46:10","teamName":"CA'MARTA squadra A","clubLegalName":"Ca'Marta sport&fun ssd a rl","clubTaxId":"03384630368","clubAddress":"via Regina Pacis 118","clubPostalCode":"41049","clubTown":"Ssasuolo","clubProvince":"modena","clubPhone":"0536812923","clubEmail":"tommyvale99@gmail.com","homeCourtAddress":"Sassuolo Via Regina Pacis 118 (mo)","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"Dignatici Luca","captainBirthDate":"1973-11-18","captainBirthPlace":"Sassuolo","captainResidence":"Sassuolo","captainPhone":"3357536953","captainEmail":"lucadignatici@hotmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"1e5c655dd0b65dae1543cb557e1c1f5d"},{"id":"aics2027_03","submissionDate":"7/21/2026 9:51:45","teamName":"CA'MARTA squadra B","clubLegalName":"CA'MARTA SPORT&FUN SSD A RL UNI","clubTaxId":"03384630368","clubAddress":"VIA REGINA PACIS 118","clubPostalCode":"41049","clubTown":"SASSUOLO","clubProvince":"MODENA","clubPhone":"0536 812923","clubEmail":"tommyvale99@gmail.com","homeCourtAddress":"SASSUOLO VIA REGINA PACIS 118 (mo)","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"VALENTI TOMMASO","captainBirthDate":"1989-09-21","captainBirthPlace":"CARPI","captainResidence":"CARPI","captainPhone":"3426480454","captainEmail":"tommyvale99@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"f82739604639840f3993414517315476"},{"id":"aics2027_04","submissionDate":"7/21/2026 9:56:08","teamName":"CA'MARTA squadra C","clubLegalName":"Ca'Marta sport&fun ssd a rl uni","clubTaxId":"03384630368","clubAddress":"Regina Pacis 118","clubPostalCode":"41049","clubTown":"Sassuolo","clubProvince":"MODENA","clubPhone":"0536812923","clubEmail":"tommyvale99@gmail.com","homeCourtAddress":"SASSUOLO VIA REGINA PACIS 118 (MO)","homeDay":"Sabato","homeTime":"16:00 SOLO SABATO E DOMENICA","captainName":"CANALI MATTEO","captainBirthDate":"1983-11-17","captainBirthPlace":"Sassuolo","captainResidence":"Prignano s/s (MO)","captainPhone":"3282280304","captainEmail":"mcanali83@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"27a2f7521b705337255ac794e591d916"},{"id":"aics2027_05","submissionDate":"7/21/2026 11:54:09","teamName":"Pol Nonantola Padel","clubLegalName":"Polisportiva Nonantola A.D.","clubTaxId":"80015050364","clubAddress":"Via Mazzini 34","clubPostalCode":"41015","clubTown":"Nonantola","clubProvince":"Modena","clubPhone":"3479565881","clubEmail":"polnonantola.padel@gmail.com","homeCourtAddress":"Via Risorgimento 50, 41015 Nonantola","homeDay":"Venerdi","homeTime":"20:00 SOLO VENERDÌ","captainName":"Marco Meschiari","captainBirthDate":"1981-09-15","captainBirthPlace":"Modena","captainResidence":"Modena","captainPhone":"3479565881","captainEmail":"marco.meschiari81@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"9548bac08b29fc4b5b25f2cdced44122"},{"id":"aics2027_06","submissionDate":"7/21/2026 17:07:14","teamName":"Padel Prime La Patria Carpi","clubLegalName":"S.G.La Patria 1879 ASD","clubTaxId":"90003660363","clubAddress":"Via Nuova Ponente 24/H","clubPostalCode":"41012","clubTown":"Carpi","clubProvince":"Modena","clubPhone":"059644070","clubEmail":"amministrazione.lapatria@gmail.com","homeCourtAddress":"Via Nuova Ponente 24/H, 41012, Carpi (MO)","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"Marco Gradellini","captainBirthDate":"1993-01-05","captainBirthPlace":"Carpi","captainResidence":"Carpi","captainPhone":"3467192364","captainEmail":"marco.grade@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"8968637df0729fb0ca7daa67ed41cf26"},{"id":"aics2027_07","submissionDate":"7/22/2026 17:39:24","teamName":"CT CORREGGIO 2","clubLegalName":"Circolo Tennis Correggio ASD","clubTaxId":"91010210358","clubAddress":"via Bruto Terrachini 2","clubPostalCode":"42015","clubTown":"Correggio","clubProvince":"Reggio Emilia","clubPhone":"0522637164","clubEmail":"direzione@ctcorreggio.it","homeCourtAddress":"via Bruto Terrachini 2 - 42015 Correggio (RE)","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"Maurizio Musso","captainBirthDate":"1972-07-11","captainBirthPlace":"Asti","captainResidence":"Correggio","captainPhone":"3470887572","captainEmail":"elemaeri@alice.it","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"be07b2c3818295a3b08cdbf40536a6da"},{"id":"aics2027_08","submissionDate":"7/27/2026 14:42:10","teamName":"Phoenix Cavriago","clubLegalName":"ASD Phoenix Cavriago","clubTaxId":"02500230350","clubAddress":"Via Torre n.3","clubPostalCode":"42025","clubTown":"Cavriago","clubProvince":"REGGIO NELL'EMILIA","clubPhone":"3478979048","clubEmail":"rocchi.marco@ognibene.com","homeCourtAddress":"Via Cantonazzo n.1, Cavriago 42025","homeDay":"Sabato","homeTime":"16:00 SOLO SABATO E DOMENICA","captainName":"Zecchetti Patrick","captainBirthDate":"1990-09-07","captainBirthPlace":"Montecchio Emilia","captainResidence":"Cavriago (RE) - 42025","captainPhone":"3498945499","captainEmail":"patrickz@libero.it","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"ef291d90603a3e6407cd3b444ee7f38d"},{"id":"aics2027_09","submissionDate":"7/27/2026 15:15:29","teamName":"MIRAPADEL CENTER","clubLegalName":"MIRAPADEL CENTER","clubTaxId":"04023790365","clubAddress":"VIA 2 GIUGNO 26","clubPostalCode":"41037","clubTown":"MIRANDOLA","clubProvince":"MODENA","clubPhone":"3428340667","clubEmail":"info@mirapadelcenter.it","homeCourtAddress":"VIA 2 GIUGNO 26, 41037 MIRANDOLA (MO)","homeDay":"Domenica","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"LAGONEGRO ROSARIO","captainBirthDate":"1976-11-15","captainBirthPlace":"MILANO","captainResidence":"MIRANDOLA","captainPhone":"3406686972","captainEmail":"info@mirapadelcenter.it","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"be928a8283eba98180f5c62164f1e838"},{"id":"aics2027_10","submissionDate":"7/28/2026 8:19:14","teamName":"CT CORREGGIO Serie A","clubLegalName":"CIRCOLO TENNIS CORREGGIO ASD","clubTaxId":"91010210358","clubAddress":"B.TERRACHINI 2","clubPostalCode":"42015","clubTown":"CORREGGIO","clubProvince":"REGGIO EMILIA","clubPhone":"0522 637164","clubEmail":"ctcorreggio@wansport.com","homeCourtAddress":"Via B. Terrachini 2, 42015 Correggio RE","homeDay":"Sabato","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"VEZZADINI DAVIDE","captainBirthDate":"1977-02-23","captainBirthPlace":"CORREGGIO","captainResidence":"CORREGGIO","captainPhone":"334 6886932","captainEmail":"vezzadini77@gmail.com","series":"Serie A","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"7d425b9a7e5fb27b622f0d6d734622bc"},{"id":"aics2027_11","submissionDate":"7/28/2026 11:28:10","teamName":"VILLAGE PADDLE MODENA","clubLegalName":"MODENA PADDLE CLUB SSDRL","clubTaxId":"03834490363","clubAddress":"STRADA BELLARIA 127/1","clubPostalCode":"41126","clubTown":"MODENA","clubProvince":"MODENA","clubPhone":"3512209713","clubEmail":"tornei.villagepaddle@gmail.com","homeCourtAddress":"STRADA CAVEZZO 27,  41126 BAGGIOVARA (MO)","homeDay":"Domenica","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"ENZO ZARA","captainBirthDate":"1983-03-21","captainBirthPlace":"FORMIGINE (MO)","captainResidence":"FORMIGINE (MO)","captainPhone":"3397039671","captainEmail":"enzo.zara83@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"197e17dbebc13cffca9f3e02098ba27b"},{"id":"aics2027_12","submissionDate":"7/28/2026 15:10:56","teamName":"B&B TEAM - Bope & Bullet","clubLegalName":"PADEL ARENA SRL","clubTaxId":"02906640343","clubAddress":"Via Ernesto Ghirarduzzi 2","clubPostalCode":"43122","clubTown":"PARMA","clubProvince":"PARMA","clubPhone":"+393534253475","clubEmail":"proparmapadelarena@gmail.com","homeCourtAddress":"PRO GREEN STR. MARTINELLA 328 VIGATTO 43124 PR","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"NICOLA GROSSI","captainBirthDate":"1965-07-24","captainBirthPlace":"PARMA","captainResidence":"PARMA","captainPhone":"3357443152","captainEmail":"nicolagrossi659@gmail.com","series":"Serie A + Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"7ef1717ead2c959510ca1ad361968d7f"},{"id":"aics2027_13","submissionDate":"7/28/2026 23:21:37","teamName":"PRO PARMA LOBOS","clubLegalName":"PADEL ACCADEMY SSDRL","clubTaxId":"02913830341","clubAddress":"Via Ernesto Ghirarduzzi 2","clubPostalCode":"43122","clubTown":"Parma","clubProvince":"Parma","clubPhone":"3534253475","clubEmail":"proparmapadelarena@gmail.com","homeCourtAddress":"Via Ernesto Ghirarduzzi 2 (Parma) cap 43122","homeDay":"Venerdi","homeTime":"20:00 SOLO VENERDÌ","captainName":"Davide Chierici","captainBirthDate":"1968-02-18","captainBirthPlace":"Parma","captainResidence":"Montechiarugolo","captainPhone":"3313534301","captainEmail":"crociato68@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"b7181140951230695d6ea142595d9c7b"},{"id":"aics2027_14","submissionDate":"7/29/2026 7:42:33","teamName":"PRO PARMA TIGERS","clubLegalName":"PADEL ACADEMY SSDRL","clubTaxId":"02913830341","clubAddress":"ERNESTO GHIRARDUZZI, 2","clubPostalCode":"43122","clubTown":"PARMA","clubProvince":"PARMA","clubPhone":"0521772686","clubEmail":"proparmapadelarena@gmail.com","homeCourtAddress":"PARMA, VIA ERNESTO GHIRARDUZZI, 2 43122","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"FABRIZIO VENTURINI","captainBirthDate":"1972-09-29","captainBirthPlace":"PARMA","captainResidence":"PARMA","captainPhone":"3382666694","captainEmail":"disossoventurini@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"22220d9daa1a9bf4d66f92cb0038487a"},{"id":"aics2027_15","submissionDate":"7/29/2026 8:39:17","teamName":"Punto G Nera","clubLegalName":"ASD Punto G Padel","clubTaxId":"00702500349","clubAddress":"Via Sonnino 21","clubPostalCode":"43126","clubTown":"Parma","clubProvince":"Parma","clubPhone":"342 166 7082","clubEmail":"segreteria@puntopadel.it","homeCourtAddress":"Via Sonnino 21 - 43126 Parma","homeDay":"Venerdi","homeTime":"20:00 SOLO VENERDÌ","captainName":"Massimo Bosi","captainBirthDate":"1969-10-31","captainBirthPlace":"Parma","captainResidence":"Parma","captainPhone":"3356690914","captainEmail":"mbosilavoro@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"482fc05e38f16e30b19346ad48f00e21"},{"id":"aics2027_16","submissionDate":"7/29/2026 8:59:46","teamName":"Punto G White","clubLegalName":"ASD Punto G Padel","clubTaxId":"00702500349","clubAddress":"Via Sonnino 21","clubPostalCode":"43126","clubTown":"Parma","clubProvince":"Parma","clubPhone":"342 166 7082","clubEmail":"segreteria@puntopadel.it","homeCourtAddress":"Via Sonnino 21 - 43126 Parma","homeDay":"Venerdi","homeTime":"20:00 SOLO VENERDÌ","captainName":"Francesco Pizzi","captainBirthDate":"1980-02-18","captainBirthPlace":"San Secondo Parmense","captainResidence":"Roccabianca","captainPhone":"3483616933","captainEmail":"francescopizzi80@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"8e6e3ccf4f94c517c0ac869c1fbfe4c7"},{"id":"aics2027_17","submissionDate":"7/29/2026 9:22:59","teamName":"CANI SCIOLTI","clubLegalName":"PADEL CLUB REGGIOLO SRLSD","clubTaxId":"02949130351","clubAddress":"Strada Gavello n.3","clubPostalCode":"42046","clubTown":"Reggiolo","clubProvince":"Reggio Emilia","clubPhone":"3287469448","clubEmail":"info@padelclubreggiolo.com","homeCourtAddress":"Strada Gavello n.3, Reggiolo (RE) 42046","homeDay":"Domenica","homeTime":"11:00 SOLO DOMENICA","captainName":"Gabriele Palmieri","captainBirthDate":"1968-05-24","captainBirthPlace":"Campagnola Emilia","captainResidence":"Campagnola Emilia","captainPhone":"3481520720","captainEmail":"gpalmieri@ag-informatica.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"9860922d476ad5fcefd8f2ba49ceb75d"},{"id":"aics2027_18","submissionDate":"7/29/2026 12:18:22","teamName":"PALA RBG CREW","clubLegalName":"RACQUET BALL GAMES SSDaRL","clubTaxId":"03121830354","clubAddress":"VIA DEI PRATONIERI 7","clubPostalCode":"42124","clubTown":"REGGIO EMILIA","clubProvince":"REGGIO EMILIA","clubPhone":"3275612828","clubEmail":"racquetball@tim.it","homeCourtAddress":"VIA ERNESTO SPALLANZANI 8/A - 42124","homeDay":"Domenica","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"RINALDI MARCO","captainBirthDate":"1980-11-20","captainBirthPlace":"FORMIGINE (MO)","captainResidence":"REGGIO EMILIA","captainPhone":"3337188334","captainEmail":"ing.rinaldi.marco@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"a4fe0e70c3a61f4ccdef016ea48943f1"},{"id":"aics2027_19","submissionDate":"7/29/2026 12:49:13","teamName":"PLAYA PADEL","clubLegalName":"PLAYA ASD","clubTaxId":"90054040366","clubAddress":"VIA IMPERIALE 22/A","clubPostalCode":"41037","clubTown":"MIRANDOLA","clubProvince":"MODENA","clubPhone":"3382130665","clubEmail":"measportsrl@gmail.com","homeCourtAddress":"Via imperiale 22/a 41037 Mirandola (MO)","homeDay":"Domenica","homeTime":"10:00 SOLO DOMENICA","captainName":"FAGLIONI ENRICO","captainBirthDate":"1970-09-14","captainBirthPlace":"MIRANDOLA (MO)","captainResidence":"CAVEZZO (MO)","captainPhone":"3382130665","captainEmail":"enricofaglioni70@gmail.com","series":"Serie B + Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"7357a7a2dcc1b11c0ea6f3b6a4d7a8cc"},{"id":"aics2027_20","submissionDate":"7/29/2026 21:50:04","teamName":"ALL STAR PADEL -SERIE C","clubLegalName":"ALL STAR PADEL SSDRL","clubTaxId":"04028950360","clubAddress":"VIA LAVACCHI 1635","clubPostalCode":"41038","clubTown":"SAN FELICE SUL PANARO","clubProvince":"MODENA","clubPhone":"3395796474","clubEmail":"amministrazione.allstarpadel@gmail.com","homeCourtAddress":"VIA LAVACCHI 1635, 41038 SAN FELICE SUL PANARO","homeDay":"Sabato","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"ENRICO LEONELLI","captainBirthDate":"1979-01-21","captainBirthPlace":"BONDENO","captainResidence":"BONDENO","captainPhone":"3403669735","captainEmail":"enrico.allstarpadel@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"bd25d724f413b7895c5b251ad38d20a6"},{"id":"aics2027_21","submissionDate":"7/30/2026 13:00:16","teamName":"La quercia B","clubLegalName":"Ssd","clubTaxId":"02671840201","clubAddress":"Stradello Opi 7","clubPostalCode":"46026","clubTown":"Suzzara","clubProvince":"Mantova","clubPhone":"3498698003","clubEmail":"laquerciapadel@gmail.it","homeCourtAddress":"Stradello Opi 7 46029 suzzara","homeDay":"Sabato","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"Stefano Storchi","captainBirthDate":"2026-07-30","captainBirthPlace":"Suzzara","captainResidence":"Suzzara","captainPhone":"3358433367","captainEmail":"stefano_storchi@virgilio.it","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"321e31ec5dcc9ef11bd229e1effc4822"},{"id":"aics2027_22","submissionDate":"7/30/2026 13:02:23","teamName":"HORMIGA PADEL CLUB","clubLegalName":"ASD HORMIGA","clubTaxId":"CF 94212630365","clubAddress":"VIA PANARO 193","clubPostalCode":"41056","clubTown":"SAVIGNANO SUL PANARO","clubProvince":"MODENA","clubPhone":"3240413208","clubEmail":"hormigapadel@gmail.com","homeCourtAddress":"via panaro 193, Formica di Savignano sul Panaro","homeDay":"Domenica","homeTime":"11:00 SOLO DOMENICA","captainName":"MAURO FIORANI","captainBirthDate":"1964-11-08","captainBirthPlace":"MODENA","captainResidence":"MODENA","captainPhone":"3358238780","captainEmail":"fioranimauro64@gmal.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"1d3ce08606b3a37d3a880a33af177711"},{"id":"aics2027_23","submissionDate":"7/30/2026 13:04:43","teamName":"Quercia C","clubLegalName":"Ssd","clubTaxId":"02671840201","clubAddress":"Stradello Opi 7","clubPostalCode":"46029","clubTown":"Suzzara","clubProvince":"Mantova","clubPhone":"3498698003","clubEmail":"laquerciapadel@gmail.it","homeCourtAddress":"Stradello Opi 7 46029 suzzara","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"Stefano Storchi","captainBirthDate":"2026-07-14","captainBirthPlace":"Suzzara","captainResidence":"Mantova","captainPhone":"3358433367","captainEmail":"stefano_storchi@virgilio.it","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"9b652470e6cae54b99aba9e12013cba2"},{"id":"aics2027_24","submissionDate":"7/30/2026 14:24:29","teamName":"Padel San Donnino A","clubLegalName":"Padel San Donnino S.S.D a R.L.","clubTaxId":"04053390367","clubAddress":"Via della Genziana, 18","clubPostalCode":"41126","clubTown":"Modena","clubProvince":"Modena","clubPhone":"3666358467","clubEmail":"padelsandonnino@gmail.com","homeCourtAddress":"Via della Genziana, 18, 41126","homeDay":"Sabato","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"Francesco Teoli","captainBirthDate":"2002-10-01","captainBirthPlace":"Modena","captainResidence":"Modena","captainPhone":"3472612643","captainEmail":"francesco.teoli09@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"452df60bf8a25ddd65124021e140d479"},{"id":"aics2027_25","submissionDate":"7/30/2026 14:38:02","teamName":"Padel San Donnino B","clubLegalName":"Padel San Donnino S.S.D. a R.L.","clubTaxId":"04053390367","clubAddress":"Via della Genziana 18","clubPostalCode":"41126","clubTown":"Modena","clubProvince":"Modena","clubPhone":"3666358467","clubEmail":"padelsandonnino@gmail.com","homeCourtAddress":"Via della Genziana 18, 41126","homeDay":"Domenica","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"Francesco Teoli","captainBirthDate":"2002-10-01","captainBirthPlace":"Modena","captainResidence":"Modena","captainPhone":"3472612643","captainEmail":"francesco.teoli09@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"68c779bcfdb353fe25005b757bc49f13"},{"id":"aics2027_26","submissionDate":"7/30/2026 21:28:13","teamName":"Qui Pádel C","clubLegalName":"Qui Padel & Fun SSD","clubTaxId":"02674970203","clubAddress":"G. Di Vittorio 49","clubPostalCode":"46026","clubTown":"Quistello","clubProvince":"MN","clubPhone":"3458345177","clubEmail":"quipadel@gmail.com","homeCourtAddress":"via Allende 7, 46026 Quistello MN","homeDay":"Domenica","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"Emiliano Verolla","captainBirthDate":"1978-10-11","captainBirthPlace":"Formia LT","captainResidence":"Carpi","captainPhone":"3458345177","captainEmail":"emilioverolla11@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"26715c3fd053394ceb51c3c5579be8d8"},{"id":"aics2027_27","submissionDate":"7/30/2026 22:23:29","teamName":"EDEN ACADEMY SERIE C","clubLegalName":"EDEN SPORT & SALUTE","clubTaxId":"02310620352","clubAddress":"VIA G.BALLA 6","clubPostalCode":"42124","clubTown":"REGGIO EMILIA","clubProvince":"RE","clubPhone":"0522944244","clubEmail":"info@edenbenessere.it","homeCourtAddress":"VIA G.BALLA 6 42124 REGGIO EMILIA","homeDay":"Domenica","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"AUGUSTO AUBRY","captainBirthDate":"1974-09-27","captainBirthPlace":"NAPOLI","captainResidence":"SCANDIANO","captainPhone":"3405918068","captainEmail":"augustoaubry@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"cb5ff81c53eb60444a471cb80d6f2a27"},{"id":"aics2027_28","submissionDate":"7/31/2026 0:05:43","teamName":"BLUE PADEL CARPI C","clubLegalName":"BLUE PADEL CARPI","clubTaxId":"03955960368","clubAddress":"PIAZZALE DELLE PISCINE 4","clubPostalCode":"41012","clubTown":"CARPI","clubProvince":"modena","clubPhone":"MO","clubEmail":"amministrazione.bluepadelcarpi@gmail.com","homeCourtAddress":"Piazzale delle piscine 4 carpi 41012","homeDay":"Sabato","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"Maria Pia Calabrese","captainBirthDate":"1991-09-30","captainBirthPlace":"carpi","captainResidence":"carpi","captainPhone":"3333208040","captainEmail":"pia@maglificiolsm.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"fc74338b71f7af2969764bcb46af624c"},{"id":"aics2027_29","submissionDate":"7/31/2026 0:10:17","teamName":"BLUE PADEL CARPI B","clubLegalName":"BLUE PADEL CARPI","clubTaxId":"03955960368","clubAddress":"PIAZZALE DELLE PISCINE 4","clubPostalCode":"41012","clubTown":"CARPI","clubProvince":"MODENA","clubPhone":"3333208040","clubEmail":"pia@maglificiolsm.com","homeCourtAddress":"PIAZZALE DELLE PISCINE 4 CARPI 41012","homeDay":"Venerdi","homeTime":"20:00 SOLO VENERDÌ","captainName":"MARIA PIA CALABRESE","captainBirthDate":"1991-09-30","captainBirthPlace":"CARPI","captainResidence":"CARPI","captainPhone":"3333208040","captainEmail":"pia@maglificiolsm.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"7d069a1fbf11a1d1a8a6d086ab0037fe"},{"id":"aics2027_30","submissionDate":"7/31/2026 15:32:43","teamName":"EDEN PDEL 1","clubLegalName":"EDEN SPORT SCSD","clubTaxId":"02310620352","clubAddress":"via G.Balla, 6","clubPostalCode":"42124","clubTown":"Reggio nell'Emilia","clubProvince":"REGGIO EMILIA","clubPhone":"0522944244","clubEmail":"corrado.verzini@gmail.com","homeCourtAddress":"via G.Balla 6 - Reggio nell'Emilia","homeDay":"Domenica","homeTime":"15:00 SOLO SABATO E DOMENICA","captainName":"CORRADO VERZINI","captainBirthDate":"1973-07-07","captainBirthPlace":"TERNI","captainResidence":"REGGIO NELL'EMILIA","captainPhone":"3463904590","captainEmail":"corrado.verzini@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"9bfab7901c2ae5ed99959b4027397abd"},{"id":"aics2027_31","submissionDate":"7/31/2026 15:50:37","teamName":"ALL STAR PADEL - SERIE B","clubLegalName":"ALL STAR PADEL SSDRL","clubTaxId":"04028950360","clubAddress":"VIA LAVACCHI 1635","clubPostalCode":"41038","clubTown":"SAN FELICE SUL PANARO","clubProvince":"MODENA","clubPhone":"3894563547","clubEmail":"amministrazione.allstarpadel@gmail.com","homeCourtAddress":"VIA LAVACCHI 1635, 41038 SAN FELICE S/P (MO)","homeDay":"Sabato","homeTime":"14:00 SOLO SABATO E DOMENICA","captainName":"ENRICO LEONELLI","captainBirthDate":"1979-01-21","captainBirthPlace":"BONDENO (FE)","captainResidence":"BONDENO (FE)","captainPhone":"3403669735","captainEmail":"enrico.allstarpadel@gmail.com","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"10f904a4cbe0b34d735e653c1ed50686"},{"id":"aics2027_32","submissionDate":"7/31/2026 18:06:36","teamName":"NEWPADEL SOLIERA B","clubLegalName":"ASD NEWPADEL SOLIERA","clubTaxId":"90055660360","clubAddress":"Via Scarlatti n° 58/a","clubPostalCode":"41019","clubTown":"SOLIERA","clubProvince":"MODENA","clubPhone":"344 1350801","clubEmail":"padel@newpadelsoliera.it","homeCourtAddress":"Via Scarlatti n° 58/a 41019 SOLIERA","homeDay":"Domenica","homeTime":"10:00 SOLO DOMENICA","captainName":"CASTELLUCCI ANDREA","captainBirthDate":"1970-05-10","captainBirthPlace":"COLLEFERRO ROMA","captainResidence":"CORREGGIO","captainPhone":"371 3165453","captainEmail":"padel@newpadelsoliera.it","series":"Serie B","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"71c462f8131f867e1e272f622550c5f0"},{"id":"aics2027_33","submissionDate":"7/31/2026 18:18:59","teamName":"NEWPADEL SOLIERA C","clubLegalName":"ASD NEWPADEL SOLIERA","clubTaxId":"90055660360","clubAddress":"Via Scarlatti 58/a","clubPostalCode":"41019","clubTown":"SOLIERA","clubProvince":"MODENA","clubPhone":"344 1350801","clubEmail":"padel@padelsoliera.it","homeCourtAddress":"Via Scarlatti n° 58/a","homeDay":"Domenica","homeTime":"10:00 SOLO DOMENICA","captainName":"CASTELLUCCI ANDREA","captainBirthDate":"1970-05-10","captainBirthPlace":"COLLEFERRO ROMA","captainResidence":"CORREGGIO","captainPhone":"371 31654543","captainEmail":"padel@newpadelsoliera.it","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"e9c93d9a8147d7e49deeaef0a912a8d7"},{"id":"aics2027_34","submissionDate":"8/1/2026 13:10:11","teamName":"PUNTO G GREY","clubLegalName":"ASD PUNTO G PADEL","clubTaxId":"00702500349","clubAddress":"Via Sonnino 21","clubPostalCode":"43126","clubTown":"PARMA","clubProvince":"PARMA","clubPhone":"342 166 7082","clubEmail":"segreteria@puntopadel.it","homeCourtAddress":"Via Sonnino 21 43126 Parma","homeDay":"Sabato","homeTime":"17:00 SOLO SABATO E DOMENICA","captainName":"Cagnin Andrea","captainBirthDate":"1968-01-25","captainBirthPlace":"Parma","captainResidence":"Montechiarugolo","captainPhone":"3351831590","captainEmail":"ilcagno@gmail.com","series":"Serie C","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"a7481e02c0e6beec0db2ae1b7533c2e2"},{"id":"aics2027_35","submissionDate":"8/1/2026 15:59:38","teamName":"DOPPIO PADEL MOTTEGGIANA SERIE A","clubLegalName":"Asd Doppio Padel Motteggina","clubTaxId":"02737930202","clubAddress":"Ai Enrico Fermi 2","clubPostalCode":"46020","clubTown":"MOTTEGGIANA","clubProvince":"MN","clubPhone":"3356053551","clubEmail":"alessio@comesasnc.com","homeCourtAddress":"VIA ENRICO FERMI 2, 46020 MOTTEGGIANA (MN)","homeDay":"Sabato","homeTime":"16:00 SOLO SABATO E DOMENICA","captainName":"Lipreri Alessio","captainBirthDate":"1972-07-26","captainBirthPlace":"Mantova","captainResidence":"Luzzara","captainPhone":"3356053551","captainEmail":"alessio@comesasnc.com","series":"Serie A","regulationAccepted":true,"privacyAccepted":true,"status":"Iscritta","rosterStatus":"Da compilare","captainAccessEnabled":false,"inviteToken":"355a7e4be7767860b16e3a22e23cebde"}];
 const PAM_CHAMP_TEAMS_KEY="pam_championship_2027_team_overrides";
+const PAM_CHAMP_CUSTOM_TEAMS_KEY="pam_championship_2027_custom_teams";
+function pamChampCustomTeams(){try{const v=JSON.parse(localStorage.getItem(PAM_CHAMP_CUSTOM_TEAMS_KEY)||"[]");return Array.isArray(v)?v:[]}catch(_){return []}}
+function pamSaveChampCustomTeams(v){localStorage.setItem(PAM_CHAMP_CUSTOM_TEAMS_KEY,JSON.stringify(v||[]))}
 function pamChampOverrides(){
  try{return JSON.parse(localStorage.getItem(PAM_CHAMP_TEAMS_KEY)||"{}")}catch(_){return {}}
 }
 function pamChampTeams(){
  const overrides=pamChampOverrides();
- return PAM_CHAMPIONSHIP_TEAMS.map(function(t){return Object.assign({},t,overrides[t.id]||{})});
+ return PAM_CHAMPIONSHIP_TEAMS.concat(pamChampCustomTeams()).map(function(t){return Object.assign({},t,overrides[t.id]||{})});
 }
 function pamChampTeam(id){return pamChampTeams().find(function(t){return t.id===id})||null}
 function pamTeamLogo(t){return t&&t.teamLogoUrl?t.teamLogoUrl:""}
@@ -2615,9 +2760,32 @@ function pamSaveChampTeam(id,patch){
  all[id]=Object.assign({},all[id]||{},patch||{});
  localStorage.setItem(PAM_CHAMP_TEAMS_KEY,JSON.stringify(all));
 }
-function pamCaptainPortalUrl(team){
+function pamCaptainPortalUrl(team,tokenOverride){
  const base=location.href.split("?")[0].replace(/index\.html?$/i,"").replace(/\/$/,"");
- return base+"/captain-portal.html?invite="+encodeURIComponent(team.inviteToken);
+ const token=tokenOverride||team?.inviteToken||team?.invite_token||"";
+ return base+"/captain-portal.html?invite="+encodeURIComponent(token);
+}
+async function pamPrepareCaptainPortal(team){
+ if(!team)throw new Error("Squadra non trovata.");
+ if(!pamIsAdmin()||!PAM_SESSION)throw new Error("Accedi come amministratore per preparare il portale capitano.");
+ let token=String(team.inviteToken||team.invite_token||"").trim();
+ if(!token)token=(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):(Date.now().toString(16)+Math.random().toString(16).slice(2)));
+ const lookup=await sb.from("championship_teams").select("id,invite_token,access_enabled").eq("id",team.id).maybeSingle();
+ if(lookup.error)throw lookup.error;
+ if(lookup.data){
+  token=String(lookup.data.invite_token||token);
+  const upd=await sb.from("championship_teams").update({invite_token:token,access_enabled:true,updated_at:new Date().toISOString()}).eq("id",team.id).select("id,invite_token").single();
+  if(upd.error)throw upd.error;
+  token=String(upd.data?.invite_token||token);
+ }else{
+  const row={id:team.id,team_name:team.teamName||"Squadra",series:team.series||"",club_legal_name:team.clubLegalName||"",club_tax_id:team.clubTaxId||"",club_address:team.clubAddress||"",club_postal_code:team.clubPostalCode||"",club_town:team.clubTown||"",club_province:team.clubProvince||"",club_phone:team.clubPhone||"",club_email:team.clubEmail||"",home_court_address:team.homeCourtAddress||"",home_day:team.homeDay||"",home_time:team.homeTime||"",captain_name:team.captainName||"",captain_email:team.captainEmail||"",captain_phone:team.captainPhone||"",access_enabled:true,invite_token:token,roster_status:team.rosterStatus||"Da compilare",status:team.status||"Iscritta",updated_at:new Date().toISOString()};
+  const ins=await sb.from("championship_teams").insert(row).select("id,invite_token").single();
+  if(ins.error)throw ins.error;
+  token=String(ins.data?.invite_token||token);
+ }
+ pamSaveChampTeam(team.id,{inviteToken:token,captainAccessEnabled:true});
+ team.inviteToken=token;team.captainAccessEnabled=true;
+ return pamCaptainPortalUrl(team,token);
 }
 function pamSeriesCount(label){
  return pamChampTeams().filter(function(t){return String(t.series).includes(label)}).length;
@@ -2625,6 +2793,7 @@ function pamSeriesCount(label){
 function pamOfficialTeamsList(){
  const teams=pamChampTeams();
  return '<section class="card"><div class="pam-v5-section-title"><div><h2>Squadre regolarmente iscritte</h2><small>Clicca su una squadra per aprirne la pagina. Le impostazioni amministrative sono disponibili soltanto all’interno della scheda.</small></div><span class="pam-v5-badge">'+teams.length+' ISCRIZIONI</span></div>'+
+ (pamIsAdmin()?'<div class="row" style="margin-bottom:12px"><button class="primary" data-create-champ-team>＋ CREA NUOVA SQUADRA</button></div>':'')+
  '<div class="pam-team-search"><input id="champTeamSearch" type="search" placeholder="Cerca squadra, club, capitano, serie..."><select id="champSeriesFilter"><option value="">Tutte le serie</option><option>Serie A</option><option>Serie B</option><option>Serie C</option></select></div>'+
  '<div id="champTeamRows">'+teams.map(function(t){
   const search=[t.teamName,t.clubLegalName,t.captainName,t.captainEmail,t.captainPhone,t.series,t.homeCourtAddress,t.clubTown].join(" ").toLowerCase();
@@ -2690,6 +2859,26 @@ function championshipView(){
   '</section>'+pamAicsCompetitionsView()+pamOfficialTeamsList()+
  '</div>';
 }
+function pamNewChampTeamView(){
+ if(!pamIsAdmin())return header("Accesso negato","Solo amministratore")+'<section class="card"><div class="notice error">Solo l’amministratore può creare nuove squadre.</div></section>';
+ const f=function(label,id,type,full){return '<div class="field '+(full?'full':'')+'"><label>'+label+'</label><input id="'+id+'" type="'+(type||'text')+'"></div>'};
+ return header("Nuova squadra","AICS Padel Championship 2027")+'<section class="card"><h2>Crea nuova squadra</h2><div class="notice">La squadra sarà inserita nel Campionato e automaticamente tra le partecipanti alla Coppa Italia. Potrà accedere alla Supercoppa soltanto ottenendo il diritto sportivo previsto.</div><div class="pam-new-team-form">'+
+ f('Nome squadra *','newTeamName')+'<div class="field"><label>Serie *</label><select id="newTeamSeries"><option>Serie A</option><option>Serie B</option><option>Serie C</option></select></div>'+f('Ragione sociale club','newClubLegal')+f('Codice fiscale / P. IVA','newClubTax')+f('Indirizzo club','newClubAddress',null,true)+f('CAP','newClubPostal')+f('Comune','newClubTown')+f('Provincia','newClubProvince')+f('Telefono club','newClubPhone','tel')+f('Email club','newClubEmail','email')+f('Indirizzo completo campo di casa','newHomeAddress',null,true)+f('Giorno gare interne','newHomeDay')+f('Orario gare interne','newHomeTime')+f('Nome e cognome capitano *','newCaptainName')+f('Telefono capitano','newCaptainPhone','tel')+f('Email capitano','newCaptainEmail','email')+'</div><div class="row" style="margin-top:14px"><button class="primary" data-save-new-champ-team>SALVA NUOVA SQUADRA</button><button class="secondary" data-view="championship">Annulla</button></div></section>';
+}
+async function pamCreateChampTeam(){
+ if(!pamIsAdmin()){pamToast('Solo l’amministratore può creare squadre.','error');return}
+ const val=function(id){return (document.getElementById(id)?.value||'').trim()};
+ const teamName=val('newTeamName'),series=val('newTeamSeries'),captainName=val('newCaptainName');
+ if(!teamName||!series||!captainName){pamToast('Compila nome squadra, serie e capitano.','error');return}
+ const id='aics2027_custom_'+Date.now();
+ const team={id:id,submissionDate:new Date().toLocaleString('it-IT'),teamName:teamName,clubLegalName:val('newClubLegal'),clubTaxId:val('newClubTax'),clubAddress:val('newClubAddress'),clubPostalCode:val('newClubPostal'),clubTown:val('newClubTown'),clubProvince:val('newClubProvince'),clubPhone:val('newClubPhone'),clubEmail:val('newClubEmail'),homeCourtAddress:val('newHomeAddress'),homeDay:val('newHomeDay'),homeTime:val('newHomeTime'),captainName:captainName,captainPhone:val('newCaptainPhone'),captainEmail:val('newCaptainEmail'),series:series,regulationAccepted:true,privacyAccepted:true,status:'Iscritta',rosterStatus:'Da compilare',captainAccessEnabled:false,inviteToken:(crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):(Date.now().toString(16)+Math.random().toString(16).slice(2)))};
+ const list=pamChampCustomTeams();list.push(team);pamSaveChampCustomTeams(list);
+ if(PAM_SESSION&&pamCloudReady){
+  const remote={id:id,team_name:team.teamName,series:team.series,club_legal_name:team.clubLegalName,club_tax_id:team.clubTaxId,club_address:team.clubAddress,club_postal_code:team.clubPostalCode,club_town:team.clubTown,club_province:team.clubProvince,club_phone:team.clubPhone,club_email:team.clubEmail,home_court_address:team.homeCourtAddress,home_day:team.homeDay,home_time:team.homeTime,captain_name:team.captainName,captain_email:team.captainEmail,captain_phone:team.captainPhone,access_enabled:false,invite_token:team.inviteToken,roster_status:team.rosterStatus,status:team.status,updated_at:new Date().toISOString()};
+  const r=await sb.from('championship_teams').insert(remote);if(r.error)pamToast('Squadra salvata localmente; Supabase: '+r.error.message,'error');
+ }
+ state.champTeamId=id;state.view='championship-team';save();render();pamToast('Nuova squadra creata e inserita anche in Coppa Italia.','success');
+}
 function championshipTeamView(){
  const t=pamChampTeam(state.champTeamId);
  if(!t){state.view="championship";return championshipView()}
@@ -2732,13 +2921,12 @@ async function pamToggleTeamAccess(id,forced){
 }
 async function pamShareTeamInvite(id){
  const t=pamChampTeam(id);if(!t)return;
- if(!t.captainAccessEnabled){pamToast("Prima devi abilitare l’accesso per questa squadra.","error");return}
- const url=pamCaptainPortalUrl(t);
- const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
  try{
+  const url=await pamPrepareCaptainPortal(t);
+  const text="Ciao "+t.captainName+", ecco il link personale per accedere alla gestione della squadra "+t.teamName+" nell’AICS Padel Championship 2027. Al primo accesso crea il tuo account usando l’indirizzo "+t.captainEmail+". "+url;
   if(navigator.share){await navigator.share({title:"Accesso squadra "+t.teamName,text:text,url:url})}
-  else{await navigator.clipboard.writeText(text);pamToast("Messaggio e link copiati negli appunti.","success")}
- }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a condividere il link: "+err.message,"error")}
+  else{await navigator.clipboard.writeText(text);pamToast("Accesso abilitato: messaggio e link copiati negli appunti.","success")}
+ }catch(err){if(err&&err.name!=="AbortError")pamToast("Non riesco a preparare il portale capitano: "+err.message,"error")}
 }
 async function pamSaveChampTeamForm(id){
  const patch={};
@@ -2759,65 +2947,141 @@ async function pamSaveChampTeamForm(id){
 }
 
 
-let pamRecoveryPlayerFilter="all",pamRecoveryPlayerSearch="";
-function pamRecoveryBirth(p){return p&&(p.birth||p.birthDate)||""}
-function pamRecoveryAge(p){
- const v=pamRecoveryBirth(p);if(!v)return null;
+let pamPlayerFilterV82="all";
+let pamPlayerSearchV82="";
+let pamShowSelectedOnlyV82=false;
+let pamSelectedPlayerIdsV82=new Set();
+
+function pamBirthValueV82(p){return String((p&&(p.birth||p.birthDate))||"")}
+function pamAgeV82(p){
+ const v=pamBirthValueV82(p);if(!v)return null;
  const d=new Date(v+"T12:00:00");if(Number.isNaN(d.getTime()))return null;
- const n=new Date();let a=n.getFullYear()-d.getFullYear(),md=n.getMonth()-d.getMonth();
- if(md<0||(md===0&&n.getDate()<d.getDate()))a--;return a;
+ const n=new Date();let a=n.getFullYear()-d.getFullYear();
+ const md=n.getMonth()-d.getMonth();if(md<0||(md===0&&n.getDate()<d.getDate()))a--;
+ return a;
 }
-function pamRecoveryIncomplete(p){
- return !String(p.firstName||"").trim()||!String(p.lastName||"").trim()||!pamRecoveryBirth(p)||!String(p.phone||"").trim();
+function pamIncompleteV82(p){
+ return !String(p.firstName||"").trim()||
+        !String(p.lastName||"").trim()||
+        !pamBirthValueV82(p)||
+        !String(p.phone||"").trim();
 }
-function pamRecoveryMatches(p){
- const f=pamRecoveryPlayerFilter,a=pamRecoveryAge(p),g=String(p.gender||"").toLowerCase();
- if(f==="male"&&!g.includes("masch"))return false;
- if(f==="female"&&!g.includes("femm"))return false;
- if(f==="incomplete"&&!pamRecoveryIncomplete(p))return false;
+function pamFilterMatchV82(p){
+ if(pamShowSelectedOnlyV82&&!pamSelectedPlayerIdsV82.has(String(p.id)))return false;
+ const f=pamPlayerFilterV82,a=pamAgeV82(p),g=String(p.gender||"").toLowerCase();
+ if(f==="male"&&!(g.includes("masch")||g==="m"))return false;
+ if(f==="female"&&!(g.includes("femm")||g==="f"))return false;
+ if(f==="incomplete"&&!pamIncompleteV82(p))return false;
  if(f==="u16"&&!(a!==null&&a<16))return false;
  if(f==="u30"&&!(a!==null&&a<30))return false;
  if(f==="o30"&&!(a!==null&&a>=30))return false;
  if(f==="o55"&&!(a!==null&&a>=55))return false;
  if(f==="tokens"&&!(Number(p.tokenBalance||0)>0))return false;
- const q=pamRecoveryPlayerSearch.toLowerCase().trim();
- if(q&&!([p.firstName,p.lastName,playerName(p),p.phone,p.email,p.birthPlace,p.residenceTown,p.residenceProvince].join(" ").toLowerCase().includes(q)))return false;
+
+ const q=pamPlayerSearchV82.toLowerCase().trim();
+ if(q){
+  const hay=[
+   p.firstName,p.lastName,
+   (typeof playerName==="function"?playerName(p):""),
+   p.phone,p.email,p.birthPlace,p.residenceTown,p.residenceProvince
+  ].join(" ").toLowerCase();
+  if(!hay.includes(q))return false;
+ }
  return true;
 }
-function pamRecoveryVisiblePlayers(){return state.players.filter(pamRecoveryMatches)}
-function pamRecoveryCsv(){
- const rows=pamRecoveryVisiblePlayers();if(!rows.length)return pamToast("Nessun giocatore da esportare.","error");
- const data=[["Nome","Cognome","Data nascita","Telefono","Email","Sesso","Gettoni"]].concat(rows.map(function(p){return[p.firstName||"",p.lastName||"",pamRecoveryBirth(p),p.phone||"",p.email||"",p.gender||"",Number(p.tokenBalance||0)]}));
- const csv=data.map(function(r){return r.map(function(v){return '"'+String(v).replaceAll('"','""')+'"'}).join(";")}).join("\n");
- const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");
- a.href=URL.createObjectURL(blob);a.download="giocatori.csv";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
+function pamVisiblePlayersV82(){
+ return (state.players||[]).filter(pamFilterMatchV82);
 }
-function pamRecoveryEmail(){
- const emails=pamRecoveryVisiblePlayers().map(function(p){return String(p.email||"").trim()}).filter(Boolean);
- if(!emails.length)return pamToast("Nessuna email disponibile.","error");
+function pamCsvRowsV82(rows){
+ const head=["Nome","Cognome","Data nascita","Telefono","Email","Sesso","Gettoni"];
+ return [head].concat(rows.map(function(p){
+  return [p.firstName||"",p.lastName||"",pamBirthValueV82(p),p.phone||"",p.email||"",p.gender||"",Number(p.tokenBalance||0)];
+ }));
+}
+function pamDownloadCsvV82(){
+ const rows=pamVisiblePlayersV82();
+ if(!rows.length)return pamToast("Nessun giocatore da esportare.","error");
+ const csv=pamCsvRowsV82(rows).map(function(r){
+  return r.map(function(v){return '"'+String(v).replaceAll('"','""')+'"'}).join(";");
+ }).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="padel-arena-giocatori.csv";
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
+}
+function pamExportExcelV82(){
+ const rows=pamVisiblePlayersV82();
+ if(!rows.length)return pamToast("Nessun giocatore da esportare.","error");
+ if(window.XLSX){
+  const data=pamCsvRowsV82(rows);
+  const ws=XLSX.utils.aoa_to_sheet(data),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Giocatori");
+  XLSX.writeFile(wb,"padel-arena-giocatori.xlsx");
+ }else{
+  pamToast("Excel non disponibile: preparo CSV compatibile con Excel.","success");
+  pamDownloadCsvV82();
+ }
+}
+function pamExportPdfV82(){
+ const rows=pamVisiblePlayersV82();
+ if(!rows.length)return pamToast("Nessun giocatore da esportare.","error");
+ const body=rows.map(function(p){
+  return "<tr><td>"+esc(p.firstName||"")+"</td><td>"+esc(p.lastName||"")+"</td><td>"+esc(pamBirthValueV82(p))+"</td><td>"+esc(p.phone||"")+"</td><td>"+esc(p.email||"")+"</td><td>"+Number(p.tokenBalance||0)+"</td></tr>";
+ }).join("");
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Giocatori</title><style>body{font-family:Arial;padding:18px;color:#111}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #aaa;padding:5px;text-align:left}th{background:#eee}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>Padel Arena Manager · Giocatori</h1><p>Totale: '+rows.length+'</p><table><thead><tr><th>Nome</th><th>Cognome</th><th>Data nascita</th><th>Telefono</th><th>Email</th><th>Gettoni</th></tr></thead><tbody>'+body+'</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>';
+ const w=window.open("","_blank");
+ if(w){w.document.write(html);w.document.close();return}
+ const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+ location.href=URL.createObjectURL(blob);
+}
+function pamEmailVisibleV82(){
+ const emails=pamVisiblePlayersV82().map(function(p){return String(p.email||"").trim()}).filter(Boolean);
+ if(!emails.length)return pamToast("Nessuna email disponibile nei risultati.","error");
  location.href="mailto:?bcc="+encodeURIComponent(emails.join(","))+"&subject="+encodeURIComponent("Comunicazione Padel Arena");
 }
-function pamRecoveryWhatsapp(){
- const rows=pamRecoveryVisiblePlayers().filter(function(p){return String(p.phone||"").trim()});
- if(!rows.length)return pamToast("Nessun numero WhatsApp disponibile.","error");
- const msg=prompt("Messaggio WhatsApp","Ciao, comunicazione Padel Arena:");if(msg===null)return;
- const p=rows[0],num=String(p.phone).replace(/\D/g,"");location.href="https://wa.me/"+num+"?text="+encodeURIComponent(msg);
+function pamWhatsappSelectedV82(){
+ const rows=pamVisiblePlayersV82().filter(function(p){return String(p.phone||"").trim()});
+ if(!rows.length)return pamToast("Nessun numero WhatsApp disponibile nei risultati.","error");
+ const msg=prompt("Messaggio WhatsApp","Ciao {nome}, comunicazione Padel Arena:");
+ if(msg===null)return;
+ const p=rows[0],name=(typeof playerName==="function"?playerName(p):(p.firstName||""));
+ const num=String(p.phone||"").replace(/\D/g,"");
+ location.href="https://wa.me/"+num+"?text="+encodeURIComponent(msg.replaceAll("{nome}",name));
+}
+function pamToggleAllVisibleV82(on){
+ pamVisiblePlayersV82().forEach(function(p){
+  if(on)pamSelectedPlayerIdsV82.add(String(p.id));
+  else pamSelectedPlayerIdsV82.delete(String(p.id));
+ });
+ render();
 }
 
 function playersView(){
- const orderedPlayers=state.players.filter(pamRecoveryMatches).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+ const orderedPlayers=state.players.filter(pamFilterMatchV82).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
  const rows=orderedPlayers.length?orderedPlayers.map(function(p,i){
   const searchText=[playerName(p),p.phone,p.email,(p.alternatePhones||[]).join(" "),(p.alternateEmails||[]).join(" "),p.birthPlace,p.postalCode,p.residenceTown,p.residenceProvince].join(" ").toLowerCase();
   return '<div class="item player-search-row" data-player-search="'+esc(searchText)+'"><img class="player-avatar" src="'+esc(pamPlayerPhoto(p))+'" alt="'+esc(playerName(p))+'"><div class="grow"><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.gender||"Categoria non indicata")+' · Saldo gettoni: <b>'+Number(p.tokenBalance||0)+'</b>'+(p.phone?" · "+esc(p.phone):"")+'</div>'+
   '<div class="muted">'+
-  ((p.birth||p.birthDate)?'Nato/a il '+esc(p.birth||p.birthDate)+' · ':'Data di nascita non compilata · ')+(p.birthPlace?'a '+esc(p.birthPlace):'Luogo di nascita non compilato')+
+  (p.birthPlace?'Nato/a a '+esc(p.birthPlace):'Luogo di nascita non compilato')+
   ' · '+(p.postalCode?'CAP '+esc(p.postalCode):'CAP non compilato')+
   ' · '+(p.residenceTown?esc(p.residenceTown):'Comune non compilato')+
   (p.residenceProvince?' ('+esc(p.residenceProvince)+')':' · Provincia non compilata')+
   '</div></div><label class="upload-button player-photo-control">Foto<input type="file" accept="image/*" data-player-photo="'+p.id+'"></label><button class="small" data-edit-player="'+p.id+'">Modifica</button></div>'
  }).join(""):'<div class="muted">Nessun cliente presente.</div>';
- return header("Anagrafica clienti","Crea una volta, riutilizza sempre")+
- '<div class="card"><h2>Cerca, filtra e comunica</h2><div class="field"><label>Ricerca giocatore</label><input id="pamRecoverySearch" type="search" placeholder="Nome, cognome, telefono o email" value="'+esc(pamRecoveryPlayerSearch)+'"></div><div class="field"><label>Filtro</label><select id="pamRecoveryFilter"><option value="all">Tutti i giocatori</option><option value="male">Solo maschi</option><option value="female">Solo donne</option><option value="incomplete">Account incompleti</option><option value="u16">Under 16</option><option value="u30">Under 30</option><option value="o30">Over 30</option><option value="o55">Over 55</option><option value="tokens">Giocatori con gettoni</option></select></div><div class="row"><button class="secondary" data-recovery-csv>CSV / Excel</button><button class="secondary" data-recovery-email>Email CCN</button><button class="secondary" data-recovery-wa>WhatsApp</button></div><div class="notice"><b>'+orderedPlayers.length+'</b> risultati. Le anagrafiche incomplete vengono segnalate ma non corrette automaticamente.</div></div>'+
+ return header("Anagrafica clienti","Crea una volta, riutilizza sempre")+ '<div class="card"><h2 style="margin-top:0">Cerca, filtra e seleziona</h2>'+
+ '<div class="field"><label>Ricerca giocatore</label><input id="pamSearchV82" type="search" autocomplete="off" placeholder="Nome, cognome, telefono o email" value="'+esc(pamPlayerSearchV82)+'"></div>'+
+ '<div class="field"><label>Filtro</label><select id="pamFilterV82">'+
+ '<option value="all">Tutti i giocatori</option><option value="male">Solo maschi</option><option value="female">Solo donne</option><option value="incomplete">Account incompleti</option><option value="u16">Under 16</option><option value="u30">Under 30</option><option value="o30">Over 30</option><option value="o55">Over 55</option><option value="tokens">Giocatori con gettoni</option></select></div>'+
+ '<div class="row"><button class="secondary" data-v82-select-all>Seleziona risultati</button><button class="secondary" data-v82-clear-visible>Deseleziona risultati</button></div>'+
+ '<div class="row"><button class="secondary" data-v82-show-selected>'+(pamShowSelectedOnlyV82?"Mostra tutti":"Visualizza giocatori selezionati")+'</button><button class="secondary" data-v82-clear-all>Azzera selezione</button></div>'+
+ '<div class="notice"><b>'+orderedPlayers.length+'</b> risultati · <b>'+pamSelectedPlayerIdsV82.size+'</b> selezionati. Le anagrafiche incomplete restano da verificare: non vengono corrette automaticamente.</div>'+
+ '</div>'+
+ '<div class="card"><h2 style="margin-top:0">Comunicazioni ed esportazione</h2>'+
+ '<div class="row"><button class="secondary" data-v82-wa>WhatsApp</button><button class="secondary" data-v82-email>Email CCN</button></div>'+
+ '<div class="row"><button class="secondary" data-v82-pdf>PDF</button><button class="secondary" data-v82-xlsx>Excel</button><button class="secondary" data-v82-csv>CSV</button></div>'+
+ '</div>'+
  '<div class="card"><h2>Nuovo cliente / giocatore</h2><div id="playerMessage"></div>'+
  '<div class="row"><div class="field"><label>Nome</label><input id="pFirst"></div><div class="field"><label>Cognome</label><input id="pLast"></div></div>'+
  '<div class="row"><div class="field"><label>Telefono</label><input id="pPhone"></div><div class="field"><label>Email</label><input id="pEmail" type="email"></div></div>'+
@@ -2852,8 +3116,8 @@ let pamQuickPlayerContext=null;
 function pamCurrentModalSelectedIds(){
  const overlay=document.getElementById("pamTournamentPlayersOverlay");
  if(!overlay)return null;
- return Array.from(overlay.querySelectorAll("[data-tournament-player]:checked"))
-  .map(function(x){return x.getAttribute("data-tournament-player")});
+ if(overlay.__pamSelected)return Array.from(overlay.__pamSelected);
+ return Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
 }
 
 function pamOpenQuickPlayer(context){
@@ -3440,7 +3704,16 @@ function eventsView(){
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
  return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>';
 }
-function playerById(id){return state.players.find(function(p){return p.id===id})}
+function playerById(id){
+ const key=String(id||"");
+ const direct=(state.players||[]).find(function(p){return String(p.id)===key});
+ if(direct)return direct;
+ for(const e of (state.events||[])){
+  const snap=e&&e.playerSnapshots&&e.playerSnapshots[key];
+  if(snap)return snap;
+ }
+ return null;
+}
 function names(ids){return ids.map(function(id){const p=playerById(id);return p?playerName(p):"Giocatore"}).join(" / ")}
 function teamStackHtml(ids){
  return '<div class="team-stack">'+ids.map(function(id){
@@ -4532,7 +4805,7 @@ function updateStageTeam(select){
  save();
 }
 function eventPlayersView(e){
- return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
+ return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);if(!p)return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>Giocatore non disponibile</b><div class="muted">Riferimento anagrafico temporaneamente non trovato. I dati del torneo non sono stati cancellati.</div></div></div>';return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
 }
 function commitBalances(){
  const e=currentEvent();if(!e)return;
@@ -4594,6 +4867,8 @@ document.addEventListener("click",function(ev){
  const closeRegistrations=ev.target.closest("[data-close-registrations]");if(closeRegistrations){document.getElementById("pamRegistrationsOverlay")?.remove();return}
  const setCapacity=ev.target.closest("[data-set-registration-capacity]");if(setCapacity){pamSetRegistrationCapacity(setCapacity.getAttribute("data-set-registration-capacity"));return}
  const processRegistration=ev.target.closest("[data-process-registration]");if(processRegistration){pamProcessRegistration(processRegistration.getAttribute("data-process-registration"),processRegistration.getAttribute("data-action"),processRegistration.getAttribute("data-event-id"));return}
+ const deleteRegistration=ev.target.closest("[data-delete-registration]");if(deleteRegistration){pamDeleteRegistration(deleteRegistration.getAttribute("data-delete-registration"),deleteRegistration.getAttribute("data-event-id"));return}
+ const deleteDuplicates=ev.target.closest("[data-delete-duplicate-registrations]");if(deleteDuplicates){pamDeleteRegistration(deleteDuplicates.getAttribute("data-delete-duplicate-registrations"),deleteDuplicates.getAttribute("data-event-id"));return}
 
  const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
  const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
@@ -4675,11 +4950,20 @@ document.addEventListener("click",function(ev){
  }
 
 
+ const globalBack=ev.target.closest("[data-global-back]");if(globalBack){pamGoBack();return}
+ const globalHome=ev.target.closest("[data-global-home]");if(globalHome){pamGoHome();return}
+ const globalMenu=ev.target.closest("[data-global-menu]");if(globalMenu){pamOpenUniversalMenu();return}
+ const closeGlobal=ev.target.closest("[data-close-global-menu]");if(closeGlobal){document.getElementById("pamUniversalMenu")?.remove();return}
+ const globalView=ev.target.closest("[data-global-view]");if(globalView){document.getElementById("pamUniversalMenu")?.remove();setView(globalView.getAttribute("data-global-view"));return}
+ const globalLogout=ev.target.closest("[data-global-logout]");if(globalLogout){document.getElementById("pamUniversalMenu")?.remove();document.getElementById("pamLogoutBtn")?.click();return}
+ const createChamp=ev.target.closest("[data-create-champ-team]");if(createChamp){if(!pamIsAdmin()){pamToast("Solo l’amministratore può creare nuove squadre.","error");return}document.getElementById("pamUniversalMenu")?.remove();setView("championship-new-team");return}
+ const saveNewChamp=ev.target.closest("[data-save-new-champ-team]");if(saveNewChamp){pamCreateChampTeam();return}
+
  const openChamp=ev.target.closest("[data-open-champ-team]");if(openChamp){state.champTeamId=openChamp.getAttribute("data-open-champ-team");state.view="championship-team";save();render();setTimeout(function(){pamLoadAdminRoster(openChamp.getAttribute("data-open-champ-team"))},40);return}
  const toggleChamp=ev.target.closest("[data-toggle-team-access]");if(toggleChamp){pamToggleTeamAccess(toggleChamp.getAttribute("data-toggle-team-access"));return}
  const shareChamp=ev.target.closest("[data-share-team-invite]");if(shareChamp){pamShareTeamInvite(shareChamp.getAttribute("data-share-team-invite"));return}
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
- const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(t)window.open(pamCaptainPortalUrl(t)+"&preview=1","_blank");return}
+ const previewChamp=ev.target.closest("[data-preview-team-portal]");if(previewChamp){const t=pamChampTeam(previewChamp.getAttribute("data-preview-team-portal"));if(!t){pamToast("Squadra non trovata.","error");return}pamPrepareCaptainPortal(t).then(function(url){window.open(url+"&preview=1","_blank")}).catch(function(err){pamToast("Non riesco ad aprire il portale capitano: "+err.message,"error")});return}
 
  const compBtn=ev.target.closest("[data-champ-competition]");if(compBtn){state.champCompetition=compBtn.getAttribute("data-champ-competition");save();render();return}
  const saveSuper=ev.target.closest("[data-save-supercup]");if(saveSuper){pamSaveAicsCompetitionState({championshipWinner:document.getElementById("pamChampionshipWinner")?.value||"",cupWinner:document.getElementById("pamCupWinner")?.value||""});pamToast("Finaliste di Supercoppa salvate.","success");render();return}
@@ -4925,8 +5209,8 @@ function pamApplyDynamicTheme(){
 
 function render(){
  document.body.classList.remove("pam-public-mode");
- let body=state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
- document.getElementById("root").innerHTML='<main class="app">'+body+'</main>'+nav();
+ let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ document.getElementById("root").innerHTML='<main class="app">'+pamUniversalNav()+body+'</main>'+nav();
  pamApplyDynamicTheme();
 }
 const pamOriginalRender=render;
@@ -4939,7 +5223,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.1.3-fast-login",{updateViaCache:"none"}).then(function(reg){
+  navigator.serviceWorker.register("./service-worker.js?v=8.1.19-captain-link",{updateViaCache:"none"}).then(function(reg){
    reg.update();
    if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
    reg.addEventListener("updatefound",function(){

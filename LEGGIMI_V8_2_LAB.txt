@@ -1,0 +1,44 @@
+PADEL ARENA MANAGER — V8.2 LAB COMPLETA SAFE
+
+BASE
+V8 operativa 8.1.15 congelata come riferimento.
+Nessuna Recovery 1.0 / 1.01 / 1.02 usata come base.
+
+INCLUSO E VERIFICATO
+- logout preservato;
+- funzioni giocatori e modifica giocatore preservate;
+- data di nascita;
+- caricamento Supabase completo a pagine da 1000;
+- snapshot atomico per evitare 3181 -> 35 / 0;
+- ricerca giocatori;
+- filtri a tendina;
+- selezione multipla;
+- Visualizza giocatori selezionati;
+- WhatsApp;
+- Email CCN;
+- CSV;
+- Excel (con fallback CSV);
+- PDF/stampa;
+- link public-registration compatibile con index-v8-lab.html;
+- public-registration.html incluso;
+- helper WhatsApp organizzatore.
+
+CLASSIFICA GETTONI / ASTE GUIDATE
+Presenza rilevata nella base dopo integrazione:
+- gettoni/circuito: SI
+- aste: SI
+
+Nota: se queste due funzioni non erano nella SAFE 8.1.15, non ho copiato alla cieca
+pezzi delle LAB rotte. Saranno reintegrate dal ramo V8.1.22 solo dopo test dedicato.
+
+SINTASSI JAVASCRIPT: OK
+
+INSTALLAZIONE
+Caricare su GitHub:
+1. index-v8-lab.html
+2. public-registration.html
+
+NON TOCCARE index.html operativo.
+
+LINK TEST
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8200
