@@ -1,0 +1,30 @@
+PADEL ARENA MANAGER — V8.1.27 LAB STORAGE STABILE
+
+PROBLEMA
+Safari/iPhone mostrava:
+QuotaExceededError: The quota has been exceeded.
+
+CORREZIONE
+- Supabase è la fonte principale di giocatori e tornei.
+- La LAB NON salva più players[] ed events[] completi in localStorage.
+- Nel browser vengono salvate solo preferenze leggere dell'interfaccia.
+- Se localStorage non è disponibile, usa sessionStorage come fallback.
+- Le vecchie chiavi LAB 1.22–1.26 vengono eliminate automaticamente.
+- La chiave pam_v071 della V8 OPERATIVA non viene cancellata né modificata.
+- La LAB non aggiunge automaticamente la vecchia anagrafica incorporata.
+- La LAB non importa automaticamente i clienti Eden.
+- L'errore di quota non può più bloccare l'avvio.
+
+TEST
+1. Carica SOLO index-v8-lab.html.
+2. Non sostituire index.html.
+3. Apri:
+   index-v8-lab.html?v=8127
+4. Accedi.
+5. Attendi la sincronizzazione.
+6. Controlla il numero giocatori.
+7. Ricarica la pagina 3-4 volte: il numero deve restare stabile.
+8. Verifica che non ricompaia QuotaExceededError.
+
+La V8.1.26 Email/WhatsApp è mantenuta.
+public-registration.html e lo SQL email sono inclusi nel pacchetto.

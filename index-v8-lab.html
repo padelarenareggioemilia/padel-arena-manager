@@ -1330,7 +1330,7 @@ if(!window.supabase){
 
 <style>
 body.pam-lab:before{
- content:"V8.1.26 LAB · NON PERMANENTE";
+ content:"V8.1.27 LAB · NON PERMANENTE";
  position:fixed;top:8px;right:8px;z-index:10050;
  background:#7c3aed;color:#fff;border:1px solid #a78bfa;
  border-radius:999px;padding:6px 10px;font:800 10px system-ui;
@@ -1531,7 +1531,7 @@ async function pamStartSession(session){
   pamToast("Accesso effettuato. Aggiornamento dati online in corso…","success");
 
   pamCloudLoad(true,true).then(async function(){
-   if(pamIsAdmin()){
+   if(pamIsAdmin()&&!PAM_LAB_MODE){
     const imported=await pamImportEdenClients();
     if(imported&&(imported.added||imported.updated))pamToast("Anagrafiche Eden integrate: "+imported.added+" nuove, "+imported.updated+" aggiornate. I gettoni esistenti sono rimasti invariati.","success");
    }
@@ -1542,7 +1542,12 @@ async function pamStartSession(session){
   }).catch(function(err){
    console.error(err);
    pamSetConnectionState(false);
-   pamToast("Accesso riuscito. Sincronizzazione momentaneamente non disponibile: "+(err.message||err),"error");
+   const msg=String(err&&err.message||err||"");
+   if(/quota|QuotaExceeded/i.test(msg)){
+    pamToast("Accesso riuscito. La vecchia cache LAB era piena; questa versione usa una cache leggera. Ricarica una volta la pagina.","error");
+   }else{
+    pamToast("Accesso riuscito. Sincronizzazione Supabase momentaneamente non disponibile: "+msg,"error");
+   }
   });
  }catch(err){
   console.error(err);
@@ -1623,10 +1628,11 @@ async function pamBootAuth(){
 
 const PAM_LAB_MODE=true;
 const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8122";
-if(!localStorage.getItem(KEY)&&localStorage.getItem(PAM_PRODUCTION_KEY)){
- try{localStorage.setItem(KEY,localStorage.getItem(PAM_PRODUCTION_KEY))}catch(e){}
-}
+const KEY="pam_v8_lab_8127";
+const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126"];
+PAM_OLD_LAB_KEYS.forEach(function(k){
+ try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
+});
 const SEEDED_PLAYERS=[
  {firstName:"Andrea",lastName:"Spina",gender:"Maschile",tokenBalance:3},
  {firstName:"Antonio",lastName:"Stirparo",gender:"Maschile",tokenBalance:6},
@@ -1812,7 +1818,40 @@ function freshState(){return{view:"home",tab:"matches",players:[],events:[],curr
 }}}
 let state;
 let pamLocalEditUntil=0;
-try{state=JSON.parse(localStorage.getItem(KEY))||freshState()}catch(e){state=freshState()}
+function pamCompactUiState(source){
+ const s=source||{};
+ return {
+  view:s.view||"home",
+  tab:s.tab||"matches",
+  currentEventId:s.currentEventId||null,
+  draft:s.draft||freshState().draft,
+  playerFilter:s.playerFilter||"all",
+  selectedPlayerIds:Array.isArray(s.selectedPlayerIds)?s.selectedPlayerIds.slice(0,500):[],
+  bulkWhatsappMessage:s.bulkWhatsappMessage||"",
+  bulkEmailSubject:s.bulkEmailSubject||"Comunicazione Padel Arena Manager",
+  champTeamId:s.champTeamId||null,
+  players:[],
+  events:[]
+ };
+}
+function pamReadLocalUiState(){
+ try{
+  const raw=localStorage.getItem(KEY)||sessionStorage.getItem(KEY);
+  return raw?Object.assign(freshState(),JSON.parse(raw)):freshState();
+ }catch(_){return freshState()}
+}
+function pamPersistLocalState(){
+ const payload=JSON.stringify(pamCompactUiState(state));
+ try{
+  localStorage.setItem(KEY,payload);
+  return true;
+ }catch(err){
+  try{sessionStorage.setItem(KEY,payload)}catch(_){}
+  console.warn("Cache locale LAB non disponibile:",err);
+  return false;
+ }
+}
+state=pamReadLocalUiState();
 if(!state.draft)state.draft=freshState().draft;
 if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
 if(state.draft.fee===undefined)state.draft.fee=25;
@@ -1884,6 +1923,7 @@ const importedRegistryNames=["Adamelli Marco", "Agosti Cinzia", "aguilar hugo", 
 function registryTokenKey(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/).filter(Boolean).sort().join("|");
 }
+if(!PAM_LAB_MODE){
 const existingRegistryKeys=new Set((state.players||[]).map(function(p){return registryTokenKey(playerName(p))}));
 importedRegistryNames.forEach(function(fullName){
  const key=registryTokenKey(fullName);
@@ -1907,6 +1947,7 @@ importedRegistryNames.forEach(function(fullName){
  existingRegistryKeys.add(key);
 });
 save();
+}
 
 function normalizeName(s){return String(s||"").trim().toLocaleLowerCase("it-IT").replace(/\s+/g," ")}
 function seedParticipants(){
@@ -1983,7 +2024,7 @@ function pamProtectCurrentEdit(ms){
 }
 function save(){
  pamProtectCurrentEdit(5000);
- localStorage.setItem(KEY,JSON.stringify(state));
+ pamPersistLocalState();
  if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
@@ -2063,7 +2104,7 @@ function pamScheduleCloudSync(){
 }
 async function pamCloudSyncAll(){
  if(PAM_LAB_MODE){
-  localStorage.setItem(KEY,JSON.stringify(state));
+  pamPersistLocalState();
   return;
  }
  if(!pamCloudReady||!PAM_SESSION||pamUploading)return;
@@ -2095,7 +2136,7 @@ async function pamCloudSyncAll(){
     if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
    }
   }
-  localStorage.setItem(KEY,JSON.stringify(state));
+  pamPersistLocalState();
   pamSetConnectionState(true);
  }catch(err){
   console.error("Sincronizzazione Supabase:",err);
@@ -2116,6 +2157,13 @@ function pamSetConnectionState(ok){
 window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
 window.addEventListener("offline",function(){pamSetConnectionState(false)});
 
+
+
+function pamStorageDiagnostic(){
+ let labBytes=0;
+ try{labBytes=(localStorage.getItem(KEY)||"").length*2}catch(_){}
+ return {labKB:(labBytes/1024).toFixed(1)};
+}
 
 async function pamGetCloudCounts(){
  const [p,e]=await Promise.all([
@@ -2159,7 +2207,10 @@ async function pamRefreshSyncPanel(){
   if(cp)cp.textContent=c.players;
   if(ce)ce.textContent=c.events;
   const log=document.getElementById("pamSyncLog");
-  if(log)log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT");
+  if(log){
+   const d=pamStorageDiagnostic();
+   log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT")+" · Cache LAB "+d.labKB+" KB · V8 operativa non modificata";
+  }
   pamSetConnectionState(true);
  }catch(err){
   const log=document.getElementById("pamSyncLog");
@@ -2171,10 +2222,10 @@ function pamSyncPanelHtml(){
  if(!PAM_SESSION)return"";
  return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
   '<h2>☁️ Archivio condiviso</h2>'+
-  '<div class="muted">Confronta i dati salvati sul dispositivo con quelli presenti su Supabase.</div>'+
+  '<div class="muted"><b>Fonte archivio: Supabase.</b> La LAB conserva nel browser solo impostazioni leggere dell’interfaccia, non l’intera anagrafica.</div>'+
   '<div class="pam-sync-grid">'+
-   '<div class="pam-sync-stat"><span>Giocatori sul dispositivo</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
-   '<div class="pam-sync-stat"><span>Tornei sul dispositivo</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Giocatori caricati</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei caricati</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
    '<div class="pam-sync-stat"><span>Stato</span><b style="font-size:17px">'+(navigator.onLine?"CONNESSO":"OFFLINE")+'</b></div>'+
   '</div>'+
   '<div class="pam-sync-grid">'+
@@ -2182,6 +2233,7 @@ function pamSyncPanelHtml(){
    '<div class="pam-sync-stat"><span>Tornei online</span><b id="pamCloudEvents">…</b></div>'+
    '<div class="pam-sync-stat"><span>Account</span><b style="font-size:15px">'+esc(PAM_PROFILE?.role||"")+'</b></div>'+
   '</div>'+
+  '<div class="notice success"><b>Storage LAB protetto:</b> giocatori e tornei vengono ricaricati da Supabase e non vengono più duplicati integralmente nel browser.</div>'+
   '<div class="pam-sync-actions">'+
    '<button class="secondary" data-action="cloud-check">Aggiorna conteggi</button>'+
    (pamIsAdmin()?'<button class="primary" data-action="cloud-upload-local">Carica questo dispositivo online</button>':'')+
@@ -2209,6 +2261,9 @@ async function pamCloudLoad(initial,forceReplace){
  });
  if(forceReplace||initial||remotePlayers.length)state.players=remotePlayers;
  if(forceReplace||initial||remoteEvents.length)state.events=remoteEvents;
+ state.__playersSource="Supabase";
+ state.__cloudPlayersCount=remotePlayers.length;
+ state.__cloudEventsCount=remoteEvents.length;
  if(initial&&pamIsAdmin()&&!remoteEvents.length&&state.events.length){
   pamCloudReady=true;
   await pamCloudSyncAll();
@@ -2216,7 +2271,7 @@ async function pamCloudLoad(initial,forceReplace){
   pamCloudReady=true;
  }
  if(state.currentEventId&&!state.events.some(function(e){return e.id===state.currentEventId}))state.currentEventId=null;
- localStorage.setItem(KEY,JSON.stringify(state));
+ pamPersistLocalState();
  if(!pamIsUserEditing()){
   const y=window.scrollY;
   render();
@@ -2606,7 +2661,7 @@ function pamOpenSharedTournamentFromUrl(){
  const token=new URLSearchParams(location.search).get("tournament");
  if(!token)return;
  const e=state.events.find(function(x){return x.shareToken===token});
- if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";localStorage.setItem(KEY,JSON.stringify(state));render();pamApplyRole()}
+ if(e){state.currentEventId=e.id;state.view="event";state.tab="matches";pamPersistLocalState();render();pamApplyRole()}
 }
 
 function setView(v){state.view=v;save();render()}
@@ -2621,7 +2676,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.26 LAB · Email</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.27 LAB · Storage stabile</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2636,7 +2691,7 @@ function home(){
    '<img class="pam-v5-welcome-logo" src="assets/padel-arena-manager-logo.png" alt="Padel Arena Manager">'+
    '<div><span class="pam-v5-kicker">PADEL · TECNOLOGIA · ORGANIZZAZIONE</span><h2>Buonasera Francesco.</h2><p>Gestisci tornei, campionati, club e giocatori da un’unica applicazione, con l’identità blu notte, blu elettrico e verde fluo del logo.</p></div>'+
   '</section>'+
-  '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Dati disponibili sul dispositivo</small></div><div class="pam-v5-status-grid">'+
+  '<section><div class="pam-v5-section-title"><h2>Situazione generale</h2><small>Archivio caricato da Supabase</small></div><div class="pam-v5-status-grid">'+
    '<div class="pam-v5-stat"><i>🎾</i><b>'+eventCount+'</b><span>TORNEI SALVATI</span></div>'+
    '<div class="pam-v5-stat"><i>🏆</i><b>35</b><span>SQUADRE ISCRITTE</span></div>'+
    '<div class="pam-v5-stat"><i>🏟️</i><b>23</b><span>CLUB COINVOLTI</span></div>'+
@@ -4709,7 +4764,7 @@ async function saveAuction(which){
   e.ledger[id].spent=total;
  });
  pamProtectCurrentEdit(8000);
- localStorage.setItem(KEY,JSON.stringify(state));
+ pamPersistLocalState();
  try{
   if(pamCloudReady&&PAM_SESSION)await pamCloudSyncAll();
   pamToast("Asta "+which+" salvata. Saldo gettoni aggiornato.","success");
@@ -5049,7 +5104,7 @@ document.addEventListener("input",function(ev){
   const id=ev.target.getAttribute("data-player-id")||ev.target.getAttribute("data-auction"+which+"-spend");
   if(which&&id){
    pamAuctionData(e,which).spending[id]=Math.max(0,Number(ev.target.value)||0);
-   localStorage.setItem(KEY,JSON.stringify(state));
+   pamPersistLocalState();
   }
   return;
  }
