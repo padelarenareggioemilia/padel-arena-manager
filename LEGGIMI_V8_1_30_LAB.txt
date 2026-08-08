@@ -1,0 +1,43 @@
+PADEL ARENA MANAGER — V8.1.30 LAB RICERCA GIOCATORI
+
+MANTIENE tutte le correzioni di sincronizzazione della V8.1.29.
+
+MENU GIOCATORI
+Nuova barra di ricerca:
+- nome
+- cognome
+- telefono
+- email
+- comune/provincia
+
+Il filtro non è più composto da tanti pulsanti.
+Ora c'è UN SOLO MENU A TENDINA con:
+- Tutti i giocatori
+- Solo maschi
+- Solo donne
+- Account incompleti
+- Under 16
+- Under 30
+- Over 30
+- Over 55
+- Giocatori con gettoni
+
+RICERCA + FILTRO
+Le due funzioni lavorano insieme.
+Esempio:
+Filtro = Solo donne
+Ricerca = Rossi
+Mostra soltanto le giocatrici che corrispondono a Rossi.
+
+Restano disponibili:
+- selezione multipla
+- WhatsApp
+- Email CCN
+- PDF
+- Excel
+- CSV
+
+INSTALLAZIONE
+Carica SOLO index-v8-lab.html.
+NON toccare index.html.
+Apri index-v8-lab.html?v=8130

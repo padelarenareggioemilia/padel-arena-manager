@@ -1330,7 +1330,7 @@ if(!window.supabase){
 
 <style>
 body.pam-lab:before{
- content:"V8.1.29 LAB · NON PERMANENTE";
+ content:"V8.1.30 LAB · NON PERMANENTE";
  position:fixed;top:8px;right:8px;z-index:10050;
  background:#7c3aed;color:#fff;border:1px solid #a78bfa;
  border-radius:999px;padding:6px 10px;font:800 10px system-ui;
@@ -1399,6 +1399,18 @@ body.pam-lab:before{
  .pam-player-row-select .row-actions{grid-column:2}
  .pam-export-actions{display:grid;grid-template-columns:1fr 1fr}
  .pam-export-actions button{width:100%;min-width:0}
+}
+</style>
+
+
+<style>
+.pam-player-tools .field{margin-bottom:10px}
+#pamPlayerSearch,#pamPlayerFilterSelect{width:100%;min-height:46px;font-size:16px}
+@media(max-width:700px){
+ .pam-player-tools{position:relative}
+ .pam-player-selectbar{display:grid;grid-template-columns:1fr 1fr}
+ .pam-player-selectbar .count{grid-column:1/-1}
+ .pam-player-selectbar button:last-child{grid-column:1/-1}
 }
 </style>
 
@@ -1628,8 +1640,8 @@ async function pamBootAuth(){
 
 const PAM_LAB_MODE=true;
 const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8129";
-const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128"];
+const KEY="pam_v8_lab_8130";
+const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129"];
 PAM_OLD_LAB_KEYS.forEach(function(k){
  try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
 });
@@ -2742,7 +2754,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.29 LAB · Sync stabile</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.30 LAB · Ricerca giocatori</span></div>'+
  '</div>';
 }
 function nav(){
@@ -2983,6 +2995,7 @@ async function pamSaveChampTeamForm(id){
 
 
 if(!state.playerFilter)state.playerFilter="all";
+if(state.playerSearch===undefined)state.playerSearch="";
 if(!Array.isArray(state.selectedPlayerIds))state.selectedPlayerIds=[];
 
 function pamPlayerAge(p){
@@ -3019,8 +3032,25 @@ function pamPlayerMatchesFilter(p,filter){
  if(filter==="tokens")return pamPlayerHasTokens(p);
  return true;
 }
+function pamPlayerSearchHaystack(p){
+ return [
+  p&&p.firstName,
+  p&&p.lastName,
+  playerName(p),
+  p&&p.phone,
+  p&&p.email,
+  p&&p.residenceTown,
+  p&&p.residenceProvince
+ ].map(function(v){return String(v||"").toLowerCase().trim()}).join(" ");
+}
 function pamFilteredPlayers(){
- return (state.players||[]).filter(function(p){return pamPlayerMatchesFilter(p,state.playerFilter||"all")});
+ const filter=state.playerFilter||"all";
+ const q=String(state.playerSearch||"").toLowerCase().trim();
+ return (state.players||[]).filter(function(p){
+  if(!pamPlayerMatchesFilter(p,filter))return false;
+  if(!q)return true;
+  return pamPlayerSearchHaystack(p).includes(q);
+ });
 }
 function pamSelectedPlayers(){
  const ids=new Set((state.selectedPlayerIds||[]).map(String));
@@ -3153,9 +3183,9 @@ function playersView(){
   ["incomplete","Account incompleti"],["u16","Under 16"],["u30","Under 30"],
   ["o30","Over 30"],["o55","Over 55"],["tokens","Giocatori con gettoni"]
  ];
- const filterHtml=filters.map(function(x){
+ const filterOptions=filters.map(function(x){
   const count=(state.players||[]).filter(function(p){return pamPlayerMatchesFilter(p,x[0])}).length;
-  return '<button class="pam-filter-btn '+(filter===x[0]?"active":"")+'" data-player-filter="'+x[0]+'">'+esc(x[1])+' <span class="badge">'+count+'</span></button>';
+  return '<option value="'+x[0]+'" '+(filter===x[0]?"selected":"")+'>'+esc(x[1])+' ('+count+')</option>';
  }).join("");
  const rows=filtered.map(function(p){
   const age=pamPlayerAge(p),incomplete=pamPlayerIncomplete(p),checked=selectedSet.has(String(p.id));
@@ -3166,8 +3196,10 @@ function playersView(){
    (incomplete?'<span class="badge" style="background:#7a2d2d;color:#fff">Account incompleto</span>':'')+'</div>'+
    '<div class="row-actions"><button class="secondary" data-email-player="'+p.id+'">✉️ Email</button><button class="secondary" data-edit-player="'+p.id+'">Modifica</button></div></div>';
  }).join("");
- return header("Giocatori","Filtri, selezione multipla, comunicazioni ed esportazioni")+
- '<section class="pam-player-tools"><h2 style="margin-top:0">Filtra anagrafica</h2><div class="pam-filter-grid">'+filterHtml+'</div>'+
+ return header("Giocatori","Ricerca rapida, filtri, selezione multipla, comunicazioni ed esportazioni")+
+ '<section class="pam-player-tools"><h2 style="margin-top:0">Cerca e filtra</h2>'+
+ '<div class="field"><label>Cerca giocatore</label><input id="pamPlayerSearch" type="search" autocomplete="off" placeholder="Nome, cognome, telefono o email" value="'+esc(state.playerSearch||"")+'"></div>'+
+ '<div class="field"><label>Filtro giocatori</label><select id="pamPlayerFilterSelect">'+filterOptions+'</select></div>'+
  '<div class="pam-player-selectbar"><span id="pamSelectedCount" class="count">'+(state.selectedPlayerIds||[]).length+' selezionati</span>'+
  '<button class="secondary" data-action="select-filtered-players">Seleziona tutti i risultati</button>'+
  '<button class="secondary" data-action="deselect-filtered-players">Deseleziona risultati</button>'+
@@ -3177,9 +3209,9 @@ function playersView(){
  '<div class="field"><label>Oggetto email</label><input id="pamBulkEmailSubject" value="'+esc(state.bulkEmailSubject||"Comunicazione Padel Arena Manager")+'" placeholder="Oggetto email"></div>'+
  '<div class="field"><textarea id="pamBulkMessage" rows="4" placeholder="Ciao {nome}, ti comunichiamo che...">'+esc(state.bulkWhatsappMessage||"")+'</textarea></div>'+
  '<div class="pam-export-actions"><button class="primary" data-action="bulk-whatsapp-selected">💬 WhatsApp selezionati</button><button class="primary" data-action="bulk-email-selected">✉️ Email selezionati (CCN)</button></div>'+
- '<div class="notice">Per evitare blocchi del browser, WhatsApp viene aperto un destinatario alla volta. Dopo ogni invio ti viene chiesto se vuoi passare al successivo.</div>'+
+ '<div class="notice">Per WhatsApp i destinatari vengono aperti uno alla volta. Per email i selezionati vengono inseriti in CCN/BCC.</div>'+
  '<div class="pam-export-actions"><button class="secondary" data-action="export-players-pdf">PDF</button><button class="secondary" data-action="export-players-xlsx">Excel</button><button class="secondary" data-action="export-players-csv">CSV</button></div></section>'+
- '<div class="notice"><b>'+filtered.length+'</b> giocatori nel filtro “'+esc(pamPlayerFilterLabel(filter))+'”.</div>'+
+ '<div class="notice"><b>'+filtered.length+'</b> risultati · Filtro: <b>'+esc(pamPlayerFilterLabel(filter))+'</b>'+(state.playerSearch?' · Ricerca: <b>'+esc(state.playerSearch)+'</b>':'')+'</div>'+
  rows;
 }
 function newEventView(){
@@ -5212,7 +5244,31 @@ function pamFormYes(id,fallback){
  const el=document.getElementById(id);
  return el?el.value==="yes":Boolean(fallback);
 }
+document.addEventListener("input",function(ev){
+ const search=ev.target.closest("#pamPlayerSearch");
+ if(search){
+  state.playerSearch=search.value||"";
+  clearTimeout(window.__pamPlayerSearchTimer);
+  window.__pamPlayerSearchTimer=setTimeout(function(){
+   save();
+   render();
+   const input=document.getElementById("pamPlayerSearch");
+   if(input){
+    input.focus();
+    try{input.setSelectionRange(input.value.length,input.value.length)}catch(_){}
+   }
+  },180);
+  return;
+ }
+});
+
 document.addEventListener("change",function(ev){
+ const playerFilterSelect=ev.target.closest("#pamPlayerFilterSelect");
+ if(playerFilterSelect){
+  state.playerFilter=playerFilterSelect.value||"all";
+  save();render();return;
+ }
+
  const bulkSubject=ev.target.closest("#pamBulkEmailSubject");
  if(bulkSubject){state.bulkEmailSubject=bulkSubject.value||"";save();return}
  const bulkMsg=ev.target.closest("#pamBulkMessage");
