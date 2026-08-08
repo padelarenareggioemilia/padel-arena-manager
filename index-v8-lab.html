@@ -1330,7 +1330,7 @@ if(!window.supabase){
 
 <style>
 body.pam-lab:before{
- content:"V8.1.31 LAB · NON PERMANENTE";
+ content:"V8.1.32 LAB · NON PERMANENTE";
  position:fixed;top:8px;right:8px;z-index:10050;
  background:#7c3aed;color:#fff;border:1px solid #a78bfa;
  border-radius:999px;padding:6px 10px;font:800 10px system-ui;
@@ -1430,6 +1430,7 @@ body.pam-lab:before{
 
 
 window.addEventListener("error",function(ev){
+ if(document.querySelector(".pam-main-header")||document.querySelector("nav")){console.error("Errore runtime:",ev.error||ev.message);return;}
  const root=document.getElementById("root");
  if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di avvio</h2><p>L’app non è riuscita a partire.</p><pre style="white-space:pre-wrap">'+String(ev.message||"Errore sconosciuto")+'</pre><p>Ricarica la pagina. Se il messaggio resta, invia uno screenshot di questa schermata.</p></div>';
 });
@@ -1499,7 +1500,67 @@ async function pamLogout(){
  if(pamRealtimeChannel){await sb.removeChannel(pamRealtimeChannel);pamRealtimeChannel=null}
  document.getElementById("pamRoleBadge")?.remove();
  document.getElementById("pamLogoutBtn")?.remove();
- document.body.classList.add("pam-lab");
+ 
+document.addEventListener("click",function(ev){
+ const el=ev.target.closest("[data-action],[data-email-player],[data-edit-player],[data-player-filter]");
+ if(!el)return;
+
+ const action=el.getAttribute("data-action");
+
+ if(el.hasAttribute("data-email-player")){
+  ev.preventDefault();
+  pamEmailPlayer(el.getAttribute("data-email-player"));
+  return;
+ }
+
+ if(el.hasAttribute("data-edit-player")){
+  ev.preventDefault();
+  editPlayer(el.getAttribute("data-edit-player"));
+  return;
+ }
+
+ if(el.hasAttribute("data-player-filter")){
+  ev.preventDefault();
+  pamSetPlayerFilter(el.getAttribute("data-player-filter"));
+  return;
+ }
+
+ if(action==="select-filtered-players"){
+  ev.preventDefault();pamSelectFilteredPlayers();return;
+ }
+ if(action==="deselect-filtered-players"){
+  ev.preventDefault();pamSelectNoneFiltered();return;
+ }
+ if(action==="clear-player-selection"){
+  ev.preventDefault();pamClearPlayerSelection();return;
+ }
+ if(action==="bulk-whatsapp-selected"){
+  ev.preventDefault();
+  state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();
+  save();
+  pamBulkWhatsappSelected();
+  return;
+ }
+ if(action==="bulk-email-selected"){
+  ev.preventDefault();
+  state.bulkEmailSubject=(document.getElementById("pamBulkEmailSubject")?.value||"").trim();
+  state.bulkWhatsappMessage=(document.getElementById("pamBulkMessage")?.value||"").trim();
+  save();
+  pamBulkEmailSelected();
+  return;
+ }
+ if(action==="export-players-pdf"){
+  ev.preventDefault();pamExportPlayersPdf();return;
+ }
+ if(action==="export-players-xlsx"){
+  ev.preventDefault();pamExportPlayersXlsx();return;
+ }
+ if(action==="export-players-csv"){
+  ev.preventDefault();pamExportPlayersCsv();return;
+ }
+},true);
+
+document.body.classList.add("pam-lab");
 pamRenderPublicHome();
 }
 async function pamGetProfile(user){
@@ -1640,8 +1701,8 @@ async function pamBootAuth(){
 
 const PAM_LAB_MODE=true;
 const PAM_PRODUCTION_KEY="pam_v071";
-const KEY="pam_v8_lab_8131";
-const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129","pam_v8_lab_8130"];
+const KEY="pam_v8_lab_8132";
+const PAM_OLD_LAB_KEYS=["pam_v8_lab_8122","pam_v8_lab_8123","pam_v8_lab_8124","pam_v8_lab_8125","pam_v8_lab_8126","pam_v8_lab_8127","pam_v8_lab_8128","pam_v8_lab_8129","pam_v8_lab_8130","pam_v8_lab_8131"];
 PAM_OLD_LAB_KEYS.forEach(function(k){
  try{if(k!==KEY)localStorage.removeItem(k)}catch(_){}
 });
@@ -2754,9 +2815,22 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.31 LAB · Fix giocatore</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.1.32 LAB · Fix funzioni</span></div>'+
  '</div>';
 }
+
+function competitionTypeLabel(v){
+ const key=String(v||"").trim();
+ const labels={
+  rodeo_tokens:"Rodeo Tokens",
+  rodeo_simple:"Rodeo semplice",
+  fixed_pairs:"Coppie fisse",
+  championship:"Campionato",
+  tournament:"Torneo"
+ };
+ return labels[key]||key.replace(/_/g," ").replace(/\b\w/g,function(c){return c.toUpperCase()})||"Torneo";
+}
+
 function nav(){
  return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="token-circuit">🪙<br>Gettoni</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
 }
@@ -3116,7 +3190,10 @@ function pamExportPlayersCsv(){
 }
 function pamExportPlayersXlsx(){
  const rows=pamPlayerExportRows();if(!rows.length)return pamToast("Seleziona almeno un giocatore.","error");
- if(!window.XLSX)return pamToast("Modulo Excel non disponibile. Riprova con connessione internet.","error");
+ if(!window.XLSX){
+  pamToast("Modulo Excel non disponibile: preparo un CSV compatibile con Excel.","error");
+  return pamExportPlayersCsv();
+ }
  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb,ws,"Giocatori");
  XLSX.writeFile(wb,"giocatori_selezionati.xlsx");
@@ -3124,10 +3201,14 @@ function pamExportPlayersXlsx(){
 function pamExportPlayersPdf(){
  const rows=pamPlayerExportRows();if(!rows.length)return pamToast("Seleziona almeno un giocatore.","error");
  const headers=Object.keys(rows[0]);
- const w=window.open("","_blank");if(!w)return pamToast("Il browser ha bloccato la finestra PDF.","error");
  const tr=rows.map(function(r){return "<tr>"+headers.map(function(h){return "<td>"+esc(r[h])+"</td>"}).join("")+"</tr>"}).join("");
- w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Giocatori selezionati</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{font-size:22px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>Padel Arena Manager · Giocatori selezionati</h1><p>Filtro: '+esc(pamPlayerFilterLabel(state.playerFilter||"all"))+' · Totale: '+rows.length+'</p><table><thead><tr>'+headers.map(function(h){return "<th>"+esc(h)+"</th>"}).join("")+'</tr></thead><tbody>'+tr+'</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>');
- w.document.close();
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Giocatori selezionati</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#111}h1{font-size:22px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}@page{size:A4 landscape;margin:10mm}</style></head><body><h1>Padel Arena Manager · Giocatori selezionati</h1><p>Filtro: '+esc(pamPlayerFilterLabel(state.playerFilter||"all"))+' · Totale: '+rows.length+'</p><table><thead><tr>'+headers.map(function(h){return "<th>"+esc(h)+"</th>"}).join("")+'</tr></thead><tbody>'+tr+'</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>';
+ const w=window.open("","_blank");
+ if(w){w.document.write(html);w.document.close();return}
+ const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ location.href=url;
+ setTimeout(function(){URL.revokeObjectURL(url)},5000);
 }
 
 function pamBulkEmailSelected(){
@@ -3164,7 +3245,7 @@ function pamOpenNextBulkWhatsapp(){
  if(!p||!pamWhatsappPhone(p.phone))return pamOpenNextBulkWhatsapp();
  const base=String(state.bulkWhatsappMessage||"").trim();
  const msg=base?base.replace(/\{nome\}/gi,playerName(p)):("Ciao "+playerName(p)+", comunicazione da Padel Arena Manager.");
- window.open(pamWhatsappUrl(p.phone,msg),"_blank");
+ location.href=pamWhatsappUrl(p.phone,msg);
  setTimeout(function(){
   if((state.bulkWhatsappQueue||[]).length){
    const ok=confirm("WhatsApp aperto per "+playerName(p)+".\n\nDopo aver inviato il messaggio, vuoi aprire il prossimo giocatore?");
@@ -4969,7 +5050,7 @@ function pamOpenWhatsappPlayer(eventId,playerId,kind){
  if(!pamWhatsappPhone(p.phone)){
   pamToast("Numero WhatsApp non disponibile per "+playerName(p)+".","error");return;
  }
- window.open(pamWhatsappUrl(p.phone,pamWhatsappMessage(e,p,kind||"reminder")),"_blank");
+ location.href=pamWhatsappUrl(p.phone,pamWhatsappMessage(e,p,kind||"reminder"));
 }
 function pamWhatsappEventView(e){
  const template=String(e.whatsappTemplate||"reminder");

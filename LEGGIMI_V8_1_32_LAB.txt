@@ -1,0 +1,39 @@
+PADEL ARENA MANAGER — V8.1.32 LAB FIX FUNZIONI
+
+CORREZIONI
+1. Ripristinata competitionTypeLabel:
+   eliminato l'errore ReferenceError che poteva apparire anche senza toccare nulla,
+   durante un render automatico/realtime.
+
+2. Menu Giocatori:
+   aggiunto un listener dedicato e robusto per:
+   - modifica giocatore
+   - email singola
+   - selezione/deselezione
+   - WhatsApp selezionati
+   - Email selezionati CCN
+   - PDF
+   - Excel
+   - CSV
+
+3. WhatsApp:
+   su iPhone usa apertura diretta via location.href invece di popup.
+
+4. PDF:
+   fallback se Safari blocca le nuove finestre.
+
+5. Excel:
+   se la libreria XLSX CDN non è disponibile, scarica CSV compatibile Excel.
+
+6. Stabilità:
+   un errore runtime non critico non deve più sostituire l'intera app
+   con la schermata rossa dopo che l'interfaccia è già avviata.
+
+Mantiene tutte le correzioni sync e storage delle versioni precedenti.
+
+INSTALLAZIONE
+Carica SOLO index-v8-lab.html.
+NON toccare index.html operativo.
+
+LINK TEST
+index-v8-lab.html?v=8132
