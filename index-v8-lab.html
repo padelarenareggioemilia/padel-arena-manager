@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.7 LAB COMUNICAZIONI</title>
+<title>Padel Arena Manager V8.2.8 LAB COMUNICAZIONI LIVE</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1412,12 +1412,7 @@ document.addEventListener("change",function(ev){
   pamCommRenderV827();
  }
 });
-document.addEventListener("input",function(ev){
- if(ev.target&&ev.target.id==="pamCommQ827"){
-  clearTimeout(window.__pamCommQ827Timer);
-  window.__pamCommQ827Timer=setTimeout(pamCommRenderV827,100);
- }
-});
+document.addEventListener("input",function(ev){if(ev.target&&ev.target.id==="pamCommQ827")pamCommRenderV827();});
 document.addEventListener("click",function(ev){
  const t=ev.target&&ev.target.closest?ev.target.closest("button"):null;if(!t)return;
  if(t.matches("[data-comm827-selectall]")){ev.preventDefault();pamCommSelectFilteredV827();return}
@@ -1429,6 +1424,12 @@ document.addEventListener("click",function(ev){
  if(t.matches("[data-comm827-xlsx]")){ev.preventDefault();pamCommExcelV827();return}
  if(t.matches("[data-comm827-csv]")){ev.preventDefault();pamCommCsvV827();return}
 },true);
+
+
+/* pam-v828-select-live */
+document.addEventListener("input",function(ev){
+ if(ev.target&&["pamCommSex827","pamCommAge827","pamCommEvent827"].includes(ev.target.id))pamCommRenderV827();
+});
 
 </script>
 <script>
@@ -1497,6 +1498,17 @@ button.danger[data-delete-request],
 .pam-comm-results{display:grid;gap:8px;max-height:520px;overflow:auto;margin-top:12px}
 .pam-comm-row{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #294262;border-radius:12px;background:#0b182a}
 .pam-comm-row input{width:22px;height:22px;flex:0 0 auto}.pam-comm-row span{display:grid}.pam-comm-row small{color:var(--muted)}
+</style>
+
+
+<style id="pam-v828-communications-live">
+.pam-comm-quick-actions{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
+ margin:10px 0 12px;
+}
+@media(max-width:650px){.pam-comm-quick-actions{grid-template-columns:1fr}}
 </style>
 
 </head>
@@ -2808,7 +2820,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.7 LAB · COMUNICAZIONI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.8 LAB · COMUNICAZIONI LIVE</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3087,7 +3099,7 @@ function home(){
   '<section><div class="pam-v5-section-title"><h2>Accesso rapido</h2><small>Le funzioni che utilizzi di più</small></div><div class="pam-v5-actions">'+
    '<button class="pam-v5-action primary-tile" data-view="championship"><span class="tile-icon">🏆</span><strong>AICS Championship 2027</strong><small>Squadre, club, rose e documenti</small></button>'+
    '<button class="pam-v5-action" data-view="events"><span class="tile-icon">🎾</span><strong>Tornei</strong><small>Partite, risultati e classifiche</small></button>'+
-   '<button class="pam-v5-action" data-view="players"><span class="tile-icon">👥</span><strong>Giocatori</strong><small>Anagrafica unica online</small></button>'+
+   '<button class="pam-v5-action" data-view="players"><span class="tile-icon">👥</span><strong>Giocatori</strong><small>Anagrafica unica online</small></button>'+'<button class="pam-v5-action" data-view="communications"><span class="tile-icon">✉️</span><strong>Comunicazioni</strong><small>Messaggi ai giocatori</small></button>'+
    '<button class="pam-v5-action" data-view="new"><span class="tile-icon">＋</span><strong>Nuovo evento</strong><small>Crea una competizione</small></button>'+
   '</div></section>'+
   '<section class="pam-v5-campaign">'+
@@ -3524,7 +3536,7 @@ function pamCommEventPlayersV827(eventId){
  return new Set((e.playerIds||[]).map(String));
 }
 function pamCommFilteredV827(){
- const q=String(document.getElementById("pamCommQ827")?.value||"").trim().toLowerCase();
+ const q=String(document.getElementById("pamCommQ827")?.value||"").trim().toLowerCase().replace(/\s+/g," ");
  const sex=String(document.getElementById("pamCommSex827")?.value||"all");
  const ageBand=String(document.getElementById("pamCommAge827")?.value||"all");
  const eventId=String(document.getElementById("pamCommEvent827")?.value||"all");
@@ -3532,17 +3544,21 @@ function pamCommFilteredV827(){
 
  return (state.players||[]).filter(function(p){
   if(sex!=="all"&&pamCommGenderV827(p)!==sex)return false;
+
   const age=pamCommAgeV827(p);
   if(ageBand!=="all"){
    if(age===null)return false;
-   if(ageBand==="u16"&&!(age>=0&&age<=16))return false;
-   if(ageBand==="u30"&&!(age>=17&&age<=29))return false;
-   if(ageBand==="u55"&&!(age>=30&&age<=54))return false;
-   if(ageBand==="o55"&&!(age>=55))return false;
+   if(ageBand==="u16"&&(age<0||age>16))return false;
+   if(ageBand==="u30"&&(age<17||age>29))return false;
+   if(ageBand==="u55"&&(age<30||age>54))return false;
+   if(ageBand==="o55"&&age<55)return false;
   }
+
   if(eventPlayers&&!eventPlayers.has(String(p.id)))return false;
+
   if(q){
-   const hay=[p.firstName,p.lastName,playerName(p),p.phone,p.email].join(" ").toLowerCase();
+   const hay=[p.firstName,p.lastName,playerName(p),p.phone,p.email]
+    .join(" ").toLowerCase().replace(/\s+/g," ");
    if(!hay.includes(q))return false;
   }
   return true;
@@ -3554,28 +3570,40 @@ function pamCommSelectedPlayersV827(){
 function pamCommRenderV827(){
  const box=document.getElementById("pamCommList827");if(!box)return;
  const rows=pamCommFilteredV827();
+ const visibleIds=new Set(rows.map(function(p){return String(p.id)}));
+
+ Array.from(pamCommSelectionV827).forEach(function(id){
+  if(!visibleIds.has(String(id)))pamCommSelectionV827.delete(String(id));
+ });
+
  const count=document.getElementById("pamCommFilteredCount827");
  if(count)count.textContent=String(rows.length);
+
  const selected=document.getElementById("pamCommSelectedCount827");
  if(selected)selected.textContent=String(pamCommSelectionV827.size);
+
  const preview=document.getElementById("pamCommSelectedPreview827");
  if(preview){
-  const picked=pamCommSelectedPlayersV827();
+  const picked=rows.filter(function(p){return pamCommSelectionV827.has(String(p.id))});
   preview.innerHTML=picked.length
-   ?picked.slice(0,30).map(function(p){return '<span class="pam-comm-chip">'+esc(playerName(p))+'</span>'}).join("")+(picked.length>30?'<span class="pam-comm-chip">+'+(picked.length-30)+'</span>':'')
+   ?picked.slice(0,30).map(function(p){return '<span class="pam-comm-chip">'+esc(playerName(p))+'</span>'}).join("")+
+    (picked.length>30?'<span class="pam-comm-chip">+'+(picked.length-30)+'</span>':'')
    :'<span class="muted">Nessun destinatario selezionato.</span>';
  }
+
  if(!rows.length){
-  box.innerHTML='<div class="notice">Nessun giocatore corrisponde ai filtri impostati.</div>';return;
+  box.innerHTML='<div class="notice">Nessun giocatore corrisponde ai filtri impostati.</div>';
+  return;
  }
+
  box.innerHTML=rows.map(function(p){
   const id=String(p.id),checked=pamCommSelectionV827.has(id)?"checked":"";
   const age=pamCommAgeV827(p);
-  return '<label class="pam-comm-row"><input type="checkbox" data-comm827-player="'+id+'" '+checked+'>'+
-   '<span class="grow"><b>'+esc(playerName(p))+'</b><small>'+
-   esc(p.phone||"Telefono mancante")+' · '+esc(p.email||"Email mancante")+
-   (age!==null?' · '+age+' anni':' · Età non disponibile')+
-   '</small></span></label>';
+  return '<label class="pam-comm-row">'+
+   '<input type="checkbox" data-comm827-player="'+id+'" '+checked+'>'+
+   '<span class="grow"><b>'+esc(playerName(p))+'</b>'+
+   '<small>'+esc(p.phone||"Telefono mancante")+' · '+esc(p.email||"Email mancante")+
+   (age!==null?' · '+age+' anni':' · Età non disponibile')+'</small></span></label>';
  }).join("");
 }
 function pamCommSelectFilteredV827(){
@@ -3653,7 +3681,10 @@ function communicationsView(){
   '<div class="field"><label>Fascia d’età</label><select id="pamCommAge827"><option value="all">Tutte le età</option><option value="u16">Under 16 · 0-16</option><option value="u30">Under 30 · 17-29</option><option value="u55">Under 55 · 30-54</option><option value="o55">Over 55 · 55+</option></select></div></div>'+
   '<div class="field"><label>Iscritti al torneo</label><select id="pamCommEvent827">'+eventOptions+'</select></div>'+
   '<div class="field"><label>Ricerca nome / cognome</label><input id="pamCommQ827" type="search" autocomplete="off" placeholder="Scrivi nome o cognome"></div>'+
-  '<div class="notice"><b id="pamCommFilteredCount827">0</b> giocatori corrispondenti ai filtri</div>'+
+  '<div class="notice"><b id="pamCommFilteredCount827">0</b> giocatori corrispondenti ai filtri</div>'+'<div id="pamCommQuickActions828" class="pam-comm-quick-actions">'+
+  '<button class="primary" type="button" data-comm827-wa>WhatsApp selezionati</button>'+
+  '<button class="secondary" type="button" data-comm827-email>Email CCN selezionati</button>'+
+ '</div>'+
   '<div class="row"><button class="secondary" type="button" data-comm827-selectall>Seleziona tutti i risultati</button><button class="secondary" type="button" data-comm827-clear>Deseleziona tutti</button></div>'+
   '<div id="pamCommList827" class="pam-comm-results"></div>'+
  '</div>'+
@@ -5845,7 +5876,7 @@ function render(){
  let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="communications"?communicationsView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+pamUniversalNav()+body+'</main>'+nav();
  pamApplyDynamicTheme();
- if(state.view==="communications")setTimeout(pamCommRenderV827,0);
+ if(state.view==="communications")pamCommRenderV827();
 }
 const pamOriginalRender=render;
 render=function(){
