@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.5 LAB SALVATAGGIO DB</title>
+<title>Padel Arena Manager V8.2.6 LAB CLICK FIX</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1400,26 +1400,6 @@ document.addEventListener("click",function(ev){
  if(ev.target.closest("[data-comm-xlsx-v822]")){ev.preventDefault();pamCommExcelV822();return}
  if(ev.target.closest("[data-comm-csv-v822]")){ev.preventDefault();pamCommCsvV822();return}
  if(ev.target.closest("[data-comm-clear-v822]")){ev.preventDefault();pamCommSelectedV822.clear();pamRenderCommResultsV822();const c=document.getElementById("pamCommCountV822");if(c)c.textContent="0";return}
- const org=ev.target.closest("[data-save-event-organizer-v822]");
- if(org){
-  ev.preventDefault();
-  const e=state.events.find(function(x){return String(x.id)===String(org.getAttribute("data-save-event-organizer-v822"))});
-  if(!e)return;
-  e.organizerName=document.getElementById("pamEventOrgNameV822")?.value.trim()||"";
-  e.organizerPhone=document.getElementById("pamEventOrgPhoneV822")?.value.trim()||"";
-  e.organizerEmail=document.getElementById("pamEventOrgEmailV822")?.value.trim()||"";
-  if(typeof save==="function")save();
-  const old=org.textContent;org.disabled=true;org.textContent="Salvataggio...";
-  pamSaveOrganizerV825(e).then(function(saved){
-   org.textContent="Salvato ✓";const st=document.getElementById("pamOrganizerSaveStatusV825");if(st)st.textContent="Salvato nel database alle "+new Date().toLocaleTimeString("it-IT");
-   pamToast("Organizzatore salvato nel database ✓","success");
-   setTimeout(function(){org.disabled=false;org.textContent=old},1300);
-  }).catch(function(err){
-   console.error(err);org.disabled=false;org.textContent=old;const st=document.getElementById("pamOrganizerSaveStatusV825");if(st)st.textContent="Salvataggio non riuscito: "+(err.message||err);
-   pamToast("Errore salvataggio organizzatore: "+(err.message||err),"error");
-  });
-  return;
- }
 },true);
 
 </script>
@@ -1469,6 +1449,17 @@ button.danger[data-delete-request],
  background:#1f6fa5!important;color:#fff!important}
 .notice:not(.error):not(.success){border-color:#315b82!important;background:rgba(29,79,122,.16)!important;color:#dceeff!important}
 .danger{background:#9f3045!important;color:#fff!important}
+</style>
+
+
+<style id="pam-v826-organizer-click-fix">
+#pamOrganizerSaveStatusV826{
+ padding:8px 10px;
+ border-radius:10px;
+ background:#0a1829;
+ border:1px solid #315b82;
+ font-weight:800;
+}
 </style>
 
 </head>
@@ -2780,7 +2771,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.5 LAB · SALVATAGGIO DB</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.6 LAB · CLICK FIX</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -2982,6 +2973,60 @@ async function pamSaveOrganizerV825(e){
  e.organizerEmail=saved.organizerEmail||args.p_email;
  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
  return saved;
+}
+
+
+async function pamHandleOrganizerSaveV826(btn,ev){
+ try{
+  if(ev){ev.preventDefault();ev.stopPropagation();}
+  if(!btn)throw new Error("Pulsante non disponibile.");
+  const id=String(btn.getAttribute("data-event-id")||"");
+  const e=(state.events||[]).find(function(x){return String(x.id)===id});
+  if(!e)throw new Error("Torneo non trovato.");
+
+  const status=document.getElementById("pamOrganizerSaveStatusV826");
+  btn.disabled=true;
+  btn.textContent="SALVATAGGIO IN CORSO...";
+  if(status){
+   status.textContent="Sto inviando i dati a Supabase...";
+   status.style.color="#dceeff";
+  }
+
+  e.organizerName=String(document.getElementById("pamEventOrgNameV822")?.value||"").trim();
+  e.organizerPhone=String(document.getElementById("pamEventOrgPhoneV822")?.value||"").trim();
+  e.organizerEmail=String(document.getElementById("pamEventOrgEmailV822")?.value||"").trim();
+
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
+
+  const saved=await pamSaveOrganizerV825(e);
+
+  btn.textContent="SALVATO ✓";
+  if(status){
+   status.textContent="✓ Salvato nel database alle "+new Date().toLocaleTimeString("it-IT")+
+    " · "+(saved.organizerName||"")+" · "+(saved.organizerPhone||"")+" · "+(saved.organizerEmail||"");
+   status.style.color="#b7ff3c";
+  }
+  if(typeof pamToast==="function")pamToast("Organizzatore salvato nel database ✓","success");
+
+  setTimeout(function(){
+   btn.disabled=false;
+   btn.textContent="Salva organizzatore";
+  },1800);
+  return false;
+ }catch(err){
+  console.error("pamHandleOrganizerSaveV826",err);
+  if(btn){
+   btn.disabled=false;
+   btn.textContent="RIPROVA SALVATAGGIO";
+  }
+  const status=document.getElementById("pamOrganizerSaveStatusV826");
+  if(status){
+   status.textContent="ERRORE: "+(err&&err.message?err.message:String(err));
+   status.style.color="#ffb4c0";
+  }
+  if(typeof pamToast==="function")pamToast("Errore: "+(err&&err.message?err.message:String(err)),"error");
+  return false;
+ }
 }
 
 function nav(){
@@ -4114,7 +4159,7 @@ function eventView(){
  '<div class="field"><label>Nome organizzatore</label><input id="pamEventOrgNameV822" value="'+esc(e.organizerName||"")+'"></div>'+
  '<div class="field"><label>Telefono / WhatsApp</label><input id="pamEventOrgPhoneV822" value="'+esc(e.organizerPhone||"")+'"></div>'+
  '<div class="field"><label>Email</label><input id="pamEventOrgEmailV822" type="email" value="'+esc(e.organizerEmail||"")+'"></div>'+
- '<button class="secondary" type="button" data-save-event-organizer-v822="'+e.id+'">Salva organizzatore</button><div id="pamOrganizerSaveStatusV825" class="muted" style="margin-top:8px"></div></div></details>'+
+ '<button class="secondary" type="button" data-event-id="'+e.id+'" onclick="return pamHandleOrganizerSaveV826(this,event)">Salva organizzatore</button><div id="pamOrganizerSaveStatusV826" class="muted" style="margin-top:8px;min-height:20px">Premi Salva organizzatore per memorizzare questi contatti.</div></div></details>'+
  '<details class="pam-actions-menu print-hide"><summary>Azioni e strumenti del torneo</summary><div class="pam-actions-content">'+
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+

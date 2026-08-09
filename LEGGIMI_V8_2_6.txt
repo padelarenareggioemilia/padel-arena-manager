@@ -1,0 +1,23 @@
+V8.2.6 LAB · CLICK FIX
+
+Corregge il click del pulsante Salva organizzatore.
+
+Il pulsante ora chiama DIRETTAMENTE:
+pamHandleOrganizerSaveV826(this,event)
+
+Non dipende più dal listener generale della pagina.
+
+NON serve rieseguire SQL se hai già eseguito
+SUPABASE_V8_2_5_SALVATAGGIO_ORGANIZZATORE.sql.
+
+Su GitHub sostituisci SOLO:
+index-v8-lab.html
+
+Test:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8260
+
+Quando premi il pulsante DEVE succedere immediatamente una di queste due cose:
+1) "SALVATAGGIO IN CORSO..." e poi "SALVATO ✓"
+2) "ERRORE: ..." sotto al pulsante.
+
+Se non cambia neppure il testo del pulsante, il file online non è quello appena caricato.
