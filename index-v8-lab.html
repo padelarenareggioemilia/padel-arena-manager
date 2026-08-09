@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.10 LAB WHATSAPP CODA</title>
+<title>Padel Arena Manager V8.2.11 LAB ASTA GUIDATA</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1511,6 +1511,17 @@ button.danger[data-delete-request],
 @media(max-width:650px){.pam-comm-quick-actions{grid-template-columns:1fr}}
 </style>
 
+
+<style id="pam-v8211-guided-auction">
+.pam-guided-auction{border-color:#315b82}
+.pam-guided-auction-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pam-guided-auction-head h2{margin:8px 0}
+.pam-auction-buy-row{padding:13px;margin:10px 0;border:1px solid #315b82;border-radius:14px;background:#0b182a}
+.pam-auction-row-title{font-weight:1000;margin-bottom:9px;color:#b7ff3c}
+.pam-auction-advanced{margin-top:14px}
+@media(max-width:700px){.pam-guided-auction-head{align-items:flex-start;flex-direction:column}}
+</style>
+
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -2820,7 +2831,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.10 LAB · WHATSAPP CODA</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.11 LAB · ASTA GUIDATA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5475,7 +5486,7 @@ function pamFinalOnlyView(e){
  }
  return '<div class="card"><h2>Composizione finale</h2>'+selectors+'</div>'+cards+summary;
 }
-function auctionView(e,which){
+function pamAuctionLegacyViewV8211(e,which){
  const count=pamAuctionCount(e);
  if(which<1||which>count)return '<div class="notice error">Asta non prevista per questo torneo.</div>';
  if(which===1){
@@ -5493,6 +5504,182 @@ function auctionView(e,which){
  if(which<count)return '<div class="notice"><b>Asta '+which+' di '+count+':</b> inserisci i gettoni spesi. Il saldo residuo verrà aggiornato e riportato nell’asta successiva.</div>'+rows;
  return '<div class="notice"><b>Asta '+which+' di '+count+':</b> ultima asta. Inserisci i gettoni spesi e componi la finale.</div>'+rows+'<div style="height:14px"></div>'+pamFinalOnlyView(e);
 }
+
+function pamGuidedAuctionCandidatesV8211(e,which){
+ if(which===1){
+  if((e.playerIds||[]).length===6)return [];
+  return semifinalQualified(e);
+ }
+ return semifinalWinners(e);
+}
+function pamGuidedAuctionPhaseV8211(e,which){
+ return which===1?"Semifinali":"Finale";
+}
+function pamGuidedAuctionRowsCountV8211(e,which){
+ const ids=pamGuidedAuctionCandidatesV8211(e,which);
+ return ids.length===8?4:ids.length===4?2:0;
+}
+function pamGuidedAuctionOptionV8211(ids,selected){
+ return '<option value="">Seleziona...</option>'+ids.map(function(id){
+  return '<option value="'+esc(id)+'" '+(String(id)===String(selected||"")?"selected":"")+'>'+esc(playerName(playerById(id)))+'</option>';
+ }).join("");
+}
+function pamGuidedAuctionAvailableV8211(e,which,id){
+ const auction=pamAuctionData(e,which);
+ const row=standings(e).find(function(x){return String(x.id)===String(id)});
+ const old=Number(auction.spending[id])||0;
+ return Math.max(0,Number(row?row.balance:0)+old);
+}
+function pamGuidedAuctionViewV8211(e,which){
+ const ids=pamGuidedAuctionCandidatesV8211(e,which);
+ const rowsCount=pamGuidedAuctionRowsCountV8211(e,which);
+ const phase=pamGuidedAuctionPhaseV8211(e,which);
+ const auction=pamAuctionData(e,which);
+ if(!auction.guidedPairs)auction.guidedPairs=[];
+
+ if((e.playerIds||[]).length===6&&which===1){
+  return '<div class="card pam-guided-auction"><h2>⚡ Asta guidata</h2>'+
+   '<div class="notice">Nel formato Rodeo a 6 la fase eliminatoria/finale è già costruita automaticamente dal sistema. Inserisci soltanto i gettoni spesi nella modalità tradizionale qui sotto.</div></div>';
+ }
+ if(rowsCount===0){
+  const msg=which===1
+   ?'Completa prima la fase precedente: servono 8 giocatori qualificati per creare le semifinali.'
+   :'Completa entrambe le semifinali: servono 4 finalisti per creare la finale.';
+  return '<div class="card pam-guided-auction"><h2>⚡ Asta guidata</h2><div class="notice">'+msg+'</div></div>';
+ }
+
+ const rows=[];
+ for(let i=0;i<rowsCount;i++){
+  const saved=auction.guidedPairs[i]||{};
+  rows.push(
+   '<div class="pam-auction-buy-row">'+
+    '<div class="pam-auction-row-title">Acquisto '+(i+1)+'</div>'+
+    '<div class="row">'+
+     '<div class="field"><label>Chi compra</label><select data-guided-auction-buyer="'+which+'" data-row="'+i+'">'+pamGuidedAuctionOptionV8211(ids,saved.buyer)+'</select></div>'+
+     '<div class="field"><label>Chi viene acquistato</label><select data-guided-auction-player="'+which+'" data-row="'+i+'">'+pamGuidedAuctionOptionV8211(ids,saved.player)+'</select></div>'+
+     '<div class="field"><label>Prezzo in gettoni</label><input type="number" min="0" step="1" inputmode="numeric" value="'+(Number(saved.price)||0)+'" data-guided-auction-price="'+which+'" data-row="'+i+'"></div>'+
+    '</div>'+
+    '<div class="muted" data-guided-auction-balance="'+i+'">Il saldo disponibile del compratore viene verificato alla conferma.</div>'+
+   '</div>'
+  );
+ }
+
+ const explanation=rowsCount===4
+  ?'Inserisci i 4 acquisti. Ogni giocatore deve comparire una sola volta. Il sistema formerà 4 coppie e genererà automaticamente Semifinale 1 e Semifinale 2.'
+  :'Inserisci i 2 acquisti. Ogni finalista deve comparire una sola volta. Il sistema formerà le 2 coppie e genererà automaticamente la Finale.';
+
+ return '<div class="card pam-guided-auction">'+
+  '<div class="pam-guided-auction-head"><div><span class="pill">ASTA '+which+'</span><h2>⚡ Asta guidata · '+phase+'</h2></div><b>'+ids.length+' giocatori</b></div>'+
+  '<div class="notice"><b>Flusso semplice:</b> chi compra → chi viene acquistato → prezzo. '+explanation+'</div>'+
+  rows.join('')+
+  '<div id="pamGuidedAuctionStatusV8211" class="notice">Compila tutti gli acquisti e poi conferma.</div>'+
+  '<button class="primary" type="button" onclick="return pamSaveGuidedAuctionV8211('+which+',this)">CONFERMA ASTA E GENERA '+phase.toUpperCase()+'</button>'+
+ '</div>';
+}
+function pamGuidedAuctionReadV8211(which){
+ const buyers=Array.from(document.querySelectorAll('[data-guided-auction-buyer="'+which+'"]'));
+ return buyers.map(function(b){
+  const row=b.getAttribute("data-row");
+  return {
+   buyer:String(b.value||""),
+   player:String(document.querySelector('[data-guided-auction-player="'+which+'"][data-row="'+row+'"]')?.value||""),
+   price:Math.max(0,Number(document.querySelector('[data-guided-auction-price="'+which+'"][data-row="'+row+'"]')?.value)||0)
+  };
+ });
+}
+function pamGuidedAuctionStatusV8211(msg,kind){
+ const el=document.getElementById("pamGuidedAuctionStatusV8211");
+ if(!el)return;
+ el.textContent=msg;
+ el.className="notice "+(kind==="error"?"error":kind==="success"?"success":"");
+}
+async function pamSaveGuidedAuctionV8211(which,btn){
+ const e=currentEvent();if(!e)return false;
+ try{
+  const ids=pamGuidedAuctionCandidatesV8211(e,which).map(String);
+  const rows=pamGuidedAuctionReadV8211(which);
+  const expected=pamGuidedAuctionRowsCountV8211(e,which);
+  if(rows.length!==expected)throw new Error("numero di acquisti non corretto");
+  if(rows.some(function(r){return !r.buyer||!r.player}))throw new Error("seleziona compratore e giocatore acquistato in ogni riga");
+  if(rows.some(function(r){return r.buyer===r.player}))throw new Error("un giocatore non può acquistare se stesso");
+
+  const used=[];
+  rows.forEach(function(r){used.push(r.buyer,r.player)});
+  if(new Set(used).size!==ids.length||used.length!==ids.length)throw new Error("ogni giocatore della fase deve comparire una sola volta");
+  if(used.some(function(id){return !ids.includes(String(id))}))throw new Error("è stato selezionato un giocatore non ammesso in questa fase");
+
+  rows.forEach(function(r){
+   const available=pamGuidedAuctionAvailableV8211(e,which,r.buyer);
+   if(r.price>available)throw new Error(playerName(playerById(r.buyer))+" ha "+available+" gettoni disponibili, non "+r.price);
+  });
+
+  if(!confirm("Confermi l'asta? Verranno aggiornati i gettoni e generate automaticamente le partite della fase "+pamGuidedAuctionPhaseV8211(e,which)+"."))return false;
+
+  btn.disabled=true;btn.textContent="GENERAZIONE IN CORSO...";
+  pamGuidedAuctionStatusV8211("Salvataggio asta e generazione partite...","");
+
+  const auction=pamAuctionData(e,which);
+  auction.guidedPairs=rows.map(function(r){return {buyer:r.buyer,player:r.player,price:r.price}});
+  auction.spending={};
+  ids.forEach(function(id){auction.spending[id]=0});
+  rows.forEach(function(r){auction.spending[r.buyer]=(Number(auction.spending[r.buyer])||0)+r.price});
+
+  const count=pamAuctionCount(e);
+  e.playerIds.forEach(function(id){
+   e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};
+   let total=0;
+   for(let i=1;i<=count;i++)total+=Number(pamAuctionData(e,i).spending[id])||0;
+   e.ledger[id].spent=total;
+  });
+
+  const fs=ensureFinalStages(e);
+  const pairs=rows.map(function(r){return [r.buyer,r.player]});
+
+  if(which===1&&pairs.length===4){
+   fs.semifinals[0].teamA=pairs[0].slice();
+   fs.semifinals[0].teamB=pairs[1].slice();
+   fs.semifinals[0].score1=null;fs.semifinals[0].score2=null;fs.semifinals[0].score1R=null;fs.semifinals[0].score2R=null;
+   fs.semifinals[1].teamA=pairs[2].slice();
+   fs.semifinals[1].teamB=pairs[3].slice();
+   fs.semifinals[1].score1=null;fs.semifinals[1].score2=null;fs.semifinals[1].score1R=null;fs.semifinals[1].score2R=null;
+  }else if(which>1&&pairs.length===2){
+   fs.final.teamA=pairs[0].slice();
+   fs.final.teamB=pairs[1].slice();
+   fs.final.score1=null;fs.final.score2=null;fs.final.score1R=null;fs.final.score2R=null;
+  }else{
+   throw new Error("configurazione della fase non compatibile con l'asta guidata");
+  }
+
+  pamProtectCurrentEdit(8000);
+  localStorage.setItem(KEY,JSON.stringify(state));
+
+  if(pamCloudReady&&PAM_SESSION){
+   try{await pamCloudSyncAll()}
+   catch(err){console.warn("Sync asta guidata:",err);pamToast("Asta creata sul dispositivo; sincronizzazione cloud da completare.","error")}
+  }
+
+  pamGuidedAuctionStatusV8211("Asta confermata. Gettoni aggiornati e "+pamGuidedAuctionPhaseV8211(e,which).toLowerCase()+" generate.","success");
+  pamToast("Asta "+which+" completata: "+pamGuidedAuctionPhaseV8211(e,which)+" generate automaticamente.","success");
+
+  setTimeout(function(){
+   const y=window.scrollY;render();requestAnimationFrame(function(){window.scrollTo(0,y)});
+  },450);
+ }catch(err){
+  console.error("Asta guidata:",err);
+  pamGuidedAuctionStatusV8211("ERRORE: "+(err.message||err),"error");
+  if(btn){btn.disabled=false;btn.textContent="CONFERMA ASTA E GENERA "+pamGuidedAuctionPhaseV8211(e,which).toUpperCase()}
+ }
+ return false;
+}
+function auctionView(e,which){
+ const guided=pamGuidedAuctionViewV8211(e,which);
+ const legacy=pamAuctionLegacyViewV8211(e,which);
+ return guided+
+  '<details class="pam-actions-menu pam-auction-advanced print-hide"><summary>Modalità manuale avanzata / recupero</summary>'+
+   '<div class="pam-actions-content"><div class="notice">Usa questa sezione solo se devi correggere manualmente gettoni o composizione delle coppie.</div>'+legacy+'</div>'+
+  '</details>';
+}
+
 function auction2View(e){
  const fs=ensureFinalStages(e),finalists=semifinalWinners(e);
  if(finalists.length!==4)return '<div class="notice error">Prima completa entrambe le semifinali.</div>';
