@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.9 LAB COMUNICAZIONI ATTIVE</title>
+<title>Padel Arena Manager V8.2.10 LAB WHATSAPP CODA</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -2820,7 +2820,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.9 LAB · COMUNICAZIONI ATTIVE</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.10 LAB · WHATSAPP CODA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3619,18 +3619,61 @@ function pamCommMessageV827(p){
 }
 function pamCommStartWhatsappV827(){
  const rows=pamCommSelectedPlayersV827().filter(function(p){return pamPhoneV822(p.phone)});
- if(!rows.length)return pamToast("Nessun destinatario selezionato con numero WhatsApp.","error");
+ if(!rows.length){pamCommStatusV829("Nessun destinatario selezionato con numero WhatsApp.","error");return false}
  pamCommWhatsappQueueV827=rows.slice();
- pamCommNextWhatsappV827();
+ const status=document.getElementById("pamCommWaStatus827");
+ if(status)status.textContent="Coda WhatsApp pronta: "+rows.length+" destinatari.";
+ pamCommStatusV829("Coda WhatsApp pronta: "+rows.length+" destinatari. Premi APRI PRIMO WHATSAPP.","success");
+ pamCommShowWhatsappNextV8210();
+ return false;
+}
+function pamCommShowWhatsappNextV8210(){
+ const next=document.getElementById("pamCommWaNext827");
+ if(!next)return;
+ if(!pamCommWhatsappQueueV827.length){
+  next.hidden=true;
+  return;
+ }
+ const p=pamCommWhatsappQueueV827[0];
+ next.hidden=false;
+ next.textContent=(pamCommWhatsappQueueV827.length===1?"Apri ultimo WhatsApp: ":"Apri prossimo WhatsApp: ")+playerName(p)+" ("+pamCommWhatsappQueueV827.length+" rimasti)";
 }
 function pamCommNextWhatsappV827(){
- if(!pamCommWhatsappQueueV827.length)return pamToast("Comunicazioni WhatsApp completate.","success");
+ if(!pamCommWhatsappQueueV827.length){
+  try{sessionStorage.removeItem("pam-wa-queue-v8210")}catch(_){} pamCommStatusV829("Coda WhatsApp completata.","success");
+  const status=document.getElementById("pamCommWaStatus827");if(status)status.textContent="Coda WhatsApp completata.";
+  pamCommShowWhatsappNextV8210();
+  return false;
+ }
  const p=pamCommWhatsappQueueV827.shift();
  const num=pamPhoneV822(p.phone);
+ const url="https://wa.me/"+num+"?text="+encodeURIComponent(pamCommMessageV827(p));
  const status=document.getElementById("pamCommWaStatus827");
- if(status)status.textContent="Da inviare: "+playerName(p)+" · restano "+pamCommWhatsappQueueV827.length;
- window.open("https://wa.me/"+num+"?text="+encodeURIComponent(pamCommMessageV827(p)),"_blank","noopener");
- const next=document.getElementById("pamCommWaNext827");if(next)next.hidden=pamCommWhatsappQueueV827.length===0;
+ if(status)status.textContent="Aperto: "+playerName(p)+" · restano "+pamCommWhatsappQueueV827.length;
+ pamCommStatusV829("WhatsApp: "+playerName(p)+" · restano "+pamCommWhatsappQueueV827.length+" destinatari.","success");
+
+ // Navigazione intenzionale nella stessa scheda: su iPhone evita il blocco dei popup multipli.
+ // La coda viene salvata per poter proseguire tornando alla pagina.
+ try{
+  sessionStorage.setItem("pam-wa-queue-v8210",JSON.stringify(pamCommWhatsappQueueV827.map(function(x){return String(x.id)})));
+ }catch(_){}
+ pamCommShowWhatsappNextV8210();
+ window.location.href=url;
+ return false;
+}
+function pamCommRestoreWhatsappQueueV8210(){
+ try{
+  const ids=JSON.parse(sessionStorage.getItem("pam-wa-queue-v8210")||"[]");
+  if(!Array.isArray(ids)||!ids.length)return;
+  const map=new Map((state.players||[]).map(function(p){return [String(p.id),p]}));
+  pamCommWhatsappQueueV827=ids.map(function(id){return map.get(String(id))}).filter(Boolean);
+  if(state.view==="communications"){
+   const status=document.getElementById("pamCommWaStatus827");
+   if(status)status.textContent="Coda WhatsApp da continuare: "+pamCommWhatsappQueueV827.length+" destinatari.";
+   pamCommStatusV829("Continua la coda WhatsApp: "+pamCommWhatsappQueueV827.length+" destinatari rimasti.","success");
+   pamCommShowWhatsappNextV8210();
+  }
+ }catch(_){}
 }
 function pamCommEmailV827(){
  const rows=pamCommSelectedPlayersV827();
@@ -3716,9 +3759,8 @@ function pamCommClearAllV829(){
 }
 function pamCommWhatsappDirectV829(){
  try{
-  const n=pamCommSelectedPlayersV827().filter(function(p){return pamPhoneV822(p.phone)}).length;
-  if(!n){pamCommStatusV829("Seleziona almeno un giocatore con telefono WhatsApp.","error");return false}
-  pamCommStatusV829("Apro WhatsApp per "+n+" destinatari, uno alla volta.","success");
+  const rows=pamCommSelectedPlayersV827().filter(function(p){return pamPhoneV822(p.phone)});
+  if(!rows.length){pamCommStatusV829("Seleziona almeno un giocatore con telefono WhatsApp.","error");return false}
   pamCommStartWhatsappV827();
  }catch(err){pamCommStatusV829("ERRORE WHATSAPP: "+(err.message||err),"error")}
  return false;
@@ -5967,7 +6009,7 @@ function render(){
  let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="communications"?communicationsView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+pamUniversalNav()+body+'</main>'+nav();
  pamApplyDynamicTheme();
- if(state.view==="communications"){pamCommRenderV827();setTimeout(function(){pamCommStatusV829("Pagina Comunicazioni pronta.","success")},0);}
+ if(state.view==="communications"){pamCommRenderV827();setTimeout(function(){pamCommStatusV829("Pagina Comunicazioni pronta.","success");pamCommRestoreWhatsappQueueV8210()},0);}
 }
 const pamOriginalRender=render;
 render=function(){
