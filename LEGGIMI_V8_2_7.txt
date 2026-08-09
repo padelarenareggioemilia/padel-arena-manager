@@ -1,0 +1,32 @@
+V8.2.7 LAB · COMUNICAZIONI
+
+Nuova pagina autonoma COMUNICAZIONI.
+
+FILTRI COMBINABILI A TENDINA:
+- Sesso: Tutti / Maschi / Femmine
+- Età: Tutte / Under 16 (0-16) / Under 30 (17-29) / Under 55 (30-54) / Over 55 (55+)
+- Iscritti al torneo: Tutti oppure singolo torneo
+- Ricerca libera nome/cognome
+
+FUNZIONI:
+- Seleziona tutti i risultati filtrati
+- Deseleziona tutti
+- Anteprima destinatari selezionati
+- WhatsApp ai selezionati, uno alla volta con pulsante "Apri prossimo WhatsApp"
+- Email CCN ai selezionati
+- PDF / Excel / CSV dei destinatari
+- {nome} personalizza WhatsApp
+- {organizzatore} usa il mittente
+
+MITTENTE PREDEFINITO:
+Lignola Francesco
+3276910287
+edenpadelclubre@gmail.com
+
+GitHub:
+sostituire SOLO index-v8-lab.html
+
+Nessun SQL da eseguire.
+
+Test:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8270

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.6 LAB CLICK FIX</title>
+<title>Padel Arena Manager V8.2.7 LAB COMUNICAZIONI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1402,6 +1402,34 @@ document.addEventListener("click",function(ev){
  if(ev.target.closest("[data-comm-clear-v822]")){ev.preventDefault();pamCommSelectedV822.clear();pamRenderCommResultsV822();const c=document.getElementById("pamCommCountV822");if(c)c.textContent="0";return}
 },true);
 
+
+document.addEventListener("change",function(ev){
+ if(ev.target&&["pamCommSex827","pamCommAge827","pamCommEvent827"].includes(ev.target.id))pamCommRenderV827();
+ const cb=ev.target&&ev.target.closest?ev.target.closest("[data-comm827-player]"):null;
+ if(cb){
+  const id=String(cb.getAttribute("data-comm827-player"));
+  if(cb.checked)pamCommSelectionV827.add(id);else pamCommSelectionV827.delete(id);
+  pamCommRenderV827();
+ }
+});
+document.addEventListener("input",function(ev){
+ if(ev.target&&ev.target.id==="pamCommQ827"){
+  clearTimeout(window.__pamCommQ827Timer);
+  window.__pamCommQ827Timer=setTimeout(pamCommRenderV827,100);
+ }
+});
+document.addEventListener("click",function(ev){
+ const t=ev.target&&ev.target.closest?ev.target.closest("button"):null;if(!t)return;
+ if(t.matches("[data-comm827-selectall]")){ev.preventDefault();pamCommSelectFilteredV827();return}
+ if(t.matches("[data-comm827-clear]")){ev.preventDefault();pamCommClearV827();return}
+ if(t.matches("[data-comm827-wa]")){ev.preventDefault();pamCommStartWhatsappV827();return}
+ if(t.matches("[data-comm827-wanext]")){ev.preventDefault();pamCommNextWhatsappV827();return}
+ if(t.matches("[data-comm827-email]")){ev.preventDefault();pamCommEmailV827();return}
+ if(t.matches("[data-comm827-pdf]")){ev.preventDefault();pamCommPdfV827();return}
+ if(t.matches("[data-comm827-xlsx]")){ev.preventDefault();pamCommExcelV827();return}
+ if(t.matches("[data-comm827-csv]")){ev.preventDefault();pamCommCsvV827();return}
+},true);
+
 </script>
 <script>
 if(!window.supabase){
@@ -1460,6 +1488,15 @@ button.danger[data-delete-request],
  border:1px solid #315b82;
  font-weight:800;
 }
+</style>
+
+
+<style id="pam-v827-communications">
+.pam-comm-chips{display:flex;flex-wrap:wrap;gap:7px;min-height:34px}
+.pam-comm-chip{display:inline-flex;padding:7px 10px;border-radius:999px;background:#173a5b;border:1px solid #315b82;font-size:12px;font-weight:800}
+.pam-comm-results{display:grid;gap:8px;max-height:520px;overflow:auto;margin-top:12px}
+.pam-comm-row{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid #294262;border-radius:12px;background:#0b182a}
+.pam-comm-row input{width:22px;height:22px;flex:0 0 auto}.pam-comm-row span{display:grid}.pam-comm-row small{color:var(--muted)}
 </style>
 
 </head>
@@ -2771,7 +2808,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.6 LAB · CLICK FIX</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.7 LAB · COMUNICAZIONI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3030,7 +3067,7 @@ async function pamHandleOrganizerSaveV826(btn,ev){
 }
 
 function nav(){
- return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="players">👥<br>Giocatori</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
+ return '<nav><div><button data-view="home">⌂<br>Home</button><button data-view="championship">🏆<br>Campionato</button><button data-view="players">👥<br>Giocatori</button><button data-view="communications">✉️<br>Comunicazioni</button><button data-view="events">🎾<br>Tornei</button></div></nav>';
 }
 function home(){
  const playerCount=state.players.length;
@@ -3452,6 +3489,187 @@ function pamCommPdfV822(){
  const body=rows.map(function(p){return "<tr><td>"+esc(playerName(p))+"</td><td>"+esc(p.phone||"")+"</td><td>"+esc(p.email||"")+"</td><td>"+Number(p.tokenBalance||0)+"</td></tr>"}).join("");
  const html='<!doctype html><html><head><meta charset="utf-8"><title>Giocatori selezionati</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #aaa;padding:6px;text-align:left}</style></head><body><h1>Giocatori selezionati</h1><table><tr><th>Giocatore</th><th>Telefono</th><th>Email</th><th>Gettoni</th></tr>'+body+'</table><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>';
  const w=window.open("","_blank");if(w){w.document.write(html);w.document.close()}else{const b=new Blob([html],{type:"text/html"});location.href=URL.createObjectURL(b)}
+}
+
+
+const PAM_COMM_DEFAULT_SENDER_V827={
+ name:"Lignola Francesco",
+ phone:"3276910287",
+ email:"edenpadelclubre@gmail.com"
+};
+let pamCommSelectionV827=new Set();
+let pamCommWhatsappQueueV827=[];
+
+function pamCommAgeV827(p){
+ const raw=String((p&&(p.birth||p.birthDate))||"").trim();
+ if(!raw)return null;
+ const d=new Date(raw+"T12:00:00");
+ if(Number.isNaN(d.getTime()))return null;
+ const now=new Date();
+ let age=now.getFullYear()-d.getFullYear();
+ const md=now.getMonth()-d.getMonth();
+ if(md<0||(md===0&&now.getDate()<d.getDate()))age--;
+ return age;
+}
+function pamCommGenderV827(p){
+ const g=String((p&&p.gender)||"").trim().toLowerCase();
+ if(g.startsWith("f"))return "F";
+ if(g.startsWith("m"))return "M";
+ return "";
+}
+function pamCommEventPlayersV827(eventId){
+ if(!eventId)return null;
+ const e=(state.events||[]).find(function(x){return String(x.id)===String(eventId)});
+ if(!e)return new Set();
+ return new Set((e.playerIds||[]).map(String));
+}
+function pamCommFilteredV827(){
+ const q=String(document.getElementById("pamCommQ827")?.value||"").trim().toLowerCase();
+ const sex=String(document.getElementById("pamCommSex827")?.value||"all");
+ const ageBand=String(document.getElementById("pamCommAge827")?.value||"all");
+ const eventId=String(document.getElementById("pamCommEvent827")?.value||"all");
+ const eventPlayers=eventId==="all"?null:pamCommEventPlayersV827(eventId);
+
+ return (state.players||[]).filter(function(p){
+  if(sex!=="all"&&pamCommGenderV827(p)!==sex)return false;
+  const age=pamCommAgeV827(p);
+  if(ageBand!=="all"){
+   if(age===null)return false;
+   if(ageBand==="u16"&&!(age>=0&&age<=16))return false;
+   if(ageBand==="u30"&&!(age>=17&&age<=29))return false;
+   if(ageBand==="u55"&&!(age>=30&&age<=54))return false;
+   if(ageBand==="o55"&&!(age>=55))return false;
+  }
+  if(eventPlayers&&!eventPlayers.has(String(p.id)))return false;
+  if(q){
+   const hay=[p.firstName,p.lastName,playerName(p),p.phone,p.email].join(" ").toLowerCase();
+   if(!hay.includes(q))return false;
+  }
+  return true;
+ }).sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")});
+}
+function pamCommSelectedPlayersV827(){
+ return (state.players||[]).filter(function(p){return pamCommSelectionV827.has(String(p.id))});
+}
+function pamCommRenderV827(){
+ const box=document.getElementById("pamCommList827");if(!box)return;
+ const rows=pamCommFilteredV827();
+ const count=document.getElementById("pamCommFilteredCount827");
+ if(count)count.textContent=String(rows.length);
+ const selected=document.getElementById("pamCommSelectedCount827");
+ if(selected)selected.textContent=String(pamCommSelectionV827.size);
+ const preview=document.getElementById("pamCommSelectedPreview827");
+ if(preview){
+  const picked=pamCommSelectedPlayersV827();
+  preview.innerHTML=picked.length
+   ?picked.slice(0,30).map(function(p){return '<span class="pam-comm-chip">'+esc(playerName(p))+'</span>'}).join("")+(picked.length>30?'<span class="pam-comm-chip">+'+(picked.length-30)+'</span>':'')
+   :'<span class="muted">Nessun destinatario selezionato.</span>';
+ }
+ if(!rows.length){
+  box.innerHTML='<div class="notice">Nessun giocatore corrisponde ai filtri impostati.</div>';return;
+ }
+ box.innerHTML=rows.map(function(p){
+  const id=String(p.id),checked=pamCommSelectionV827.has(id)?"checked":"";
+  const age=pamCommAgeV827(p);
+  return '<label class="pam-comm-row"><input type="checkbox" data-comm827-player="'+id+'" '+checked+'>'+
+   '<span class="grow"><b>'+esc(playerName(p))+'</b><small>'+
+   esc(p.phone||"Telefono mancante")+' · '+esc(p.email||"Email mancante")+
+   (age!==null?' · '+age+' anni':' · Età non disponibile')+
+   '</small></span></label>';
+ }).join("");
+}
+function pamCommSelectFilteredV827(){
+ pamCommFilteredV827().forEach(function(p){pamCommSelectionV827.add(String(p.id))});
+ pamCommRenderV827();
+}
+function pamCommClearV827(){pamCommSelectionV827.clear();pamCommRenderV827()}
+function pamCommMessageV827(p){
+ const raw=String(document.getElementById("pamCommMessage827")?.value||"").trim();
+ const sender=String(document.getElementById("pamCommSenderName827")?.value||PAM_COMM_DEFAULT_SENDER_V827.name).trim();
+ const msg=raw||"Ciao {nome}, comunicazione Padel Arena.";
+ return msg.replaceAll("{nome}",playerName(p||{})).replaceAll("{organizzatore}",sender);
+}
+function pamCommStartWhatsappV827(){
+ const rows=pamCommSelectedPlayersV827().filter(function(p){return pamPhoneV822(p.phone)});
+ if(!rows.length)return pamToast("Nessun destinatario selezionato con numero WhatsApp.","error");
+ pamCommWhatsappQueueV827=rows.slice();
+ pamCommNextWhatsappV827();
+}
+function pamCommNextWhatsappV827(){
+ if(!pamCommWhatsappQueueV827.length)return pamToast("Comunicazioni WhatsApp completate.","success");
+ const p=pamCommWhatsappQueueV827.shift();
+ const num=pamPhoneV822(p.phone);
+ const status=document.getElementById("pamCommWaStatus827");
+ if(status)status.textContent="Da inviare: "+playerName(p)+" · restano "+pamCommWhatsappQueueV827.length;
+ window.open("https://wa.me/"+num+"?text="+encodeURIComponent(pamCommMessageV827(p)),"_blank","noopener");
+ const next=document.getElementById("pamCommWaNext827");if(next)next.hidden=pamCommWhatsappQueueV827.length===0;
+}
+function pamCommEmailV827(){
+ const rows=pamCommSelectedPlayersV827();
+ const emails=Array.from(new Set(rows.map(function(p){return String(p.email||"").trim()}).filter(Boolean)));
+ if(!emails.length)return pamToast("Nessun destinatario selezionato con email.","error");
+ const subject=String(document.getElementById("pamCommSubject827")?.value||"Comunicazione Padel Arena").trim();
+ const senderName=String(document.getElementById("pamCommSenderName827")?.value||PAM_COMM_DEFAULT_SENDER_V827.name).trim();
+ const senderPhone=String(document.getElementById("pamCommSenderPhone827")?.value||PAM_COMM_DEFAULT_SENDER_V827.phone).trim();
+ const senderEmail=String(document.getElementById("pamCommSenderEmail827")?.value||PAM_COMM_DEFAULT_SENDER_V827.email).trim();
+ const generic={firstName:"",lastName:""};
+ const body=pamCommMessageV827(generic)+"\n\n"+senderName+"\nWhatsApp: "+senderPhone+"\nEmail: "+senderEmail;
+ location.href="mailto:?bcc="+encodeURIComponent(emails.join(","))+"&subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+}
+function pamCommExportRowsV827(){
+ return pamCommSelectedPlayersV827().map(function(p){
+  return {Nome:p.firstName||"",Cognome:p.lastName||"",Sesso:p.gender||"","Data nascita":p.birth||p.birthDate||"",Età:pamCommAgeV827(p)??"",Telefono:p.phone||"",Email:p.email||"",Gettoni:Number(p.tokenBalance||0)};
+ });
+}
+function pamCommCsvV827(){
+ const rows=pamCommExportRowsV827();if(!rows.length)return pamToast("Nessun giocatore selezionato.","error");
+ const headers=Object.keys(rows[0]);
+ const data=[headers].concat(rows.map(function(r){return headers.map(function(h){return r[h]})}));
+ const csv=data.map(function(r){return r.map(function(v){return '"'+String(v??"").replaceAll('"','""')+'"'}).join(";")}).join("\n");
+ const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="comunicazioni-destinatari.csv";document.body.appendChild(a);a.click();a.remove();
+}
+function pamCommExcelV827(){
+ const rows=pamCommExportRowsV827();if(!rows.length)return pamToast("Nessun giocatore selezionato.","error");
+ if(!window.XLSX)return pamCommCsvV827();
+ const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Destinatari");XLSX.writeFile(wb,"comunicazioni-destinatari.xlsx");
+}
+function pamCommPdfV827(){
+ const rows=pamCommSelectedPlayersV827();if(!rows.length)return pamToast("Nessun giocatore selezionato.","error");
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Destinatari comunicazione</title><style>body{font-family:Arial;padding:24px}h1{margin-bottom:4px}.muted{color:#666}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #bbb;padding:7px;text-align:left}</style></head><body>'+
+ '<h1>Padel Arena Manager</h1><div class="muted">Destinatari selezionati: '+rows.length+'</div><table><tr><th>Giocatore</th><th>Telefono</th><th>Email</th><th>Età</th></tr>'+
+ rows.map(function(p){return '<tr><td>'+esc(playerName(p))+'</td><td>'+esc(p.phone||"")+'</td><td>'+esc(p.email||"")+'</td><td>'+(pamCommAgeV827(p)??"")+'</td></tr>'}).join("")+
+ '</table><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>';
+ const w=window.open("","_blank");if(w){w.document.write(html);w.document.close()}
+}
+function communicationsView(){
+ const events=(state.events||[]).slice().sort(function(a,b){return String(b.date||"").localeCompare(String(a.date||""))});
+ const eventOptions='<option value="all">Tutti / nessun filtro torneo</option>'+events.map(function(e){
+  return '<option value="'+esc(e.id)+'">'+esc((e.date?e.date+" · ":"")+(e.name||"Torneo"))+'</option>';
+ }).join("");
+ return header("Comunicazioni","Comunicazioni in uscita verso i giocatori")+
+ '<div class="card"><h2>1. Filtra i destinatari</h2>'+
+  '<div class="row"><div class="field"><label>Sesso</label><select id="pamCommSex827"><option value="all">Tutti</option><option value="M">Maschi</option><option value="F">Femmine</option></select></div>'+
+  '<div class="field"><label>Fascia d’età</label><select id="pamCommAge827"><option value="all">Tutte le età</option><option value="u16">Under 16 · 0-16</option><option value="u30">Under 30 · 17-29</option><option value="u55">Under 55 · 30-54</option><option value="o55">Over 55 · 55+</option></select></div></div>'+
+  '<div class="field"><label>Iscritti al torneo</label><select id="pamCommEvent827">'+eventOptions+'</select></div>'+
+  '<div class="field"><label>Ricerca nome / cognome</label><input id="pamCommQ827" type="search" autocomplete="off" placeholder="Scrivi nome o cognome"></div>'+
+  '<div class="notice"><b id="pamCommFilteredCount827">0</b> giocatori corrispondenti ai filtri</div>'+
+  '<div class="row"><button class="secondary" type="button" data-comm827-selectall>Seleziona tutti i risultati</button><button class="secondary" type="button" data-comm827-clear>Deseleziona tutti</button></div>'+
+  '<div id="pamCommList827" class="pam-comm-results"></div>'+
+ '</div>'+
+ '<div class="card"><h2>2. Destinatari selezionati (<span id="pamCommSelectedCount827">'+pamCommSelectionV827.size+'</span>)</h2><div id="pamCommSelectedPreview827" class="pam-comm-chips"></div></div>'+
+ '<div class="card"><h2>3. Mittente / organizzatore</h2>'+
+  '<div class="row"><div class="field"><label>Nome</label><input id="pamCommSenderName827" value="'+esc(PAM_COMM_DEFAULT_SENDER_V827.name)+'"></div>'+
+  '<div class="field"><label>WhatsApp</label><input id="pamCommSenderPhone827" value="'+esc(PAM_COMM_DEFAULT_SENDER_V827.phone)+'"></div>'+
+  '<div class="field"><label>Email</label><input id="pamCommSenderEmail827" type="email" value="'+esc(PAM_COMM_DEFAULT_SENDER_V827.email)+'"></div></div>'+
+ '</div>'+
+ '<div class="card"><h2>4. Messaggio</h2>'+
+  '<div class="field"><label>Oggetto email</label><input id="pamCommSubject827" value="Comunicazione Padel Arena"></div>'+
+  '<div class="field"><label>Testo</label><textarea id="pamCommMessage827" rows="5" placeholder="Ciao {nome}, ...&#10;&#10;Puoi usare {nome} e {organizzatore}."></textarea></div>'+
+  '<div class="row"><button class="primary" type="button" data-comm827-wa>WhatsApp ai selezionati</button><button class="secondary" type="button" data-comm827-email>Email CCN ai selezionati</button></div>'+
+  '<div id="pamCommWaStatus827" class="muted" style="margin-top:8px"></div><button id="pamCommWaNext827" class="secondary" type="button" data-comm827-wanext hidden>Apri prossimo WhatsApp</button>'+
+ '</div>'+
+ '<div class="card"><h2>5. Esporta destinatari</h2><div class="row"><button class="secondary" type="button" data-comm827-pdf>PDF</button><button class="secondary" type="button" data-comm827-xlsx>Excel</button><button class="secondary" type="button" data-comm827-csv>CSV</button></div></div>';
 }
 
 function playersView(){
@@ -5624,9 +5842,10 @@ function pamApplyDynamicTheme(){
 
 function render(){
  document.body.classList.remove("pam-public-mode");
- let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="communications"?communicationsView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+pamUniversalNav()+body+'</main>'+nav();
  pamApplyDynamicTheme();
+ if(state.view==="communications")setTimeout(pamCommRenderV827,0);
 }
 const pamOriginalRender=render;
 render=function(){
