@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.2 LAB TEST 3</title>
+<title>Padel Arena Manager V8.2.4 LAB TORNEO FIX</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1408,17 +1408,15 @@ document.addEventListener("click",function(ev){
   e.organizerName=document.getElementById("pamEventOrgNameV822")?.value.trim()||"";
   e.organizerPhone=document.getElementById("pamEventOrgPhoneV822")?.value.trim()||"";
   e.organizerEmail=document.getElementById("pamEventOrgEmailV822")?.value.trim()||"";
-  save();
-  org.disabled=true;
-  const __orgOldText=org.textContent;
-  org.textContent="Salvataggio...";
-  Promise.resolve(pamCloudSyncAll()).then(function(){
+  if(typeof save==="function")save();
+  const old=org.textContent;org.disabled=true;org.textContent="Salvataggio...";
+  pamSaveOrganizerV824(e).then(function(){
    org.textContent="Salvato ✓";
-   pamToast("Organizzatore salvato e sincronizzato.","success");
-   setTimeout(function(){org.disabled=false;org.textContent=__orgOldText},1200);
+   pamToast("Organizzatore salvato online.","success");
+   setTimeout(function(){org.disabled=false;org.textContent=old},1300);
   }).catch(function(err){
-   console.error(err);org.disabled=false;org.textContent=__orgOldText;
-   pamToast("Salvataggio organizzatore non riuscito: "+(err.message||err),"error");
+   console.error(err);org.disabled=false;org.textContent=old;
+   pamToast("Errore salvataggio organizzatore: "+(err.message||err),"error");
   });
   return;
  }
@@ -1460,6 +1458,17 @@ button.danger[data-delete-request],
 .pam-comm-results{display:grid;gap:8px;max-height:360px;overflow:auto;margin:10px 0}
 .pam-comm-row{display:flex;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:12px;background:#0b182a}
 .pam-comm-row input{width:22px;height:22px;flex:0 0 auto}.pam-comm-row span{display:grid}.pam-comm-row small{color:var(--muted)}
+</style>
+
+
+<style id="pam-v824-no-red-normal-actions">
+.primary:not(.danger){background:#9dff25!important;color:#07111f!important}
+.secondary,.small,.back,.upload-button,.pam-actions-menu>summary,.tabs button:not(.on){
+ background:#173a5b!important;color:#fff!important;border-color:#315b82!important}
+.tabs .on,[data-share-registration],[data-manage-tournament-players],[data-regenerate-tournament],[data-action="commit-balances"]{
+ background:#1f6fa5!important;color:#fff!important}
+.notice:not(.error):not(.success){border-color:#315b82!important;background:rgba(29,79,122,.16)!important;color:#dceeff!important}
+.danger{background:#9f3045!important;color:#fff!important}
 </style>
 
 </head>
@@ -2539,36 +2548,46 @@ function pamResetEventGeneratedData(e){
  e.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
 }
 function pamRegenerateTournament(id){
- const e=state.events.find(function(x){return x.id===id});if(!e)return;
- const overlay=document.getElementById("pamTournamentPlayersOverlay");
- const ids=overlay&&overlay.__pamSelected?Array.from(overlay.__pamSelected):Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return x.getAttribute("data-tournament-player")});
- if(e.competitionType==="rodeo_tokens"&&![6,8,10,12,16].includes(ids.length)){
-  pamToast("Hai selezionato "+ids.length+" giocatori. Per il Rodeo a gettoni sono ammessi 6, 8, 10, 12 oppure 16 giocatori.","error");return;
+ try{
+  const e=state.events.find(function(x){return String(x.id)===String(id)});if(!e)throw new Error("Torneo non trovato.");
+  const overlay=document.getElementById("pamTournamentPlayersOverlay");
+  if(!overlay)throw new Error("Finestra partecipanti non disponibile.");
+  const ids=overlay.__pamSelected
+   ? Array.from(overlay.__pamSelected).map(String)
+   : Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return String(x.getAttribute("data-tournament-player"))});
+  if(ids.length<4)throw new Error("Seleziona almeno 4 giocatori.");
+  if(e.competitionType==="fixed_pairs"&&ids.length%2!==0)throw new Error("Per le coppie fisse serve un numero pari di giocatori.");
+  if(!confirm("Confermi la nuova lista partecipanti? Partite e risultati di questo torneo verranno rigenerati."))return;
+  e.playerIds=ids.slice();
+  e.payments=defaultPayments(ids,e.entryFee||0);
+  e.ledger={};
+  ids.forEach(function(pid){
+   const p=playerById(pid);
+   e.ledger[pid]={carried:Math.max(0,Number((p&&p.tokenBalance)||0)),spent:0,podium:0};
+  });
+  pamResetEventGeneratedData(e);
+  if(e.competitionType==="fixed_pairs"){
+   const built=buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
+   e.pairs=built.pairs||[];e.matches=built.matches||[];
+  }else{
+   e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg)||[];
+  }
+  if(!e.matches.length)throw new Error("La generazione non ha prodotto partite.");
+  save();
+  overlay.remove();
+  state.currentEventId=e.id;state.view="event";state.tab="matches";
+  render();
+  pamToast(ids.length+" partecipanti salvati · "+e.matches.length+" partite generate.","success");
+  if(PAM_SESSION&&pamIsAdmin()){
+   Promise.resolve(pamCloudSyncAll()).catch(function(err){
+    console.warn("Sync torneo dopo rigenerazione:",err);
+    pamToast("Partite create sul dispositivo; sincronizzazione cloud da completare.","error");
+   });
+  }
+ }catch(err){
+  console.error("Rigenerazione torneo:",err);
+  pamToast("Rigenerazione non riuscita: "+(err.message||err),"error");
  }
- if(e.competitionType!=="rodeo_tokens"&&ids.length<4){
-  pamToast("Seleziona almeno 4 giocatori.","error");return;
- }
- if(e.competitionType==="fixed_pairs"&&ids.length%2!==0){
-  pamToast("Per le coppie fisse serve un numero pari di giocatori.","error");return;
- }
- if(!confirm("Confermi? Tutte le partite, i risultati, i timer e le fasi finali di questo torneo verranno cancellati e rigenerati."))return;
- e.playerIds=ids;
- e.payments=defaultPayments(ids,e.entryFee||0);
- e.ledger={};
- ids.forEach(function(pid){
-  const p=playerById(pid);
-  e.ledger[pid]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0};
- });
- pamResetEventGeneratedData(e);
- if(e.competitionType==="fixed_pairs"){
-  const built=buildFixedPairs(ids,e.pairsPerGroup||4,e.courts,e.returnLeg);
-  e.pairs=built.pairs;e.matches=built.matches;
- }else{
-  e.matches=buildMatches(ids,e.courts,e.returnLeg);
- }
- save();render();
- overlay.remove();
- pamToast("Partecipanti aggiornati e partite rigenerate.","success");
 }
 
 
@@ -2761,7 +2780,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.3 LAB · ORGANIZZATORE FIX</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.4 LAB · TORNEO FIX</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -2942,6 +2961,16 @@ function pamReplaceIdsDeepV822(value,idMap){
  }
  if(typeof value==="string"&&idMap.has(value))return idMap.get(value);
  return value;
+}
+
+
+async function pamSaveOrganizerV824(e){
+ if(!e)throw new Error("Torneo non trovato.");
+ const clean=JSON.parse(JSON.stringify(e));
+ const res=await sb.from("tournaments").update({data:clean}).eq("id",e.id).select("id,data").maybeSingle();
+ if(res.error)throw res.error;
+ if(!res.data)throw new Error("Supabase non ha confermato il salvataggio.");
+ return true;
 }
 
 function nav(){
@@ -4208,7 +4237,7 @@ function pairById(e,id){return (e.pairs||[]).find(function(p){return p.id===id})
 function pairName(e,id){const p=pairById(e,id);return p?names(p.players):"Coppia"}
 function matchesView(e){
  if(!e.matches||!e.matches.length){
-  return '<div class="notice error"><b>Nessuna partita presente.</b><br>Elimina questa competizione e rigenerala con la versione 2.0.1.</div>';
+  return '<div class="notice"><b>Nessuna partita presente.</b><br>Apri <b>Partecipanti / Rigenera</b>, seleziona i giocatori e genera le partite.</div>';
  }
  const html=e.matches.map(function(m,i){
   const saved=m.score1!==null&&m.score2!==null;
@@ -4239,6 +4268,22 @@ function saveResult(button){
  }catch(err){msg.className="notice error";msg.textContent="Errore: "+err.message}
 }
 function editResult(id){const e=currentEvent();const m=e.matches.find(function(x){return x.id===id});if(m){m.score1=null;m.score2=null;save();render()}}
+
+function pamRefreshOpeningBalancesV824(e){
+ if(!e)return false;
+ const hasSaved=(e.matches||[]).some(function(m){return m.score1!==null&&m.score2!==null});
+ if(hasSaved)return false;
+ e.ledger=e.ledger||{};
+ let changed=false;
+ (e.playerIds||[]).forEach(function(id){
+  const p=playerById(id);if(!p)return;
+  const current=Math.max(0,Number(p.tokenBalance)||0);
+  e.ledger[id]=e.ledger[id]||{carried:current,spent:0,podium:0};
+  if(Number(e.ledger[id].carried||0)!==current){e.ledger[id].carried=current;changed=true}
+ });
+ return changed;
+}
+
 function standings(e){
  const r={};e.playerIds.forEach(function(id){r[id]={id:id,played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
  e.matches.forEach(function(m){
@@ -4257,6 +4302,7 @@ function standingsView(e){
  return '<div class="card table-wrap"><table class="table"><thead><tr><th>Pos.</th><th>Giocatore</th><th>PG</th><th>Punti</th><th>GF</th><th>GS</th><th>Diff.</th><th>Bonus</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function tokensView(e){
+ if(pamRefreshOpeningBalancesV824(e)){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}}
  const rows=standings(e).map(function(r){
   const l=e.ledger[r.id]||{carried:0,spent:0,podium:0};
   return '<tr><td><b>'+esc(playerName(playerById(r.id)))+'</b></td><td>3</td><td><input type="number" min="0" value="'+(l.carried||0)+'" data-ledger="'+r.id+'" data-field="carried"></td><td>'+r.points+'</td><td>'+r.bonus+'</td><td><input type="number" min="0" value="'+(l.spent||0)+'" data-ledger="'+r.id+'" data-field="spent"></td><td><select data-ledger="'+r.id+'" data-field="podium">'+[0,5,10].map(function(x){return'<option '+((Number(l.podium)||0)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></td><td><b>'+r.balance+'</b></td></tr>'
@@ -5120,14 +5166,16 @@ function eventPlayersView(e){
 }
 function commitBalances(){
  const e=currentEvent();if(!e)return;
- const rows=standings(e);
- rows.forEach(function(r){
-  const p=playerById(r.id);
-  if(p)p.tokenBalance=Math.max(0,Number(r.balance)||0);
- });
- save();
- alert("Saldi gettoni aggiornati nell’anagrafica.");
- render();
+ try{
+  const rows=standings(e);
+  rows.forEach(function(r){const p=playerById(r.id);if(p)p.tokenBalance=Math.max(0,Number(r.balance)||0)});
+  save();pamToast("Saldi gettoni aggiornati nell’anagrafica.","success");
+  if(PAM_SESSION&&pamIsAdmin()){
+   Promise.resolve(pamCloudSyncAll()).then(function(){pamToast("Saldi gettoni aggiornati e sincronizzati.","success")})
+   .catch(function(err){console.warn(err);pamToast("Saldi aggiornati sul dispositivo; sincronizzazione cloud non riuscita.","error")});
+  }
+  render();
+ }catch(err){pamToast("Aggiornamento gettoni non riuscito: "+(err.message||err),"error")}
 }
 
 function printCurrentPage(){

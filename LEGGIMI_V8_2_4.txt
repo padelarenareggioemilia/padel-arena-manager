@@ -1,0 +1,11 @@
+V8.2.4 LAB · TORNEO FIX
+
+- Salvataggio organizzatore diretto su Supabase con conferma.
+- Rodeo: ammessi anche 9 partecipanti (in generale >=4).
+- Salva partecipanti e rigenera: errori visibili, partite generate e tab Partite aperta.
+- Gettoni riallineati dall'anagrafica se non ci sono risultati salvati.
+- Salvataggio gettoni sincronizzato con Supabase.
+- Rosso rimosso dalle funzioni normali.
+
+Su GitHub sostituisci SOLO index-v8-lab.html.
+Link test: index-v8-lab.html?v=8240
