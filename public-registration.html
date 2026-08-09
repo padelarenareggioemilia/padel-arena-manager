@@ -50,7 +50,7 @@ async function loadTournament(){
  if(!token){showError("Link di iscrizione non valido.");return}
  const {data,error}=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
  if(error||!data){showError(error?.message||"Torneo non trovato.");return}
- tournament=data;await loadPublicExtras();render();
+ tournament=data;organizerContact={name:data?.organizer_name||data?.organizerName||"",phone:data?.organizer_phone||data?.organizerPhone||"",email:data?.organizer_email||data?.organizerEmail||""};await loadPublicExtras();render();
 }
 
 async function loadPublicExtras(){
@@ -62,7 +62,7 @@ async function loadPublicExtras(){
   if(!listRes.error)publicRegistrations=listRes.data||[];
   if(!contactRes.error&&contactRes.data){
    const c=Array.isArray(contactRes.data)?contactRes.data[0]:contactRes.data;
-   organizerContact={name:c?.organizer_name||"",phone:c?.organizer_phone||"",email:c?.organizer_email||""};
+   organizerContact={name:c?.organizer_name||organizerContact.name||"",phone:c?.organizer_phone||organizerContact.phone||"",email:c?.organizer_email||organizerContact.email||""};
   }
  }catch(e){console.warn("Extra pubblici:",e)}
 }
@@ -74,7 +74,7 @@ function publicExtrasHtml(){
  let actions="";
  if(phone)actions+='<a href="https://wa.me/'+phone+'?text='+encodeURIComponent("Ciao, ti contatto per "+(tournament?.name||"il torneo Padel Arena"))+'">WhatsApp</a>';
  if(email)actions+='<a href="mailto:'+esc(email)+'?subject='+encodeURIComponent("Informazioni "+(tournament?.name||"torneo Padel Arena"))+'">Email</a>';
- const contact='<section class="pub-extra"><h3>Contatta l’organizzatore'+(organizerContact.name?' · '+esc(organizerContact.name):'')+'</h3>'+
+ const contact='<section class="pub-extra" id="organizzatore"><h3>Contatta l’organizzatore'+(organizerContact.name?' · '+esc(organizerContact.name):'')+'</h3>'+
   (actions?'<div class="pub-contact-actions">'+actions+'</div>':'<div class="muted">Contatti organizzatore non ancora configurati.</div>')+'</section>';
  return list+contact;
 }

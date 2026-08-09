@@ -1,0 +1,15 @@
+V8.2.3 LAB · ORGANIZZATORE FIX
+
+1. GitHub: sostituisci index-v8-lab.html
+2. GitHub: sostituisci public-registration.html
+3. Supabase > SQL Editor: esegui SUPABASE_V8_2_3_ORGANIZZATORE.sql UNA VOLTA
+4. Non toccare index.html.
+
+Correzioni:
+- Salva organizzatore forza la sincronizzazione Supabase e mostra Salvato ✓.
+- Ogni torneo pubblico ha CONTATTA ORGANIZZATORE.
+- La pagina pubblica ha sezione ancorata #organizzatore con WhatsApp/email.
+- RPC pubblica espone soltanto nome/telefono/email dell'organizzatore del torneo pubblicato.
+
+Test LAB:
+index-v8-lab.html?v=8230

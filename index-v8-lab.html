@@ -1408,7 +1408,19 @@ document.addEventListener("click",function(ev){
   e.organizerName=document.getElementById("pamEventOrgNameV822")?.value.trim()||"";
   e.organizerPhone=document.getElementById("pamEventOrgPhoneV822")?.value.trim()||"";
   e.organizerEmail=document.getElementById("pamEventOrgEmailV822")?.value.trim()||"";
-  save();pamToast("Organizzatore aggiornato.","success");return;
+  save();
+  org.disabled=true;
+  const __orgOldText=org.textContent;
+  org.textContent="Salvataggio...";
+  Promise.resolve(pamCloudSyncAll()).then(function(){
+   org.textContent="Salvato ✓";
+   pamToast("Organizzatore salvato e sincronizzato.","success");
+   setTimeout(function(){org.disabled=false;org.textContent=__orgOldText},1200);
+  }).catch(function(err){
+   console.error(err);org.disabled=false;org.textContent=__orgOldText;
+   pamToast("Salvataggio organizzatore non riuscito: "+(err.message||err),"error");
+  });
+  return;
  }
 },true);
 
@@ -1611,7 +1623,7 @@ function pamPublicLogo(t){return t.logo_url||"assets/padel-arena-manager-logo.pn
 function pamPublicEventCard(t){
  const open=t.registration_open!==false,available=Number(t.available_places??0),wait=t.waitlist_enabled!==false;
  const action=open?'<a class="primary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>':wait?'<a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">LISTA D’ATTESA</a>':'<span class="secondary wide" style="opacity:.7">ISCRIZIONI CHIUSE</span>';
- return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">VEDI ISCRITTI</a><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary wide" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
+ return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<a class="secondary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">VEDI ISCRITTI</a><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary wide" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button><a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'#organizzatore">CONTATTA ORGANIZZATORE</a></div></div></article>';
 }
 function pamPublicUpcomingHtml(){return PAM_PUBLIC_DATA.tournaments.length?PAM_PUBLIC_DATA.tournaments.map(pamPublicEventCard).join(""):'<div class="pam-public-empty" style="grid-column:1/-1">Al momento non sono pubblicati tornei in programma.</div>'}
 function pamPublicMatchesHtml(){const rows=PAM_PUBLIC_DATA.matches.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,12).map(m=>'<div class="pam-public-match"><div><b>'+pamPublicEsc(pamPublicDate(m.event_date))+'</b><div class="pam-public-muted">'+pamPublicEsc(m.start_time||'')+'</div></div><div><b>'+pamPublicEsc(m.home_team_name||'Da definire')+'</b><div class="pam-public-muted">vs '+pamPublicEsc(m.away_team_name||'Da definire')+' · '+pamPublicEsc(m.series||'')+'</div></div><div class="pam-public-score">'+(m.home_score==null?'–':pamPublicEsc(m.home_score))+' : '+(m.away_score==null?'–':pamPublicEsc(m.away_score))+'</div></div>').join(''):'<div class="pam-public-empty">Calendario e risultati saranno pubblicati dall’organizzazione.</div>'}
@@ -2749,7 +2761,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.2 LAB · TEST 3</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.3 LAB · ORGANIZZATORE FIX</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
