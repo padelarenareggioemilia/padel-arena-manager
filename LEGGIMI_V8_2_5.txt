@@ -1,0 +1,17 @@
+V8.2.5 LAB · SALVATAGGIO DB
+
+Corregge SOLO il salvataggio dell'organizzatore.
+
+1) Supabase > SQL Editor:
+   esegui SUPABASE_V8_2_5_SALVATAGGIO_ORGANIZZATORE.sql
+
+2) GitHub:
+   sostituisci SOLO index-v8-lab.html
+
+public-registration.html non cambia.
+
+Test:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=8250
+
+Il pulsante ora deve mostrare Salvataggio... e poi Salvato ✓,
+con sotto l'orario della conferma reale del database.
