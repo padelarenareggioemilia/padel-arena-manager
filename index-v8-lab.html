@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.15 LAB POSTER LINK FIX</title>
+<title>Padel Arena Manager V8.2.16 LAB RECUPERO GETTONI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -3075,7 +3075,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.15 LAB · POSTER LINK FIX</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.16 LAB · RECUPERO GETTONI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5064,7 +5064,7 @@ function tokensView(e){
   const l=e.ledger[r.id]||{carried:0,spent:0,podium:0};
   return '<tr><td><b>'+esc(playerName(playerById(r.id)))+'</b></td><td>3</td><td><input type="number" min="0" value="'+(l.carried||0)+'" data-ledger="'+r.id+'" data-field="carried"></td><td>'+r.points+'</td><td>'+r.bonus+'</td><td><input type="number" min="0" value="'+(l.spent||0)+'" data-ledger="'+r.id+'" data-field="spent"></td><td><select data-ledger="'+r.id+'" data-field="podium">'+[0,5,10].map(function(x){return'<option '+((Number(l.podium)||0)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></td><td><b>'+r.balance+'</b></td></tr>'
  }).join("");
- return '<div class="notice">Calcolo: saldo precedente + 3 gettoni di benvenuto + punti + bonus differenza game − spesi + bonus podio.</div><div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Benvenuto</th><th>Saldo precedente</th><th>Punti</th><th>Bonus diff.</th><th>Spesi</th><th>Podio</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table></div><button class="primary" data-action="commit-balances">Salva i saldi nell’anagrafica per la prossima tappa</button>';
+ return '<div class="notice">Calcolo: saldo precedente + 3 gettoni di benvenuto + punti + bonus differenza game − spesi + bonus podio.</div><div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Benvenuto</th><th>Saldo precedente</th><th>Punti</th><th>Bonus diff.</th><th>Spesi</th><th>Podio</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="row" style="margin-top:12px"><button class="secondary" data-action="recover-last-tokens">↩️ Recupera gettoni ultima tappa</button><button class="primary" data-action="commit-balances">Salva i saldi nell’anagrafica per la prossima tappa</button></div>';
 }
 
 
@@ -6097,6 +6097,52 @@ function updateStageTeam(select){
 function eventPlayersView(e){
  return '<div class="card">'+e.playerIds.map(function(id,i){const p=playerById(id);if(!p)return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>Giocatore non disponibile</b><div class="muted">Riferimento anagrafico temporaneamente non trovato. I dati del torneo non sono stati cancellati.</div></div></div>';return'<div class="item"><div class="rank">'+(i+1)+'</div><div><b>'+esc(playerName(p))+'</b><div class="muted">'+esc(p.phone||"")+(p.level?" · "+esc(p.level):"")+'</div></div></div>'}).join("")+'</div>';
 }
+
+function pamEventTimeV8216(ev){
+ const raw=String((ev&&ev.date)||"")+"T"+String((ev&&ev.startTime)||"00:00");
+ const n=Date.parse(raw);
+ return Number.isFinite(n)?n:0;
+}
+function pamFinalTokenBalanceFromEventV8216(ev,pid){
+ if(!ev||!(ev.playerIds||[]).includes(pid))return null;
+ try{
+  const row=standings(ev).find(function(x){return x.id===pid});
+  if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
+ }catch(_){}
+ return null;
+}
+function recoverLastTokensV8216(){
+ const e=currentEvent();if(!e)return;
+ e.ledger=e.ledger||{};
+ const currentTime=pamEventTimeV8216(e);
+ let recovered=0,fromEvents=0,fromRegistry=0;
+ (e.playerIds||[]).forEach(function(id){
+  const previous=(state.events||[]).filter(function(x){
+   return x&&x.id!==e.id&&(x.playerIds||[]).includes(id)&&pamEventTimeV8216(x)<currentTime;
+  }).sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
+  let value=null;
+  for(let i=0;i<previous.length;i++){
+   value=pamFinalTokenBalanceFromEventV8216(previous[i],id);
+   if(value!==null){fromEvents++;break}
+  }
+  if(value===null){
+   const p=playerById(id);
+   if(p&&Number.isFinite(Number(p.tokenBalance))){
+    value=Math.max(0,Number(p.tokenBalance)||0);fromRegistry++;
+   }
+  }
+  if(value!==null){
+   e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};
+   e.ledger[id].carried=value;
+   recovered++;
+  }
+ });
+ if(!recovered){pamToast("Nessun saldo gettoni precedente trovato.","error");return}
+ save();
+ pamToast("Recuperati i gettoni per "+recovered+" giocatori dalla tappa precedente.","success");
+ render();
+}
+
 function commitBalances(){
  const e=currentEvent();if(!e)return;
  try{
@@ -6280,6 +6326,7 @@ document.addEventListener("click",function(ev){
   if(a==="create-event")createEvent();
   if(a==="save-result")saveResult(action);
   if(a==="edit-result")editResult(action.getAttribute("data-match-id"));
+  if(a==="recover-last-tokens")recoverLastTokensV8216();
   if(a==="commit-balances")commitBalances();
   if(a==="save-stage-result")saveStageResult(action);
   if(a==="edit-stage-result")editStageResult(action.getAttribute("data-stage"),action.getAttribute("data-leg"));
