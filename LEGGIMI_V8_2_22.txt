@@ -1,0 +1,29 @@
+V8.2.22 LAB · RIPRISTINO FEMMINILE FORZATO
+
+CORREZIONI:
+1. 2ª TAPPA FEMMINILE 27/07/2026
+- se non esiste online viene SEMPRE inserita nell'elenco locale;
+- ricerca le 10 giocatrici con confronto tollerante dei nomi;
+- recupera eventuali vecchi pam_players / pam_scores se ancora presenti;
+- salva SOLO quel torneo su Supabase con un upsert dedicato;
+- non risincronizza tutto l'archivio per il ripristino.
+
+2. STATO SUPABASE
+- un singolo errore momentaneo non mostra più subito NON SINCRONIZZATO;
+- servono 3 errori consecutivi per passare allo stato rosso.
+
+3. GETTONI
+Rimane SOLO:
+↩️ RECUPERA DA TAPPA PRECEDENTE
+Non somma +3 a ogni clic e non aggiorna il saldo anagrafico corrente.
+
+GITHUB:
+sostituire:
+- index-v8-lab.html
+- manifest.webmanifest
+- service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82220
