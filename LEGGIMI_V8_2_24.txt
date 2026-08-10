@@ -1,0 +1,33 @@
+V8.2.24 LAB · SALDI FEMMINILI IN ANAGRAFICA
+
+I seguenti saldi vengono scritti direttamente nel saldo gettoni generale dei giocatori:
+
+Maurizia Casini = 34
+Monia Mazzi = 51
+Fabienne De Cup De Saint Paul = 9
+Carlotta Rivi = 5
+Viviana De Magistris = 10
+Stefania Bella = 9
+Valentina Labattaglia = 16
+Viktoriia Dutka = 3
+Sara Sacco' = 9
+Elisa Savini = 11
+
+IMPORTANTE:
+- restano insieme a tutti gli altri giocatori nella classifica generale;
+- nessun altro saldo viene modificato;
+- i valori vengono riapplicati dopo il caricamento Supabase, così non vengono persi;
+- se amministratore connesso, l'anagrafica aggiornata viene sincronizzata online;
+- la 2ª tappa femminile storica V8.2.23 resta preservata;
+- RECUPERA DA TAPPA PRECEDENTE resta invariato.
+
+GITHUB:
+sostituire:
+1. index-v8-lab.html
+2. manifest.webmanifest
+3. service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82240

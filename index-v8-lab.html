@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.23 LAB SALDI FEMMINILI STORICI</title>
+<title>Padel Arena Manager V8.2.24 LAB SALDI FEMMINILI IN ANAGRAFICA</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1320,7 +1320,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=82230">
+<link rel="manifest" href="manifest.webmanifest?v=82240">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2223,6 +2223,63 @@ function applyMaleTokenBalancesTappa2(){
 }
 applyMaleTokenBalancesTappa2();
 
+
+function pamApplyFemaleHistoricalBalancesV8224(){
+ const balances={
+  "Maurizia Casini":34,
+  "Monia Mazzi":51,
+  "Fabienne De Cup De Saint Paul":9,
+  "Carlotta Rivi":5,
+  "Viviana De Magistris":10,
+  "Stefania Bella":9,
+  "Valentina Labattaglia":16,
+  "Viktoriia Dutka":3,
+  "Sara Sacco'":9,
+  "Elisa Savini":11
+ };
+ let changed=false;
+ Object.keys(balances).forEach(function(fullName){
+  const wanted=registryTokenKey(fullName);
+  const matches=(state.players||[]).filter(function(p){
+   return registryTokenKey(playerName(p))===wanted;
+  });
+  if(matches.length){
+   matches.forEach(function(p){
+    const next=Number(balances[fullName]);
+    if(Number(p.tokenBalance||0)!==next){
+     p.tokenBalance=next;
+     if(!p.gender)p.gender="Femminile";
+     changed=true;
+    }
+   });
+  }else{
+   const parts=fullName.split(" ");
+   state.players.push({
+    id:uid("p"),
+    firstName:parts.shift(),
+    lastName:parts.join(" "),
+    phone:"",
+    email:"",
+    birth:"",
+    birthPlace:"",
+    postalCode:"",
+    residenceTown:"",
+    residenceProvince:"",
+    level:"",
+    notes:"Saldo gettoni femminile ripristinato da archivio storico",
+    gender:"Femminile",
+    tokenBalance:Number(balances[fullName])
+   });
+   changed=true;
+  }
+ });
+ state.migrations=state.migrations||{};
+ state.migrations.femaleHistoricalBalancesV8224="2026-08-10";
+ if(changed)save();
+ return changed;
+}
+pamApplyFemaleHistoricalBalancesV8224();
+
 function pamIsUserEditing(){
  const a=document.activeElement;
  const formActive=!!(a&&a.matches&&a.matches("input,textarea,select"));
@@ -2656,6 +2713,7 @@ async function pamCloudLoad(initial,forceReplace){
 
   state.players=remotePlayers;
   state.events=remoteEvents;
+  pamApplyFemaleHistoricalBalancesV8224();
   state.__playersSource="Supabase completo";
   state.__cloudPlayersCount=remotePlayers.length;
   state.__cloudEventsCount=remoteEvents.length;
@@ -2664,6 +2722,11 @@ async function pamCloudLoad(initial,forceReplace){
   pamCloudLastOkAt=Date.now();
   pamCloudReady=true;
   pamSyncLabel(true,"cloud");
+  if(PAM_SESSION&&pamIsAdmin()&&state.migrations&&state.migrations.femaleHistoricalBalancesV8224){
+   setTimeout(function(){
+    pamCloudSyncAll().catch(function(err){console.error("Sync saldi femminili V8.2.24:",err)});
+   },500);
+  }
   if(secondFemaleV8222.restored&&PAM_SESSION&&pamIsAdmin()){
    setTimeout(function(){
     pamUpsertSecondFemaleV8222(secondFemaleV8222.event).then(function(){
@@ -3126,7 +3189,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.23 LAB · SALDI FEMMINILI STORICI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.24 LAB · SALDI FEMMINILI IN ANAGRAFICA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6720,7 +6783,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=82230",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=82240",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
