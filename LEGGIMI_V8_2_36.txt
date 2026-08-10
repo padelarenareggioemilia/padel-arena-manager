@@ -1,0 +1,18 @@
+V8.2.36 LAB · TIMER IPHONE AUDIO SBLOCCATO
+
+PATCH SOLO TIMER:
+- l'AudioContext viene creato/sbloccato nel momento esatto in cui l'utente tocca START;
+- a scadenza: allarme sonoro insistente per circa 12 secondi;
+- sequenza di frequenze alternate e più evidente;
+- vibrazione richiesta tramite navigator.vibrate dove il browser la supporta;
+- lampeggio/pulsazione visiva e STOP ALLARME.
+
+IMPORTANTE iPHONE:
+Safari/iOS può non supportare navigator.vibrate nelle web app e non è possibile
+forzare via browser vibrazione hardware, volume a zero o modalità silenziosa.
+La correzione principale è lo sblocco dell'audio durante il tocco START.
+
+NON MODIFICATO:
+gettoni, classifiche, Supabase, giocatori, tornei, aste, risultati,
+PDF/condivisione, iscrizioni, Home/Login.
+Nessun SQL.

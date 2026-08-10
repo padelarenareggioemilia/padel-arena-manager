@@ -1322,6 +1322,15 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 .pam-new-team-form{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pam-new-team-form .field{margin:0}.pam-new-team-form .full{grid-column:1/-1}
 @media(max-width:700px){.pam-universal-nav{top:4px;margin-bottom:10px}.pam-universal-menu-grid,.pam-new-team-form{grid-template-columns:1fr}.pam-new-team-form .full{grid-column:auto}}
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
+
+/* V8.2.36 · Timer iPhone: allarme visivo ad alta attenzione */
+@keyframes pamTimerPhoneFlash{0%,100%{filter:none}50%{filter:brightness(1.45) contrast(1.25)}}
+@keyframes pamTimerPhonePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+body.pam-timer-expired{animation:pamTimerPhoneFlash .45s linear infinite}
+#timerAlertOverlay.pam-timer-loud .timer-alert-box{animation:pamTimerPhonePulse .45s ease-in-out infinite}
+#timerAlertOverlay.pam-timer-loud h1{font-size:clamp(40px,11vw,76px);line-height:1}
+#timerAlertOverlay.pam-timer-loud [data-action="dismiss-timer-alert"]{min-height:58px;font-size:19px;font-weight:1000}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest?v=82280">
@@ -3293,7 +3302,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.35 LAB · FIX AVVIO IPHONE</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.36 LAB · TIMER IPHONE AUDIO SBLOCCATO</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5407,35 +5416,87 @@ function timerHtml(e,key,phase){
 }
 
 let timerAudioContext=null;
-function playTimerAlarm(){
+let pamTimerAlarmLoop=null;
+let pamTimerAlarmUntil=0;
+
+function pamPrimeTimerAudio(){
  try{
-  timerAudioContext=timerAudioContext||new (window.AudioContext||window.webkitAudioContext)();
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return false;
+  timerAudioContext=timerAudioContext||new AC();
   const ctx=timerAudioContext;
+  if(ctx.state==="suspended")ctx.resume().catch(function(){});
+  // Sblocco audio iOS: il timer viene avviato da un tocco dell'utente.
+  const osc=ctx.createOscillator(),g=ctx.createGain();
+  g.gain.setValueAtTime(0.00001,ctx.currentTime);
+  osc.connect(g);g.connect(ctx.destination);
+  osc.start();osc.stop(ctx.currentTime+0.025);
+  return true;
+ }catch(err){return false}
+}
+function pamTimerAlarmBurst(){
+ try{
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+  timerAudioContext=timerAudioContext||new AC();
+  const ctx=timerAudioContext;
+  // Se è già stato sbloccato dal tasto START, su iPhone resta riproducibile a scadenza.
+  if(ctx.state==="suspended")ctx.resume().catch(function(){});
   const now=ctx.currentTime;
-  [0,0.35,0.7,1.05,1.4].forEach(function(offset){
-   const osc=ctx.createOscillator();
-   const gain=ctx.createGain();
-   osc.type="square";
-   osc.frequency.setValueAtTime(offset%0.7===0?880:660,now+offset);
-   gain.gain.setValueAtTime(0.0001,now+offset);
-   gain.gain.exponentialRampToValueAtTime(0.35,now+offset+0.02);
-   gain.gain.exponentialRampToValueAtTime(0.0001,now+offset+0.28);
+  const tones=[
+   [0.00,1180],[0.13,760],[0.26,1420],[0.42,860],
+   [0.55,1320],[0.70,720],[0.84,1500]
+  ];
+  tones.forEach(function(spec,i){
+   const osc=ctx.createOscillator(),gain=ctx.createGain();
+   osc.type=(i%2)?"sawtooth":"square";
+   osc.frequency.setValueAtTime(spec[1],now+spec[0]);
+   gain.gain.setValueAtTime(0.0001,now+spec[0]);
+   gain.gain.exponentialRampToValueAtTime(0.72,now+spec[0]+0.012);
+   gain.gain.exponentialRampToValueAtTime(0.0001,now+spec[0]+0.115);
    osc.connect(gain);gain.connect(ctx.destination);
-   osc.start(now+offset);osc.stop(now+offset+0.3);
+   osc.start(now+spec[0]);osc.stop(now+spec[0]+0.13);
   });
  }catch(err){}
- try{if(navigator.vibrate)navigator.vibrate([500,200,500,200,900])}catch(err){}
+ try{
+  if(navigator.vibrate)navigator.vibrate([450,90,450,90,700,100,700]);
+ }catch(err){}
+}
+function stopTimerAlarm(){
+ pamTimerAlarmUntil=0;
+ if(pamTimerAlarmLoop){clearInterval(pamTimerAlarmLoop);pamTimerAlarmLoop=null}
+ try{if(navigator.vibrate)navigator.vibrate(0)}catch(err){}
+}
+function playTimerAlarm(){
+ stopTimerAlarm();
+ pamTimerAlarmUntil=Date.now()+12000;
+ pamTimerAlarmBurst();
+ pamTimerAlarmLoop=setInterval(function(){
+  if(Date.now()>=pamTimerAlarmUntil){stopTimerAlarm();return}
+  pamTimerAlarmBurst();
+ },1050);
 }
 function showTimerAlert(key){
  const overlay=document.getElementById("timerAlertOverlay");
- if(overlay){overlay.classList.add("visible");overlay.setAttribute("data-expired-key",key)}
+ if(overlay){
+  overlay.classList.add("visible","pam-timer-loud");
+  overlay.setAttribute("data-expired-key",key);
+  const h=overlay.querySelector("h1");if(h)h.textContent="⏰ TEMPO SCADUTO!";
+  const p=overlay.querySelector("p");if(p)p.textContent="FERMA L’ALLARME";
+  const b=overlay.querySelector('[data-action="dismiss-timer-alert"]');if(b)b.textContent="STOP ALLARME";
+ }
+ document.body.classList.add("pam-timer-expired");
  playTimerAlarm();
 }
 function dismissTimerAlert(){
+ stopTimerAlarm();
+ document.body.classList.remove("pam-timer-expired");
  const overlay=document.getElementById("timerAlertOverlay");
- if(overlay)overlay.classList.remove("visible");
+ if(overlay)overlay.classList.remove("visible","pam-timer-loud");
 }
 function startTimer(key){
+ // IMPORTANT: sblocca l'audio iOS mentre siamo ancora dentro il gesto/tocco START.
+ pamPrimeTimerAudio();
  const e=currentEvent();e.timers=e.timers||{};
  e.timers[key]={endAt:Date.now()+Math.max(1,Number(e.timerDuration||e.matchDuration)||15)*60000,alerted:false};
  dismissTimerAlert();
