@@ -1,0 +1,8 @@
+V8.2.28 LAB · BARRA COMPATTA
+- Barra ruolo/connessione ridotta a una pillola sottile in basso a destra.
+- Pulsante Esci ridotto a una pillola piccola in basso a sinistra.
+- Safe-area iPhone rispettata.
+- La barra stato non intercetta tocchi/click (pointer-events:none).
+- Nessuna modifica alla logica tornei, partecipanti, gettoni, risultati, PDF o sincronizzazione.
+Nessun SQL.
+Sostituire i soliti file della build.

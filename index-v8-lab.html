@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.27 LAB PARTECIPANTI RICONCILIATI</title>
+<title>Padel Arena Manager V8.2.27 LAB PARTECIPANTI 8 VISIBILI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -915,8 +915,12 @@ nav{position:fixed;left:0;right:0;bottom:0;background:#08111ff2;border-top:1px s
 .pam-login-card input{width:100%;box-sizing:border-box;min-height:54px;border-radius:15px;border:2px solid #ccd7e2;font-size:18px;padding:0 15px;background:#fff;color:#081523}
 .pam-login-card button{width:100%;min-height:56px;margin-top:18px;border:0;border-radius:16px;background:#a8ff2e;color:#06111f;font-size:19px;font-weight:1000}
 #pamLoginError{color:#b00020;font-weight:800;min-height:22px;margin-top:12px}
-#pamRoleBadge{position:fixed;right:12px;bottom:12px;z-index:9000;border-radius:999px;padding:9px 13px;background:#071a2b;color:#fff;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.25)}
-#pamLogoutBtn{position:fixed;left:12px;bottom:12px;z-index:9000;border:0;border-radius:999px;padding:10px 14px;background:#fff;color:#06111f;font-size:13px;font-weight:900;box-shadow:0 7px 18px rgba(0,0,0,.22)}
+#pamRoleBadge{position:fixed;right:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9000;max-width:calc(100vw - 86px);border-radius:999px;padding:5px 9px;background:#071a2b;color:#fff;font-size:10px;line-height:1.1;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 10px rgba(0,0,0,.18);opacity:.92;pointer-events:none}
+#pamLogoutBtn{position:fixed;left:8px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9000;border:0;border-radius:999px;padding:5px 9px;min-height:0;width:auto;background:#fff;color:#06111f;font-size:10px;line-height:1.1;font-weight:900;box-shadow:0 4px 10px rgba(0,0,0,.16);opacity:.94}
+@media(max-width:700px){
+ #pamRoleBadge{right:6px;bottom:calc(5px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 68px);padding:4px 7px;font-size:9px}
+ #pamLogoutBtn{left:6px;bottom:calc(5px + env(safe-area-inset-bottom,0px));padding:4px 7px;font-size:9px}
+}
 
 
 .pam-toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:100000;max-width:min(560px,92vw);padding:13px 17px;border-radius:14px;background:#10243d;color:#fff;font-weight:900;box-shadow:0 12px 35px rgba(0,0,0,.35)}
@@ -1320,7 +1324,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=82270">
+<link rel="manifest" href="manifest.webmanifest?v=82280">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1614,6 +1618,28 @@ html.pam-stable-refresh-v8212 *::after{
 <style id="pam-v8218-token-ranking">
 .pam-v8218-token-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
 @media(max-width:700px){.pam-v8218-token-head{align-items:flex-start;flex-direction:column}}
+</style>
+
+
+<style id="pam-v8227-participants-fix">
+.pam-player-choice-snapshot{
+  outline:2px solid rgba(157,255,37,.35);
+  outline-offset:-2px;
+}
+.pam-player-choice-snapshot span small:last-child{
+  color:#b7ff70;
+  margin-top:3px;
+}
+.pam-cloud-transient-v8227{
+  animation:pamCloudTransientV8227 4s ease forwards;
+  overflow:hidden;
+  transform-origin:top;
+}
+@keyframes pamCloudTransientV8227{
+  0%,68%{opacity:1;max-height:120px;margin-top:12px;margin-bottom:12px}
+  85%{opacity:0}
+  100%{opacity:0;max-height:0;margin-top:0;margin-bottom:0;padding-top:0;padding-bottom:0;border-width:0}
+}
 </style>
 
 </head>
@@ -2800,13 +2826,6 @@ function pamToast(message,type){
  n.textContent=message;
  document.body.appendChild(n);
  setTimeout(function(){n.remove()},3500);
-
- if(type==="success"){
-  clearTimeout(window.pamAutoHideGreenV8227);
-  window.pamAutoHideGreenV8227=setTimeout(function(){
-   document.querySelectorAll(".toast.success,.notice.success,.pam-toast.success,[data-toast].success").forEach(function(el){el.style.display="none"});
-  },3000);
- }
 }
 function pamShareUrl(e){
  if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
@@ -2907,66 +2926,109 @@ function pamEditEvent(id){
 function pamTournamentPlayersModal(id){
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  document.getElementById("pamTournamentPlayersOverlay")?.remove();
- const overlay=document.createElement("div");overlay.id="pamTournamentPlayersOverlay";overlay.className="pam-modal-overlay";
+
+ const overlay=document.createElement("div");
+ overlay.id="pamTournamentPlayersOverlay";
+ overlay.className="pam-modal-overlay";
+
  const selected=new Set((e.playerIds||[]).map(String));
- const pamModalPlayers=(state.players||[]).slice();
- const pamKnownIds=new Set(pamModalPlayers.map(function(p){return String(p.id)}));
- (e.playerIds||[]).forEach(function(pid){
-  const sid=String(pid);
-  if(pamKnownIds.has(sid))return;
-  let snap=null;
-  const snaps=e.playerSnapshots||e.participantSnapshots||e.playersSnapshot||e.playerNames||{};
-  if(Array.isArray(snaps)){
-   snap=snaps.find(function(x){return x&&String(x.id)===sid});
-  }else if(snaps&&typeof snaps==="object"){
-   snap=snaps[sid]||snaps[pid]||null;
-  }
-  let first="",last="",gender="";
-  if(snap&&typeof snap==="object"){
-   first=snap.firstName||snap.nome||"";
-   last=snap.lastName||snap.cognome||"";
-   gender=snap.gender||snap.sesso||"";
-   if(!first&&!last&&snap.name){
-    const pp=String(snap.name).trim().split(/\s+/); first=pp.shift()||""; last=pp.join(" ");
-   }
-  }else if(typeof snap==="string"){
-   const pp=snap.trim().split(/\s+/); first=pp.shift()||""; last=pp.join(" ");
-  }
-  // Also recover the name from matches/results when snapshots are absent.
-  if(!first&&!last){
-   const all=(e.matches||[]).concat(e.results||[]);
-   for(let i=0;i<all.length;i++){
-    const raw=JSON.stringify(all[i]||{});
-    if(raw.includes('"'+sid+'"')){
-     const reg=(state.players||[]).find(function(x){return String(x.id)===sid});
-     if(reg){first=reg.firstName||"";last=reg.lastName||"";gender=reg.gender||""}
-     break;
-    }
-   }
-  }
-  pamModalPlayers.push({id:pid,firstName:first||"Giocatrice",lastName:last||(" "+sid),gender:gender||"Femminile",_pamRecoveredTournamentPlayer:true});
-  pamKnownIds.add(sid);
- });
+
+ function modalPlayersV8227(){
+  const all=(state.players||[]).slice();
+  const existingIds=new Set(all.map(function(p){return String(p.id)}));
+
+  // IMPORTANT: a participant can still exist inside the tournament snapshot
+  // even if the shared registry has temporarily loaded a different/incomplete record set.
+  // Always surface those selected tournament participants in this modal.
+  selected.forEach(function(pid){
+   if(existingIds.has(String(pid)))return;
+   const snap=(e.playerSnapshots&&e.playerSnapshots[String(pid)])||playerById(pid);
+   if(!snap)return;
+   const virtual=Object.assign({},snap,{id:String(pid),__pamTournamentSnapshot:true});
+   all.push(virtual);
+   existingIds.add(String(pid));
+  });
+
+  // One row per ID; selected snapshot ID is kept intact so results/matches are untouched.
+  const byId=new Map();
+  all.forEach(function(p){
+   if(!p||p.id===undefined||p.id===null)return;
+   byId.set(String(p.id),p);
+  });
+  return Array.from(byId.values());
+ }
+
  function drawRows(){
   const q=normalizeName((overlay.querySelector("#pamTournamentPlayerSearch")||{}).value||"");
   const onlySelected=overlay.dataset.onlySelected==="1";
-  const rows=(state.players||[]).slice().sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")}).filter(function(p){
-   if(onlySelected&&!selected.has(String(p.id)))return false;
-   return !q||normalizeName([playerName(p),p.phone,p.email].join(" ")).includes(q);
-  }).map(function(p){
-   const checked=selected.has(String(p.id));
-   return '<div class="pam-player-choice"><input type="checkbox" data-tournament-player="'+esc(p.id)+'" '+(checked?'checked':'')+'><img src="'+esc(pamPlayerPhoto(p))+'" alt=""><span><b>'+esc(playerName(p))+'</b><small>'+esc(p.gender||"")+(p.level?' · '+esc(p.level):'')+'</small></span><div class="pam-player-choice-actions"><button type="button" class="small" data-rename-tournament-player="'+esc(p.id)+'">Rinomina</button>'+(checked?'<button type="button" class="small" data-replace-existing-event-player="'+esc(p.id)+'" data-event-id="'+esc(e.id)+'">Sostituisci</button>':'')+'</div></div>';
-  }).join("");
-  const list=overlay.querySelector("#pamTournamentPlayerList");if(list)list.innerHTML=rows||'<div class="notice">Nessun nominativo corrispondente.</div>';
-  const badge=overlay.querySelector("#pamTournamentSelectedCount");if(badge)badge.textContent=selected.size+" selezionati";
-  const toggle=overlay.querySelector("[data-modal-toggle-selected]");if(toggle)toggle.textContent=onlySelected?"Mostra tutti i giocatori":"Mostra solo i giocatori selezionati";
-  overlay.querySelectorAll("[data-tournament-player]").forEach(function(cb){cb.addEventListener("change",function(){const id=String(cb.getAttribute("data-tournament-player"));if(cb.checked)selected.add(id);else selected.delete(id);drawRows()})});
+
+  const rows=modalPlayersV8227()
+   .sort(function(a,b){return playerName(a).localeCompare(playerName(b),"it")})
+   .filter(function(p){
+    if(onlySelected&&!selected.has(String(p.id)))return false;
+    return !q||normalizeName([playerName(p),p.phone,p.email].join(" ")).includes(q);
+   })
+   .map(function(p){
+    const checked=selected.has(String(p.id));
+    const snapshotNote=p.__pamTournamentSnapshot?'<small>Iscritta al torneo · scheda recuperata dal torneo</small>':'';
+    return '<div class="pam-player-choice'+(p.__pamTournamentSnapshot?' pam-player-choice-snapshot':'')+'">'+
+      '<input type="checkbox" data-tournament-player="'+esc(p.id)+'" '+(checked?'checked':'')+'>'+
+      '<img src="'+esc(pamPlayerPhoto(p))+'" alt="">'+
+      '<span><b>'+esc(playerName(p))+'</b><small>'+esc(p.gender||"")+(p.level?' · '+esc(p.level):'')+'</small>'+snapshotNote+'</span>'+
+      '<div class="pam-player-choice-actions">'+
+       '<button type="button" class="small" data-rename-tournament-player="'+esc(p.id)+'">Rinomina</button>'+
+       (checked?'<button type="button" class="small" data-replace-existing-event-player="'+esc(p.id)+'" data-event-id="'+esc(e.id)+'">Sostituisci</button>':'')+
+      '</div></div>';
+   }).join("");
+
+  const list=overlay.querySelector("#pamTournamentPlayerList");
+  if(list)list.innerHTML=rows||'<div class="notice">Nessun nominativo corrispondente.</div>';
+
+  const badge=overlay.querySelector("#pamTournamentSelectedCount");
+  if(badge)badge.textContent=selected.size+" selezionati";
+
+  const toggle=overlay.querySelector("[data-modal-toggle-selected]");
+  if(toggle)toggle.textContent=onlySelected?"Mostra tutti i giocatori":"Mostra solo i giocatori selezionati";
+
+  overlay.querySelectorAll("[data-tournament-player]").forEach(function(cb){
+   cb.addEventListener("change",function(){
+    const pid=String(cb.getAttribute("data-tournament-player"));
+    if(cb.checked)selected.add(pid);else selected.delete(pid);
+    drawRows();
+   });
+  });
  }
- overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2><div class="muted">Cerca e seleziona giocatori già presenti oppure crea una nuova anagrafica.</div><div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div><button class="secondary" data-close-tournament-players>Chiudi</button></div><div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica esistente</label><input id="pamTournamentPlayerSearch" type="search" placeholder="Nome, cognome, telefono o email"></div><button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div><div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button><button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div><div class="pam-player-choice-list" id="pamTournamentPlayerList"></div><div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button></div></div>';
- document.body.appendChild(overlay);overlay.__pamSelected=selected;overlay.dataset.onlySelected="0";
+
+ overlay.innerHTML='<div class="pam-modal-card">'+
+  '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2>'+
+   '<div class="muted">Sono sempre mostrati anche i partecipanti già salvati nel torneo, anche se l’anagrafica online è momentaneamente incompleta.</div>'+
+   '<div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div>'+
+   '<button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
+  '<div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div>'+
+  '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica esistente</label>'+
+   '<input id="pamTournamentPlayerSearch" type="search" placeholder="Nome, cognome, telefono o email"></div>'+
+   '<button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div>'+
+  '<div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button>'+
+   '<button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div>'+
+  '<div class="pam-player-choice-list" id="pamTournamentPlayerList"></div>'+
+  '<div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button></div>'+
+ '</div>';
+
+ document.body.appendChild(overlay);
+ overlay.__pamSelected=selected;
+ overlay.dataset.onlySelected="0";
  overlay.querySelector("#pamTournamentPlayerSearch").addEventListener("input",drawRows);
- overlay.querySelector("[data-modal-toggle-selected]").addEventListener("click",function(){overlay.dataset.onlySelected=overlay.dataset.onlySelected==="1"?"0":"1";drawRows()});
- overlay.querySelector("[data-modal-deselect-all]").addEventListener("click",function(){if(!selected.size){pamToast("Non ci sono giocatori selezionati.","error");return}if(!confirm("Deselezionare tutti i giocatori del torneo? Questa operazione non rigenera ancora le partite."))return;selected.clear();drawRows();pamToast("Selezione azzerata. Premi Salva partecipanti per confermare.","success")});
+ overlay.querySelector("[data-modal-toggle-selected]").addEventListener("click",function(){
+  overlay.dataset.onlySelected=overlay.dataset.onlySelected==="1"?"0":"1";
+  drawRows();
+ });
+ overlay.querySelector("[data-modal-deselect-all]").addEventListener("click",function(){
+  if(!selected.size){pamToast("Non ci sono giocatori selezionati.","error");return}
+  if(!confirm("Deselezionare tutti i giocatori del torneo? Questa operazione non rigenera ancora le partite."))return;
+  selected.clear();
+  drawRows();
+  pamToast("Selezione azzerata. Premi Salva partecipanti per confermare.","success");
+ });
  drawRows();
 }
 function pamRenameTournamentPlayer(playerId){
@@ -3231,7 +3293,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.27 LAB · PARTECIPANTI RICONCILIATI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.28 LAB · BARRA COMPATTA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5077,7 +5139,7 @@ function eventView(){
   (pamIsAdmin()?'<button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button>':'')+
   (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div></details>'+
- '<div class="notice success print-hide"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
+ '<div class="notice success print-hide pam-cloud-transient-v8227"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice success print-hide"><b>Modalità collaboratore:</b> gestione operativa del torneo: risultati, timer, classifica, gettoni, aste, fasi finali, pagamenti, iscrizioni, PDF e condivisione. Partecipanti, sostituzioni e rigenerazione restano riservati all’amministratore.</div>':'')+
  '<details class="pam-actions-menu pam-detail-menu print-hide"><summary>Dettagli programmazione e PDF</summary><div class="pam-actions-content">'+
  '<b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
@@ -6822,7 +6884,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=82270",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=82280",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });

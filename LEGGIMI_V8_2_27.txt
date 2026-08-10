@@ -1,8 +1,27 @@
-V8.2.27 LAB · PARTECIPANTI RICONCILIATI
-- La finestra partecipanti usa anagrafica + tutti gli ID già iscritti al torneo.
-- Un partecipante già presente nel torneo non sparisce più se manca temporaneamente dall'anagrafica caricata.
-- Nessuna apertura della finestra modifica o rigenera partite, risultati o gettoni.
-- Le notifiche verdi di successo vengono nascoste automaticamente dopo pochi secondi.
-- Rigenerazione solo col pulsante esplicito e conferma.
+V8.2.27 LAB · PARTECIPANTI 8 VISIBILI
+
+PARTECIPANTI:
+- La finestra Partecipanti ora unisce:
+  1) anagrafica generale caricata;
+  2) snapshot dei giocatori già salvati dentro il torneo.
+- Quindi un'iscritta regolare non sparisce dalla finestra solo perché il suo ID non è presente nel caricamento corrente dell'anagrafica.
+- Le partecipanti recuperate dallo snapshot restano con lo stesso ID del torneo:
+  partite, risultati, classifica e gettoni NON vengono modificati.
+- Rinomina e Sostituisci restano disponibili.
+- Il conteggio selezionati continua a derivare dagli effettivi playerIds del torneo.
+
+BARRA VERDE:
+- "Archivio online attivo" appare brevemente e poi si chiude da sola.
+- Il badge in basso continua a mostrare lo stato Supabase.
+
+IMPORTANTE:
+- Nessuna rigenerazione automatica.
+- Nessun risultato/gettone modificato aprendo la finestra.
+- La rigenerazione avviene solo premendo esplicitamente il pulsante finale.
+
+GITHUB:
+sostituire index-v8-lab.html, manifest.webmanifest, service-worker.js
 Nessun SQL.
-Sostituire: index-v8-lab.html, manifest.webmanifest, service-worker.js.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82270
