@@ -1,0 +1,18 @@
+V8.2.35 LAB · FIX AVVIO IPHONE
+
+Correzione UNICA:
+- aggiunta la funzione normalizeText mancante che causava:
+  ReferenceError: Can't find variable: normalizeText
+
+NON MODIFICATO:
+- saldi gettoni
+- deduplica
+- filtri Tutti/Maschi/Femmine
+- Supabase
+- partite
+- aste
+- PDF
+- iscrizioni
+- timer
+
+Nessun SQL.
