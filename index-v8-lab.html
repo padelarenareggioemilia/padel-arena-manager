@@ -3302,7 +3302,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.36 LAB · TIMER IPHONE AUDIO SBLOCCATO</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.39 LAB · GIRONI MOBILE ADATTIVI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -4278,14 +4278,50 @@ function pamCommEventPlayersV827(eventId){
  if(!e)return new Set();
  return new Set((e.playerIds||[]).map(String));
 }
+
+function pamCommTokenCircuitPlayersV8237(){
+ // READ ONLY: usa la stessa fonte della classifica generale gettoni.
+ // Una sola persona per chiave canonica, saldo > 0.
+ const groups=new Map();
+ (state.players||[]).forEach(function(p){
+  const key=(typeof pamTokenPersonKeyV8234==="function")
+   ?pamTokenPersonKeyV8234(playerName(p))
+   :registryTokenKey(playerName(p));
+  if(!key)return;
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(p);
+ });
+ const out=[];
+ groups.forEach(function(group){
+  const p=(typeof pamTokenRepresentativeV8234==="function")
+   ?pamTokenRepresentativeV8234(group)
+   :group[0];
+  const balance=(typeof pamLatestTokenBalanceV8234==="function")
+   ?pamLatestTokenBalanceV8234(p)
+   :Math.max.apply(null,group.map(function(x){return Math.max(0,Number(x.tokenBalance)||0)}));
+  if(balance>0){
+   // Solo per visualizzazione/comunicazioni: non scrive il saldo in anagrafica.
+   const copy=Object.assign({},p,{__pamCommTokenBalance:balance});
+   if(!copy.gender){
+    const g=group.find(function(x){return String(x.gender||"").trim()});
+    if(g)copy.gender=g.gender;
+   }
+   out.push(copy);
+  }
+ });
+ return out;
+}
+
 function pamCommFilteredV827(){
  const q=String(document.getElementById("pamCommQ827")?.value||"").trim().toLowerCase().replace(/\s+/g," ");
  const sex=String(document.getElementById("pamCommSex827")?.value||"all");
  const ageBand=String(document.getElementById("pamCommAge827")?.value||"all");
  const eventId=String(document.getElementById("pamCommEvent827")?.value||"all");
- const eventPlayers=eventId==="all"?null:pamCommEventPlayersV827(eventId);
+ const tokenCircuit=eventId==="__token_circuit__";
+ const eventPlayers=(eventId==="all"||tokenCircuit)?null:pamCommEventPlayersV827(eventId);
+ const sourcePlayers=tokenCircuit?pamCommTokenCircuitPlayersV8237():(state.players||[]);
 
- return (state.players||[]).filter(function(p){
+ return sourcePlayers.filter(function(p){
   if(sex!=="all"&&pamCommGenderV827(p)!==sex)return false;
 
   const age=pamCommAgeV827(p);
@@ -4346,7 +4382,9 @@ function pamCommRenderV827(){
    '<input type="checkbox" data-comm827-player="'+id+'" '+checked+' onchange="return pamCommTogglePlayerV829(this)">'+
    '<span class="grow"><b>'+esc(playerName(p))+'</b>'+
    '<small>'+esc(p.phone||"Telefono mancante")+' · '+esc(p.email||"Email mancante")+
-   (age!==null?' · '+age+' anni':' · Età non disponibile')+'</small></span></label>';
+   (age!==null?' · '+age+' anni':' · Età non disponibile')+
+   (p.__pamCommTokenBalance!==undefined?' · 🏅 '+Number(p.__pamCommTokenBalance)+' gettoni':'')+
+   '</small></span></label>';
  }).join("");
 }
 function pamCommSelectFilteredV827(){
@@ -4450,7 +4488,80 @@ function pamCommExcelV827(){
 }
 function pamCommPdfV827(){
  const rows=pamCommSelectedPlayersV827();if(!rows.length)return pamToast("Nessun giocatore selezionato.","error");
- const html='<!doctype html><html><head><meta charset="utf-8"><title>Destinatari comunicazione</title><style>body{font-family:Arial;padding:24px}h1{margin-bottom:4px}.muted{color:#666}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #bbb;padding:7px;text-align:left}</style></head><body>'+
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Destinatari comunicazione</title><style>body{font-family:Arial;padding:24px}h1{margin-bottom:4px}.muted{color:#666}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{border:1px solid #bbb;padding:7px;text-align:left}
+/* V8.2.38 · Semifinali sempre visibili e centrate */
+.pam-semis-visible-v8238{width:min(1180px,100%);margin:18px auto 0}
+.pam-semis-visible-v8238>h2{margin:0 0 12px;text-align:center}
+.pam-semis-grid-v8238{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.pam-semi-column-v8238{min-width:0}
+.pam-semi-column-v8238>.card,.pam-semi-column-v8238>.match,.pam-semi-column-v8238>.notice{width:100%;margin-left:auto;margin-right:auto}
+@media(max-width:760px){.pam-semis-visible-v8238{margin-top:14px}.pam-semis-grid-v8238{grid-template-columns:1fr;gap:14px}.pam-semis-visible-v8238>h2{text-align:left}}
+
+/* V8.2.39 · Fase a gironi mobile adattiva al numero di campi */
+@media(max-width:760px){
+ .pam-mobile-matches-v8239{display:block;width:100%}
+ .pam-mobile-matches-v8239 .match.pam-mobile-match-v8239{
+   margin:0 0 8px!important;
+   border-radius:15px!important;
+   box-shadow:none!important;
+ }
+ .pam-mobile-matches-v8239 .match-meta{margin:2px 0 4px!important;line-height:1.1!important}
+ .pam-mobile-matches-v8239 .matchup-stack{margin:5px auto!important;gap:3px!important}
+ .pam-mobile-matches-v8239 .vs-divider{gap:6px!important}
+ .pam-mobile-matches-v8239 .score-row{margin:5px 0!important;gap:5px!important}
+ .pam-mobile-matches-v8239 [data-note]{margin-top:3px!important}
+ .pam-mobile-matches-v8239 .match-message{margin:2px 0!important}
+ .pam-mobile-matches-v8239 .notice{margin-bottom:5px!important}
+ .pam-mobile-matches-v8239 .timer-panel{
+   margin:4px 0!important;border-width:2px!important;border-radius:11px!important;
+   display:grid!important;grid-template-columns:auto 1fr auto!important;
+   align-items:center!important;gap:7px!important;text-align:left!important;
+ }
+ .pam-mobile-matches-v8239 .timer-title{margin:0!important;white-space:nowrap}
+ .pam-mobile-matches-v8239 .timer-display{margin:0!important;text-align:center!important}
+ .pam-mobile-matches-v8239 .timer-panel button{margin:0!important}
+
+ /* 1 campo: una partita grande */
+ .pam-mobile-courts-1-v8239 .match{padding:13px!important}
+ .pam-mobile-courts-1-v8239 .team-stack{font-size:25px!important;line-height:1.12!important}
+ .pam-mobile-courts-1-v8239 .timer-display{font-size:46px!important}
+ .pam-mobile-courts-1-v8239 .timer-title{font-size:12px!important}
+
+ /* 2 campi: due partite leggibili nella stessa schermata */
+ .pam-mobile-courts-2-v8239 .match{padding:9px!important}
+ .pam-mobile-courts-2-v8239 .team-stack{font-size:20px!important;line-height:1.06!important;padding:2px 0!important;gap:1px!important}
+ .pam-mobile-courts-2-v8239 .vs-divider span{font-size:15px!important}
+ .pam-mobile-courts-2-v8239 .timer-panel{padding:6px 8px!important}
+ .pam-mobile-courts-2-v8239 .timer-display{font-size:31px!important}
+ .pam-mobile-courts-2-v8239 .timer-title{font-size:10px!important}
+ .pam-mobile-courts-2-v8239 input{min-height:36px!important;font-size:14px!important}
+ .pam-mobile-courts-2-v8239 button{min-height:36px!important;font-size:14px!important}
+
+ /* 3 campi: tre partite contemporanee */
+ .pam-mobile-courts-3-v8239 .match{padding:7px!important;margin-bottom:6px!important}
+ .pam-mobile-courts-3-v8239 .team-stack{font-size:17px!important;line-height:1.02!important;padding:0!important;gap:0!important}
+ .pam-mobile-courts-3-v8239 .vs-divider span{font-size:13px!important}
+ .pam-mobile-courts-3-v8239 .timer-panel{padding:4px 6px!important;margin:3px 0!important}
+ .pam-mobile-courts-3-v8239 .timer-display{font-size:25px!important}
+ .pam-mobile-courts-3-v8239 .timer-title{font-size:9px!important}
+ .pam-mobile-courts-3-v8239 input{min-height:31px!important;font-size:13px!important;padding:4px 7px!important}
+ .pam-mobile-courts-3-v8239 button{min-height:31px!important;font-size:12px!important;padding:4px 7px!important}
+ .pam-mobile-courts-3-v8239 .pill{font-size:10px!important;padding:3px 6px!important}
+
+ /* 4 o più campi: massima compattezza mantenendo i comandi */
+ .pam-mobile-courts-4plus-v8239 .match{padding:6px!important;margin-bottom:5px!important;border-radius:11px!important}
+ .pam-mobile-courts-4plus-v8239 .team-stack{font-size:15px!important;line-height:1!important;padding:0!important;gap:0!important}
+ .pam-mobile-courts-4plus-v8239 .matchup-stack{margin:2px auto!important;gap:1px!important}
+ .pam-mobile-courts-4plus-v8239 .vs-divider span{font-size:11px!important}
+ .pam-mobile-courts-4plus-v8239 .timer-panel{padding:3px 5px!important;margin:2px 0!important;gap:4px!important}
+ .pam-mobile-courts-4plus-v8239 .timer-display{font-size:21px!important}
+ .pam-mobile-courts-4plus-v8239 .timer-title{font-size:8px!important;letter-spacing:0!important}
+ .pam-mobile-courts-4plus-v8239 input{min-height:28px!important;font-size:12px!important;padding:3px 6px!important}
+ .pam-mobile-courts-4plus-v8239 button{min-height:28px!important;font-size:11px!important;padding:3px 6px!important}
+ .pam-mobile-courts-4plus-v8239 .pill{font-size:9px!important;padding:2px 5px!important}
+ .pam-mobile-courts-4plus-v8239 .notice{padding:5px 6px!important;font-size:10px!important}
+}
+</style></head><body>'+
  '<h1>Padel Arena Manager</h1><div class="muted">Destinatari selezionati: '+rows.length+'</div><table><tr><th>Giocatore</th><th>Telefono</th><th>Email</th><th>Età</th></tr>'+
  rows.map(function(p){return '<tr><td>'+esc(playerName(p))+'</td><td>'+esc(p.phone||"")+'</td><td>'+esc(p.email||"")+'</td><td>'+(pamCommAgeV827(p)??"")+'</td></tr>'}).join("")+
  '</table><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>';
@@ -4548,7 +4659,9 @@ function pamCommCsvDirectV829(){
 
 function communicationsView(){
  const events=(state.events||[]).slice().sort(function(a,b){return String(b.date||"").localeCompare(String(a.date||""))});
- const eventOptions='<option value="all">Tutti / nessun filtro torneo</option>'+events.map(function(e){
+ const eventOptions='<option value="all">Tutti / nessun filtro torneo</option>'+
+  '<option value="__token_circuit__">🏅 Circuito a gettoni · giocatori con almeno 1 gettone</option>'+
+  events.map(function(e){
   return '<option value="'+esc(e.id)+'">'+esc((e.date?e.date+" · ":"")+(e.name||"Torneo"))+'</option>';
  }).join("");
  return header("Comunicazioni","Comunicazioni in uscita verso i giocatori")+
@@ -5536,13 +5649,15 @@ function matchesView(e){
  if(!e.matches||!e.matches.length){
   return '<div class="notice"><b>Nessuna partita presente.</b><br>Apri <b>Partecipanti / Rigenera</b>, seleziona i giocatori e genera le partite.</div>';
  }
+ const pamMobileCourtsV8239=Math.max(1,Number(e.courts)||1);
+ const pamMobileDensityV8239=pamMobileCourtsV8239>=4?"4plus":String(pamMobileCourtsV8239);
  const html=e.matches.map(function(m,i){
   const saved=m.score1!==null&&m.score2!==null;
   const a=e.competitionType==="fixed_pairs"?pairName(e,m.pair1):names(m.t1);
   const b=e.competitionType==="fixed_pairs"?pairName(e,m.pair2):names(m.t2);
   const legLabel=(m.leg===2?" · Ritorno":" · Andata");
   const roundLabel=(e.competitionType==="fixed_pairs"?"Girone "+m.group:"Turno "+m.round)+legLabel;
-  return '<div class="match" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
+  return '<div class="match pam-mobile-match-v8239" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
   matchMetaHtml(e,i,roundLabel,m.court)+timerHtml(e,"match-"+m.id,"initial")+
   (e.competitionType==="fixed_pairs"?matchupStackHtml(pairStackHtml(e,m.pair1),pairStackHtml(e,m.pair2)):matchupStackHtml(teamStackHtml(m.t1),teamStackHtml(m.t2)))+
   (saved?'<div class="notice success">Risultato salvato: <b>'+m.score1+' - '+m.score2+'</b></div><button class="secondary" data-action="edit-result" data-match-id="'+m.id+'">Modifica risultato</button>':
@@ -5551,7 +5666,8 @@ function matchesView(e){
  }).join("");
  const quality=pamRodeoQuality(e);
  const qualityHtml=quality?'<div class="notice '+(quality.repeatedTeams===0?"success":"error")+'"><b>Controllo abbinamenti Rodeo:</b> coppie di compagni ripetute: '+quality.repeatedTeams+' · ripetizioni individuali contro gli stessi avversari: '+quality.repeatedOpponents+'.<br><b>Priorità assoluta:</b> nessuna coppia di compagni ripetuta; gli avversari vengono variati al massimo consentito dal numero di giocatori e partite.</div>':"";
- return qualityHtml+'<div class="notice">Ogni risultato viene salvato online e resta disponibile su tutti i dispositivi autorizzati.</div>'+html;
+ return qualityHtml+'<div class="notice">Ogni risultato viene salvato online e resta disponibile su tutti i dispositivi autorizzati.</div>'+
+ '<div class="pam-mobile-matches-v8239 pam-mobile-courts-'+pamMobileDensityV8239+'-v8239" data-mobile-courts="'+pamMobileCourtsV8239+'">'+html+'</div>';
 }
 function saveResult(button){
  const e=currentEvent();const id=button.getAttribute("data-match-id");const card=button.closest("[data-match-card]");const msg=card.querySelector(".match-message");
@@ -6334,6 +6450,25 @@ function pamFinalOnlyView(e){
  }
  return '<div class="card"><h2>Composizione finale</h2>'+selectors+'</div>'+cards+summary;
 }
+
+function pamGuidedSemifinalsVisibleV8238(e){
+ if(!e||!Array.isArray(e.playerIds)||e.playerIds.length===6)return "";
+ const fs=ensureFinalStages(e),qualified=semifinalQualified(e);
+ if(qualified.length!==8)return "";
+ const hasTeams=(fs.semifinals||[]).some(function(m){return m&&Array.isArray(m.teamA)&&Array.isArray(m.teamB)&&m.teamA.length===2&&m.teamB.length===2});
+ if(!hasTeams)return "";
+ const cols=fs.semifinals.map(function(m,index){
+  const stage="semi"+(index+1),base=(e.matches||[]).length+1+index*(e.semifinalReturnLeg?2:1);
+  const selectors='<div class="row"><div class="field"><label>Coppia A - giocatore 1</label><select data-team-stage="'+stage+'" data-side="A" data-pos="0">'+stagePlayerOptions(qualified,m.teamA[0])+'</select></div><div class="field"><label>Coppia A - giocatore 2</label><select data-team-stage="'+stage+'" data-side="A" data-pos="1">'+stagePlayerOptions(qualified,m.teamA[1])+'</select></div></div>'+
+  '<div class="row"><div class="field"><label>Coppia B - giocatore 1</label><select data-team-stage="'+stage+'" data-side="B" data-pos="0">'+stagePlayerOptions(qualified,m.teamB[0])+'</select></div><div class="field"><label>Coppia B - giocatore 2</label><select data-team-stage="'+stage+'" data-side="B" data-pos="1">'+stagePlayerOptions(qualified,m.teamB[1])+'</select></div></div>';
+  const cards=stageLegCard(e,stage,m,"Semifinale "+(index+1),1,base,index+1,"semifinal")+(e.semifinalReturnLeg?stageLegCard(e,stage,m,"Semifinale "+(index+1),2,base+1,index+1,"semifinal"):"");
+  const total=stageAggregate(e,stage,m),winner=stageWinnerTeam(e,stage,m);
+  const summary=total?(total.a===total.b?'<div class="notice error">Totale in parità: <b>'+total.a+' - '+total.b+'</b>.</div>':'<div class="notice success">Totale semifinale: <b>'+total.a+' - '+total.b+'</b><br>Finalisti: <b>'+esc(names(winner))+'</b></div>'):"";
+  return '<section class="pam-semi-column-v8238"><div class="card"><h2>Composizione semifinale '+(index+1)+'</h2>'+selectors+'</div>'+cards+summary+'</section>';
+ }).join("");
+ return '<section id="pamSemifinaliSempreVisibiliV8238" class="pam-semis-visible-v8238"><h2>Semifinali</h2><div class="pam-semis-grid-v8238">'+cols+'</div></section>';
+}
+
 function pamAuctionLegacyViewV8211(e,which){
  const count=pamAuctionCount(e);
  if(which<1||which>count)return '<div class="notice error">Asta non prevista per questo torneo.</div>';
@@ -6510,7 +6645,10 @@ async function pamSaveGuidedAuctionV8211(which,btn){
   pamToast("Asta "+which+" completata: "+pamGuidedAuctionPhaseV8211(e,which)+" generate automaticamente.","success");
 
   setTimeout(function(){
-   const y=window.scrollY;render();requestAnimationFrame(function(){window.scrollTo(0,y)});
+   const y=window.scrollY;render();requestAnimationFrame(function(){
+    if(which===1){const target=document.getElementById("pamSemifinaliSempreVisibiliV8238");if(target){target.scrollIntoView({behavior:"smooth",block:"start"});return}}
+    window.scrollTo(0,y);
+   });
   },450);
  }catch(err){
   console.error("Asta guidata:",err);
@@ -6521,8 +6659,9 @@ async function pamSaveGuidedAuctionV8211(which,btn){
 }
 function auctionView(e,which){
  const guided=pamGuidedAuctionViewV8211(e,which);
+ const visibleSemis=which===1?pamGuidedSemifinalsVisibleV8238(e):"";
  const legacy=pamAuctionLegacyViewV8211(e,which);
- return guided+
+ return guided+visibleSemis+
   '<details class="pam-actions-menu pam-auction-advanced print-hide"><summary>Modalità manuale avanzata / recupero</summary>'+
    '<div class="pam-actions-content"><div class="notice">Usa questa sezione solo se devi correggere manualmente gettoni o composizione delle coppie.</div>'+legacy+'</div>'+
   '</details>';
