@@ -1,0 +1,12 @@
+V8.2.29 LAB · HOME + LOGIN PAGINA PUBBLICA
+
+Modifica SOLO public-registration.html:
+- aggiunto 🏠 HOME -> prima pagina Free/pubblica
+- aggiunto 🔐 LOGIN -> accesso
+- pulsanti compatti, anche su iPhone
+- nessuna modifica a iscrizioni, ricerca giocatori, Supabase o torneo
+
+Su GitHub sostituire SOLO:
+public-registration.html
+
+Nessun SQL.
