@@ -2205,16 +2205,16 @@ seedParticipants();
 
 function applyMaleTokenBalancesTappa2(){
  const balances={
-  "Corrado Verzini":13,
-  "Ivan Gianferrari":36,
-  "Claudio Negretti":11,
-  "Augusto Aubry":15,
-  "Sergio Balia":35,
-  "Francesco Lignola":9,
-  "Ionel Marcel":18,
-  "Stefano Neri":9,
-  "Stefano Fontanesi":16,
-  "Riccardo Vecchi":3
+  "Sergio Balia":70,
+  "Mirco Giovanardi":27,
+  "Gianluca Govi":13,
+  "Maurizio Carnevali":36,
+  "Maurizio Musso":23,
+  "Corrado Verzini":57,
+  "Claudio Negretti":7,
+  "Ionel Marcel":27,
+  "Stefano Neri":4,
+  "Stefano Fontanesi":4
  };
  Object.keys(balances).forEach(function(fullName){
   const key=registryTokenKey(fullName);
@@ -2305,6 +2305,7 @@ function pamApplyFemaleHistoricalBalancesV8224(){
  return changed;
 }
 pamApplyFemaleHistoricalBalancesV8224();
+pamReconcileTokensV8232();
 
 function pamIsUserEditing(){
  const a=document.activeElement;
@@ -2741,6 +2742,7 @@ async function pamCloudLoad(initial,forceReplace){
   state.players=remotePlayers;
   state.events=remoteEvents;
   pamApplyFemaleHistoricalBalancesV8224();
+  pamReconcileTokensV8232();
   state.__playersSource="Supabase completo";
   state.__cloudPlayersCount=remotePlayers.length;
   state.__cloudEventsCount=remoteEvents.length;
@@ -3293,7 +3295,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.28 LAB · BARRA COMPATTA</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.32 LAB · SALDI VERIFICATI + DEDUPLICA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3467,6 +3469,72 @@ function pamNormalizeAndDedupeV822(players){
  groups.forEach(function(p){result.push(p)});
  return {players:result,idMap:idMap};
 }
+
+function pamMergeDuplicateRegistryV8232(){
+ const players=state.players||[], groups=new Map(), out=[], idMap=new Map();
+ players.forEach(function(p){
+  const key=registryTokenKey(playerName(p));
+  if(!key){out.push(p);return}
+  if(!groups.has(key)){
+   groups.set(key,p); out.push(p); idMap.set(String(p.id),String(p.id)); return;
+  }
+  const cur=groups.get(key);
+  // Do not merge when strong personal data show they are different people.
+  if(pamConflictV822(cur,p)){
+   out.push(p); idMap.set(String(p.id),String(p.id)); return;
+  }
+  const merged=pamMergeV822(cur,p);
+  merged.tokenBalance=Math.max(Number(cur.tokenBalance||0),Number(p.tokenBalance||0));
+  const oldA=String(cur.id),oldB=String(p.id),keep=String(merged.id);
+  const pos=out.findIndex(function(x){return String(x.id)===oldA});
+  if(pos>=0)out[pos]=merged; else out.push(merged);
+  groups.set(key,merged);
+  idMap.set(oldA,keep); idMap.set(oldB,keep);
+ });
+ idMap.forEach(function(v,k){
+  let x=v,guard=0;
+  while(idMap.has(x)&&idMap.get(x)!==x&&guard++<20)x=idMap.get(x);
+  idMap.set(k,x);
+ });
+ if(out.length!==players.length){
+  state.players=out;
+  state.events=(state.events||[]).map(function(e){return pamReplaceIdsDeepV822(e,idMap)});
+  return players.length-out.length;
+ }
+ return 0;
+}
+function pamApplyConfirmedMaleFinalBalancesV8232(){
+ const balances={
+  "Sergio Balia":70,
+  "Mirco Giovanardi":27,
+  "Gianluca Govi":13,
+  "Maurizio Carnevali":36,
+  "Maurizio Musso":23,
+  "Corrado Verzini":57,
+  "Claudio Negretti":7,
+  "Ionel Marcel":27,
+  "Stefano Neri":4,
+  "Stefano Fontanesi":4
+ };
+ let changed=false;
+ Object.keys(balances).forEach(function(name){
+  const key=registryTokenKey(name);
+  const matches=(state.players||[]).filter(function(p){return registryTokenKey(playerName(p))===key});
+  matches.forEach(function(p){
+   const next=Number(balances[name]);
+   if(Number(p.tokenBalance||0)!==next){p.tokenBalance=next;changed=true}
+   if(!p.gender)p.gender="Maschile";
+  });
+ });
+ return changed;
+}
+function pamReconcileTokensV8232(){
+ const merged=pamMergeDuplicateRegistryV8232();
+ const balancesChanged=pamApplyConfirmedMaleFinalBalancesV8232();
+ if(merged||balancesChanged)localStorage.setItem(KEY,JSON.stringify(state));
+ return {merged:merged,balancesChanged:balancesChanged};
+}
+
 function pamReplaceIdsDeepV822(value,idMap){
  if(Array.isArray(value))return value.map(function(v){return pamReplaceIdsDeepV822(v,idMap)});
  if(value&&typeof value==="object"){
