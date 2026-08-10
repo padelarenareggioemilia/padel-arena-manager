@@ -1,0 +1,33 @@
+V8.2.23 LAB · SALDI FEMMINILI STORICI
+
+RECUPERATI DA VECCHIA VERSIONE DELL'APP:
+Fabienne De Cup De Saint Paul = 9
+Carlotta Rivi = 5
+Viviana De Magistris = 10
+Stefania Bella = 9
+Valentina Labattaglia = 16
+Viktoriia Dutka = 3
+Sara Sacco' = 9
+Elisa Savini = 11
+Monia Mazzi = 51
+Maurizia Casini = 34
+
+Questi valori vengono salvati nella 2ª TAPPA FEMMINILE del 27/07/2026 come
+historicalFinalBalances e sono PROTETTI.
+
+- Se la tappa non esiste, viene creata.
+- Se esiste già la copia incompleta creata dalla V8.2.22, viene RIPARATA.
+- RECUPERA DA TAPPA PRECEDENTE usa questi saldi esatti.
+- Non vengono sovrascritti i saldi delle tappe successive.
+- Non viene applicato +3 ripetuto premendo il pulsante più volte.
+
+GITHUB:
+sostituire:
+1. index-v8-lab.html
+2. manifest.webmanifest
+3. service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82230

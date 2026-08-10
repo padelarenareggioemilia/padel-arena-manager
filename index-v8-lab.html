@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.22 LAB RIPRISTINO FEMMINILE FORZATO</title>
+<title>Padel Arena Manager V8.2.23 LAB SALDI FEMMINILI STORICI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1320,7 +1320,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=82220">
+<link rel="manifest" href="manifest.webmanifest?v=82230">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2513,62 +2513,54 @@ function pamHistoricalFindPlayerV8222(remotePlayers,target){
  return bestScore>=Math.min(2,t.length)?best:null;
 }
 function pamBuildSecondFemaleV8222(remotePlayers){
- const seed=[
-  {name:"Fabienne De Cup De Saint Paul",prev:0},
-  {name:"Carlotta Rivi",prev:0},
-  {name:"Viviana De Magistris",prev:0},
-  {name:"Stefania Bella",prev:0},
-  {name:"Valentina Labattaglia",prev:0},
-  {name:"Viktoriia Dutka",prev:0},
-  {name:"Sara Sacco",prev:0},
-  {name:"Elisa Savini",prev:0},
-  {name:"Monia Mazzi",prev:23},
-  {name:"Maurizia Casini",prev:6}
- ];
- let legacyPlayers=null,legacyScores={};
- try{
-  const lp=JSON.parse(localStorage.getItem("pam_players")||"null");
-  if(Array.isArray(lp)&&lp.length)legacyPlayers=lp;
-  legacyScores=JSON.parse(localStorage.getItem("pam_scores")||"{}")||{};
- }catch(_){}
- const source=legacyPlayers||seed;
+ const historicalFinalByName={
+  "Fabienne De Cup De Saint Paul":9,
+  "Carlotta Rivi":5,
+  "Viviana De Magistris":10,
+  "Stefania Bella":9,
+  "Valentina Labattaglia":16,
+  "Viktoriia Dutka":3,
+  "Sara Sacco'":9,
+  "Elisa Savini":11,
+  "Monia Mazzi":51,
+  "Maurizia Casini":34
+ };
+ const seedNames=Object.keys(historicalFinalByName);
 
- const ids=[],carried={};
- source.forEach(function(lp,i){
-  const fallback=seed[i]||lp;
-  const p=pamHistoricalFindPlayerV8222(remotePlayers,lp.name||fallback.name)||pamHistoricalFindPlayerV8222(remotePlayers,fallback.name);
+ const ids=[],historicalFinalBalances={};
+ seedNames.forEach(function(name,i){
+  const p=pamHistoricalFindPlayerV8222(remotePlayers,name);
   if(p){
    ids[i]=p.id;
-   carried[p.id]=Math.max(0,Number(lp.prev??fallback.prev)||0);
+   historicalFinalBalances[String(p.id)]=historicalFinalByName[name];
   }
  });
 
  const schedule=[
   [1,"20:00","Campo Blu",0,9,2,7],[1,"20:00","Campo Verde",3,6,4,5],
-  [2,"20:30","Campo Blu",1,8,0,3],[2,"20:30","Campo Verde",2,5,6,9],
-  [3,"21:00","Campo Blu",4,7,1,2],[3,"21:00","Campo Verde",0,5,8,9],
-  [4,"21:30","Campo Blu",3,7,1,6],[4,"21:30","Campo Verde",2,8,4,9],
-  [5,"22:00","Campo Blu",0,6,2,4],[5,"22:00","Campo Verde",1,5,3,8]
+  [2,"20:20","Campo Blu",0,8,1,6],[2,"20:20","Campo Verde",9,7,3,4],
+  [3,"20:40","Campo Blu",8,6,9,5],[3,"20:40","Campo Verde",1,4,2,3],
+  [4,"21:00","Campo Blu",0,6,8,4],[4,"21:00","Campo Verde",7,5,1,2],
+  [5,"21:20","Campo Blu",0,5,9,1],[5,"21:20","Campo Verde",7,3,8,2]
  ];
  const matches=[];
  schedule.forEach(function(m,i){
   if(ids[m[3]]&&ids[m[4]]&&ids[m[5]]&&ids[m[6]]){
-   const s=legacyScores[i]||legacyScores[String(i)]||{};
    matches.push({
     id:"m_fem2_"+(i+1),round:m[0],time:m[1],court:m[2],
     t1:[ids[m[3]],ids[m[4]]],t2:[ids[m[5]],ids[m[6]]],
-    score1:(s.a!==null&&s.a!==""&&Number.isFinite(Number(s.a)))?Number(s.a):null,
-    score2:(s.b!==null&&s.b!==""&&Number.isFinite(Number(s.b)))?Number(s.b):null
+    score1:null,score2:null
    });
   }
  });
 
  const playerIds=ids.filter(Boolean);
- if(playerIds.length<6){
-  console.warn("Ripristino 2ª tappa femminile: giocatrici trovate",playerIds.length);
- }
  const ledger={};
- playerIds.forEach(function(id){ledger[id]={carried:carried[id]||0,spent:0,podium:0}});
+ playerIds.forEach(function(id){
+   const finalValue=Number(historicalFinalBalances[String(id)]||0);
+   // Carried is only a display-compatible fallback. Exact historical balance is protected separately.
+   ledger[id]={carried:Math.max(0,finalValue-3),spent:0,podium:0};
+ });
 
  return {
   id:"e_femmina_20260727_ripristinata",
@@ -2581,13 +2573,16 @@ function pamBuildSecondFemaleV8222(remotePlayers){
   playerIds:playerIds,
   matches:matches,
   ledger:ledger,
+  historicalFinalBalances:historicalFinalBalances,
+  historicalBalanceSource:"V8.1.x archivio storico",
+  historicalLocked:true,
   shareToken:"femmina-20260727-ripristinata",
   startTime:"20:00",
   maxParticipants:10,
   minParticipants:10,
   entryFee:25,
   createdAt:"2026-07-27T18:00:00.000Z",
-  restoredBy:"V8.2.22"
+  restoredBy:"V8.2.23"
  };
 }
 function pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents){
@@ -2595,12 +2590,20 @@ function pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents){
   const n=pamNormHistoricalNameV8222(e&&e.name);
   return String(e&&e.date||"")==="2026-07-27"&&n.includes("femmin");
  });
- if(existing)return {restored:false,event:existing};
-
- const ev=pamBuildSecondFemaleV8222(remotePlayers);
- remoteEvents.push(ev);
+ const rebuilt=pamBuildSecondFemaleV8222(remotePlayers);
+ if(existing){
+  // Preserve the event id/share token if already online, but repair the historical content.
+  const keepId=existing.id;
+  const keepShare=existing.shareToken;
+  Object.keys(existing).forEach(function(k){delete existing[k]});
+  Object.assign(existing,rebuilt);
+  existing.id=keepId||rebuilt.id;
+  if(keepShare)existing.shareToken=keepShare;
+  return {restored:true,event:existing,repaired:true};
+ }
+ remoteEvents.push(rebuilt);
  remoteEvents.sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
- return {restored:true,event:ev};
+ return {restored:true,event:rebuilt,repaired:false};
 }
 async function pamUpsertSecondFemaleV8222(e){
  if(!e||!PAM_SESSION||!pamIsAdmin())return;
@@ -2665,7 +2668,7 @@ async function pamCloudLoad(initial,forceReplace){
    setTimeout(function(){
     pamUpsertSecondFemaleV8222(secondFemaleV8222.event).then(function(){
       pamSetConnectionState(true);
-      pamToast("2ª tappa femminile ripristinata e salvata online.","success");
+      pamToast("2ª tappa femminile ripristinata con i saldi storici reali e salvata online.","success");
     }).catch(function(err){
       console.error("Ripristino 2ª tappa femminile:",err);
       pamToast("2ª tappa femminile visibile sul dispositivo; salvataggio online da riprovare.","error");
@@ -3123,7 +3126,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.22 LAB · RIPRISTINO FEMMINILE FORZATO</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.23 LAB · SALDI FEMMINILI STORICI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3534,8 +3537,8 @@ function pamLatestTokenBalanceV8219(player){
 
  for(let i=0;i<events.length;i++){
   try{
-   const row=standings(events[i]).find(function(x){return String(x.id)===pid});
-   if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
+   const exact=pamFinalTokenBalanceFromEventV8216(events[i],pid);
+   if(exact!==null)return Math.max(0,Number(exact)||0);
   }catch(_){}
  }
  return Math.max(0,Number(player.tokenBalance||0));
@@ -6204,9 +6207,12 @@ function pamEventTimeV8216(ev){
  return Number.isFinite(n)?n:0;
 }
 function pamFinalTokenBalanceFromEventV8216(ev,pid){
- if(!ev||!(ev.playerIds||[]).includes(pid))return null;
+ if(!ev)return null;
+ if(ev.historicalFinalBalances&&ev.historicalFinalBalances[String(pid)]!==undefined){
+  return Math.max(0,Number(ev.historicalFinalBalances[String(pid)])||0);
+ }
  try{
-  const row=standings(ev).find(function(x){return x.id===pid});
+  const row=standings(ev).find(function(x){return String(x.id)===String(pid)});
   if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
  }catch(_){}
  return null;
@@ -6714,7 +6720,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=82220",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=82230",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
