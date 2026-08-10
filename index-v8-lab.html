@@ -2247,7 +2247,7 @@ function applyMaleTokenBalancesTappa2(){
  state.migrations.maleTokensTappa2="2026-07-29-v2";
  save();
 }
-applyMaleTokenBalancesTappa2();
+/* V8.2.34: vecchia migrazione saldi maschili disattivata */
 
 
 function pamApplyFemaleHistoricalBalancesV8224(){
@@ -2304,7 +2304,6 @@ function pamApplyFemaleHistoricalBalancesV8224(){
  if(changed)save();
  return changed;
 }
-pamApplyFemaleHistoricalBalancesV8224();
 pamReconcileTokensV8232();
 
 function pamIsUserEditing(){
@@ -2741,7 +2740,6 @@ async function pamCloudLoad(initial,forceReplace){
 
   state.players=remotePlayers;
   state.events=remoteEvents;
-  pamApplyFemaleHistoricalBalancesV8224();
   pamReconcileTokensV8232();
   state.__playersSource="Supabase completo";
   state.__cloudPlayersCount=remotePlayers.length;
@@ -3295,7 +3293,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.32 LAB · SALDI VERIFICATI + DEDUPLICA</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.34 LAB · GETTONI FONTE UNICA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3470,33 +3468,70 @@ function pamNormalizeAndDedupeV822(players){
  return {players:result,idMap:idMap};
 }
 
-function pamMergeDuplicateRegistryV8232(){
+
+function pamCanonicalPersonKeyV8233(name){
+ const words=normalizeText(name).split(/\s+/).filter(Boolean);
+ // Collapse repeated tokens (Balia Sergio Balia -> balia sergio).
+ const uniq=[];
+ words.forEach(function(w){if(uniq.indexOf(w)<0)uniq.push(w)});
+ return uniq.slice().sort().join(" ");
+}
+function pamCleanRepeatedPersonNameV8233(name){
+ const raw=String(name||"").trim().split(/\s+/).filter(Boolean), seen=new Set(), out=[];
+ raw.forEach(function(w){
+  const k=normalizeText(w);
+  if(k && !seen.has(k)){seen.add(k);out.push(w)}
+ });
+ return out.join(" ");
+}
+function pamPreferredDuplicateV8233(a,b){
+ // Prefer the cleaner/shorter name; otherwise keep the richer record.
+ const an=pamCleanRepeatedPersonNameV8233(playerName(a));
+ const bn=pamCleanRepeatedPersonNameV8233(playerName(b));
+ const as=an.split(/\s+/).length, bs=bn.split(/\s+/).length;
+ if(as!==bs)return as<bs?a:b;
+ const ar=["phone","email","level","gender"].reduce(function(n,k){return n+(a[k]?1:0)},0);
+ const br=["phone","email","level","gender"].reduce(function(n,k){return n+(b[k]?1:0)},0);
+ return br>ar?b:a;
+}
+function pamMergeDuplicateRegistryV8233(){
  const players=state.players||[], groups=new Map(), out=[], idMap=new Map();
  players.forEach(function(p){
-  const key=registryTokenKey(playerName(p));
+  const key=pamCanonicalPersonKeyV8233(playerName(p));
   if(!key){out.push(p);return}
   if(!groups.has(key)){
-   groups.set(key,p); out.push(p); idMap.set(String(p.id),String(p.id)); return;
+   // Clean repeated words even for the first occurrence.
+   const cleaned=Object.assign({},p);
+   const cleanName=pamCleanRepeatedPersonNameV8233(playerName(cleaned));
+   if(cleaned.name!==undefined) cleaned.name=cleanName;
+   else if(cleaned.fullName!==undefined) cleaned.fullName=cleanName;
+   groups.set(key,cleaned); out.push(cleaned); idMap.set(String(p.id),String(cleaned.id)); return;
   }
   const cur=groups.get(key);
-  // Do not merge when strong personal data show they are different people.
+  // Strong personal-data conflicts mean distinct people: do not merge.
   if(pamConflictV822(cur,p)){
    out.push(p); idMap.set(String(p.id),String(p.id)); return;
   }
-  const merged=pamMergeV822(cur,p);
+  const preferred=pamPreferredDuplicateV8233(cur,p);
+  const other=preferred===cur?p:cur;
+  const merged=pamMergeV822(preferred,other);
+  const cleanName=pamCleanRepeatedPersonNameV8233(playerName(preferred));
+  if(merged.name!==undefined) merged.name=cleanName;
+  else if(merged.fullName!==undefined) merged.fullName=cleanName;
+  // Never add balances while deduplicating.
   merged.tokenBalance=Math.max(Number(cur.tokenBalance||0),Number(p.tokenBalance||0));
-  const oldA=String(cur.id),oldB=String(p.id),keep=String(merged.id);
-  const pos=out.findIndex(function(x){return String(x.id)===oldA});
+  const oldCur=String(cur.id), oldP=String(p.id), keep=String(merged.id);
+  const pos=out.findIndex(function(x){return String(x.id)===oldCur});
   if(pos>=0)out[pos]=merged; else out.push(merged);
   groups.set(key,merged);
-  idMap.set(oldA,keep); idMap.set(oldB,keep);
+  idMap.set(oldCur,keep); idMap.set(oldP,keep);
  });
  idMap.forEach(function(v,k){
   let x=v,guard=0;
   while(idMap.has(x)&&idMap.get(x)!==x&&guard++<20)x=idMap.get(x);
   idMap.set(k,x);
  });
- if(out.length!==players.length){
+ if(out.length!==players.length || out.some(function(p,i){return p!==players[i]})){
   state.players=out;
   state.events=(state.events||[]).map(function(e){return pamReplaceIdsDeepV822(e,idMap)});
   return players.length-out.length;
@@ -3529,7 +3564,7 @@ function pamApplyConfirmedMaleFinalBalancesV8232(){
  return changed;
 }
 function pamReconcileTokensV8232(){
- const merged=pamMergeDuplicateRegistryV8232();
+ const merged=pamMergeDuplicateRegistryV8233();
  const balancesChanged=pamApplyConfirmedMaleFinalBalancesV8232();
  if(merged||balancesChanged)localStorage.setItem(KEY,JSON.stringify(state));
  return {merged:merged,balancesChanged:balancesChanged};
@@ -3761,28 +3796,124 @@ function pamSeriesLogo(series){
 }
 
 
+
 let pamTokenRankingGenderV8219="all";
 
-function pamLatestTokenBalanceV8219(player){
- if(!player)return 0;
- const pid=String(player.id);
+/* Saldi certificati da schermate/archivio storico.
+   Questi valori sono usati solo come ancora certa quando non esiste
+   una tappa PIU' RECENTE con saldo finale valido per la stessa persona. */
+function pamCertifiedTokenBalancesV8234(){
+ return {
+  "balia|sergio":70,
+  "giovanardi|mirco":27,
+  "gianluca|govi":13,
+  "carnevali|maurizio":36,
+  "maurizio|musso":23,
+  "corrado|verzini":57,
+  "claudio|negretti":7,
+  "ionel|marcel":27,
+  "neri|stefano":4,
+  "fontanesi|stefano":4,
+
+  "casini|maurizia":34,
+  "mazzi|monia":51,
+  "cup|de|fabienne|paul|saint":9,
+  "carlotta|rivi":5,
+  "de|magistris|viviana":10,
+  "bella|stefania":9,
+  "labattaglia|valentina":16,
+  "dutka|viktoriia":3,
+  "sacco|sara":9,
+  "elisa|savini":11
+ };
+}
+function pamTokenPersonKeyV8234(name){
+ const words=String(name||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/[^a-z0-9 ]/g," ").trim().split(/\s+/).filter(Boolean);
+ const uniq=[];
+ words.forEach(function(w){if(!uniq.includes(w))uniq.push(w)});
+ return uniq.sort().join("|");
+}
+function pamTokenPersonIdsV8234(player){
+ if(!player)return[];
+ const key=pamTokenPersonKeyV8234(playerName(player));
+ return (state.players||[]).filter(function(p){
+  return pamTokenPersonKeyV8234(playerName(p))===key;
+ }).map(function(p){return String(p.id)});
+}
+function pamLatestValidTokenFromEventsV8234(player){
+ const ids=new Set(pamTokenPersonIdsV8234(player));
+ if(!ids.size)return null;
  const events=(state.events||[]).filter(function(e){
-  return e&&e.competitionType==="rodeo_tokens"&&(e.playerIds||[]).some(function(id){return String(id)===pid});
+  return e&&e.competitionType==="rodeo_tokens"&&(e.playerIds||[]).some(function(id){return ids.has(String(id))});
  }).sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
 
  for(let i=0;i<events.length;i++){
-  try{
-   const exact=pamFinalTokenBalanceFromEventV8216(events[i],pid);
-   if(exact!==null)return Math.max(0,Number(exact)||0);
-  }catch(_){}
+  const e=events[i];
+  // Try every duplicate ID tied to the same real person.
+  const eventIds=(e.playerIds||[]).filter(function(id){return ids.has(String(id))});
+  for(let j=0;j<eventIds.length;j++){
+   try{
+    const exact=pamFinalTokenBalanceFromEventV8216(e,eventIds[j]);
+    if(exact!==null && Number.isFinite(Number(exact))){
+     return {balance:Math.max(0,Number(exact)||0),time:pamEventTimeV8216(e),event:e};
+    }
+   }catch(_){}
+  }
  }
- return Math.max(0,Number(player.tokenBalance||0));
+ return null;
 }
+function pamLatestTokenBalanceV8234(player){
+ if(!player)return 0;
+ const eventResult=pamLatestValidTokenFromEventsV8234(player);
+ const key=pamTokenPersonKeyV8234(playerName(player));
+ const certified=pamCertifiedTokenBalancesV8234()[key];
 
+ // Certified values describe the latest verified snapshots supplied by the organizer.
+ // If an event is chronologically later than those snapshots, its real final balance wins.
+ // Current certified snapshots are dated 2026-08-10.
+ const certifiedTime=new Date("2026-08-10T23:59:59+02:00").getTime();
+ if(eventResult && eventResult.time>certifiedTime)return eventResult.balance;
+ if(certified!==undefined)return Math.max(0,Number(certified)||0);
+ if(eventResult)return eventResult.balance;
+
+ // Final fallback: use the highest registry balance among duplicate records.
+ const ids=new Set(pamTokenPersonIdsV8234(player));
+ let fallback=0;
+ (state.players||[]).forEach(function(p){
+  if(ids.has(String(p.id)))fallback=Math.max(fallback,Math.max(0,Number(p.tokenBalance)||0));
+ });
+ return fallback;
+}
+function pamTokenRepresentativeV8234(group){
+ return group.slice().sort(function(a,b){
+  const ac=(a.phone?1:0)+(a.email?1:0)+(a.gender?1:0)+(a.level?1:0);
+  const bc=(b.phone?1:0)+(b.email?1:0)+(b.gender?1:0)+(b.level?1:0);
+  return bc-ac || playerName(a).length-playerName(b).length;
+ })[0];
+}
 function pamTokenRankingRowsV8219(){
- return (state.players||[]).map(function(p){
-  return {player:p,balance:pamLatestTokenBalanceV8219(p)};
- }).filter(function(x){
+ const groups=new Map();
+ (state.players||[]).forEach(function(p){
+  const key=pamTokenPersonKeyV8234(playerName(p));
+  if(!key)return;
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(p);
+ });
+
+ const rows=[];
+ groups.forEach(function(group){
+  const p=pamTokenRepresentativeV8234(group);
+  const balance=pamLatestTokenBalanceV8234(p);
+  // Fill missing gender from any duplicate record.
+  if(!p.gender){
+   const withGender=group.find(function(x){return String(x.gender||"").trim()});
+   if(withGender)p.gender=withGender.gender;
+  }
+  rows.push({player:p,balance:balance,duplicateCount:group.length});
+ });
+
+ return rows.filter(function(x){
   if(x.balance<=0)return false;
   if(pamTokenRankingGenderV8219==="all")return true;
   const g=String(x.player.gender||"").toLowerCase();
@@ -3803,7 +3934,7 @@ function tokenRankingViewV8218(){
  }).join(""):'<tr><td colspan="4">Nessun giocatore con almeno 1 gettone per il filtro selezionato.</td></tr>';
 
  return header("Classifica generale gettoni","Saldo aggiornato all’ultima tappa disputata")+
-  '<div class="card"><div class="pam-v8218-token-head"><div><span class="pam-v5-kicker">CLASSIFICA GENERALE</span><h2>🏅 Gettoni giocatori</h2><div class="muted">Mostra solo chi ha almeno 1 gettone. Il saldo viene preso dall’ultima tappa disputata.</div></div><button class="secondary" type="button" data-view="home">Torna alla Home</button></div>'+
+  '<div class="card"><div class="pam-v8218-token-head"><div><span class="pam-v5-kicker">CLASSIFICA GENERALE</span><h2>🏅 Gettoni giocatori</h2><div class="muted">Una sola riga per persona. Saldo preso dall’ultima tappa valida; i saldi certificati restano protetti fino a una tappa successiva.</div></div><button class="secondary" type="button" data-view="home">Torna alla Home</button></div>'+
   '<div class="row" style="margin-top:14px"><div class="field"><label>Filtro sesso</label><select id="pamTokenGenderV8219" onchange="pamTokenRankingGenderV8219=this.value;render()">'+
    '<option value="all" '+(pamTokenRankingGenderV8219==="all"?"selected":"")+'>Tutti</option>'+
    '<option value="male" '+(pamTokenRankingGenderV8219==="male"?"selected":"")+'>Maschi</option>'+

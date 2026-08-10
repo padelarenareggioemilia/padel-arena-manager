@@ -1,0 +1,50 @@
+V8.2.34 LAB · GETTONI FONTE UNICA
+
+OBIETTIVO
+Chiudere definitivamente il problema classifica generale gettoni / doppioni.
+
+LOGICA NUOVA
+1. Ogni persona ha una chiave canonica indipendente da ordine nome/cognome,
+   punteggiatura e parole ripetute.
+2. La classifica mostra UNA SOLA RIGA per persona anche se Supabase contiene
+   ancora più record anagrafici equivalenti.
+3. Il saldo viene cercato nell'ULTIMA TAPPA RODEO A GETTONI valida, considerando
+   tutti gli ID duplicati collegabili alla stessa persona.
+4. I saldi certificati dall'organizzatore restano protetti fino alla presenza
+   di una tappa cronologicamente successiva.
+5. tokenBalance anagrafico è solo fallback, non più fonte primaria.
+
+SALDI CERTIFICATI MASCHILI
+Sergio Balia 70
+Mirco Giovanardi 27
+Gianluca Govi 13
+Maurizio Carnevali 36
+Maurizio Musso 23
+Corrado Verzini 57
+Claudio Negretti 7
+Ionel Marcel 27
+Stefano Neri 4
+Stefano Fontanesi 4
+
+SALDI CERTIFICATI FEMMINILI
+Maurizia Casini 34
+Monia Mazzi 51
+Fabienne De Cup De Saint Paul 9
+Carlotta Rivi 5
+Viviana De Magistris 10
+Stefania Bella 9
+Valentina Labattaglia 16
+Viktoriia Dutka 3
+Sara Sacco' 9
+Elisa Savini 11
+
+NON TOCCATO
+- filtri Tutti / Maschi / Femmine
+- partite
+- aste
+- risultati
+- timer
+- PDF
+- iscrizioni
+- logica tornei
+Nessun SQL.
