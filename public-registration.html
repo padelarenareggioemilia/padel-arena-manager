@@ -17,22 +17,31 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 
-.public-top-actions{display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px}
-.public-top-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
-border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 11px;font-size:12px;
-font-weight:900;line-height:1;background:#102238;color:#fff}
-.public-top-actions a.home{background:#9dff25;color:#07111f;border-color:#9dff25}
-@media(max-width:600px){.public-top-actions{position:sticky;top:6px;z-index:50}.public-top-actions a{padding:6px 10px;font-size:11px}}
-
+.pub-nav{display:flex;gap:10px;margin-left:auto;align-items:center}
+.pub-nav a{display:inline-flex;align-items:center;justify-content:center;padding:12px 15px;border-radius:12px;text-decoration:none;font-weight:900;white-space:nowrap}
+.pub-nav .home{background:#17304e;color:#fff;border:1px solid #3c5d7d}
+.pub-nav .login{background:var(--accent);color:#07111f}
+@media(max-width:650px){
+ .brand{align-items:flex-start;flex-wrap:wrap}
+ .pub-nav{width:100%;margin-left:0;display:grid;grid-template-columns:1fr 1fr}
+ .pub-nav a{width:100%}
+}
 </style>
+
+<style>
+.pub-extra{background:rgba(16,35,59,.96);border:1px solid #294262;border-radius:20px;padding:18px;margin:12px 0}
+.pub-extra h3{margin:0 0 12px}
+.pub-contact-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pub-contact-actions a{padding:13px 16px;border-radius:12px;background:#17304e;border:1px solid #3c5d7d;color:white;text-align:center;text-decoration:none;font-weight:900}
+.pub-player{padding:9px 0;border-bottom:1px solid #294262}.pub-player:last-child{border-bottom:0}
+@media(max-width:650px){.pub-contact-actions{grid-template-columns:1fr}}
+</style>
+
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.jpg" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div></div>
- <div id="app"><div class="public-top-actions">
-<a class="home" href="./index-v8-lab.html?public=1">🏠 HOME</a>
-<a href="./index-v8-lab.html?login=1">🔐 LOGIN</a>
-</div><div class="card">Caricamento torneo...</div></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab.html">⌂ HOME</a><a class="login" href="index-v8-lab.html?login=1">🔐 LOGIN</a></nav></div>
+ <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
 const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
@@ -40,6 +49,8 @@ const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false}});
 const token=new URLSearchParams(location.search).get("tournament");
 let tournament=null;
+let publicRegistrations=[];
+let organizerContact={name:"",phone:"",email:""};
 let mode="single";
 let primary={type:"existing",id:null,name:""};
 let partner={type:"existing",id:null,name:""};
@@ -49,8 +60,35 @@ async function loadTournament(){
  if(!token){showError("Link di iscrizione non valido.");return}
  const {data,error}=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
  if(error||!data){showError(error?.message||"Torneo non trovato.");return}
- tournament=data;render();
+ tournament=data;organizerContact={name:data?.organizer_name||data?.organizerName||"",phone:data?.organizer_phone||data?.organizerPhone||"",email:data?.organizer_email||data?.organizerEmail||""};await loadPublicExtras();render();
 }
+
+async function loadPublicExtras(){
+ try{
+  const [listRes,contactRes]=await Promise.all([
+   sb.rpc("public_tournament_registration_list",{p_share_token:token}),
+   sb.rpc("public_tournament_contact_info",{p_share_token:token})
+  ]);
+  if(!listRes.error)publicRegistrations=listRes.data||[];
+  if(!contactRes.error&&contactRes.data){
+   const c=Array.isArray(contactRes.data)?contactRes.data[0]:contactRes.data;
+   organizerContact={name:c?.organizer_name||organizerContact.name||"",phone:c?.organizer_phone||organizerContact.phone||"",email:c?.organizer_email||organizerContact.email||""};
+  }
+ }catch(e){console.warn("Extra pubblici:",e)}
+}
+function publicExtrasHtml(){
+ const names=(publicRegistrations||[]).filter(function(r){return ["accepted","imported","new","waitlist"].includes(String(r.status||"").toLowerCase())});
+ const list='<section class="pub-extra"><h3>Giocatori iscritti ('+names.length+')</h3>'+
+  (names.length?names.map(function(r){return '<div class="pub-player">'+esc(r.full_name||"Giocatore")+(r.status==="waitlist"?' · Lista attesa':'')+'</div>'}).join(""):'<div class="muted">Nessun giocatore iscritto al momento.</div>')+'</section>';
+ const phone=String(organizerContact.phone||"").replace(/\D/g,""),email=String(organizerContact.email||"").trim();
+ let actions="";
+ if(phone)actions+='<a href="https://wa.me/'+phone+'?text='+encodeURIComponent("Ciao, ti contatto per "+(tournament?.name||"il torneo Padel Arena"))+'">WhatsApp</a>';
+ if(email)actions+='<a href="mailto:'+esc(email)+'?subject='+encodeURIComponent("Informazioni "+(tournament?.name||"torneo Padel Arena"))+'">Email</a>';
+ const contact='<section class="pub-extra" id="organizzatore"><h3>Contatta l’organizzatore'+(organizerContact.name?' · '+esc(organizerContact.name):'')+'</h3>'+
+  (actions?'<div class="pub-contact-actions">'+actions+'</div>':'<div class="muted">Contatti organizzatore non ancora configurati.</div>')+'</section>';
+ return list+contact;
+}
+
 function showError(msg){document.getElementById("app").innerHTML='<div class="card error">'+esc(msg)+'</div>'}
 function personSection(kind,title){
  const p=kind==="primary"?primary:partner;
@@ -64,7 +102,7 @@ function existingSearch(kind,p){
  return '<label>Scrivi almeno una parte del nome o del cognome</label>'+
   '<input type="search" data-search-person="'+kind+'" placeholder="Esempio: Franc Lig">'+
   '<div class="search-results" id="'+kind+'Results"></div>'+
-  (p.id?'<div class="selected-person"><b>SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button></div>':'');
+  (p.id?'<div class="selected-person"><b>SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button></div><div class="notice"><b>Conferma e completa i dati obbligatori.</b> Per tutelare la privacy non mostriamo i dati già presenti.</div>'+newForm(kind):'');
 }
 function newForm(kind){
  const f=n=>kind+"_"+n;
@@ -77,24 +115,32 @@ function newForm(kind){
  '<div class="row"><div><label>Provincia di residenza <span class="required">*</span></label><input id="'+f("residenceProvince")+'" maxlength="2" placeholder="RE" required></div>'+
  '<div><label>Telefono <span class="required">*</span></label><input id="'+f("phone")+'" type="tel" required></div></div>'+
  '<label>Indirizzo email <span class="required">*</span></label><input id="'+f("email")+'" type="email" required>'+
- '<div class="row"><div><label>Sesso facoltativo</label><select id="'+f("gender")+'"><option value="">Non indicato</option><option>Maschile</option><option>Femminile</option></select></div>'+
+ '<div class="row"><div><label>Sesso <span class="required">*</span></label><select id="'+f("gender")+'" required><option value="">Seleziona</option><option>Maschile</option><option>Femminile</option><option>Altro / non binario</option></select></div>'+
  '<div><label>Livello facoltativo</label><input id="'+f("level")+'" placeholder="Principiante, intermedio..."></div></div>'+
  '<label>Note facoltative</label><textarea id="'+f("notes")+'" rows="2"></textarea>';
 }
+function isFixedPairsTournament(){
+ return String(tournament&&tournament.competition_type||"").toLowerCase()==="fixed_pairs";
+}
+function normalizeRegistrationMode(){
+ if(!isFixedPairsTournament())mode="single";
+}
 function render(){
+ normalizeRegistrationMode();
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
- '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.event_date||tournament.date||"")+' · '+esc(tournament.start_time||"")+' · '+esc(tournament.club||"")+'</div>'+(tournament.description?'<p>'+esc(tournament.description)+'</p>':'')+'<div class="notice"><b>Posti:</b> '+(tournament.max_participants||'senza limite')+' · <b>Disponibili:</b> '+(tournament.available_places==null?'—':tournament.available_places)+' · <b>Quota:</b> € '+Number(tournament.entry_fee||0)+'</div>'+ 
+ '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
  '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
- '<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
+ publicExtrasHtml()+
+ (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
   '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+
   '<button type="button" class="secondary '+(mode==="pair"?"on":"")+'" data-mode="pair">ISCRIZIONE CON PARTNER</button>'+
- '</div></section>'+
+ '</div><div class="muted" style="margin-top:10px">Nei tornei a coppie puoi iscriverti singolarmente oppure indicare il partner.</div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo a gettoni e Rodeo semplice ogni giocatore si iscrive singolarmente.</div></section>')+
  personSection("primary","I TUOI DATI")+
  (mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
  '<section class="card"><div class="privacy">I dati vengono utilizzati esclusivamente per gestire l’iscrizione al torneo e aggiornare l’anagrafica sportiva dell’organizzatore.</div>'+
- (tournament.registration_open?'<button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button>':'<div class="notice error"><b>ISCRIZIONI CHIUSE</b><br>'+(tournament.waitlist_enabled?'Contatta l’organizzatore per la lista d’attesa.':'Non è possibile inviare nuove richieste.')+'</div>')+'<div id="submitMessage"></div></section>';
+ '<button type="button" class="primary" id="submitRegistration" style="width:100%;margin-top:14px">CONFERMA ISCRIZIONE</button><div id="submitMessage"></div></section>';
 }
 async function searchPlayers(kind,q){
  const box=document.getElementById(kind+"Results");if(!box)return;
@@ -113,7 +159,7 @@ function readNew(kind){
   postalCode:get("postalCode"),residenceTown:get("residenceTown"),residenceProvince:get("residenceProvince").toUpperCase(),
   phone:get("phone"),email:get("email").toLowerCase(),gender:get("gender"),level:get("level"),notes:get("notes")
  };
- const required=["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email"];
+ const required=["firstName","lastName","birth","birthPlace","postalCode","residenceTown","residenceProvince","phone","email","gender"];
  for(const k of required)if(!obj[k])throw new Error("Completa tutti i campi obbligatori.");
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(obj.email))throw new Error("Inserisci un indirizzo email valido.");
  return {kind:"new",data:obj};
@@ -122,7 +168,7 @@ function payloadFor(kind){
  const p=kind==="primary"?primary:partner;
  if(p.type==="existing"){
   if(!p.id)throw new Error(kind==="primary"?"Seleziona il tuo nominativo.":"Seleziona il partner.");
-  return {kind:"existing",player_id:p.id};
+  return {kind:"existing",player_id:p.id,data:readNew(kind).data};
  }
  return readNew(kind);
 }
@@ -130,6 +176,7 @@ async function submit(){
  const btn=document.getElementById("submitRegistration"),msg=document.getElementById("submitMessage");
  try{
   btn.disabled=true;btn.textContent="INVIO IN CORSO...";
+  normalizeRegistrationMode();
   const primaryPayload=payloadFor("primary");
   const partnerPayload=mode==="pair"?payloadFor("partner"):null;
   if(mode==="pair"&&primaryPayload.kind==="existing"&&partnerPayload.kind==="existing"&&primaryPayload.player_id===partnerPayload.player_id)throw new Error("Il giocatore e il partner devono essere persone diverse.");
