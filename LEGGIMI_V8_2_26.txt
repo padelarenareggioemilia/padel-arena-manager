@@ -1,0 +1,9 @@
+V8.2.26 LAB · PARTECIPANTI COMPLETI
+- Gestione partecipanti apre mostrando TUTTA l'anagrafica.
+- I checkbox indicano chi è già iscritto al torneo.
+- La ricerca filtra in tempo reale nome/cognome/telefono/email.
+- 'Mostra solo i giocatori selezionati' resta disponibile.
+- Aprire/cercare/selezionare NON rigenera partite e NON tocca risultati/gettoni.
+- La rigenerazione avviene solo premendo esplicitamente 'Salva partecipanti e rigenera partite' e confermando.
+Nessun SQL.
+Sostituire: index-v8-lab.html, manifest.webmanifest, service-worker.js.
