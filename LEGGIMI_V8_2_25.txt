@@ -1,0 +1,10 @@
+V8.2.25 LAB · SYNC DEDUPLICATA GETTONI
+- Deduplica giocatori E tornei per ID immediatamente prima degli upsert Supabase.
+- Corregge l'errore ON CONFLICT ... cannot affect row a second time.
+- RECUPERA DA TAPPA PRECEDENTE assegna il saldo storico precedente.
+- Se non esiste uno storico valido usa il saldo gettoni generale.
+- Non aggiunge +3 nel recupero: il benvenuto resta separato nel calcolo della giornata.
+- Conserva i 10 saldi femminili ripristinati nella V8.2.24.
+Nessun SQL.
+Sostituire su GitHub: index-v8-lab.html, manifest.webmanifest, service-worker.js.
+TEST: https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82250
