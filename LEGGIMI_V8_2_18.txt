@@ -1,0 +1,31 @@
+V8.2.18 LAB · GETTONI RIPRISTINATI
+
+HOME:
+- nuovo riquadro grande "🏅 Classifica gettoni"
+- classifica generale di tutti i giocatori ordinati per saldo.
+
+MENU:
+- nuova voce "Classifica gettoni".
+
+TORNEI RODEO A GETTONI:
+in "Azioni e strumenti del torneo":
+- ↩️ Recupera gettoni ultima tappa
+- 💾 Aggiorna gettoni anagrafica
+
+SCHEDA GETTONI:
+gli stessi comandi restano anche sotto la tabella.
+
+Recupera = saldo della tappa precedente più recente, con fallback sul saldo anagrafica.
+Aggiorna = salva il saldo attuale nell'anagrafica per la tappa successiva.
+
+FIX IPHONE V8.2.17 PRESERVATO.
+
+GITHUB: sostituire 3 file:
+index-v8-lab.html
+manifest.webmanifest
+service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82180

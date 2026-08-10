@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.16 LAB RECUPERO GETTONI</title>
+<title>Padel Arena Manager V8.2.18 LAB GETTONI RIPRISTINATI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1320,7 +1320,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest?v=82180">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1333,120 +1333,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-document.addEventListener("input",function(ev){
- if(ev.target&&ev.target.id==="pamSearchV82"){
-  pamPlayerSearchV82=ev.target.value||"";
-  clearTimeout(window.__pamV82SearchTimer);
-  window.__pamV82SearchTimer=setTimeout(function(){
-   render();
-   const x=document.getElementById("pamSearchV82");
-   const s=document.getElementById("pamFilterV82");
-   if(s)s.value=pamPlayerFilterV82;
-   if(x){x.focus();try{x.setSelectionRange(x.value.length,x.value.length)}catch(_){ }}
-  },180);
- }
-});
-document.addEventListener("change",function(ev){
- if(ev.target&&ev.target.id==="pamFilterV82"){
-  pamPlayerFilterV82=ev.target.value||"all";render();
-  const s=document.getElementById("pamFilterV82");if(s)s.value=pamPlayerFilterV82;return;
- }
- if(ev.target&&ev.target.matches(".v82-player-check")){
-  const id=String(ev.target.getAttribute("data-v82-player-id")||"");
-  if(ev.target.checked)pamSelectedPlayerIdsV82.add(id);else pamSelectedPlayerIdsV82.delete(id);
-  return;
- }
-});
-document.addEventListener("click",function(ev){
- if(ev.target.closest("[data-v82-select-all]")){ev.preventDefault();pamToggleAllVisibleV82(true);return}
- if(ev.target.closest("[data-v82-clear-visible]")){ev.preventDefault();pamToggleAllVisibleV82(false);return}
- if(ev.target.closest("[data-v82-show-selected]")){ev.preventDefault();pamShowSelectedOnlyV82=!pamShowSelectedOnlyV82;render();return}
- if(ev.target.closest("[data-v82-clear-all]")){ev.preventDefault();pamSelectedPlayerIdsV82.clear();pamShowSelectedOnlyV82=false;render();return}
- if(ev.target.closest("[data-v82-wa]")){ev.preventDefault();pamWhatsappSelectedV82();return}
- if(ev.target.closest("[data-v82-email]")){ev.preventDefault();pamEmailVisibleV82();return}
- if(ev.target.closest("[data-v82-pdf]")){ev.preventDefault();pamExportPdfV82();return}
- if(ev.target.closest("[data-v82-xlsx]")){ev.preventDefault();pamExportExcelV82();return}
- if(ev.target.closest("[data-v82-csv]")){ev.preventDefault();pamDownloadCsvV82();return}
-},true);
-
-
-document.addEventListener("input",function(ev){
- if(ev.target&&ev.target.id==="pamCommSearchV822"){
-  clearTimeout(window.__pamCommTimerV822);
-  window.__pamCommTimerV822=setTimeout(pamRenderCommResultsV822,120);
- }
-});
-document.addEventListener("change",function(ev){
- const cb=ev.target.closest("[data-comm-player-v822]");
- if(cb){
-  const id=String(cb.getAttribute("data-comm-player-v822"));
-  if(cb.checked)pamCommSelectedV822.add(id);else pamCommSelectedV822.delete(id);
-  const c=document.getElementById("pamCommCountV822");if(c)c.textContent=String(pamCommSelectedV822.size);
- }
- const photo=ev.target.closest("#pPhotoV822");
- if(photo&&photo.files&&photo.files[0]){
-  const f=photo.files[0];
-  if(f.size>5*1024*1024){pamToast("Foto troppo grande: massimo 5 MB.","error");photo.value="";return}
-  const reader=new FileReader();
-  reader.onload=function(){pamPendingNewPlayerPhotoV822=String(reader.result||"");const p=document.getElementById("pPhotoPreviewV822");if(p)p.innerHTML='<img src="'+pamPendingNewPlayerPhotoV822+'" style="max-width:100px;max-height:100px;border-radius:12px">';};
-  reader.readAsDataURL(f);
- }
-});
-document.addEventListener("click",function(ev){
- if(ev.target.closest("[data-comm-wa-v822]")){ev.preventDefault();pamCommWhatsappV822();return}
- if(ev.target.closest("[data-comm-email-v822]")){ev.preventDefault();pamCommEmailV822();return}
- if(ev.target.closest("[data-comm-pdf-v822]")){ev.preventDefault();pamCommPdfV822();return}
- if(ev.target.closest("[data-comm-xlsx-v822]")){ev.preventDefault();pamCommExcelV822();return}
- if(ev.target.closest("[data-comm-csv-v822]")){ev.preventDefault();pamCommCsvV822();return}
- if(ev.target.closest("[data-comm-clear-v822]")){ev.preventDefault();pamCommSelectedV822.clear();pamRenderCommResultsV822();const c=document.getElementById("pamCommCountV822");if(c)c.textContent="0";return}
-},true);
-
-
-document.addEventListener("change",function(ev){
- if(ev.target&&["pamCommSex827","pamCommAge827","pamCommEvent827"].includes(ev.target.id))pamCommRenderV827();
- const cb=ev.target&&ev.target.closest?ev.target.closest("[data-comm827-player]"):null;
- if(cb){
-  const id=String(cb.getAttribute("data-comm827-player"));
-  if(cb.checked)pamCommSelectionV827.add(id);else pamCommSelectionV827.delete(id);
-  pamCommRenderV827();
- }
-});
-document.addEventListener("input",function(ev){if(ev.target&&ev.target.id==="pamCommQ827")pamCommRenderV827();});
-document.addEventListener("click",function(ev){
- const t=ev.target&&ev.target.closest?ev.target.closest("button"):null;if(!t)return;
- if(t.matches("[data-comm827-selectall]")){ev.preventDefault();pamCommSelectFilteredV827();return}
- if(t.matches("[data-comm827-clear]")){ev.preventDefault();pamCommClearV827();return}
- if(t.matches("[data-comm827-wa]")){ev.preventDefault();pamCommStartWhatsappV827();return}
- if(t.matches("[data-comm827-wanext]")){ev.preventDefault();pamCommNextWhatsappV827();return}
- if(t.matches("[data-comm827-email]")){ev.preventDefault();pamCommEmailV827();return}
- if(t.matches("[data-comm827-pdf]")){ev.preventDefault();pamCommPdfV827();return}
- if(t.matches("[data-comm827-xlsx]")){ev.preventDefault();pamCommExcelV827();return}
- if(t.matches("[data-comm827-csv]")){ev.preventDefault();pamCommCsvV827();return}
-},true);
-
-
-/* pam-v828-select-live */
-document.addEventListener("input",function(ev){
- if(ev.target&&["pamCommSex827","pamCommAge827","pamCommEvent827"].includes(ev.target.id))pamCommRenderV827();
-});
-
-
-document.addEventListener("change",function(ev){
- const input=ev.target&&ev.target.closest?ev.target.closest("[data-brand-logo-v8214]"):null;
- if(input){pamHandleBrandLogoV8214(input);return}
-});
-document.addEventListener("click",function(ev){
- const clear=ev.target&&ev.target.closest?ev.target.closest("[data-clear-brand-logo-v8214]"):null;
- if(clear){
-  ev.preventDefault();
-  const key=clear.getAttribute("data-clear-brand-logo-v8214");
-  if(key){state.draft[key]="";render()}
-  return;
- }
-},true);
-
-</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
 <script>
 if(!window.supabase){
  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
@@ -1723,6 +1610,12 @@ html.pam-stable-refresh-v8212 *::after{
 }
 </style>
 
+
+<style id="pam-v8218-token-ranking">
+.pam-v8218-token-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+@media(max-width:700px){.pam-v8218-token-head{align-items:flex-start;flex-direction:column}}
+</style>
+
 </head>
 <body>
 <div id="root"><div style="max-width:680px;margin:40px auto;padding:24px;border-radius:20px;background:#122139;color:#fff;font-family:system-ui;border:1px solid #2b4267"><h2 style="margin-top:0">Padel Arena Manager 8.1.3</h2><p id="pamBootMessage">Avvio dell’app in corso…</p></div></div>
@@ -1738,13 +1631,25 @@ html.pam-stable-refresh-v8212 *::after{
 <script>
 
 
+let pamBootCompletedV8217=false;
 window.addEventListener("error",function(ev){
+ const msg=String(ev&&ev.message||"");
+ if(!msg||msg==="Script error."||msg==="Script error"){
+  console.warn("Errore esterno ignorato durante avvio iOS:",msg);
+  return;
+ }
+ if(pamBootCompletedV8217){
+  console.error("Errore runtime:",ev.error||msg);
+  return;
+ }
  const root=document.getElementById("root");
- if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di avvio</h2><p>L’app non è riuscita a partire.</p><pre style="white-space:pre-wrap">'+String(ev.message||"Errore sconosciuto")+'</pre><p>Ricarica la pagina. Se il messaggio resta, invia uno screenshot di questa schermata.</p></div>';
+ if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di avvio</h2><p>L’app non è riuscita a partire.</p><pre style="white-space:pre-wrap">'+msg+'</pre><p>Ricarica la pagina. Se il messaggio resta, invia uno screenshot di questa schermata.</p></div>';
 });
 window.addEventListener("unhandledrejection",function(ev){
- const root=document.getElementById("root");
- if(root)root.innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Errore di connessione</h2><pre style="white-space:pre-wrap">'+String(ev.reason&&ev.reason.message||ev.reason||"Errore sconosciuto")+'</pre></div>';
+ const reason=String(ev&&ev.reason&&ev.reason.message||ev&&ev.reason||"Errore sconosciuto");
+ console.error("Promise non gestita:",ev&&ev.reason||reason);
+ if(pamBootCompletedV8217)return;
+ if(/network|fetch|supabase|timeout|load failed|offline/i.test(reason))return;
 });
 if(!window.supabase){
  document.getElementById("root").innerHTML='<div style="max-width:760px;margin:30px auto;padding:22px;border-radius:18px;background:#351316;color:#fff;font-family:system-ui;border:2px solid #ef4444"><h2>Libreria Supabase non caricata</h2><p>Safari non è riuscito a caricare il collegamento necessario all’app. Disattiva temporaneamente eventuali blocchi contenuti e ricarica.</p></div>';
@@ -3075,13 +2980,13 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.16 LAB · RECUPERO GETTONI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.18 LAB · GETTONI RIPRISTINATI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
 function pamOpenUniversalMenu(){
  const admin=pamIsAdmin();
- const items=[['⌂ Home','home'],['🎾 Tornei','events'],['🏆 Campionato','championship']];
+ const items=[['⌂ Home','home'],['🎾 Tornei','events'],['🏅 Classifica gettoni','tokenranking'],['🏆 Campionato','championship']];
  if(admin){items.push(['👥 Giocatori','players'],['＋ Nuovo torneo','new']);}
  let html='<div class="pam-universal-menu" id="pamUniversalMenu"><div class="pam-universal-menu-card"><div class="pam-universal-menu-head"><h2>Menu</h2><button class="secondary" data-close-global-menu>Chiudi</button></div><div class="pam-universal-menu-grid">';
  html+=items.map(function(x){return '<button type="button" data-global-view="'+x[1]+'">'+x[0]+'</button>'}).join('');
@@ -3354,7 +3259,7 @@ function home(){
   '<section><div class="pam-v5-section-title"><h2>Accesso rapido</h2><small>Le funzioni che utilizzi di più</small></div><div class="pam-v5-actions">'+
    '<button class="pam-v5-action primary-tile" data-view="championship"><span class="tile-icon">🏆</span><strong>AICS Championship 2027</strong><small>Squadre, club, rose e documenti</small></button>'+
    '<button class="pam-v5-action" data-view="events"><span class="tile-icon">🎾</span><strong>Tornei</strong><small>Partite, risultati e classifiche</small></button>'+
-   '<button class="pam-v5-action" data-view="players"><span class="tile-icon">👥</span><strong>Giocatori</strong><small>Anagrafica unica online</small></button>'+'<button class="pam-v5-action" data-view="communications"><span class="tile-icon">✉️</span><strong>Comunicazioni</strong><small>Messaggi ai giocatori</small></button>'+
+   '<button class="pam-v5-action" data-view="players"><span class="tile-icon">👥</span><strong>Giocatori</strong><small>Anagrafica unica online</small></button><button class="pam-v5-action" data-view="tokenranking"><span class="tile-icon">🏅</span><strong>Classifica gettoni</strong><small>Saldo generale di tutti i giocatori</small></button>'+'<button class="pam-v5-action" data-view="communications"><span class="tile-icon">✉️</span><strong>Comunicazioni</strong><small>Messaggi ai giocatori</small></button>'+
    '<button class="pam-v5-action" data-view="new"><span class="tile-icon">＋</span><strong>Nuovo evento</strong><small>Crea una competizione</small></button>'+
   '</div></section>'+
   '<section class="pam-v5-campaign">'+
@@ -3472,6 +3377,20 @@ function pamSeriesLogo(series){
  if(key.includes("serie a"))return "assets/aics-serie-a-2027.png";
  if(key.includes("serie b"))return "assets/aics-serie-b-2027.png";
  return "assets/aics-serie-c-2027.png";
+}
+
+
+function tokenRankingViewV8218(){
+ const rows=(state.players||[]).slice().sort(function(a,b){
+  const d=Number(b.tokenBalance||0)-Number(a.tokenBalance||0);
+  return d||playerName(a).localeCompare(playerName(b),"it");
+ });
+ const body=rows.length?rows.map(function(p,i){
+  return '<tr><td><b>'+(i+1)+'</b></td><td><b>'+esc(playerName(p))+'</b></td><td>'+esc(String(p.gender||"—"))+'</td><td><b>'+Number(p.tokenBalance||0)+'</b></td></tr>';
+ }).join(""):'<tr><td colspan="4">Nessun giocatore presente.</td></tr>';
+ return header("Classifica generale gettoni","Saldo attuale salvato nell’anagrafica giocatori")+
+  '<div class="card"><div class="pam-v8218-token-head"><div><span class="pam-v5-kicker">CLASSIFICA GENERALE</span><h2>🏅 Gettoni giocatori</h2><div class="muted">'+rows.length+' giocatori ordinati per saldo gettoni.</div></div><button class="secondary" type="button" data-view="home">Torna alla Home</button></div></div>'+
+  '<div class="card table-wrap"><table class="table"><thead><tr><th>Pos.</th><th>Giocatore</th><th>Sesso</th><th>Gettoni</th></tr></thead><tbody>'+body+'</tbody></table></div>';
 }
 
 function championshipView(){
@@ -4865,7 +4784,7 @@ function eventView(){
   '<button class="secondary" data-refresh-cloud="1">🔄 Aggiorna dati</button>'+
   '<button class="secondary" data-share-event="'+e.id+'">🔗 Condividi torneo</button>'+
   '<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button>'+
-  '<button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button>'+
+  '<button class="secondary" data-open-poster="'+e.id+'">🖼️ Locandina + QR</button>'+  (e.competitionType==="rodeo_tokens"?'<button class="secondary" type="button" data-action="recover-last-tokens">↩️ Recupera gettoni ultima tappa</button><button class="secondary" type="button" data-action="commit-balances">💾 Aggiorna gettoni anagrafica</button>':'')+
   (pamIsAdmin()?'<button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button>':'')+
   (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
  '</div></details>'+
@@ -5064,7 +4983,7 @@ function tokensView(e){
   const l=e.ledger[r.id]||{carried:0,spent:0,podium:0};
   return '<tr><td><b>'+esc(playerName(playerById(r.id)))+'</b></td><td>3</td><td><input type="number" min="0" value="'+(l.carried||0)+'" data-ledger="'+r.id+'" data-field="carried"></td><td>'+r.points+'</td><td>'+r.bonus+'</td><td><input type="number" min="0" value="'+(l.spent||0)+'" data-ledger="'+r.id+'" data-field="spent"></td><td><select data-ledger="'+r.id+'" data-field="podium">'+[0,5,10].map(function(x){return'<option '+((Number(l.podium)||0)===x?"selected":"")+'>'+x+'</option>'}).join("")+'</select></td><td><b>'+r.balance+'</b></td></tr>'
  }).join("");
- return '<div class="notice">Calcolo: saldo precedente + 3 gettoni di benvenuto + punti + bonus differenza game − spesi + bonus podio.</div><div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Benvenuto</th><th>Saldo precedente</th><th>Punti</th><th>Bonus diff.</th><th>Spesi</th><th>Podio</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="row" style="margin-top:12px"><button class="secondary" data-action="recover-last-tokens">↩️ Recupera gettoni ultima tappa</button><button class="primary" data-action="commit-balances">Salva i saldi nell’anagrafica per la prossima tappa</button></div>';
+ return '<div class="notice">Calcolo: saldo precedente + 3 gettoni di benvenuto + punti + bonus differenza game − spesi + bonus podio.</div><div class="card table-wrap"><table class="table"><thead><tr><th>Giocatore</th><th>Benvenuto</th><th>Saldo precedente</th><th>Punti</th><th>Bonus diff.</th><th>Spesi</th><th>Podio</th><th>Saldo</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="row" style="margin-top:12px"><button class="secondary" data-action="recover-last-tokens">↩️ Recupera gettoni ultima tappa</button><button class="primary" data-action="commit-balances">💾 Aggiorna gettoni anagrafica / prossima tappa</button></div>';
 }
 
 
@@ -6602,7 +6521,7 @@ function pamMarkBackgroundSyncV8212(){
 function render(){
  pamBackgroundDataPendingV8212=false;
  document.body.classList.remove("pam-public-mode");
- let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="communications"?communicationsView():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
+ let body=state.view==="championship-new-team"?pamNewChampTeamView():state.view==="championship-team"?championshipTeamView():state.view==="championship"?championshipView():state.view==="players"?playersView():state.view==="communications"?communicationsView():state.view==="tokenranking"?tokenRankingViewV8218():state.view==="new"?newEventView():state.view==="events"?eventsView():state.view==="event"?eventView():home();
  document.getElementById("root").innerHTML='<main class="app">'+pamUniversalNav()+body+'</main>'+nav();
  pamApplyDynamicTheme();
  if(state.view==="communications"){pamCommRenderV827();setTimeout(function(){pamCommStatusV829("Pagina Comunicazioni pronta.","success");pamCommRestoreWhatsappQueueV8210()},0);}
@@ -6617,37 +6536,20 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=8.1.19-captain-link",{updateViaCache:"none"}).then(function(reg){
-   reg.update();
-   if(reg.waiting)reg.waiting.postMessage({type:"SKIP_WAITING"});
-   reg.addEventListener("updatefound",function(){
-    const worker=reg.installing;
-    if(!worker)return;
-    worker.addEventListener("statechange",function(){
-     if(worker.state==="installed"&&navigator.serviceWorker.controller){
-      worker.postMessage({type:"SKIP_WAITING"});
-     }
-    });
-   });
-  }).catch(function(err){
-   console.warn("Service worker non registrato:",err);
-  });
-
-  let refreshing=false;
-  navigator.serviceWorker.addEventListener("controllerchange",function(){
-   if(refreshing)return;
-   refreshing=true;
-   window.location.reload();
-  });
+  navigator.serviceWorker.register("./service-worker.js?v=82180",{updateViaCache:"none"})
+   .then(function(reg){reg.update().catch(function(){})})
+   .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
 }
-
-
 
 const pamObserver=new MutationObserver(()=>pamRestrictCollaboratorUI());
 window.addEventListener("DOMContentLoaded",()=>{
  pamObserver.observe(document.body,{subtree:true,childList:true});
- setTimeout(pamBootAuth,0);
+ setTimeout(function(){
+  Promise.resolve(pamBootAuth()).catch(function(err){console.error("Avvio autenticazione:",err)})
+   .finally(function(){pamBootCompletedV8217=true});
+ },0);
+ setTimeout(function(){pamBootCompletedV8217=true},6000);
 });
 
 
@@ -6726,6 +6628,21 @@ document.addEventListener('click',function(e){
  const ap=e.target.closest('[data-admin-roster-approve]'),rj=e.target.closest('[data-admin-roster-reject]');if(!ap&&!rj)return;
  const el=ap||rj;pamDecideRoster(el.getAttribute(ap?'data-admin-roster-approve':'data-admin-roster-reject'),el.getAttribute('data-team-id'),ap?'approved':'rejected');
 });
+</script>
+<script id="pam-v8217-brand-handlers">
+document.addEventListener("change",function(ev){
+ const input=ev.target&&ev.target.closest?ev.target.closest("[data-brand-logo-v8214]"):null;
+ if(input){pamHandleBrandLogoV8214(input);return}
+});
+document.addEventListener("click",function(ev){
+ const clear=ev.target&&ev.target.closest?ev.target.closest("[data-clear-brand-logo-v8214]"):null;
+ if(clear){
+  ev.preventDefault();
+  const key=clear.getAttribute("data-clear-brand-logo-v8214");
+  if(key){state.draft[key]="";render()}
+  return;
+ }
+},true);
 </script>
 </body>
 </html>

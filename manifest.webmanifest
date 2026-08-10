@@ -1,25 +1,25 @@
 {
   "name": "Padel Arena Manager",
   "short_name": "Padel Arena",
-  "description": "Gestione tornei, giocatori, risultati, gettoni, aste e PDF.",
-  "start_url": "./index.html",
+  "description": "Gestione tornei, giocatori e campionati Padel Arena",
+  "start_url": "./index-v8-lab.html?source=home&v=82180",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#07111f",
-  "theme_color": "#07111f",
-  "orientation": "portrait-primary",
+  "background_color": "#061426",
+  "theme_color": "#0b5f8a",
+  "orientation": "any",
   "icons": [
     {
-      "src": "assets/icon-192.png",
-      "sizes": "192x192",
+      "src": "assets/apple-touch-icon.png",
+      "sizes": "180x180",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "assets/padel-arena-manager-logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
