@@ -1,0 +1,26 @@
+V8.2.20 LAB · RECUPERA E AGGIORNA GETTONI
+
+Nella scheda Gettoni e negli strumenti del torneo Rodeo a gettoni:
+- un solo tasto: 🔄 RECUPERA E AGGIORNA GETTONI
+
+Con un clic:
+1. recupera il saldo precedente dall'ultima tappa disponibile;
+2. ricalcola la situazione gettoni del torneo corrente;
+3. salva/consolida i saldi nell'anagrafica generale.
+
+Restano incluse le correzioni V8.2.19:
+- classifica generale gettoni basata sull'ultima tappa;
+- filtro Tutti / Maschi / Femmine;
+- esclusione automatica dei giocatori con saldo 0.
+
+Restano inclusi i fix iPhone/Home precedenti.
+
+GITHUB: sostituire 3 file
+1. index-v8-lab.html
+2. manifest.webmanifest
+3. service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82200
