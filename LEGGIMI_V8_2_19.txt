@@ -1,0 +1,26 @@
+V8.2.19 LAB · GETTONI CORRETTI
+
+CORREZIONE CLASSIFICA GENERALE GETTONI
+
+- saldo preso dall'ultima tappa Rodeo a gettoni disputata;
+- fallback sul saldo anagrafica solo se non esiste una tappa utilizzabile;
+- filtro in alto: Tutti / Maschi / Femmine;
+- chi ha 0 gettoni NON appare;
+- chi ha almeno 1 gettone appare;
+- ordinamento dal saldo più alto al più basso.
+
+Le funzioni torneo:
+- Recupera gettoni ultima tappa
+- Aggiorna gettoni anagrafica
+restano invariate.
+
+GITHUB:
+sostituire 3 file:
+1. index-v8-lab.html
+2. manifest.webmanifest
+3. service-worker.js
+
+Nessun SQL.
+
+TEST:
+https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82190

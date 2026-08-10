@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.18 LAB GETTONI RIPRISTINATI</title>
+<title>Padel Arena Manager V8.2.19 LAB GETTONI CORRETTI</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1320,7 +1320,7 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 @media print{.pam-universal-nav,.pam-universal-menu{display:none!important}}
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=82180">
+<link rel="manifest" href="manifest.webmanifest?v=82190">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2980,7 +2980,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.18 LAB · GETTONI RIPRISTINATI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.19 LAB · GETTONI CORRETTI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3380,16 +3380,54 @@ function pamSeriesLogo(series){
 }
 
 
-function tokenRankingViewV8218(){
- const rows=(state.players||[]).slice().sort(function(a,b){
-  const d=Number(b.tokenBalance||0)-Number(a.tokenBalance||0);
-  return d||playerName(a).localeCompare(playerName(b),"it");
+let pamTokenRankingGenderV8219="all";
+
+function pamLatestTokenBalanceV8219(player){
+ if(!player)return 0;
+ const pid=String(player.id);
+ const events=(state.events||[]).filter(function(e){
+  return e&&e.competitionType==="rodeo_tokens"&&(e.playerIds||[]).some(function(id){return String(id)===pid});
+ }).sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
+
+ for(let i=0;i<events.length;i++){
+  try{
+   const row=standings(events[i]).find(function(x){return String(x.id)===pid});
+   if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
+  }catch(_){}
+ }
+ return Math.max(0,Number(player.tokenBalance||0));
+}
+
+function pamTokenRankingRowsV8219(){
+ return (state.players||[]).map(function(p){
+  return {player:p,balance:pamLatestTokenBalanceV8219(p)};
+ }).filter(function(x){
+  if(x.balance<=0)return false;
+  if(pamTokenRankingGenderV8219==="all")return true;
+  const g=String(x.player.gender||"").toLowerCase();
+  if(pamTokenRankingGenderV8219==="male")return g.includes("masch");
+  if(pamTokenRankingGenderV8219==="female")return g.includes("femmin");
+  return true;
+ }).sort(function(a,b){
+  const d=b.balance-a.balance;
+  return d||playerName(a.player).localeCompare(playerName(b.player),"it");
  });
- const body=rows.length?rows.map(function(p,i){
-  return '<tr><td><b>'+(i+1)+'</b></td><td><b>'+esc(playerName(p))+'</b></td><td>'+esc(String(p.gender||"—"))+'</td><td><b>'+Number(p.tokenBalance||0)+'</b></td></tr>';
- }).join(""):'<tr><td colspan="4">Nessun giocatore presente.</td></tr>';
- return header("Classifica generale gettoni","Saldo attuale salvato nell’anagrafica giocatori")+
-  '<div class="card"><div class="pam-v8218-token-head"><div><span class="pam-v5-kicker">CLASSIFICA GENERALE</span><h2>🏅 Gettoni giocatori</h2><div class="muted">'+rows.length+' giocatori ordinati per saldo gettoni.</div></div><button class="secondary" type="button" data-view="home">Torna alla Home</button></div></div>'+
+}
+
+function tokenRankingViewV8218(){
+ const rows=pamTokenRankingRowsV8219();
+ const body=rows.length?rows.map(function(x,i){
+  const p=x.player;
+  return '<tr><td><b>'+(i+1)+'</b></td><td><b>'+esc(playerName(p))+'</b></td><td>'+esc(String(p.gender||"—"))+'</td><td><b>'+x.balance+'</b></td></tr>';
+ }).join(""):'<tr><td colspan="4">Nessun giocatore con almeno 1 gettone per il filtro selezionato.</td></tr>';
+
+ return header("Classifica generale gettoni","Saldo aggiornato all’ultima tappa disputata")+
+  '<div class="card"><div class="pam-v8218-token-head"><div><span class="pam-v5-kicker">CLASSIFICA GENERALE</span><h2>🏅 Gettoni giocatori</h2><div class="muted">Mostra solo chi ha almeno 1 gettone. Il saldo viene preso dall’ultima tappa disputata.</div></div><button class="secondary" type="button" data-view="home">Torna alla Home</button></div>'+
+  '<div class="row" style="margin-top:14px"><div class="field"><label>Filtro sesso</label><select id="pamTokenGenderV8219" onchange="pamTokenRankingGenderV8219=this.value;render()">'+
+   '<option value="all" '+(pamTokenRankingGenderV8219==="all"?"selected":"")+'>Tutti</option>'+
+   '<option value="male" '+(pamTokenRankingGenderV8219==="male"?"selected":"")+'>Maschi</option>'+
+   '<option value="female" '+(pamTokenRankingGenderV8219==="female"?"selected":"")+'>Femmine</option>'+
+  '</select></div></div></div>'+
   '<div class="card table-wrap"><table class="table"><thead><tr><th>Pos.</th><th>Giocatore</th><th>Sesso</th><th>Gettoni</th></tr></thead><tbody>'+body+'</tbody></table></div>';
 }
 
@@ -6536,7 +6574,7 @@ pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=82180",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=82190",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });

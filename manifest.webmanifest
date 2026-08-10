@@ -2,7 +2,7 @@
   "name": "Padel Arena Manager",
   "short_name": "Padel Arena",
   "description": "Gestione tornei, giocatori e campionati Padel Arena",
-  "start_url": "./index-v8-lab.html?source=home&v=82180",
+  "start_url": "./index-v8-lab.html?source=home&v=82190",
   "scope": "./",
   "display": "standalone",
   "background_color": "#061426",
