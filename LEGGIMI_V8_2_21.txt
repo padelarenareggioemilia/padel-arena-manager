@@ -1,0 +1,18 @@
+V8.2.21 LAB · RIPRISTINO 2ª TAPPA FEMMINILE
+
+- Ripristina la 2ª tappa femminile del 27/07/2026 se manca da Supabase.
+- Recupera, se ancora presenti nel browser, i dati legacy pam_players e pam_scores della vecchia tappa.
+- La salva nuovamente online per impedirne la scomparsa al refresh.
+
+GETTONI:
+Rimane un solo pulsante:
+↩️ RECUPERA DA TAPPA PRECEDENTE
+
+Il pulsante ASSEGNA il saldo finale dell'ultima tappa precedente del singolo giocatore.
+Non aggiorna l'anagrafica e non usa il saldo corrente come base.
+Premendolo più volte non aggiunge 3 gettoni: restituisce sempre lo stesso saldo precedente.
+I 3 gettoni di benvenuto restano nel calcolo della singola giornata una sola volta.
+
+GITHUB: sostituire index-v8-lab.html, manifest.webmanifest e service-worker.js.
+Nessun SQL.
+TEST: https://padelarenareggioemilia.github.io/padel-arena-manager/index-v8-lab.html?v=82210
