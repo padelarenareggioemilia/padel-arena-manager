@@ -1,0 +1,8 @@
+V8.2.27 LAB · PARTECIPANTI RICONCILIATI
+- La finestra partecipanti usa anagrafica + tutti gli ID già iscritti al torneo.
+- Un partecipante già presente nel torneo non sparisce più se manca temporaneamente dall'anagrafica caricata.
+- Nessuna apertura della finestra modifica o rigenera partite, risultati o gettoni.
+- Le notifiche verdi di successo vengono nascoste automaticamente dopo pochi secondi.
+- Rigenerazione solo col pulsante esplicito e conferma.
+Nessun SQL.
+Sostituire: index-v8-lab.html, manifest.webmanifest, service-worker.js.
