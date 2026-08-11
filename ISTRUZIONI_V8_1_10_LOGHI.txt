@@ -7,3 +7,4 @@ PADEL ARENA MANAGER V8.1.10 - LOGHI SQUADRE
 - Non serve eseguire SQL.
 
 Caricare tutti i file su GitHub, soprattutto index.html e service-worker.js.
+    Deploy reset 11-08-2026
