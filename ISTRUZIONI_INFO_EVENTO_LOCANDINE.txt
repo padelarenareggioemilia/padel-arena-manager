@@ -15,6 +15,9 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- nella creazione e modifica torneo è presente il pulsante ben visibile
+  "CARICA UN FILE PER LA LOCANDINA", con anteprima prima del salvataggio;
+- INFO EVENTO mostra la descrizione inserita nel campo "Descrizione invito";
 - MODIFICA DATI riapre l'intero Torneo Builder già compilato;
 - SALVA MODIFICHE aggiorna tutti i dati conservando partite, risultati e classifiche;
 - RICREA TORNEO DA ZERO permette di cambiare anche formula, campi e giocatori;

@@ -3065,7 +3065,7 @@ function pamEditEvent(id){
   minParticipants:Number(e.minParticipants||0),maxParticipants:Number(e.maxParticipants||e.registrationCapacity||16),registrationMode:e.registrationMode||"automatic",waitlistEnabled:e.waitlistEnabled!==false,registrationOpen:e.registrationOpen!==false,
   registrationCloseDate:e.registrationCloseDate||e.date||"",registrationCloseTime:e.registrationCloseTime||e.startTime||"20:00",organizerName:e.organizerName||"",organizerPhone:e.organizerPhone||"",organizerEmail:e.organizerEmail||"",
   hostClubLogo:e.hostClubLogo||"",organizerLogo:e.organizerLogo||"",mainSponsorLogo:e.mainSponsorLogo||"",extraSponsorLogo1:e.extraSponsorLogo1||"",extraSponsorLogo2:e.extraSponsorLogo2||"",
-  selected:(e.playerIds||[]).slice(),fixedPairRegistrations:JSON.parse(JSON.stringify(e.fixedPairRegistrations||{})),pairsPerGroup:Number(e.pairsPerGroup||4),showSelectedOnly:false
+  selected:(e.playerIds||[]).slice(),fixedPairRegistrations:JSON.parse(JSON.stringify(e.fixedPairRegistrations||{})),pairsPerGroup:Number(e.pairsPerGroup||4),showSelectedOnly:false,customPosterUrl:e.customPosterUrl||""
  };
  state.editingEventId=e.id;
  state.view="new";
@@ -3428,6 +3428,18 @@ async function pamUploadTournamentPoster(id,file){
   save();render();
   pamToast("Locandina esterna inserita. Il pulsante pubblico ora apre questa immagine.","success");
  }catch(err){pamToast("Errore caricamento: "+(err&&err.message?err.message:String(err)),"error")}
+}
+function pamSelectBuilderPoster(file){
+ if(!file)return;
+ if(!/^image\//i.test(file.type||"")){pamToast("Seleziona una locandina in formato JPG, PNG o WEBP.","error");return}
+ if(file.size>12000000){pamToast("La locandina supera 12 MB. Scegli un file più leggero.","error");return}
+ window.pamPendingTournamentPosterFile=file;
+ const reader=new FileReader();
+ reader.onload=function(){
+  const img=document.getElementById("pamBuilderPosterPreview");if(img){img.src=reader.result;img.classList.remove("hidden")}
+  const label=document.getElementById("pamBuilderPosterName");if(label)label.textContent="File selezionato: "+file.name+" · verrà caricato quando salvi il torneo";
+ };
+ reader.readAsDataURL(file);
 }
 async function pamUploadPlayerPhoto(id,file){
  if(!pamIsAdmin()||!file)return;
@@ -5057,7 +5069,7 @@ function newEventView(){
   pamBrandingPreviewV8214("mainSponsorLogo","3. Sponsor principale",true)+
   pamBrandingPreviewV8214("extraSponsorLogo1","4. Sponsor / immagine extra",false)+
   pamBrandingPreviewV8214("extraSponsorLogo2","5. Sponsor / immagine extra",false)+
- '</div></div>'+
+ '</div><div class="field" style="margin-top:18px"><label>Locandina personalizzata facoltativa</label><div class="muted">Puoi usare la locandina creata automaticamente dalla piattaforma oppure caricare un file realizzato esternamente.</div><label class="upload-button" style="margin-top:10px">📤 CARICA UN FILE PER LA LOCANDINA<input type="file" accept="image/png,image/jpeg,image/webp" data-builder-poster></label><div id="pamBuilderPosterName" class="muted" style="margin-top:8px">'+(d.customPosterUrl?'Locandina personalizzata presente. Seleziona un nuovo file per sostituirla.':'Nessun file selezionato: verrà usata la locandina automatica.')+'</div><img id="pamBuilderPosterPreview" class="event-logo-preview '+(d.customPosterUrl?'':'hidden')+'" src="'+esc(d.customPosterUrl||'')+'" alt="Anteprima locandina personalizzata"></div></div>'+
  '<div class="card"><h2>5. Iscrizioni pubbliche</h2><div class="row"><div class="field"><label>Numero minimo</label><input id="eMinParticipants" type="number" min="0" value="'+Number(d.minParticipants||0)+'"></div><div class="field"><label>Numero massimo</label><input id="eMaxParticipants" type="number" min="1" value="'+Number(d.maxParticipants||16)+'"></div><div class="field"><label>Quota (€)</label><input id="eFee" type="number" min="0" step="0.50" value="'+Number(d.fee||0)+'"></div></div><div class="row"><div class="field"><label>Gestione richieste</label><select id="eRegistrationMode"><option value="automatic" '+(d.registrationMode==='automatic'?'selected':'')+'>ACCETTA AUTOMATICAMENTE</option><option value="approval" '+(d.registrationMode==='approval'?'selected':'')+'>RICHIEDI APPROVAZIONE</option></select></div><div class="field"><label>Lista d’attesa</label><select id="eWaitlistEnabled"><option value="yes" '+(d.waitlistEnabled?'selected':'')+'>ATTIVA</option><option value="no" '+(!d.waitlistEnabled?'selected':'')+'>DISATTIVA</option></select></div><div class="field"><label>Stato iscrizioni</label><select id="eRegistrationOpen"><option value="yes" '+(d.registrationOpen?'selected':'')+'>APERTE</option><option value="no" '+(!d.registrationOpen?'selected':'')+'>CHIUSE</option></select></div></div><div class="row"><div class="field"><label>Chiusura iscrizioni</label><input id="eRegistrationCloseDate" type="date" value="'+esc(d.registrationCloseDate||d.date)+'"></div><div class="field"><label>Ora chiusura</label><input id="eRegistrationCloseTime" type="time" value="'+esc(d.registrationCloseTime||d.startTime||'20:00')+'"></div></div></div>'+
  '<div class="card create-event-toolbar"><div><b>Giocatori già inseriti: <span id="selectedPlayersCount">'+d.selected.length+'</span></b><div class="muted">'+(editing?'Salva normalmente per conservare risultati e struttura; ricrea da zero per rigenerare tutto.':'Non sono obbligatori: puoi pubblicare il torneo con zero iscritti.')+'</div></div>'+(editing?'<div class="row"><button class="secondary create-event-top-button" data-action="save-event-changes">SALVA MODIFICHE</button><button class="danger create-event-top-button" data-action="rebuild-event">RICREA TORNEO DA ZERO</button></div>':'<button class="primary create-event-top-button" data-action="create-event">SALVA E PUBBLICA</button>')+'</div><div id="eventMessage"></div>'+
  '<div class="card"><h2>6. Inserimento manuale facoltativo</h2><div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica</label><input id="eventPlayerSearchInput" type="search" placeholder="Nome o cognome..." autocomplete="off"></div><button class="primary" data-quick-player-new-event>➕ Nuovo giocatore</button></div><div class="row print-hide"><button class="secondary" type="button" data-toggle-selected-only>'+(d.showSelectedOnly?'Mostra tutti i giocatori':'Mostra solo i giocatori selezionati')+'</button><button class="secondary" type="button" data-deselect-all-players>Deseleziona tutti</button></div><div id="pamEventPlayerSearchCount" class="pam-search-live">'+eligible.length+' nominativi disponibili</div><div class="checklist" id="pamEventPlayersChecklist">'+checks+'</div></div>';
@@ -5463,7 +5475,9 @@ function pamUpdateEventFromBuilder(rebuild){
   }else{
    Object.keys(e.payments||{}).forEach(function(id){e.payments[id].fee=Number(d.fee)||0});
   }
+  const pendingPoster=window.pamPendingTournamentPosterFile||null;window.pamPendingTournamentPosterFile=null;
   state.editingEventId=null;state.currentEventId=e.id;state.view="event";state.tab="matches";save();render();pamToast(rebuild?"Torneo ricreato completamente da zero.":"Tutti i dati del torneo sono stati aggiornati.","success");
+  if(pendingPoster)pamUploadTournamentPoster(e.id,pendingPoster);
  }catch(err){if(msg){msg.className="notice error";msg.textContent="Errore: "+err.message}}
 }
 function createEvent(){
@@ -5478,7 +5492,9 @@ function createEvent(){
   const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
   if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
+  const pendingPoster=window.pamPendingTournamentPosterFile||null;window.pamPendingTournamentPosterFile=null;
   state.events.unshift(event);state.editingEventId=null;state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();pamToast("Torneo salvato e pronto per essere condiviso","success");
+  if(pendingPoster)pamUploadTournamentPoster(event.id,pendingPoster);
  }catch(e){if(msg){msg.className="notice error";msg.textContent="Errore: "+e.message}}
 }
 function eventsView(){
@@ -7196,6 +7212,7 @@ document.addEventListener("change",function(ev){
 
  if(ev.target.matches("[data-tournament-logo]")){pamUploadTournamentLogo(ev.target.getAttribute("data-tournament-logo"),ev.target.files&&ev.target.files[0]);return}
  if(ev.target.matches("[data-tournament-poster]")){pamUploadTournamentPoster(ev.target.getAttribute("data-tournament-poster"),ev.target.files&&ev.target.files[0]);return}
+ if(ev.target.matches("[data-builder-poster]")){pamSelectBuilderPoster(ev.target.files&&ev.target.files[0]);return}
  if(ev.target.matches("[data-player-photo]")){pamUploadPlayerPhoto(ev.target.getAttribute("data-player-photo"),ev.target.files&&ev.target.files[0]);return}
 
  if(ev.target.matches("[data-team-stage]")){
