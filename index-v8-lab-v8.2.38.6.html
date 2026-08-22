@@ -1305,6 +1305,8 @@ body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-p
 .secondary{background:#19304d}
 .small{background:#19304d}
 .tabs button{border-color:#314a6d;background:#0b192c}
+.tabs{flex-wrap:wrap;overflow:visible}.tabs button{flex:1 1 120px}
+@media(max-width:600px){.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.tabs button{min-width:0;padding:10px 5px;font-size:13px;white-space:normal}}
 @media(max-width:700px){
  .pam-actions-content{display:grid;grid-template-columns:1fr}
  .pam-actions-content .primary,.pam-actions-content .secondary,.pam-actions-content .small,.pam-actions-content .upload-button{width:100%;min-width:0}
@@ -5548,9 +5550,7 @@ function eventView(){
   const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
   tabDefs=[["matches","Partite"],["standings","Classifica"]];
   if(n===6||n===10||n===12||n===16)tabDefs.push(["elimination",n===16?"Quarti di finale":"Eliminatoria"]);
-  if([6,8,10,12,16].includes(n)){
-   for(let i=1;i<=auctionCount;i++)tabDefs.push(["auction"+i,auctionCount===1?"Asta unica":("Asta "+i)]);
-  }
+  for(let i=1;i<=auctionCount;i++)tabDefs.push(["auction"+i,auctionCount===1?"Asta unica":("Asta "+i)]);
   tabDefs.push(["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]);
  }else if(e.competitionType==="rodeo_simple"){
   tabDefs=[["matches","Partite"],["standings","Classifica"],["simplefinals","Fasi finali"],["payments","Pagamenti"],["players","Giocatori"]];

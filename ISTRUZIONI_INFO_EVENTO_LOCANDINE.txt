@@ -15,6 +15,10 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- nei tornei Rodeo a gettoni tutte le aste configurate sono sempre visibili,
+  anche prima del completamento dei partecipanti;
+- su smartphone i pulsanti delle sezioni vanno su più righe: Asta 1 e Asta 2
+  non restano più nascoste fuori dallo schermo;
 - nella creazione e modifica torneo è presente il pulsante ben visibile
   "CARICA UN FILE PER LA LOCANDINA", con anteprima prima del salvataggio;
 - INFO EVENTO mostra la descrizione inserita nel campo "Descrizione invito";
