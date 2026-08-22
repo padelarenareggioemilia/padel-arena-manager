@@ -1,4 +1,4 @@
-PADEL ARENA MANAGER V8 - INFO EVENTO E LOCANDINE
+PADEL ARENA MANAGER V8 - INFO EVENTO, LOCANDINE E MODIFICA COMPLETA
 
 1. GITHUB
 Carica nella cartella principale del repository padel-arena-manager questi file,
@@ -15,6 +15,11 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- MODIFICA DATI riapre l'intero Torneo Builder già compilato;
+- SALVA MODIFICHE aggiorna tutti i dati conservando partite, risultati e classifiche;
+- RICREA TORNEO DA ZERO permette di cambiare anche formula, campi e giocatori;
+- la ricreazione azzera e rigenera partite, classifiche, aste, finali e pagamenti,
+  conservando identità e link pubblico del torneo;
 - pulsante INFO EVENTO in ogni torneo pubblico;
 - riepilogo completo delle informazioni inserite nella creazione dell'evento;
 - CREA LOCANDINA per la grafica automatica della piattaforma;
