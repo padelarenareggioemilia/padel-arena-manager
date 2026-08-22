@@ -2185,6 +2185,8 @@ let pamLocalEditUntil=0;
   state=base;
  }
 })();
+if(!Array.isArray(state.players))state.players=[];
+if(!Array.isArray(state.events))state.events=[];
 if(!state.draft)state.draft=freshState().draft;
 if(!state.draft.competitionType)state.draft.competitionType="rodeo_tokens";
 if(state.draft.fee===undefined)state.draft.fee=25;
@@ -7306,7 +7308,8 @@ render=function(){
  setTimeout(pamRestrictCollaboratorUI,0);
 };
 
-pamRenderPublicHome();
+if(new URLSearchParams(location.search).get("login")==="1")pamRenderLogin();
+else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){

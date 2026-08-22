@@ -1,0 +1,19 @@
+CORREZIONE V8 PADEL ARENA MANAGER
+
+Carica su GitHub i due file HTML contenuti nello ZIP nella cartella principale
+del repository padel-arena-manager, sostituendo quelli esistenti:
+
+1. public-registration.html
+2. index-v8-lab-v8.2.38.6.html
+
+Non eliminare e non modificare gli altri file del repository.
+
+Correzioni incluse:
+- HOME dalla schermata iscrizioni apre direttamente la V8.2.38.6 corretta;
+- LOGIN apre direttamente la schermata di accesso;
+- eliminato l'avvio della vecchia build che causava l'errore state.players.push;
+- aggiunta una protezione sull'inizializzazione degli archivi players ed events;
+- campo Provincia reso chiaramente obbligatorio;
+
+IMPORTANTE: dopo aver trascinato i due file su GitHub, premi il pulsante verde
+"Commit changes". Senza questo ultimo passaggio i file non vengono pubblicati.

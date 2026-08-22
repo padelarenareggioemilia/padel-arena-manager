@@ -14,7 +14,7 @@ main{max-width:820px;margin:auto;padding:18px 14px 60px}.brand{display:flex;alig
 label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:13px;border-radius:12px;border:1px solid #365474;background:#071523;color:white}button{padding:13px 16px;border:0;border-radius:12px;font-weight:900;cursor:pointer}.primary{background:var(--accent);color:#07111f}.secondary{background:#17304e;color:white;border:1px solid #3c5d7d}.danger{background:#7f1d1d;color:white}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}
 .search-results{display:grid;gap:8px;margin-top:8px}.person-result{display:flex;justify-content:space-between;align-items:center;text-align:left;background:#09182a;color:white;border:1px solid #365474}.person-result span{display:block}.person-result small{color:var(--muted)}.selected-person{padding:12px;border:2px solid var(--accent);border-radius:14px;background:#0d291d}
-.required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}
+.required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}.field-help{display:block;margin-top:6px;color:var(--accent);font-size:12px;font-weight:800}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 
 .pub-nav{display:flex;gap:10px;margin-left:auto;align-items:center}
@@ -40,7 +40,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab.html">⌂ HOME</a><a class="login" href="index-v8-lab.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.6.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.6.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -112,7 +112,7 @@ function newForm(kind){
  '<div><label>Luogo di nascita <span class="required">*</span></label><input id="'+f("birthPlace")+'" required></div></div>'+
  '<div class="row"><div><label>CAP di residenza <span class="required">*</span></label><input id="'+f("postalCode")+'" inputmode="numeric" required></div>'+
  '<div><label>Comune di residenza <span class="required">*</span></label><input id="'+f("residenceTown")+'" required></div></div>'+
- '<div class="row"><div><label>Provincia di residenza <span class="required">*</span></label><input id="'+f("residenceProvince")+'" maxlength="2" placeholder="RE" required></div>'+
+ '<div class="row"><div><label>Provincia di residenza <span class="required">*</span></label><input id="'+f("residenceProvince")+'" maxlength="2" autocomplete="address-level1" placeholder="Digita la sigla (es. RE)" required><small class="field-help">CAMPO OBBLIGATORIO: inserisci le 2 lettere della provincia.</small></div>'+
  '<div><label>Telefono <span class="required">*</span></label><input id="'+f("phone")+'" type="tel" required></div></div>'+
  '<label>Indirizzo email <span class="required">*</span></label><input id="'+f("email")+'" type="email" required>'+
  '<div class="row"><div><label>Sesso <span class="required">*</span></label><select id="'+f("gender")+'" required><option value="">Seleziona</option><option>Maschile</option><option>Femminile</option><option>Altro / non binario</option></select></div>'+
