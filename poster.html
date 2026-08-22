@@ -17,12 +17,13 @@ linear-gradient(160deg,#061426 0%,#0b2744 55%,#071a2f 100%);padding:54px;box-sha
 .info{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 0 42px}.info div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px}.info span{display:block;color:#8fa9bf;text-transform:uppercase;font-size:11px;letter-spacing:1px;font-weight:900}.info b{display:block;font-size:20px;margin-top:8px}
 .cta{display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:stretch}.cta .main{background:var(--lime);color:#061426;border-radius:26px;padding:28px}.cta .main h2{font-size:32px;margin:0 0 12px}.cta .main p{font-size:18px;margin:5px 0}.cta .contact{background:rgba(255,255,255,.08);border-radius:26px;padding:28px}.cta .contact span{display:block;color:#93aac0;text-transform:uppercase;font-size:12px;font-weight:900;letter-spacing:1px}.cta .contact b{display:block;font-size:22px;margin:8px 0}
 .logos{position:absolute;left:54px;right:54px;bottom:48px;display:flex;align-items:flex-end;justify-content:center;gap:18px;flex-wrap:wrap}.logo{width:150px;height:100px;border-radius:18px;background:#fff;padding:12px;display:grid;place-items:center}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo.main{width:190px;height:120px}.actions{display:flex;gap:10px;justify-content:center;margin:14px}.actions button{border:0;border-radius:14px;padding:13px 18px;font-weight:900;cursor:pointer}
+.external-poster{min-height:0;padding:18px;display:flex;align-items:center;justify-content:center}.external-poster img{display:block;max-width:100%;max-height:calc(100vh - 110px);object-fit:contain;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 @media(max-width:760px){.poster{min-height:1180px;padding:28px}.hero{margin:80px 0 45px}.hero h1{font-size:48px}.hero p{font-size:18px}.info{grid-template-columns:1fr 1fr}.cta{grid-template-columns:1fr}.logos{left:28px;right:28px;bottom:28px}.logo{width:105px;height:72px}.logo.main{width:130px;height:85px}}
 @media print{@page{size:A4 portrait;margin:0}body{background:#fff}.wrap{padding:0;max-width:none}.poster{border-radius:0;box-shadow:none;width:210mm;height:297mm;min-height:297mm;padding:12mm}.actions{display:none}.hero{margin:25mm 0 14mm}.hero h1{font-size:44pt}.hero p{font-size:14pt}.logos{left:12mm;right:12mm;bottom:10mm}.logo{width:31mm;height:20mm}.logo.main{width:38mm;height:24mm}}
 </style>
 </head>
 <body>
-<div class="actions"><button onclick="window.print()">PDF / Stampa locandina</button></div>
+<div class="actions"><button id="generatedPosterButton">Locandina automatica</button><button onclick="window.print()">PDF / Stampa locandina</button></div>
 <div class="wrap"><main id="poster" class="poster"><div>Caricamento locandina…</div></main></div>
 <script>
 const SUPABASE_URL="https://zxubwvtngyfebtfnvnwg.supabase.co";
@@ -30,20 +31,29 @@ const SUPABASE_PUBLISHABLE_KEY="sb_publishable_-KVcVuns55FvFMcjRdefxA_KJXUgYBO";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 const token=new URLSearchParams(location.search).get("tournament")||"";
+const mode=new URLSearchParams(location.search).get("mode")||"auto";
+const customPosterUrl=SUPABASE_URL+"/storage/v1/object/public/padel-arena-images/tournament-posters/"+encodeURIComponent(token)+"?v="+Date.now();
 function fmt(d){if(!d)return "";try{return new Date(d+"T12:00:00").toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})}catch(_){return d}}
+document.getElementById("generatedPosterButton").onclick=function(){const u=new URL(location.href);u.searchParams.set("mode","generated");location.href=u.toString()};
+async function customPosterExists(){try{const r=await fetch(customPosterUrl,{method:"HEAD",cache:"no-store"});return r.ok}catch(_){return false}}
 (async()=>{
- const res=await sb.from("tournaments").select("id,name,event_date,club,category,competition_type,data").eq("share_token",token).maybeSingle();
+ if(mode!=="generated"&&await customPosterExists()){
+  document.getElementById("poster").className="poster external-poster";
+  document.getElementById("poster").innerHTML='<img src="'+esc(customPosterUrl)+'" alt="Locandina ufficiale">';
+  return;
+ }
+ const res=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
  if(res.error||!res.data){document.getElementById("poster").innerHTML="<h1>Locandina non disponibile</h1>";return}
- const r=res.data,d=Object.assign({},r.data||{},r);
- const logos=[d.hostClubLogo,d.organizerLogo,d.mainSponsorLogo,d.extraSponsorLogo1,d.extraSponsorLogo2].filter(Boolean);
+ const d=res.data;
+ const logos=[d.host_club_logo,d.organizer_logo,d.main_sponsor_logo,d.extra_sponsor_logo_1,d.extra_sponsor_logo_2,d.logo_url].filter(Boolean);
  const logoHtml=logos.map((x,i)=>'<div class="logo '+(i===2?'main':'')+'"><img src="'+esc(x)+'"></div>').join("");
  const desc=String(d.description||"").trim();
  document.title=(d.name||"Torneo")+" · Locandina";
  document.getElementById("poster").innerHTML=
  '<div class="top"><div class="brand"><img src="assets/padel-arena-manager-logo.png"><div><b>PADEL ARENA MANAGER</b><span>EVENT EXPERIENCE</span></div></div><div class="datebadge">'+esc(fmt(d.event_date||d.date))+'</div></div>'+
- '<section class="hero"><div class="kicker">'+esc(d.category||"PADEL")+' · '+esc(String(d.competitionType||d.competition_type||"").replaceAll("_"," "))+'</div><h1>'+esc(d.name||"Torneo")+'</h1>'+(desc?'<p>'+esc(desc)+'</p>':'')+'</section>'+
- '<section class="info"><div><span>Data</span><b>'+esc(fmt(d.event_date||d.date))+'</b></div><div><span>Ora</span><b>'+esc(d.startTime||"20:00")+'</b></div><div><span>Club</span><b>'+esc(d.club||"")+'</b></div><div><span>Quota</span><b>€ '+esc(Number(d.entryFee||0))+'</b></div></section>'+
- '<section class="cta"><div class="main"><h2>Partecipa al torneo</h2><p>'+esc(d.registrationMode==="approval"?"Richiesta di iscrizione soggetta ad approvazione":"Iscrizioni aperte")+'</p><p>Posti: '+esc(d.maxParticipants||"—")+'</p></div><div class="contact"><span>Organizzatore</span><b>'+esc(d.organizerName||"")+'</b><div>'+esc(d.organizerPhone||"")+'</div><div>'+esc(d.organizerEmail||"")+'</div></div></section>'+
+ '<section class="hero"><div class="kicker">'+esc(d.category||"PADEL")+' · '+esc(String(d.competition_type||"").replaceAll("_"," "))+'</div><h1>'+esc(d.name||"Torneo")+'</h1>'+(desc?'<p>'+esc(desc)+'</p>':'')+'</section>'+
+ '<section class="info"><div><span>Data</span><b>'+esc(fmt(d.date))+'</b></div><div><span>Ora</span><b>'+esc(d.start_time||"20:00")+'</b></div><div><span>Club</span><b>'+esc(d.club||"")+'</b></div><div><span>Quota</span><b>€ '+esc(Number(d.entry_fee||0))+'</b></div></section>'+
+ '<section class="cta"><div class="main"><h2>Partecipa al torneo</h2><p>'+(d.registration_open===false?'Iscrizioni chiuse':'Iscrizioni aperte')+'</p><p>Posti: '+esc(d.max_participants||"—")+'</p></div><div class="contact"><span>Organizzatore</span><b>'+esc(d.organizer_name||"Padel Arena")+'</b><div>'+esc(d.organizer_phone||"")+'</div><div>'+esc(d.organizer_email||"")+'</div></div></section>'+
  '<div class="logos">'+logoHtml+'</div>';
 })();
 </script>

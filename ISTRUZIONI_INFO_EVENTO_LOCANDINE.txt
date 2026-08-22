@@ -1,0 +1,27 @@
+PADEL ARENA MANAGER V8 - INFO EVENTO E LOCANDINE
+
+1. GITHUB
+Carica nella cartella principale del repository padel-arena-manager questi file,
+sostituendo quelli esistenti:
+
+- index-v8-lab-v8.2.38.6.html
+- poster.html
+
+Al termine premi il pulsante verde "Commit changes".
+
+2. SUPABASE
+Apri Supabase > SQL Editor > New query.
+Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
+incollalo nell'editor e premi Run.
+
+FUNZIONI AGGIUNTE
+- pulsante INFO EVENTO in ogni torneo pubblico;
+- riepilogo completo delle informazioni inserite nella creazione dell'evento;
+- CREA LOCANDINA per la grafica automatica della piattaforma;
+- INSERISCI LOCANDINA per caricare una grafica creata esternamente;
+- apertura automatica della locandina esterna, se presente;
+- fallback automatico alla locandina generata dalla piattaforma;
+- correzione dell'errore "Locandina non disponibile";
+- loghi di club, organizzatore e sponsor nella locandina automatica.
+
+Non eliminare o modificare gli altri file del repository.
