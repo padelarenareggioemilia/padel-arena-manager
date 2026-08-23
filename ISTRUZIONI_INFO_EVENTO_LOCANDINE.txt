@@ -15,6 +15,10 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- admin e collaboratore vedono e gestiscono le stesse fasi del torneo;
+- l'elenco partecipanti viene ricostruito automaticamente dalle partite salvate
+  se sul dispositivo del collaboratore arriva incompleto;
+- il pulsante ELIMINATORIA non scompare più nell'account collaboratore;
 - nei tornei Rodeo a gettoni tutte le aste configurate sono sempre visibili,
   anche prima del completamento dei partecipanti;
 - su smartphone i pulsanti delle sezioni vanno su più righe: Asta 1 e Asta 2

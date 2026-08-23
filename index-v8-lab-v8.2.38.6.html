@@ -2551,6 +2551,22 @@ async function pamImportEdenClients(){
 }
 function currentEvent(){return state.events.find(function(e){return e.id===state.currentEventId})||null}
 
+function pamRepairEventPlayerIdsFromMatches(e){
+ if(!e||typeof e!=="object")return 0;
+ const ids=new Set((e.playerIds||[]).filter(Boolean).map(String));
+ (e.matches||[]).forEach(function(m){
+  (m.t1||[]).concat(m.t2||[]).forEach(function(id){if(id!==undefined&&id!==null&&String(id))ids.add(String(id))});
+ });
+ const repaired=Array.from(ids);
+ if(repaired.length!==(e.playerIds||[]).length||repaired.some(function(id,i){return String((e.playerIds||[])[i])!==id}))e.playerIds=repaired;
+ e.ledger=e.ledger||{};e.payments=e.payments||{};
+ repaired.forEach(function(id){
+  if(!e.ledger[id]){const p=playerById(id);e.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}}
+  if(!e.payments[id])e.payments[id]={fee:Number(e.entryFee)||0,paid:false,method:"",notes:""};
+ });
+ return repaired.length;
+}
+
 function pamEventRow(e){
  if(!e.shareToken)e.shareToken=pamUuid();
  return{
@@ -2894,6 +2910,7 @@ async function pamCloudLoad(initial,forceReplace){
    });
   });
   const remoteEvents=remoteEventsRaw.map(function(e){return pamReplaceIdsDeepV822(e,__normV822.idMap)});
+  remoteEvents.forEach(pamRepairEventPlayerIdsFromMatches);
   const secondFemaleV8222=pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents);
 
   if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
@@ -5545,6 +5562,7 @@ function matchupStackHtml(teamA,teamB){
 }
 function eventView(){
  const e=currentEvent();if(!e)return eventsView();
+ pamRepairEventPlayerIdsFromMatches(e);
  let tabDefs;
  if(e.competitionType==="rodeo_tokens"){
   const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
