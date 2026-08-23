@@ -4,6 +4,7 @@ PADEL ARENA MANAGER V8 - INFO EVENTO, LOCANDINE E MODIFICA COMPLETA
 Carica nella cartella principale del repository padel-arena-manager questi file,
 sostituendo quelli esistenti:
 
+- index.html
 - index-v8-lab-v8.2.38.6.html
 - poster.html
 
@@ -15,6 +16,8 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- il link principale apre ora V8.2.38.6 e non più la vecchia V8.2.38.4,
+  eliminando l'errore di avvio "state.players.push";
 - admin e collaboratore vedono e gestiscono le stesse fasi del torneo;
 - l'elenco partecipanti viene ricostruito automaticamente dalle partite salvate
   se sul dispositivo del collaboratore arriva incompleto;
