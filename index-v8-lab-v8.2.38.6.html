@@ -2553,21 +2553,42 @@ function currentEvent(){return state.events.find(function(e){return e.id===state
 
 function pamRepairEventPlayerIdsFromMatches(e){
  if(!e||typeof e!=="object")return 0;
- const ids=new Set((e.playerIds||[]).filter(Boolean).map(String));
+ const before=JSON.stringify({playerIds:e.playerIds||[],ledger:e.ledger||{},payments:e.payments||{}});
+ const oldIds=(e.playerIds||[]).filter(Boolean).map(String);
+ const matchIds=[];const seenIds=new Set();
  (e.matches||[]).forEach(function(m){
-  (m.t1||[]).concat(m.t2||[]).forEach(function(id){if(id!==undefined&&id!==null&&String(id))ids.add(String(id))});
+  (m.t1||[]).concat(m.t2||[]).forEach(function(id){
+   const key=String(id||"");if(key&&!seenIds.has(key)){seenIds.add(key);matchIds.push(key)}
+  });
  });
- [e.playerSnapshots,e.ledger,e.payments].forEach(function(source){
-  if(source&&typeof source==="object")Object.keys(source).forEach(function(id){if(id)ids.add(String(id))});
+ // Se esistono partite, sono l'unica fonte affidabile dei partecipanti reali.
+ // Non importare mai chiavi residue di vecchi ledger, pagamenti o snapshot.
+ const source=matchIds.length>=4?matchIds:oldIds;
+ const repaired=[];const seenNames=new Set();
+ source.forEach(function(id){
+  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"id|"+id;
+  if(seenNames.has(nameKey))return;
+  seenNames.add(nameKey);repaired.push(String(id));
  });
- const repaired=Array.from(ids);
- if(repaired.length!==(e.playerIds||[]).length||repaired.some(function(id,i){return String((e.playerIds||[])[i])!==id}))e.playerIds=repaired;
- e.ledger=e.ledger||{};e.payments=e.payments||{};
+ const oldLedger=e.ledger&&typeof e.ledger==="object"?e.ledger:{};
+ const oldPayments=e.payments&&typeof e.payments==="object"?e.payments:{};
+ const allOldKeys=Array.from(new Set(oldIds.concat(Object.keys(oldLedger),Object.keys(oldPayments))));
+ const cleanLedger={},cleanPayments={};
  repaired.forEach(function(id){
-  if(!e.ledger[id]){const p=playerById(id);e.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}}
-  if(!e.payments[id])e.payments[id]={fee:Number(e.entryFee)||0,paid:false,method:"",notes:""};
+  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"";
+  const sameNameKeys=allOldKeys.filter(function(oldId){const op=playerById(oldId);return nameKey&&op&&registryTokenKey(playerName(op))===nameKey});
+  const ledgers=[id].concat(sameNameKeys).map(function(k){return oldLedger[k]}).filter(Boolean);
+  const base=oldLedger[id]||{};
+  cleanLedger[id]={
+   carried:Math.max(Number((p&&p.tokenBalance)||0),...ledgers.map(function(x){return Number(x.carried)||0})),
+   spent:Number(base.spent)||0,podium:Number(base.podium)||0
+  };
+  const payment=oldPayments[id]||sameNameKeys.map(function(k){return oldPayments[k]}).find(function(x){return x&&x.paid})||{};
+  cleanPayments[id]={fee:Number(payment.fee!==undefined?payment.fee:e.entryFee)||0,paid:!!payment.paid,method:payment.method||"",notes:payment.notes||""};
  });
- return repaired.length;
+ e.playerIds=repaired;e.ledger=cleanLedger;e.payments=cleanPayments;
+ const after=JSON.stringify({playerIds:e.playerIds,ledger:e.ledger,payments:e.payments});
+ return before===after?0:repaired.length;
 }
 
 function pamEventRow(e){
@@ -2913,7 +2934,6 @@ async function pamCloudLoad(initial,forceReplace){
    });
   });
   const remoteEvents=remoteEventsRaw.map(function(e){return pamReplaceIdsDeepV822(e,__normV822.idMap)});
-  remoteEvents.forEach(pamRepairEventPlayerIdsFromMatches);
   const secondFemaleV8222=pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents);
 
   if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
@@ -2924,6 +2944,7 @@ async function pamCloudLoad(initial,forceReplace){
   state.players=remotePlayers;
   state.events=remoteEvents;
   pamReconcileTokensV8232();
+  state.events.forEach(pamRepairEventPlayerIdsFromMatches);
   state.__playersSource="Supabase completo";
   state.__cloudPlayersCount=remotePlayers.length;
   state.__cloudEventsCount=remoteEvents.length;
@@ -3504,7 +3525,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.6 LAB · CONSOLIDATA</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.6 · FIX 24.08</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -3784,11 +3805,26 @@ function pamApplyConfirmedMaleFinalBalancesV8232(){
  });
  return changed;
 }
+function pamApplyConfirmedFemaleFinalBalancesV824(){
+ const balances={"Monia Mingardi":16};
+ let changed=false;
+ Object.keys(balances).forEach(function(name){
+  const key=registryTokenKey(name);
+  const matches=(state.players||[]).filter(function(p){return registryTokenKey(playerName(p))===key});
+  matches.forEach(function(p){
+   const next=Number(balances[name]);
+   if(Number(p.tokenBalance||0)!==next){p.tokenBalance=next;changed=true}
+   if(!p.gender)p.gender="Femminile";
+  });
+ });
+ return changed;
+}
 function pamReconcileTokensV8232(){
  const merged=pamMergeDuplicateRegistryV8233();
  const balancesChanged=pamApplyConfirmedMaleFinalBalancesV8232();
- if(merged||balancesChanged)pamPersistStateLocalV82381();
- return {merged:merged,balancesChanged:balancesChanged};
+ const femaleBalancesChanged=pamApplyConfirmedFemaleFinalBalancesV824();
+ if(merged||balancesChanged||femaleBalancesChanged)pamPersistStateLocalV82381();
+ return {merged:merged,balancesChanged:balancesChanged||femaleBalancesChanged};
 }
 
 function pamReplaceIdsDeepV822(value,idMap){
@@ -5565,7 +5601,8 @@ function matchupStackHtml(teamA,teamB){
 }
 function eventView(){
  const e=currentEvent();if(!e)return eventsView();
- pamRepairEventPlayerIdsFromMatches(e);
+ const repairedPlayers=pamRepairEventPlayerIdsFromMatches(e);
+ if(repairedPlayers){pamPersistStateLocalV82381();if(PAM_SESSION&&pamCloudReady)pamScheduleCloudSync()}
  let tabDefs;
  if(e.competitionType==="rodeo_tokens"){
   const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));

@@ -16,6 +16,13 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- RIPARAZIONE 24/08: il torneo viene riportato ai soli partecipanti realmente
+  presenti nelle partite; vecchie chiavi di gettoni/pagamenti non possono più
+  creare copie in classifica;
+- i duplicati come Monia Mazzi, Sara Sacco, Arianna Lignola e Maurizia Casini
+  vengono esclusi automaticamente dal torneo senza cancellare le partite;
+- saldo confermato Monia Mingardi: 16 gettoni precedenti;
+- la pulizia viene sincronizzata online alla prima apertura del torneo;
 - ELIMINATORIA è sempre visibile nei tornei Rodeo a gettoni anche per il collaboratore;
 - il recupero partecipanti usa partite, schede torneo, gettoni e pagamenti,
   evitando differenze tra il dispositivo admin e quello collaboratore;
