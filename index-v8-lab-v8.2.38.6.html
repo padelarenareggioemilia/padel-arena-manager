@@ -5664,6 +5664,7 @@ function eventView(){
  '</div></details>'+
  '<div class="notice success print-hide pam-cloud-transient-v8227"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+
  (!pamIsAdmin()?'<div class="notice success print-hide"><b>Modalità collaboratore:</b> gestione operativa del torneo: risultati, timer, classifica, gettoni, aste, fasi finali, pagamenti, iscrizioni, PDF e condivisione. Partecipanti, sostituzioni e rigenerazione restano riservati all’amministratore.</div>':'')+
+ (e.competitionType==="rodeo_tokens"?'<button class="primary print-hide" style="width:100%;margin:0 0 14px" data-tab="elimination">⚔️ APRI FASE ELIMINATORIA</button>':'')+
  '<details class="pam-actions-menu pam-detail-menu print-hide"><summary>Dettagli programmazione e PDF</summary><div class="pam-actions-content">'+
  '<b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
  ' · durata effettiva '+Number(e.timerDuration||e.matchDuration||15)+' minuti'+
