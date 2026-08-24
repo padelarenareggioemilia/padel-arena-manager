@@ -2557,6 +2557,9 @@ function pamRepairEventPlayerIdsFromMatches(e){
  (e.matches||[]).forEach(function(m){
   (m.t1||[]).concat(m.t2||[]).forEach(function(id){if(id!==undefined&&id!==null&&String(id))ids.add(String(id))});
  });
+ [e.playerSnapshots,e.ledger,e.payments].forEach(function(source){
+  if(source&&typeof source==="object")Object.keys(source).forEach(function(id){if(id)ids.add(String(id))});
+ });
  const repaired=Array.from(ids);
  if(repaired.length!==(e.playerIds||[]).length||repaired.some(function(id,i){return String((e.playerIds||[])[i])!==id}))e.playerIds=repaired;
  e.ledger=e.ledger||{};e.payments=e.payments||{};
@@ -5566,8 +5569,7 @@ function eventView(){
  let tabDefs;
  if(e.competitionType==="rodeo_tokens"){
   const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
-  tabDefs=[["matches","Partite"],["standings","Classifica"]];
-  if(n===6||n===10||n===12||n===16)tabDefs.push(["elimination",n===16?"Quarti di finale":"Eliminatoria"]);
+  tabDefs=[["matches","Partite"],["standings","Classifica"],["elimination",n===16?"Quarti di finale":"Eliminatoria"]];
   for(let i=1;i<=auctionCount;i++)tabDefs.push(["auction"+i,auctionCount===1?"Asta unica":("Asta "+i)]);
   tabDefs.push(["tokens","Gettoni"],["payments","Pagamenti"],["players","Giocatori"]);
  }else if(e.competitionType==="rodeo_simple"){

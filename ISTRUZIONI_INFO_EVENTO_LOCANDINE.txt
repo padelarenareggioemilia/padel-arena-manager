@@ -16,6 +16,9 @@ Apri il file SUPABASE_V8_INFO_EVENTO_LOCANDINE.sql, copia tutto il contenuto,
 incollalo nell'editor e premi Run.
 
 FUNZIONI AGGIUNTE
+- ELIMINATORIA è sempre visibile nei tornei Rodeo a gettoni anche per il collaboratore;
+- il recupero partecipanti usa partite, schede torneo, gettoni e pagamenti,
+  evitando differenze tra il dispositivo admin e quello collaboratore;
 - il link principale apre ora V8.2.38.6 e non più la vecchia V8.2.38.4,
   eliminando l'errore di avvio "state.players.push";
 - admin e collaboratore vedono e gestiscono le stesse fasi del torneo;
