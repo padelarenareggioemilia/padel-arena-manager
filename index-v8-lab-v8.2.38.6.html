@@ -3806,7 +3806,7 @@ function pamApplyConfirmedMaleFinalBalancesV8232(){
  return changed;
 }
 function pamApplyConfirmedFemaleFinalBalancesV824(){
- const balances={"Monia Mingardi":16};
+ const balances={"Maurizia Casini":39,"Chiara Longagnani":8,"Monia Mazzi":51,"Monia Mingardi":32};
  let changed=false;
  Object.keys(balances).forEach(function(name){
   const key=registryTokenKey(name);
@@ -3816,6 +3816,20 @@ function pamApplyConfirmedFemaleFinalBalancesV824(){
    if(Number(p.tokenBalance||0)!==next){p.tokenBalance=next;changed=true}
    if(!p.gender)p.gender="Femminile";
   });
+ });
+ return changed;
+}
+function pamRestoreConfirmedTokensForAug24V824(e){
+ if(!e||e.competitionType!=="rodeo_tokens"||String(e.date||"")!=="2026-08-24")return false;
+ const balances={"Maurizia Casini":39,"Chiara Longagnani":8,"Monia Mazzi":51,"Monia Mingardi":32};
+ e.ledger=e.ledger||{};
+ let changed=false;
+ (e.playerIds||[]).forEach(function(id){
+  const p=playerById(id);if(!p)return;
+  const name=Object.keys(balances).find(function(x){return registryTokenKey(x)===registryTokenKey(playerName(p))});
+  if(!name)return;
+  e.ledger[id]=e.ledger[id]||{carried:0,spent:0,podium:0};
+  if(Number(e.ledger[id].carried||0)!==balances[name]){e.ledger[id].carried=balances[name];changed=true}
  });
  return changed;
 }
@@ -4072,8 +4086,10 @@ function pamCertifiedTokenBalancesV8234(){
   "neri|stefano":4,
   "fontanesi|stefano":4,
 
-  "casini|maurizia":34,
+  "casini|maurizia":39,
   "mazzi|monia":51,
+  "chiara|longagnani":8,
+  "mingardi|monia":32,
   "cup|de|fabienne|paul|saint":9,
   "carlotta|rivi":5,
   "de|magistris|viviana":10,
@@ -5602,7 +5618,8 @@ function matchupStackHtml(teamA,teamB){
 function eventView(){
  const e=currentEvent();if(!e)return eventsView();
  const repairedPlayers=pamRepairEventPlayerIdsFromMatches(e);
- if(repairedPlayers){pamPersistStateLocalV82381();if(PAM_SESSION&&pamCloudReady)pamScheduleCloudSync()}
+ const restoredConfirmedTokens=pamRestoreConfirmedTokensForAug24V824(e);
+ if(repairedPlayers||restoredConfirmedTokens){pamPersistStateLocalV82381();if(PAM_SESSION&&pamCloudReady)pamScheduleCloudSync()}
  let tabDefs;
  if(e.competitionType==="rodeo_tokens"){
   const n=e.playerIds.length,auctionCount=Math.min(4,Math.max(1,Number(e.auctionCount)||2));
