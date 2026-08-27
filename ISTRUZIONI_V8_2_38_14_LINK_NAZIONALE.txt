@@ -1,0 +1,16 @@
+PADEL ARENA MANAGER V8.2.38.14 - CORREZIONE EVENTO NAZIONALE
+
+1. Carica tutti i file dello ZIP nella cartella principale del repository GitHub.
+2. Conferma la sostituzione dei file esistenti.
+3. Non eseguire altro SQL: questa correzione non modifica il database.
+4. Apri:
+   https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823814
+
+CORREZIONI
+- Il pulsante CONDIVIDI LINK UNICO apre sempre una finestra con il link, i comandi COPIA, APRI MODULO e CONDIVIDI.
+- Il pulsante ISCRIZIONI E RICEVUTE apre la gestione delle richieste ricevute.
+- L'evento nazionale padre appare nell'elenco Competizioni salvate.
+- Dall'elenco è disponibile anche il comando Iscrizioni ricevute.
+- Gli ID degli eventi vengono confrontati in modo sicuro dopo la sincronizzazione con Supabase.
+
+I tornei e le iscrizioni già presenti non vengono cancellati o ricreati.
