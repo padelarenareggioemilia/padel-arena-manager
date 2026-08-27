@@ -1,0 +1,27 @@
+PADEL ARENA MANAGER V8.2.38.21
+CALENDARIO NAZIONALE UNICO
+
+INSTALLAZIONE
+1. Carica tutti i file dello ZIP nel repository GitHub della V8.
+2. Sostituisci i file esistenti quando GitHub lo richiede.
+3. Attendi il completamento di GitHub Pages e riapri il normale link della V8.
+
+NON SERVE ESEGUIRE NUOVO CODICE SU SUPABASE.
+
+NOVITA
+- Maschile, Femminile e Misto usano un solo calendario condiviso.
+- Lo stesso campo non viene mai assegnato a due partite alla stessa ora.
+- Un giocatore presente in più categorie non viene mai inserito in due partite contemporaneamente.
+- Le partite vengono distribuite tra data iniziale e data finale, rispettando ogni giorno l'orario di inizio e di fine.
+- Se gli spazi disponibili non bastano, le partite eccedenti vengono indicate come DA PROGRAMMARE e non vengono sovrapposte.
+- Le fasi finali vengono collocate dopo i gironi e occupano uno slot esclusivo, così restano sicure anche prima di conoscere le coppie qualificate.
+
+UTILIZZO
+1. Conferma le iscrizioni ricevute.
+2. Entra in ogni categoria e usa Partecipanti / Rigenera per creare i gironi e le partite.
+3. Torna nella pagina principale del torneo nazionale.
+4. Controlla il riquadro CALENDARIO UNICO VERIFICATO.
+5. Se necessario premi RICALCOLA CALENDARIO UNICO.
+
+ATTENZIONE
+Partecipanti / Rigenera continua ad azzerare partite, risultati, timer e fasi finali della singola categoria. Va usato prima di iniziare a inserire i risultati.
