@@ -1,0 +1,29 @@
+PADEL ARENA MANAGER V8.2.38.22 — IMPORT / EXPORT
+
+INSTALLAZIONE
+1. Apri il repository GitHub della V8.
+2. Carica nella cartella principale tutti i file contenuti nello ZIP.
+3. Conferma la sostituzione dei file con lo stesso nome.
+4. Attendi la pubblicazione di GitHub Pages e riapri il sito.
+
+NON È NECESSARIO ESEGUIRE NUOVO SQL SU SUPABASE.
+
+FUNZIONI AGGIUNTE
+- Anagrafica: filtri per sesso, fascia d'età, torneo, gettoni e ricerca.
+- Anagrafica: esportazione dei risultati filtrati in Excel, PDF e CSV.
+- Anagrafica: importazione di giocatori e coppie da Excel o CSV.
+- Singolo torneo: importazione di giocatori e coppie dal menu "Azioni e strumenti del torneo".
+- Evento nazionale: importazione unica con smistamento Maschile, Femminile e Misto tramite la colonna Categoria.
+- Controllo duplicati tramite email, telefono, nome e data di nascita.
+- Blocco di sicurezza se nel torneo sono già stati inseriti risultati.
+
+IMPORTANTE
+L'importazione aggiunge i partecipanti ma non rigenera automaticamente partite o gironi.
+Dopo il controllo dei nominativi usa "Partecipanti / Rigenera" per creare il calendario aggiornato.
+
+FORMATO COPPIE
+Usa due righe, una per giocatore, con lo stesso valore nella colonna "Coppia".
+Nell'evento nazionale compila anche "Categoria" con Maschile, Femminile o Misto.
+È riconosciuto direttamente anche il precedente foglio del Campionato Nazionale,
+con una coppia completa per riga e le categorie "DOPPIO MASCHILE/FEMMINILE/MISTO".
+Dentro la schermata di importazione è disponibile il pulsante "Scarica modello CSV".
