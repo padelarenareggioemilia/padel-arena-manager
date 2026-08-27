@@ -4,6 +4,8 @@ PADEL ARENA MANAGER V8.2.38.23 - IMPORTAZIONE RICHIESTE NAZIONALI
 2. Esegui una sola volta il file:
    SUPABASE_V8_2_38_23_IMPORT_RICHIESTE.sql
 3. Carica tutti i file di questo aggiornamento su GitHub, sostituendo quelli omonimi.
+   È compreso anche index-v8-lab-v8.2.38.6.html: serve esclusivamente
+   a far aprire la V8.2.38.23 alle vecchie icone/app web già installate.
 4. Apri il Campionato Nazionale AICS 2026.
 5. In "Impostazioni evento nazionale" scegli "Importa giocatori e coppie".
 6. Importa il file Excel e conferma.
@@ -18,3 +20,4 @@ RISULTATO
 IMPORTANTE
 - Per tutti gli altri tornei l'importazione continua a funzionare come nella V8.2.38.22.
 - Nessun torneo, risultato, giocatore o saldo viene cancellato.
+- Non è necessario eliminare e reinstallare l'app web sul Mac.
