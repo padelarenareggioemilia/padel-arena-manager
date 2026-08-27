@@ -1,0 +1,30 @@
+PADEL ARENA MANAGER V8.2.38.20 — CONTROLLO COPPIA
+
+PRIMA: SUPABASE
+1. Apri Supabase > SQL Editor.
+2. Apri il file SUPABASE_V8_2_38_20_CONTROLLO_COPPIA.sql presente nello ZIP.
+3. Copia tutto il contenuto, incollalo nel SQL Editor e premi RUN.
+4. L'esito corretto è: OK - controllo coppia installato.
+
+POI: GITHUB
+1. Carica tutto il contenuto dello ZIP nella cartella principale del repository GitHub.
+2. Sovrascrivi i file con lo stesso nome.
+3. Attendi l'aggiornamento di GitHub Pages.
+
+CORREZIONI
+- Il modulo blocca immediatamente l'invio se i due componenti hanno lo stesso cellulare.
+- Il modulo blocca immediatamente l'invio se i due componenti hanno la stessa email.
+- Il modulo controlla anche nome, cognome e data di nascita per evitare la stessa persona due volte.
+- L'errore viene mostrato chiaramente e portato al centro dello schermo.
+- Supabase non considera più automaticamente uguali due persone diverse solo perché hanno inserito lo stesso telefono.
+- Il pulsante amministrativo mostra “CONFERMA IN CORSO...” e segnala chiaramente eventuali problemi.
+
+RICHIESTA DI PROVA GIÀ PRESENTE
+- Non eliminarla e non rifarla.
+- Dopo l'esecuzione del SQL potrai premere nuovamente “CONFERMA RICEVUTA E ISCRIZIONE”.
+
+SICUREZZA
+- Il SQL non elimina e non modifica tornei, iscrizioni, giocatori o risultati esistenti.
+
+LINK DI ACCESSO
+https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823820

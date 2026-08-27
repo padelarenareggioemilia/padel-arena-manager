@@ -89,7 +89,12 @@ begin
     select id into player_id
     from public.players
     where (player_email<>'' and lower(trim(coalesce(data->>'email','')))=player_email)
-       or (player_phone<>'' and regexp_replace(coalesce(data->>'phone',''),'[^0-9]','','g')=player_phone)
+       or (
+         player_phone<>''
+         and regexp_replace(coalesce(data->>'phone',''),'[^0-9]','','g')=player_phone
+         and lower(trim(coalesce(data->>'firstName','')))=lower(trim(coalesce(payload->>'firstName','')))
+         and lower(trim(coalesce(data->>'lastName','')))=lower(trim(coalesce(payload->>'lastName','')))
+       )
     order by updated_at desc nulls last
     limit 1;
   end if;

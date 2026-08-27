@@ -46,7 +46,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.19.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.19.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.20.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.20.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -205,12 +205,17 @@ async function submitNational(){
   if(!document.getElementById('nationalPrivacy')?.checked)throw new Error('Devi accettare l’informativa privacy.');
   btn.disabled=true;btn.textContent='INVIO IN CORSO...';
   const p1=nationalReadPerson('primary'),p2=nationalReadPerson('partner');
-  if(p1.data.email===p2.data.email&&p1.data.firstName===p2.data.firstName&&p1.data.lastName===p2.data.lastName)throw new Error('I due componenti della coppia devono essere persone diverse.');
+  const phone1=String(p1.data.phone||'').replace(/\D/g,''),phone2=String(p2.data.phone||'').replace(/\D/g,'');
+  if(phone1&&phone1===phone2)throw new Error('Inserisci un numero di cellulare diverso per ciascun componente della coppia.');
+  if(p1.data.email===p2.data.email)throw new Error('Inserisci un indirizzo email diverso per ciascun componente della coppia.');
+  const identity1=[p1.data.firstName,p1.data.lastName,p1.data.birth].map(x=>String(x||'').trim().toLowerCase()).join('|');
+  const identity2=[p2.data.firstName,p2.data.lastName,p2.data.birth].map(x=>String(x||'').trim().toLowerCase()).join('|');
+  if(identity1===identity2)throw new Error('I due componenti della coppia devono essere persone diverse.');
   const {error}=await sb.rpc('public_submit_tournament_registration_request',{p_share_token:token,p_mode:'pair',p_primary:p1,p_partner:p2});
   if(error)throw error;
   window.__nationalStayPeople={p1:p1,p2:p2};
   document.getElementById('app').innerHTML='<section class="card success">'+nationalLogosHtml()+'<h2>ISCRIZIONE INVIATA</h2><p>La coppia è stata registrata nella categoria <b>'+esc(nationalCategory)+'</b>.</p>'+nationalPaymentHtml()+'<a class="primary mail-link" href="'+esc(nationalReceiptMailLink(p1,p2))+'">INVIA LA RICEVUTA VIA EMAIL</a><p class="muted">Allega manualmente la ricevuta prima di inviare l’email.</p></section>'+nationalStayHtml(p1,p2);
- }catch(err){if(msg){msg.className='notice error';msg.textContent=err.message}if(btn){btn.disabled=false;btn.textContent='INVIA ISCRIZIONE DELLA COPPIA'}}
+ }catch(err){if(msg){msg.className='notice error';msg.textContent=err.message;msg.scrollIntoView({behavior:'smooth',block:'center'})}if(btn){btn.disabled=false;btn.textContent='INVIA ISCRIZIONE DELLA COPPIA'}}
 }
 function personSection(kind,title){
  const p=kind==="primary"?primary:partner;
