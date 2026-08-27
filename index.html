@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.38.24 · Importazione nazionale guidata</title>
+<title>Padel Arena Manager V8.2.38.25 · Cruscotto nazionale completo</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -3313,7 +3313,7 @@ function pamRegenerateTournament(id){
   });
   pamResetEventGeneratedData(e);
   if(e.competitionType==="fixed_pairs"){
-   const built=buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
+   const built=e.nationalParentId?pamBuildNationalFixedPairsV823825(e):buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
    e.pairs=built.pairs||[];e.matches=built.matches||[];
   }else{
    e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg)||[];
@@ -3617,7 +3617,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.24 · IMPORT GUIDATO</span></div>'+ 
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.25 · CRUSCOTTO NAZIONALE</span></div>'+ 
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5923,6 +5923,101 @@ function buildFixedPairs(ids,pairsPerGroup,courts,returnLeg){
  return {pairs:pairs,matches:matches};
 }
 
+/* V8.2.38.25 - configurazione indipendente delle categorie nazionali */
+function pamNationalPairKeyV823825(a,b){return [String(a),String(b)].sort().join("|")}
+function pamNationalOrderedIdsV823825(e){
+ const ids=(e.playerIds||[]).map(String),regs=e.fixedPairRegistrations||{},used=new Set(),pairs=[],singles=[];
+ ids.forEach(function(id){
+  if(used.has(id))return;
+  const reg=regs[id]||{},partner=String(reg.partnerId||reg.partner_id||"");
+  if(partner&&ids.includes(partner)&&!used.has(partner)){
+   pairs.push([id,partner]);used.add(id);used.add(partner);
+  }else{singles.push(id);used.add(id)}
+ });
+ for(let i=0;i+1<singles.length;i+=2)pairs.push([singles[i],singles[i+1]]);
+ return pairs.flat();
+}
+function pamNationalPairRowsV823825(e){
+ const ids=pamNationalOrderedIdsV823825(e),rows=[];
+ for(let i=0;i+1<ids.length;i+=2){
+  const pa=playerById(ids[i]),pb=playerById(ids[i+1]);
+  rows.push({a:ids[i],b:ids[i+1],key:pamNationalPairKeyV823825(ids[i],ids[i+1]),name:(pa?playerName(pa):"Giocatore")+" / "+(pb?playerName(pb):"Giocatore")});
+ }
+ return rows;
+}
+function pamBuildNationalFixedPairsV823825(e){
+ const ids=pamNationalOrderedIdsV823825(e),pairRows=[];
+ for(let i=0;i+1<ids.length;i+=2)pairRows.push({players:[ids[i],ids[i+1]],key:pamNationalPairKeyV823825(ids[i],ids[i+1])});
+ const pairCount=pairRows.length,pairsPerGroup=Math.max(2,Number(e.pairsPerGroup)||4);
+ const requested=Math.max(0,Number(e.nationalGroupCount)||0);
+ const groupCount=requested||Math.max(1,Math.ceil(pairCount/pairsPerGroup));
+ if(groupCount>pairCount)throw new Error("Il numero di gironi non può superare il numero di coppie.");
+ if(groupCount*pairsPerGroup<pairCount)throw new Error("I gironi impostati non contengono tutte le coppie: aumenta i gironi o le coppie per girone.");
+ const seedKeys=new Set((e.nationalSeedPairKeys||[]).map(String));
+ const seeded=pairRows.filter(function(p){return seedKeys.has(p.key)}),others=pairRows.filter(function(p){return !seedKeys.has(p.key)});
+ const groups=Array.from({length:groupCount},function(){return[]});
+ seeded.forEach(function(p,i){groups[i%groupCount].push(p)});
+ others.forEach(function(p){
+  let target=0;
+  for(let i=1;i<groups.length;i++)if(groups[i].length<groups[target].length)target=i;
+  if(groups[target].length>=pairsPerGroup)throw new Error("Capienza gironi insufficiente.");
+  groups[target].push(p);
+ });
+ const pairs=[];
+ groups.forEach(function(group,gi){group.forEach(function(row){pairs.push({id:uid("pair"),players:row.players,name:"Coppia "+(pairs.length+1),group:String.fromCharCode(65+gi),seeded:seedKeys.has(row.key)})})});
+ const matches=[],courts=Math.max(1,Number(e.courts)||1);
+ groups.forEach(function(_,gi){
+  const letter=String.fromCharCode(65+gi),gp=pairs.filter(function(p){return p.group===letter});
+  for(let i=0;i<gp.length;i++)for(let j=i+1;j<gp.length;j++)matches.push({id:uid("m"),round:letter,leg:1,court:(matches.length%courts)+1,pair1:gp[i].id,pair2:gp[j].id,score1:null,score2:null,note:"",group:letter});
+ });
+ if(e.returnLeg){matches.slice().forEach(function(m){matches.push({id:uid("m"),round:m.round,leg:2,court:(matches.length%courts)+1,pair1:m.pair2,pair2:m.pair1,score1:null,score2:null,note:"",group:m.group})})}
+ return {pairs:pairs,matches:matches};
+}
+function pamValidateNationalCategoryConfigV823825(e,groupCount,pairsPerGroup,qualifiers){
+ const pairCount=pamNationalPairRowsV823825(e).length;
+ if(groupCount<1)throw new Error("Inserisci almeno un girone.");
+ if(pairsPerGroup<2)throw new Error("Ogni girone deve contenere almeno 2 coppie.");
+ if(qualifiers<1||qualifiers>pairsPerGroup)throw new Error("Le qualificate per girone devono essere comprese tra 1 e "+pairsPerGroup+".");
+ if(pairCount&&groupCount>pairCount)throw new Error("Hai "+pairCount+" coppie: non puoi creare "+groupCount+" gironi.");
+ if(pairCount&&groupCount*pairsPerGroup<pairCount)throw new Error("Con questa configurazione entrano "+(groupCount*pairsPerGroup)+" coppie, ma ne risultano "+pairCount+".");
+}
+function pamOpenNationalCategorySettingsV823825(id){
+ const e=(state.events||[]).find(function(x){return String(x.id)===String(id)});if(!e)return;
+ document.getElementById("pamNationalCategorySettingsV823825")?.remove();
+ const rows=pamNationalPairRowsV823825(e),seeds=new Set((e.nationalSeedPairKeys||[]).map(String));
+ const groupCount=Math.max(1,Number(e.nationalGroupCount)||Math.ceil(Math.max(1,rows.length)/(Number(e.pairsPerGroup)||4)));
+ const overlay=document.createElement("div");overlay.id="pamNationalCategorySettingsV823825";overlay.className="pam-modal-overlay";overlay.dataset.eventId=e.id;
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>DOPPIO '+esc(String(e.nationalCategory||e.category).toUpperCase())+'</h2><div class="muted">Configurazione indipendente di gironi, teste di serie e fasi finali.</div></div><button class="secondary" data-close-national-settings-823825>Chiudi</button></div>'+
+ '<div class="row"><div class="field"><label>Numero di gironi</label><input id="pamNationalGroupCount823825" type="number" min="1" max="16" value="'+groupCount+'"></div><div class="field"><label>Coppie per girone</label><input id="pamNationalPairsPerGroup823825" type="number" min="2" max="16" value="'+Math.max(2,Number(e.pairsPerGroup)||4)+'"></div><div class="field"><label>Qualificate per girone</label><input id="pamNationalQualifiers823825" type="number" min="1" max="16" value="'+Math.max(1,Number(e.nationalQualifiersPerGroup)||2)+'"></div></div>'+
+ '<div class="field"><label>Struttura fasi finali</label><select id="pamNationalFinalsMode823825"><option value="classic" '+((e.finalsOption||"classic")==="classic"?"selected":"")+'>TABELLONE CLASSICO</option><option value="gold_silver" '+(e.finalsOption==="gold_silver"?"selected":"")+'>GOLD E SILVER</option><option value="gold_silver_bronze" '+(e.finalsOption==="gold_silver_bronze"?"selected":"")+'>GOLD, SILVER E BRONZE</option></select></div>'+
+ '<h3>TESTE DI SERIE</h3><div class="notice">Seleziona le coppie da separare nei diversi gironi. Finché possibile, una testa di serie viene collocata in ciascun girone.</div>'+
+ (rows.length?'<div class="pam-replacement-list">'+rows.map(function(row){return '<label class="pam-replacement-row" style="cursor:pointer"><input type="checkbox" data-national-seed-823825="'+esc(row.key)+'" '+(seeds.has(row.key)?"checked":"")+'><span><b>'+esc(row.name)+'</b><small>'+ (seeds.has(row.key)?"Testa di serie":"Coppia confermata")+'</small></span></label>'}).join("")+'</div>':'<div class="notice">Le teste di serie saranno selezionabili appena ci saranno coppie confermate.</div>')+
+ '<div id="pamNationalSettingsMessage823825"></div><div class="row"><button class="secondary" data-save-national-settings-823825> SALVA IMPOSTAZIONI</button><button class="primary" data-generate-national-category-823825> SALVA E GENERA GIRONI</button></div><div class="muted">“Salva e genera” ricrea partite e classifiche della sola categoria selezionata. Le altre categorie non vengono toccate.</div></div>';
+ document.body.appendChild(overlay);
+}
+function pamReadNationalCategorySettingsV823825(overlay){
+ const e=(state.events||[]).find(function(x){return String(x.id)===String(overlay.dataset.eventId)});if(!e)throw new Error("Categoria non trovata.");
+ const groupCount=Number(overlay.querySelector("#pamNationalGroupCount823825").value),pairsPerGroup=Number(overlay.querySelector("#pamNationalPairsPerGroup823825").value),qualifiers=Number(overlay.querySelector("#pamNationalQualifiers823825").value);
+ pamValidateNationalCategoryConfigV823825(e,groupCount,pairsPerGroup,qualifiers);
+ e.nationalGroupCount=groupCount;e.pairsPerGroup=pairsPerGroup;e.nationalQualifiersPerGroup=qualifiers;e.finalsOption=overlay.querySelector("#pamNationalFinalsMode823825").value;
+ e.nationalSeedPairKeys=Array.from(overlay.querySelectorAll("[data-national-seed-823825]:checked")).map(function(x){return x.getAttribute("data-national-seed-823825")});
+ return e;
+}
+function pamSaveNationalCategorySettingsV823825(generate){
+ const overlay=document.getElementById("pamNationalCategorySettingsV823825"),msg=overlay&&overlay.querySelector("#pamNationalSettingsMessage823825");if(!overlay)return;
+ try{
+  const e=pamReadNationalCategorySettingsV823825(overlay);
+  if(generate){
+   if((e.matches||[]).some(function(m){return m.score1!==null||m.score2!==null})&&!confirm("Questa categoria contiene risultati. Rigenerando verranno cancellati. Continuare?"))return;
+   if((e.playerIds||[]).length<4)throw new Error("Servono almeno 2 coppie confermate per generare i gironi.");
+   const built=pamBuildNationalFixedPairsV823825(e);e.pairs=built.pairs;e.matches=built.matches;delete e.fixedFinalsAdvanced;e.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};e.timers={};
+   pamRebuildNationalSchedule(e.nationalParentId,true);
+  }
+  save();overlay.remove();render();pamToast(generate?"Gironi della categoria generati senza sovrapposizioni.":"Configurazione della categoria salvata.","success");
+  if(PAM_SESSION&&pamIsAdmin())Promise.resolve(pamCloudSyncAll()).catch(function(err){console.warn("Sync configurazione nazionale:",err)});
+ }catch(err){if(msg){msg.className="notice error";msg.textContent="Errore: "+err.message}}
+}
+
 /* V8.2.38.21 - calendario unico e anti-sovrapposizione per l'evento nazionale */
 function pamNationalParentForEvent(e){
  if(!e)return null;
@@ -5934,6 +6029,25 @@ function pamNationalChildren(parent){
  const order={Maschile:0,Femminile:1,Misto:2};
  return (state.events||[]).filter(function(x){return x&&String(x.nationalParentId)===String(parent.id)})
   .sort(function(a,b){return (order[a.nationalCategory]??9)-(order[b.nationalCategory]??9)});
+}
+function pamEnsureNationalChildrenV823825(parent){
+ if(!parent||parent.competitionType!=="national_event")return [];
+ const categories=["Maschile","Femminile","Misto"];
+ let changed=false;
+ categories.forEach(function(category){
+  let child=(state.events||[]).find(function(x){return x&&String(x.nationalParentId)===String(parent.id)&&String(x.nationalCategory)===category});
+  if(child)return;
+  child=JSON.parse(JSON.stringify(parent));
+  child.id=uid("e");child.shareToken=pamUuid();child.name=parent.name+" · "+category;child.category=category;child.competitionType="fixed_pairs";child.status="internal";child.registrationOpen=false;child.nationalParentId=parent.id;child.nationalCategory=category;
+  delete child.nationalChildIds;delete child.nationalSchedule;
+  child.playerIds=[];child.playerSnapshots={};child.payments={};child.fixedPairRegistrations={};child.pairs=[];child.matches=[];child.ledger={};child.timers={};
+  state.events.push(child);changed=true;
+ });
+ const children=pamNationalChildren(parent);
+ const ids=children.map(function(child){return child.id});
+ if(JSON.stringify(parent.nationalChildIds||[])!==JSON.stringify(ids)){parent.nationalChildIds=ids;changed=true}
+ if(changed)save();
+ return children;
 }
 function pamNationalMatchPlayers(child,m){
  if(!child||!m)return [];
@@ -6179,8 +6293,34 @@ function pamEventRegulationPanel(e){
   (url?'<a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">📎 APRI '+esc(e.regulationFileName||"REGOLAMENTO")+'</a>':'')+
  '</div></details>';
 }
+function pamNationalAllMatchesV823825(parent,children){
+ const order={Maschile:0,Femminile:1,Misto:2};
+ const rows=[];
+ (children||[]).forEach(function(child){
+  (child.matches||[]).forEach(function(match,index){
+   const assignment=pamNationalScheduleAssignment(child,"match",match.id);
+   rows.push({child:child,match:match,index:index,assignment:assignment,category:child.nationalCategory||child.category||""});
+  });
+ });
+ rows.sort(function(a,b){
+  const ad=a.assignment?(a.assignment.date+" "+a.assignment.time+" "+String(a.assignment.court).padStart(3,"0")):"9999";
+  const bd=b.assignment?(b.assignment.date+" "+b.assignment.time+" "+String(b.assignment.court).padStart(3,"0")):"9999";
+  return ad.localeCompare(bd)||(order[a.category]??9)-(order[b.category]??9)||a.index-b.index;
+ });
+ if(!rows.length)return '<div class="notice"><b>NESSUNA PARTITA ANCORA GENERATA</b><br>Conferma le coppie nelle iscrizioni, poi apri la categoria interessata e usa Partecipanti / Rigenera per creare gironi e partite.</div>';
+ return '<div class="pam-national-all-matches">'+rows.map(function(row){
+  const child=row.child,match=row.match,a=row.assignment;
+  const played=match.score1!==null&&match.score2!==null;
+  return '<article class="card" style="border-left:5px solid '+(row.category==="Maschile"?'#1cb5ff':row.category==="Femminile"?'#ff5aa5':'#9dff1f')+'">'+
+   '<div class="row" style="align-items:center"><span class="pam-national-child-badge">DOPPIO '+esc(String(row.category).toUpperCase())+'</span><span class="muted">Girone '+esc(match.group||match.round||'—')+'</span></div>'+
+   '<div class="muted" style="margin:8px 0">'+(a?esc(a.date)+' · ore '+esc(a.time)+' · Campo '+esc(a.court):'<b>DA PROGRAMMARE NEL CALENDARIO UNICO</b>')+'</div>'+
+   matchupStackHtml(pairStackHtml(child,match.pair1),pairStackHtml(child,match.pair2))+
+   '<div style="text-align:center;font-size:1.35rem;font-weight:900;margin:8px 0">'+(played?esc(match.score1)+' : '+esc(match.score2):'DA GIOCARE')+'</div>'+
+   '<button class="secondary" data-open-event="'+child.id+'" data-target-tab="matches">APRI PARTITE '+esc(String(row.category).toUpperCase())+'</button></article>';
+ }).join('')+'</div>';
+}
 function pamNationalEventView(e){
- const children=["Maschile","Femminile","Misto"].map(function(category){return state.events.find(function(x){return String(x.nationalParentId)===String(e.id)&&x.nationalCategory===category})}).filter(Boolean);
+ const children=pamEnsureNationalChildrenV823825(e);
  const schedule=pamEnsureNationalSchedule(e),missing=(schedule&&schedule.overflow||[]).length;
  const scheduleHtml=!schedule||!schedule.total
   ?'<div class="notice"><b>CALENDARIO UNICO:</b> sarà creato appena generi le partite nelle categorie.</div>'
@@ -6189,10 +6329,16 @@ function pamNationalEventView(e){
    :'<div class="notice success"><b>CALENDARIO UNICO VERIFICATO</b><br>'+schedule.scheduled+' partite distribuite su '+schedule.courts+' campi senza sovrapposizioni di campi, giocatori o categorie.</div>';
  const cards=children.map(function(child){
   const players=(child.playerIds||[]).length,pairs=Math.floor(players/2),results=(child.matches||[]).filter(function(m){return m.score1!==null&&m.score2!==null}).length;
-  return '<div class="pam-national-category"><span class="pam-national-child-badge">DOPPIO '+esc(child.nationalCategory.toUpperCase())+'</span><h3>'+pairs+' coppie confermate</h3><div class="muted">'+players+' giocatori · '+(child.matches||[]).length+' partite · '+results+' risultati</div><button class="primary" data-open-event="'+child.id+'">GESTISCI CATEGORIA</button></div>';
+  return '<div class="pam-national-category"><span class="pam-national-child-badge">DOPPIO '+esc(child.nationalCategory.toUpperCase())+'</span><h3>'+pairs+' coppie confermate</h3><div class="muted">'+players+' giocatori · '+(child.matches||[]).length+' partite · '+results+' risultati</div>'+
+   '<div class="notice"><b>'+Math.max(1,Number(child.nationalGroupCount)||Math.ceil(Math.max(1,pairs)/(Number(child.pairsPerGroup)||4)))+' gironi</b> · massimo '+Math.max(2,Number(child.pairsPerGroup)||4)+' coppie per girone · '+Math.max(1,Number(child.nationalQualifiersPerGroup)||2)+' qualificate per girone<br>Finali: '+esc(({classic:"classiche",gold_silver:"Gold e Silver",gold_silver_bronze:"Gold, Silver e Bronze"})[child.finalsOption||"classic"]||"classiche")+'</div>'+
+   '<button class="primary" data-open-event="'+child.id+'" data-target-tab="matches">PARTITE</button>'+
+   '<div class="row"><button class="secondary" data-open-event="'+child.id+'" data-target-tab="pairstandings">CLASSIFICHE GIRONI</button><button class="secondary" data-open-event="'+child.id+'" data-target-tab="pairs">COPPIE</button></div>'+
+   '<div class="row"><button class="secondary" data-open-event="'+child.id+'" data-target-tab="fixedfinals">FASI FINALI</button><button class="secondary" data-open-event="'+child.id+'" data-target-tab="players">GIOCATORI</button></div>'+
+   (pamIsAdmin()?'<button class="secondary" data-national-category-settings-823825="'+child.id+'">⚙️ CONFIGURA GIRONI, TESTE DI SERIE E FINALI</button>':'')+'</div>';
  }).join("");
+ const allMatches='<section class="card" style="margin-top:16px"><h2>TUTTE LE PARTITE</h2><div class="muted" style="margin-bottom:12px">Calendario complessivo di Doppio Maschile, Doppio Femminile e Doppio Misto, ordinato per giorno, ora e campo.</div>'+pamNationalAllMatchesV823825(e,children)+'</section>';
  return header(e.name,e.date+" · "+e.club+" · CAMPIONATI NAZIONALI")+
- '<div class="pam-national-hub"><div class="pam-national-logos"><div><img src="assets/aics-logo.png" alt="AICS"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport"></div></div><div class="notice success"><b>UN SOLO LINK DI ISCRIZIONE</b><br>Gli iscritti scelgono Doppio Maschile, Doppio Femminile o Doppio Misto. Dopo la verifica della ricevuta, la coppia entra automaticamente nella categoria corretta.</div><button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI LINK UNICO</button><button class="secondary" data-open-registrations="'+e.id+'">📥 ISCRIZIONI E RICEVUTE</button>'+scheduleHtml+(pamIsAdmin()?'<button class="secondary" data-rebuild-national-schedule="'+e.id+'">🗓️ RICALCOLA CALENDARIO UNICO</button>':'')+'<div class="pam-national-categories">'+cards+'</div><div class="pam-national-payment"><b>Conferma pagamento</b><br>La ricevuta deve arrivare via email a <b>nazionalipadel@aicstennis.it</b>. L’iscrizione diventa valida solo quando premi “Conferma ricevuta e iscrizione”.</div></div>'+pamEventRegulationPanel(e)+
+ '<div class="pam-national-hub"><div class="pam-national-logos"><div><img src="assets/aics-logo.png" alt="AICS"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport"></div></div><div class="notice success"><b>UN SOLO LINK DI ISCRIZIONE</b><br>Gli iscritti scelgono Doppio Maschile, Doppio Femminile o Doppio Misto. Dopo la verifica della ricevuta, la coppia entra automaticamente nella categoria corretta.</div><button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI LINK UNICO</button><button class="secondary" data-open-registrations="'+e.id+'">📥 ISCRIZIONI E RICEVUTE</button>'+scheduleHtml+(pamIsAdmin()?'<button class="secondary" data-rebuild-national-schedule="'+e.id+'">🗓️ RICALCOLA CALENDARIO UNICO</button>':'')+'<h2 style="margin-top:18px">GESTIONE DELLE 3 CATEGORIE</h2><div class="pam-national-categories">'+cards+'</div>'+allMatches+'<div class="pam-national-payment"><b>Conferma pagamento</b><br>La ricevuta deve arrivare via email a <b>nazionalipadel@aicstennis.it</b>. L’iscrizione diventa valida solo quando premi “Conferma ricevuta e iscrizione”.</div></div>'+pamEventRegulationPanel(e)+
  (pamIsAdmin()?'<details class="pam-actions-menu print-hide"><summary>Impostazioni evento nazionale</summary><div class="pam-actions-content"><button class="secondary" data-open-import-823822="'+e.id+'">📥 Importa giocatori e coppie</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Vedi locandina</button><button class="secondary" data-create-poster="'+e.id+'">✨ Crea locandina</button><label class="upload-button">📤 Inserisci locandina<input type="file" accept="image/png,image/jpeg,image/webp" data-tournament-poster="'+e.id+'"></label><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati generali</button></div></details>':'')+printFooter(e);
 }
 function eventView(){
@@ -6875,8 +7021,10 @@ function pamFixedTierView(e,key,bracket){
  return '<section class="pam-tier-block pam-tier-'+key+'"><div class="pam-tier-title"><h2>'+esc(bracket.name)+'</h2><span>'+bracket.entrants.length+' coppie</span></div>'+champion+rounds+'</section>';
 }
 function pamFixedFinalsConfigView(e){
- const cfg=e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config||{source:"general",count:"all",mode:e.finalsOption||"classic"};
+ const programmedCount=e.nationalParentId?Math.min((e.pairs||[]).length,Math.max(2,(Number(e.nationalGroupCount)||1)*(Number(e.nationalQualifiersPerGroup)||2))):"all";
+ const cfg=e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config||{source:e.nationalParentId?"groups":"general",count:programmedCount,mode:e.finalsOption||"classic"};
  const total=(e.pairs||[]).length;
+ const countOptions=Array.from(new Set([2,4,8,16,Number(programmedCount)].filter(function(n){return Number.isFinite(n)&&n>=2&&n<=total}))).sort(function(a,b){return a-b});
  return '<div class="card pam-finals-config">'+
   '<h2>CONFIGURAZIONE FASI FINALI</h2>'+
   '<div class="notice">Puoi rigenerare il tabellone in qualsiasi momento. La classifica generale ordina tutte le coppie insieme; la classifica per gironi prende prima tutte le prime, poi tutte le seconde e così via.</div>'+
@@ -6887,7 +7035,7 @@ function pamFixedFinalsConfigView(e){
    '</select></div>'+
    '<div class="field"><label>Coppie qualificate</label><select id="pamFinalQualifiedCount">'+
     '<option value="all" '+(cfg.count==="all"?"selected":"")+'>TUTTE LE COPPIE</option>'+
-    [2,4,8,16].filter(function(n){return n<=total}).map(function(n){return'<option value="'+n+'" '+(String(cfg.count)===String(n)?"selected":"")+'>'+n+' COPPIE</option>'}).join("")+
+    countOptions.map(function(n){return'<option value="'+n+'" '+(String(cfg.count)===String(n)?"selected":"")+'>'+n+' COPPIE</option>'}).join("")+
    '</select></div>'+
    '<div class="field"><label>Modalità fasi finali</label><select id="pamFinalMode">'+
     '<option value="classic" '+(cfg.mode==="classic"?"selected":"")+'>CLASSICHE</option>'+
@@ -7667,6 +7815,13 @@ document.addEventListener("click",function(ev){
   if(!pamIsAdmin()){pamToast("Solo l’amministratore può ricalcolare il calendario nazionale.","error");return}
   pamRebuildNationalSchedule(rebuildNationalSchedule.getAttribute("data-rebuild-national-schedule"),false);return
  }
+ const nationalCategorySettings=ev.target.closest("[data-national-category-settings-823825]");if(nationalCategorySettings){
+  if(!pamIsAdmin()){pamToast("Solo l’amministratore può configurare i gironi.","error");return}
+  pamOpenNationalCategorySettingsV823825(nationalCategorySettings.getAttribute("data-national-category-settings-823825"));return
+ }
+ const closeNationalSettings=ev.target.closest("[data-close-national-settings-823825]");if(closeNationalSettings){document.getElementById("pamNationalCategorySettingsV823825")?.remove();return}
+ const saveNationalSettings=ev.target.closest("[data-save-national-settings-823825]");if(saveNationalSettings){pamSaveNationalCategorySettingsV823825(false);return}
+ const generateNationalCategory=ev.target.closest("[data-generate-national-category-823825]");if(generateNationalCategory){pamSaveNationalCategorySettingsV823825(true);return}
 
  const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
  const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
@@ -7811,7 +7966,7 @@ document.addEventListener("click",function(ev){
   if(a==="edit-six-result")editSixResult(action.getAttribute("data-six-id"),action.getAttribute("data-six-type"));
   return;
  }
- const open=ev.target.closest("[data-open-event]");if(open){const found=pamFindEventById(open.getAttribute("data-open-event"));if(!found){pamToast("Torneo non trovato. Aggiorna i dati e riprova.","error");return}state.currentEventId=found.id;state.view="event";state.tab="matches";save();render();return}
+ const open=ev.target.closest("[data-open-event]");if(open){const found=pamFindEventById(open.getAttribute("data-open-event"));if(!found){pamToast("Torneo non trovato. Aggiorna i dati e riprova.","error");return}state.currentEventId=found.id;state.view="event";state.tab=open.getAttribute("data-target-tab")||"matches";save();render();return}
  const del=ev.target.closest("[data-delete-event]");if(del){deleteEvent(del.getAttribute("data-delete-event"));return}
  const edit=ev.target.closest("[data-edit-player]");if(edit){editPlayer(edit.getAttribute("data-edit-player"));return}
 });
@@ -8133,7 +8288,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823822",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823825",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
