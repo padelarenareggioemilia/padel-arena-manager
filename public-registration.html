@@ -18,6 +18,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .national-logos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:center;margin:0 0 16px}.national-logos div{height:92px;background:#fff;border-radius:16px;padding:9px;display:flex;align-items:center;justify-content:center}.national-logos img{max-width:100%;max-height:100%;object-fit:contain}
 .category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.category-grid button{min-height:82px;background:#17304e;color:#fff;border:2px solid #3c5d7d}.category-grid button.on{background:var(--accent);color:#07111f;border-color:var(--accent);box-shadow:0 0 0 3px rgba(157,255,37,.2)}
 .national-step{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#07111f;margin-right:8px;font-weight:1000}.payment-warning{border:2px solid #facc15;background:#30270b;color:#fff5b8;font-size:15px;line-height:1.5}.payment-warning a{color:#fff;font-weight:1000}.privacy-check{display:flex;gap:10px;align-items:flex-start;margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#09182a}.privacy-check input{width:22px;height:22px;flex:0 0 auto;margin:0}
+.bank-details{display:grid;gap:7px;margin-top:10px;padding:13px;border-radius:13px;background:#111d2d;border:1px solid #536b85}.bank-details span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:900}.bank-details b{word-break:break-word}.stay-box{border:2px solid #38bdf8;background:#08263a}.stay-box textarea{min-height:210px;line-height:1.45}.mail-link{display:block;text-align:center;text-decoration:none;margin-top:12px}.copy-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.copy-row button{padding:12px}.official-note{font-size:13px;line-height:1.5;color:#dbeafe}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 @media(max-width:650px){.national-logos{grid-template-columns:1fr 1fr}.national-logos div:first-child{grid-column:1/-1}.category-grid{grid-template-columns:1fr}}
 
@@ -44,7 +45,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.15.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.15.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.16.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.16.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -120,14 +121,49 @@ function nationalPersonForm(kind,title){
 function nationalLogosHtml(){
  return '<div class="national-logos"><div><img src="assets/aics-logo.png" alt="AICS Settore Tennis e Padel Nazionale"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport Riccione"></div></div>';
 }
+const NATIONAL_PAYMENT={beneficiary:'AICS ASSOCIAZIONE ITALIANA CULTURA SPORT APS DIREZ. NAZIONALE',iban:'IT 75 I 01030 03271 000061460833',reason:'Campionato Nazionale Padel 2026',receiptEmail:'nazionalipadel@aicstennis.it'};
+function nationalPaymentHtml(){
+ return '<div class="notice payment-warning"><b>PAGAMENTO E VALIDITÀ DELL’ISCRIZIONE</b><br><b>30 € a persona</b> per una categoria · <b>40 € a persona</b> per due categorie.'+
+  '<div class="bank-details"><div><span>Intestatario</span><b>'+esc(NATIONAL_PAYMENT.beneficiary)+'</b></div><div class="copy-row"><div><span>IBAN</span><b>'+esc(NATIONAL_PAYMENT.iban)+'</b></div><button type="button" class="secondary" data-copy-value="'+esc(NATIONAL_PAYMENT.iban.replace(/\s/g,''))+'">COPIA</button></div><div class="copy-row"><div><span>Causale</span><b>'+esc(NATIONAL_PAYMENT.reason)+'</b></div><button type="button" class="secondary" data-copy-value="'+esc(NATIONAL_PAYMENT.reason)+'">COPIA</button></div></div>'+
+  '<br>La ricevuta deve essere inviata a <a href="mailto:'+NATIONAL_PAYMENT.receiptEmail+'">'+NATIONAL_PAYMENT.receiptEmail+'</a>.<br><b>L’iscrizione è valida soltanto dopo il ricevimento della ricevuta.</b></div>';
+}
+function nationalReceiptMailLink(p1,p2){
+ const subject='Ricevuta iscrizione · '+(tournament?.name||'Campionato Nazionale Padel 2026');
+ const body='Buongiorno,\n\nallego la ricevuta del bonifico per l’iscrizione al Campionato Nazionale Padel 2026.\n\nCategoria: Doppio '+nationalCategory+'\nGiocatore 1: '+p1.data.firstName+' '+p1.data.lastName+'\nGiocatore 2: '+p2.data.firstName+' '+p2.data.lastName+'\n\nCausale: '+NATIONAL_PAYMENT.reason+'\n\nCordiali saluti.';
+ return 'mailto:'+NATIONAL_PAYMENT.receiptEmail+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+}
+function nationalStayDefaultText(p1,p2,checkIn,checkOut,companions){
+ return 'Buongiorno AICS Travel,\n\nchiedo disponibilità per il soggiorno in occasione del Campionato Nazionale AICS Padel 2026 a Misano Adriatico.\n\nGiocatori:\n- '+p1.data.firstName+' '+p1.data.lastName+'\n- '+p2.data.firstName+' '+p2.data.lastName+'\n\nCategoria: Doppio '+nationalCategory+'\nCheck-in richiesto: '+checkIn+'\nCheck-out richiesto: '+checkOut+'\nAccompagnatori: '+companions+'\n\nEventuali altre notti o richieste:\n[Scrivere qui]\n\nRecapito telefonico: '+p1.data.phone+'\nEmail: '+p1.data.email+'\n\nResto in attesa di disponibilità, struttura proposta e condizioni convenzionate.\n\nCordiali saluti.';
+}
+function nationalStayHtml(p1,p2){
+ const text=nationalStayDefaultText(p1,p2,'5 settembre 2026','6 settembre 2026','0');
+ return '<section class="card stay-box"><h3>🏨 PRENOTAZIONE PERNOTTAMENTO · AICS TRAVEL</h3><p class="official-note">La sistemazione alberghiera è gestita direttamente da <b>AICS Travel</b>, in base alla disponibilità e alle condizioni convenzionate. Il soggiorno indicato dalla circolare è dalla notte del 5 settembre, con uscita il 6; puoi richiedere altre notti o aggiungere accompagnatori.</p><div class="row"><div><label>Check-in</label><select id="stayCheckIn"><option>4 settembre 2026</option><option selected>5 settembre 2026</option><option>6 settembre 2026</option></select></div><div><label>Check-out</label><select id="stayCheckOut"><option>5 settembre 2026</option><option selected>6 settembre 2026</option><option>7 settembre 2026</option></select></div></div><label>Numero accompagnatori</label><input id="stayCompanions" type="number" min="0" value="0"><label>Testo dell’email modificabile</label><textarea id="stayEmailText">'+esc(text)+'</textarea><a id="sendStayEmail" class="primary mail-link" href="mailto:info@aicstravel.it?subject='+encodeURIComponent('Richiesta pernottamento · Campionato Nazionale AICS Padel 2026')+'&body='+encodeURIComponent(text)+'">INVIA RICHIESTA AD AICS TRAVEL</a><div class="muted" style="margin-top:9px">Destinatario: info@aicstravel.it · Tel. 375 7990658 (Michela Tesi). Prima dell’invio puoi modificare liberamente il testo.</div></section>';
+}
+function refreshNationalStayEmail(){
+ const people=window.__nationalStayPeople;if(!people)return;
+ const checkIn=document.getElementById('stayCheckIn')?.value||'5 settembre 2026';
+ const checkOut=document.getElementById('stayCheckOut')?.value||'6 settembre 2026';
+ const companions=document.getElementById('stayCompanions')?.value||'0';
+ const textarea=document.getElementById('stayEmailText');if(!textarea)return;
+ textarea.value=nationalStayDefaultText(people.p1,people.p2,checkIn,checkOut,companions);
+ updateNationalStayMailLink();
+}
+function updateNationalStayMailLink(){
+ const text=document.getElementById('stayEmailText')?.value||'';
+ const link=document.getElementById('sendStayEmail');if(!link)return;
+ link.href='mailto:info@aicstravel.it?subject='+encodeURIComponent('Richiesta pernottamento · Campionato Nazionale AICS Padel 2026')+'&body='+encodeURIComponent(text);
+}
+async function copyPublicValue(value){
+ try{await navigator.clipboard.writeText(value);alert('Dato copiato.')}catch(_){prompt('Copia questo dato:',value)}
+}
 function renderNational(){
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
   '<section class="card">'+nationalLogosHtml()+'<h2>'+esc(tournament.name||'Campionati Nazionali Padel')+'</h2><div class="muted">'+esc(tournament.date||'')+' · '+esc(tournament.club||'')+'</div>'+
-  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div><div class="notice"><b>QUOTA</b><br>30 € a persona per una categoria · 40 € a persona per la doppia categoria. Per partecipare a due categorie invia una seconda iscrizione scegliendo l’altra categoria e il relativo partner.</div></section>'+publicRegulationHtml()+
+  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div>'+nationalPaymentHtml()+'<div class="notice stay-box"><b>PERNOTTAMENTO CON AICS TRAVEL</b><br>Dopo l’iscrizione potrai preparare direttamente un’email a <b>info@aicstravel.it</b>, già compilata con i dati della coppia e le notti richieste, ma completamente modificabile.</div></section>'+publicRegulationHtml()+
   '<section class="card"><h3><span class="national-step">1</span>Scegli la categoria</h3><div class="category-grid">'+['Maschile','Femminile','Misto'].map(c=>'<button type="button" class="'+(nationalCategory===c?'on':'')+'" data-national-category="'+c+'">DOPPIO '+c.toUpperCase()+'</button>').join('')+'</div></section>'+
   (nationalCategory?nationalPersonForm('primary','DATI GIOCATORE / GIOCATRICE 1')+nationalPersonForm('partner','DATI GIOCATORE / GIOCATRICE 2'):'<section class="card notice">Seleziona prima la categoria per proseguire.</section>')+
-  (nationalCategory?'<section class="card"><h3><span class="national-step">4</span>Conferma e invia</h3><div class="notice payment-warning"><b>RICEVUTA DEL BONIFICO</b><br>Non devi caricare alcun file. Invia la ricevuta via email a <a href="mailto:nazionalipadel@aicstennis.it">nazionalipadel@aicstennis.it</a>.<br><b>L’iscrizione sarà valida esclusivamente dopo il ricevimento della ricevuta via email.</b></div>'+
+  (nationalCategory?'<section class="card"><h3><span class="national-step">4</span>Conferma e invia</h3>'+nationalPaymentHtml()+
   '<details class="notice"><summary><b>Informativa privacy</b></summary><p class="privacy">I dati personali saranno trattati ai sensi dell’art. 13 del GDPR 2016/679/UE per la gestione dell’evento e per le comunicazioni inerenti l’attività statutaria e regolamentare AICS.</p></details>'+
   '<label class="privacy-check"><input id="nationalPrivacy" type="checkbox"><span>Confermo di aver letto l’informativa, acconsento al trattamento dei dati e dichiaro di essere autorizzato/a a comunicare i dati del secondo componente della coppia. <span class="required">*</span></span></label>'+
   '<button type="button" class="primary" id="submitNationalRegistration" style="width:100%;margin-top:14px">INVIA ISCRIZIONE DELLA COPPIA</button><div id="submitMessage"></div></section>':'');
@@ -152,7 +188,8 @@ async function submitNational(){
   if(p1.data.email===p2.data.email&&p1.data.firstName===p2.data.firstName&&p1.data.lastName===p2.data.lastName)throw new Error('I due componenti della coppia devono essere persone diverse.');
   const {error}=await sb.rpc('public_submit_tournament_registration_request',{p_share_token:token,p_mode:'pair',p_primary:p1,p_partner:p2});
   if(error)throw error;
-  document.getElementById('app').innerHTML='<section class="card success">'+nationalLogosHtml()+'<h2>ISCRIZIONE INVIATA</h2><p>La coppia è stata registrata nella categoria <b>'+esc(nationalCategory)+'</b>.</p><div class="notice payment-warning"><b>ISCRIZIONE IN ATTESA DELLA RICEVUTA</b><br>Invia ora la ricevuta del bonifico a <a href="mailto:nazionalipadel@aicstennis.it">nazionalipadel@aicstennis.it</a>.<br>L’iscrizione sarà valida soltanto dopo il ricevimento dell’email.</div><p>Puoi chiudere questa pagina dopo aver inviato la ricevuta.</p></section>';
+  window.__nationalStayPeople={p1:p1,p2:p2};
+  document.getElementById('app').innerHTML='<section class="card success">'+nationalLogosHtml()+'<h2>ISCRIZIONE INVIATA</h2><p>La coppia è stata registrata nella categoria <b>'+esc(nationalCategory)+'</b>.</p>'+nationalPaymentHtml()+'<a class="primary mail-link" href="'+esc(nationalReceiptMailLink(p1,p2))+'">INVIA LA RICEVUTA VIA EMAIL</a><p class="muted">Allega manualmente la ricevuta prima di inviare l’email.</p></section>'+nationalStayHtml(p1,p2);
  }catch(err){if(msg){msg.className='notice error';msg.textContent=err.message}if(btn){btn.disabled=false;btn.textContent='INVIA ISCRIZIONE DELLA COPPIA'}}
 }
 function personSection(kind,title){
@@ -257,10 +294,13 @@ async function submit(){
  }
 }
 document.addEventListener("input",e=>{
+ if(e.target.id==='stayEmailText'){updateNationalStayMailLink();return}
+ if(e.target.id==='stayCompanions'){refreshNationalStayEmail();return}
  const kind=e.target.getAttribute("data-search-person");
  if(kind){clearTimeout(e.target._t);e.target._t=setTimeout(()=>searchPlayers(kind,e.target.value),280)}
 });
 document.addEventListener("click",e=>{
+ const copy=e.target.closest('[data-copy-value]');if(copy){copyPublicValue(copy.getAttribute('data-copy-value'));return}
  const nationalCategoryBtn=e.target.closest('[data-national-category]');if(nationalCategoryBtn){nationalCategory=nationalCategoryBtn.getAttribute('data-national-category');renderNational();return}
  if(e.target.id==='submitNationalRegistration'){submitNational();return}
  const modeBtn=e.target.closest("[data-mode]");if(modeBtn){mode=modeBtn.dataset.mode;render();return}
@@ -277,6 +317,7 @@ document.addEventListener("click",e=>{
  }
  if(e.target.id==="submitRegistration")submit();
 });
+document.addEventListener('change',e=>{if(e.target.id==='stayCheckIn'||e.target.id==='stayCheckOut')refreshNationalStayEmail()});
 loadTournament();
 </script>
 </body>

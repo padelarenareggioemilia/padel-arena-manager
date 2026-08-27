@@ -1,0 +1,18 @@
+PADEL ARENA MANAGER V8.2.38.16 - PAGAMENTI E SOGGIORNO
+
+1. Carica tutti i file dello ZIP nella cartella principale del repository GitHub.
+2. Conferma la sostituzione dei file esistenti.
+3. Non eseguire SQL e non ricreare l'evento nazionale.
+4. Apri:
+   https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823816
+
+AGGIUNTE AL MODULO NAZIONALE
+- Quote: 30 euro a persona per una categoria; 40 euro a persona per due categorie.
+- Intestatario, IBAN e causale del bonifico, con pulsanti COPIA.
+- Email precompilata per inviare la ricevuta a nazionalipadel@aicstennis.it.
+- Prenotazione alberghiera separata e indirizzata esclusivamente ad AICS Travel: info@aicstravel.it.
+- Scelta check-in, check-out e numero di accompagnatori.
+- Email AICS Travel già compilata con i nomi dei giocatori, categoria e date.
+- Testo dell'email liberamente modificabile per aggiungere notti, accompagnatori o altre richieste.
+
+Nessun torneo, partecipante, risultato, regolamento o link esistente viene cancellato.
