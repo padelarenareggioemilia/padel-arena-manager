@@ -1,0 +1,15 @@
+PADEL ARENA MANAGER V8.2.38.15 - LINK PUBBLICO VERIFICATO
+
+1. Carica tutti i file dello ZIP nella cartella principale del repository GitHub.
+2. Conferma la sostituzione dei file esistenti.
+3. Non eseguire SQL e non ricreare l'evento nazionale.
+4. Apri:
+   https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823815
+
+CORREZIONE
+- Prima di mostrare il link unico, la V8 salva direttamente l'evento nazionale su Supabase.
+- La V8 verifica che ID evento e codice del link siano realmente presenti online.
+- Solo dopo la conferma apre la finestra per copiare, aprire o condividere il link.
+- Il link già creato torna a funzionare dopo aver premuto nuovamente CONDIVIDI LINK UNICO.
+
+Nessun torneo, partecipante, risultato o regolamento viene cancellato o ricreato.
