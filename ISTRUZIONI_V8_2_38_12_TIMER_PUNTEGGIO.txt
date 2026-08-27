@@ -1,0 +1,32 @@
+PADEL ARENA MANAGER V8.2.38.12 - TIMER, PUNTEGGIO E TABELLONI
+
+1. APRI SUPABASE
+   - Se non lo hai già fatto per la versione 8.2.38.11, apri SQL Editor > New query.
+   - Incolla il contenuto di SUPABASE_V8_TORNEI_NAZIONALI.sql e premi RUN una sola volta.
+   - Se lo avevi già eseguito, non occorre ripeterlo.
+
+2. CARICA I FILE SU GITHUB
+   - Apri il repository padel-arena-manager.
+   - Carica tutti i file presenti nello ZIP mantenendo la cartella assets.
+   - Conferma la sostituzione dei file già esistenti e non cancellare gli altri file.
+
+3. CREA O MODIFICA IL TORNEO
+   - In Modalità delle partite scegli TIMER SÌ per una partita a tempo.
+   - Scegli TIMER NO per una partita a punteggio.
+   - Con TIMER NO inserisci la durata stimata: il timer non apparirà e il calendario userà
+     esattamente quel distacco tra un turno e il successivo.
+
+4. SCEGLI LE FASI FINALI
+   - TABELLONE CLASSICO crea un unico tabellone.
+   - GOLD + SILVER divide le coppie in due tabelloni.
+   - GOLD + SILVER + BRONZE divide le coppie in tre tabelloni.
+   - La scelta può essere confermata o cambiata nella schermata Fasi finali.
+
+5. TORNEO NAZIONALE
+   - Un solo link raccoglie Doppio Maschile, Doppio Femminile e Doppio Misto.
+   - Dopo la conferma della ricevuta, ogni coppia entra nella categoria corretta.
+   - Le tre categorie ereditano modalità partita, durata stimata e struttura delle fasi finali.
+
+IMPORTANTE
+- Le funzioni Rodeo, aste e gettoni non vengono modificate.
+- L'iscrizione nazionale è valida solo dopo la ricezione dell'email e la conferma dell'amministratore.

@@ -15,7 +15,11 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none!important}
 .search-results{display:grid;gap:8px;margin-top:8px}.person-result{display:flex;justify-content:space-between;align-items:center;text-align:left;background:#09182a;color:white;border:1px solid #365474}.person-result span{display:block}.person-result small{color:var(--muted)}.selected-person{padding:12px;border:2px solid var(--accent);border-radius:14px;background:#0d291d}
 .required{color:#ff8585}.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mode-grid button.on{outline:3px solid var(--accent);background:#20405f}.privacy{font-size:12px;color:var(--muted);line-height:1.45}.field-help{display:block;margin-top:6px;color:var(--accent);font-size:12px;font-weight:800}
+.national-logos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:center;margin:0 0 16px}.national-logos div{height:92px;background:#fff;border-radius:16px;padding:9px;display:flex;align-items:center;justify-content:center}.national-logos img{max-width:100%;max-height:100%;object-fit:contain}
+.category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.category-grid button{min-height:82px;background:#17304e;color:#fff;border:2px solid #3c5d7d}.category-grid button.on{background:var(--accent);color:#07111f;border-color:var(--accent);box-shadow:0 0 0 3px rgba(157,255,37,.2)}
+.national-step{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#07111f;margin-right:8px;font-weight:1000}.payment-warning{border:2px solid #facc15;background:#30270b;color:#fff5b8;font-size:15px;line-height:1.5}.payment-warning a{color:#fff;font-weight:1000}.privacy-check{display:flex;gap:10px;align-items:flex-start;margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#09182a}.privacy-check input{width:22px;height:22px;flex:0 0 auto;margin:0}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
+@media(max-width:650px){.national-logos{grid-template-columns:1fr 1fr}.national-logos div:first-child{grid-column:1/-1}.category-grid{grid-template-columns:1fr}}
 
 .pub-nav{display:flex;gap:10px;margin-left:auto;align-items:center}
 .pub-nav a{display:inline-flex;align-items:center;justify-content:center;padding:12px 15px;border-radius:12px;text-decoration:none;font-weight:900;white-space:nowrap}
@@ -40,7 +44,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.6.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.6.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.12.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.12.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -54,6 +58,7 @@ let organizerContact={name:"",phone:"",email:""};
 let mode="single";
 let primary={type:"existing",id:null,name:""};
 let partner={type:"existing",id:null,name:""};
+let nationalCategory="";
 
 const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 async function loadTournament(){
@@ -90,6 +95,57 @@ function publicExtrasHtml(){
 }
 
 function showError(msg){document.getElementById("app").innerHTML='<div class="card error">'+esc(msg)+'</div>'}
+function isNationalTournament(){
+ return String(tournament&&(tournament.competition_type||tournament.competitionType)||"").toLowerCase()==="national_event";
+}
+function nationalPersonForm(kind,title){
+ const f=n=>kind+"_national_"+n;
+ return '<section class="card"><h3><span class="national-step">'+(kind==="primary"?'2':'3')+'</span>'+title+'</h3>'+
+  '<div class="row"><div><label>Nome <span class="required">*</span></label><input id="'+f('firstName')+'" autocomplete="given-name" required></div><div><label>Cognome <span class="required">*</span></label><input id="'+f('lastName')+'" autocomplete="family-name" required></div></div>'+
+  '<div class="row"><div><label>Data di nascita <span class="required">*</span></label><input id="'+f('birth')+'" type="date" required></div><div><label>Luogo di nascita <span class="required">*</span></label><input id="'+f('birthPlace')+'" required></div></div>'+
+  '<div class="row"><div><label>Eventuale classifica FITP</label><input id="'+f('fitpRanking')+'" placeholder="Es. 4.1 oppure NC"></div><div><label>Hai la tessera AICS? <span class="required">*</span></label><select id="'+f('aicsMember')+'" required><option value="">Seleziona</option><option value="Si">SÌ</option><option value="No">NO</option></select></div></div>'+
+  '<div class="row"><div><label>Taglia T-shirt <span class="required">*</span></label><select id="'+f('shirtSize')+'" required><option value="">Seleziona</option>'+['XS','S','M','L','XL','XXL','XXXL'].map(x=>'<option>'+x+'</option>').join('')+'</select></div>'+
+  (nationalCategory==='Misto'&&kind==='primary'?'<div><label>Sesso giocatore/giocatrice 1 <span class="required">*</span></label><select id="nationalMixedPrimaryGender" required><option value="">Seleziona</option><option value="Maschile">UOMO</option><option value="Femminile">DONNA</option></select><small class="field-help">Il componente 2 verrà impostato automaticamente con sesso opposto.</small></div>':'<div></div>')+'</div>'+
+  '<div class="row"><div><label>Telefono cellulare <span class="required">*</span></label><input id="'+f('phone')+'" type="tel" autocomplete="tel" required></div><div><label>Indirizzo email <span class="required">*</span></label><input id="'+f('email')+'" type="email" autocomplete="email" required><small class="field-help">Controlla con attenzione: qui arriveranno le comunicazioni.</small></div></div></section>';
+}
+function nationalLogosHtml(){
+ return '<div class="national-logos"><div><img src="assets/aics-logo.png" alt="AICS Settore Tennis e Padel Nazionale"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport Riccione"></div></div>';
+}
+function renderNational(){
+ document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
+ document.getElementById("app").innerHTML=
+  '<section class="card">'+nationalLogosHtml()+'<h2>'+esc(tournament.name||'Campionati Nazionali Padel')+'</h2><div class="muted">'+esc(tournament.date||'')+' · '+esc(tournament.club||'')+'</div>'+
+  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div><div class="notice"><b>QUOTA</b><br>30 € a persona per una categoria · 40 € a persona per la doppia categoria. Per partecipare a due categorie invia una seconda iscrizione scegliendo l’altra categoria e il relativo partner.</div></section>'+
+  '<section class="card"><h3><span class="national-step">1</span>Scegli la categoria</h3><div class="category-grid">'+['Maschile','Femminile','Misto'].map(c=>'<button type="button" class="'+(nationalCategory===c?'on':'')+'" data-national-category="'+c+'">DOPPIO '+c.toUpperCase()+'</button>').join('')+'</div></section>'+
+  (nationalCategory?nationalPersonForm('primary','DATI GIOCATORE / GIOCATRICE 1')+nationalPersonForm('partner','DATI GIOCATORE / GIOCATRICE 2'):'<section class="card notice">Seleziona prima la categoria per proseguire.</section>')+
+  (nationalCategory?'<section class="card"><h3><span class="national-step">4</span>Conferma e invia</h3><div class="notice payment-warning"><b>RICEVUTA DEL BONIFICO</b><br>Non devi caricare alcun file. Invia la ricevuta via email a <a href="mailto:nazionalipadel@aicstennis.it">nazionalipadel@aicstennis.it</a>.<br><b>L’iscrizione sarà valida esclusivamente dopo il ricevimento della ricevuta via email.</b></div>'+
+  '<details class="notice"><summary><b>Informativa privacy</b></summary><p class="privacy">I dati personali saranno trattati ai sensi dell’art. 13 del GDPR 2016/679/UE per la gestione dell’evento e per le comunicazioni inerenti l’attività statutaria e regolamentare AICS.</p></details>'+
+  '<label class="privacy-check"><input id="nationalPrivacy" type="checkbox"><span>Confermo di aver letto l’informativa, acconsento al trattamento dei dati e dichiaro di essere autorizzato/a a comunicare i dati del secondo componente della coppia. <span class="required">*</span></span></label>'+
+  '<button type="button" class="primary" id="submitNationalRegistration" style="width:100%;margin-top:14px">INVIA ISCRIZIONE DELLA COPPIA</button><div id="submitMessage"></div></section>':'');
+}
+function nationalReadPerson(kind){
+ const get=n=>document.getElementById(kind+"_national_"+n)?.value.trim()||"";
+ const mixedPrimary=document.getElementById('nationalMixedPrimaryGender')?.value||"";
+ const gender=nationalCategory==='Maschile'?'Maschile':nationalCategory==='Femminile'?'Femminile':kind==='primary'?mixedPrimary:(mixedPrimary==='Maschile'?'Femminile':mixedPrimary==='Femminile'?'Maschile':'');
+ const data={firstName:get('firstName'),lastName:get('lastName'),birth:get('birth'),birthPlace:get('birthPlace'),fitpRanking:get('fitpRanking'),aicsMember:get('aicsMember'),shirtSize:get('shirtSize'),phone:get('phone'),email:get('email').toLowerCase(),gender:gender,nationalCategory:nationalCategory,notes:'Iscrizione Campionati Nazionali Padel'};
+ for(const k of ['firstName','lastName','birth','birthPlace','aicsMember','shirtSize','phone','email'])if(!data[k])throw new Error('Completa tutti i campi obbligatori di entrambi i giocatori.');
+ if(nationalCategory==='Misto'&&!gender)throw new Error('Indica il sesso del primo componente della coppia mista.');
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email))throw new Error('Controlla gli indirizzi email inseriti.');
+ return {kind:'new',data:data};
+}
+async function submitNational(){
+ const btn=document.getElementById('submitNationalRegistration'),msg=document.getElementById('submitMessage');
+ try{
+  if(!nationalCategory)throw new Error('Seleziona la categoria.');
+  if(!document.getElementById('nationalPrivacy')?.checked)throw new Error('Devi accettare l’informativa privacy.');
+  btn.disabled=true;btn.textContent='INVIO IN CORSO...';
+  const p1=nationalReadPerson('primary'),p2=nationalReadPerson('partner');
+  if(p1.data.email===p2.data.email&&p1.data.firstName===p2.data.firstName&&p1.data.lastName===p2.data.lastName)throw new Error('I due componenti della coppia devono essere persone diverse.');
+  const {error}=await sb.rpc('public_submit_tournament_registration_request',{p_share_token:token,p_mode:'pair',p_primary:p1,p_partner:p2});
+  if(error)throw error;
+  document.getElementById('app').innerHTML='<section class="card success">'+nationalLogosHtml()+'<h2>ISCRIZIONE INVIATA</h2><p>La coppia è stata registrata nella categoria <b>'+esc(nationalCategory)+'</b>.</p><div class="notice payment-warning"><b>ISCRIZIONE IN ATTESA DELLA RICEVUTA</b><br>Invia ora la ricevuta del bonifico a <a href="mailto:nazionalipadel@aicstennis.it">nazionalipadel@aicstennis.it</a>.<br>L’iscrizione sarà valida soltanto dopo il ricevimento dell’email.</div><p>Puoi chiudere questa pagina dopo aver inviato la ricevuta.</p></section>';
+ }catch(err){if(msg){msg.className='notice error';msg.textContent=err.message}if(btn){btn.disabled=false;btn.textContent='INVIA ISCRIZIONE DELLA COPPIA'}}
+}
 function personSection(kind,title){
  const p=kind==="primary"?primary:partner;
  return '<section class="card" id="'+kind+'Section"><h3>'+title+'</h3>'+
@@ -126,6 +182,7 @@ function normalizeRegistrationMode(){
  if(!isFixedPairsTournament())mode="single";
 }
 function render(){
+ if(isNationalTournament()){renderNational();return}
  normalizeRegistrationMode();
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
@@ -195,6 +252,8 @@ document.addEventListener("input",e=>{
  if(kind){clearTimeout(e.target._t);e.target._t=setTimeout(()=>searchPlayers(kind,e.target.value),280)}
 });
 document.addEventListener("click",e=>{
+ const nationalCategoryBtn=e.target.closest('[data-national-category]');if(nationalCategoryBtn){nationalCategory=nationalCategoryBtn.getAttribute('data-national-category');renderNational();return}
+ if(e.target.id==='submitNationalRegistration'){submitNational();return}
  const modeBtn=e.target.closest("[data-mode]");if(modeBtn){mode=modeBtn.dataset.mode;render();return}
  const typeBtn=e.target.closest("[data-person-type]");if(typeBtn){
   const kind=typeBtn.dataset.personType,obj=kind==="primary"?primary:partner;
