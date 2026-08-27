@@ -1,0 +1,22 @@
+PADEL ARENA MANAGER V8.2.38.17 — TESSERA AICS
+
+INSTALLAZIONE
+1. Apri il repository GitHub padel-arena-manager.
+2. Carica tutto il contenuto dello ZIP nella cartella principale, sovrascrivendo i file con lo stesso nome.
+3. Attendi l'aggiornamento di GitHub Pages.
+4. Apri l'app con il link indicato in fondo a questo file.
+
+NOVITÀ NEL MODULO DEI CAMPIONATI NAZIONALI
+- Per entrambi i componenti della coppia, la domanda “Hai la tessera AICS?” offre:
+  SÌ / NO / NON SO.
+- SÌ: viene spiegato che il numero sarà verificato dall'organizzazione.
+- NO: viene spiegato che la tessera potrà essere fatta il giorno del torneo a 5 €, con le coperture previste per tutta la durata del torneo.
+- NON SO: viene spiegato che l'organizzazione verificherà e, se necessario, la tessera potrà essere fatta il giorno stesso a 5 €.
+
+IMPORTANTE
+- Non è necessario eseguire SQL su Supabase.
+- Non è necessario ricreare l'evento nazionale.
+- Nessun torneo, iscritto o risultato esistente viene modificato.
+
+LINK DI ACCESSO
+https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823817

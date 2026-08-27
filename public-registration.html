@@ -19,6 +19,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .category-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.category-grid button{min-height:82px;background:#17304e;color:#fff;border:2px solid #3c5d7d}.category-grid button.on{background:var(--accent);color:#07111f;border-color:var(--accent);box-shadow:0 0 0 3px rgba(157,255,37,.2)}
 .national-step{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#07111f;margin-right:8px;font-weight:1000}.payment-warning{border:2px solid #facc15;background:#30270b;color:#fff5b8;font-size:15px;line-height:1.5}.payment-warning a{color:#fff;font-weight:1000}.privacy-check{display:flex;gap:10px;align-items:flex-start;margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#09182a}.privacy-check input{width:22px;height:22px;flex:0 0 auto;margin:0}
 .bank-details{display:grid;gap:7px;margin-top:10px;padding:13px;border-radius:13px;background:#111d2d;border:1px solid #536b85}.bank-details span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:900}.bank-details b{word-break:break-word}.stay-box{border:2px solid #38bdf8;background:#08263a}.stay-box textarea{min-height:210px;line-height:1.45}.mail-link{display:block;text-align:center;text-decoration:none;margin-top:12px}.copy-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.copy-row button{padding:12px}.official-note{font-size:13px;line-height:1.5;color:#dbeafe}
+.aics-help{margin-top:8px;padding:11px 12px;border-radius:12px;border:1px solid #4ade80;background:#0b2a20;color:#dcfce7;font-size:13px;line-height:1.45;font-weight:700}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 @media(max-width:650px){.national-logos{grid-template-columns:1fr 1fr}.national-logos div:first-child{grid-column:1/-1}.category-grid{grid-template-columns:1fr}}
 
@@ -45,7 +46,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.16.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.16.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.17.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.17.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -113,10 +114,19 @@ function nationalPersonForm(kind,title){
  return '<section class="card"><h3><span class="national-step">'+(kind==="primary"?'2':'3')+'</span>'+title+'</h3>'+
   '<div class="row"><div><label>Nome <span class="required">*</span></label><input id="'+f('firstName')+'" autocomplete="given-name" required></div><div><label>Cognome <span class="required">*</span></label><input id="'+f('lastName')+'" autocomplete="family-name" required></div></div>'+
   '<div class="row"><div><label>Data di nascita <span class="required">*</span></label><input id="'+f('birth')+'" type="date" required></div><div><label>Luogo di nascita <span class="required">*</span></label><input id="'+f('birthPlace')+'" required></div></div>'+
-  '<div class="row"><div><label>Eventuale classifica FITP</label><input id="'+f('fitpRanking')+'" placeholder="Es. 4.1 oppure NC"></div><div><label>Hai la tessera AICS? <span class="required">*</span></label><select id="'+f('aicsMember')+'" required><option value="">Seleziona</option><option value="Si">SÌ</option><option value="No">NO</option></select></div></div>'+
+  '<div class="row"><div><label>Eventuale classifica FITP</label><input id="'+f('fitpRanking')+'" placeholder="Es. 4.1 oppure NC"></div><div><label>Hai la tessera AICS? <span class="required">*</span></label><select id="'+f('aicsMember')+'" data-aics-member="'+kind+'" required><option value="">Seleziona</option><option value="Si">SÌ</option><option value="No">NO</option><option value="Non so">NON SO</option></select><div id="'+f('aicsHelp')+'" class="aics-help hidden"></div></div></div>'+
   '<div class="row"><div><label>Taglia T-shirt <span class="required">*</span></label><select id="'+f('shirtSize')+'" required><option value="">Seleziona</option>'+['XS','S','M','L','XL','XXL','XXXL'].map(x=>'<option>'+x+'</option>').join('')+'</select></div>'+
   (nationalCategory==='Misto'&&kind==='primary'?'<div><label>Sesso giocatore/giocatrice 1 <span class="required">*</span></label><select id="nationalMixedPrimaryGender" required><option value="">Seleziona</option><option value="Maschile">UOMO</option><option value="Femminile">DONNA</option></select><small class="field-help">Il componente 2 verrà impostato automaticamente con sesso opposto.</small></div>':'<div></div>')+'</div>'+
   '<div class="row"><div><label>Telefono cellulare <span class="required">*</span></label><input id="'+f('phone')+'" type="tel" autocomplete="tel" required></div><div><label>Indirizzo email <span class="required">*</span></label><input id="'+f('email')+'" type="email" autocomplete="email" required><small class="field-help">Controlla con attenzione: qui arriveranno le comunicazioni.</small></div></div></section>';
+}
+function updateNationalAicsHelp(kind,value){
+ const box=document.getElementById(kind+'_national_aicsHelp');if(!box)return;
+ const messages={
+  'Si':'Perfetto. Verificheremo noi il numero della tessera AICS: non devi preoccuparti di inserirlo.',
+  'No':'Nessun problema. Potrai fare la tessera AICS direttamente il giorno del torneo al costo di soli 5 €. Sarai coperto/a per tutta la durata del torneo da tutte le coperture previste dal tesseramento.',
+  'Non so':'Non preoccuparti: verificheremo noi. Se non risultassi tesserato/a, potrai fare la tessera direttamente il giorno del torneo al costo di soli 5 €.'
+ };
+ box.textContent=messages[value]||'';box.classList.toggle('hidden',!messages[value]);
 }
 function nationalLogosHtml(){
  return '<div class="national-logos"><div><img src="assets/aics-logo.png" alt="AICS Settore Tennis e Padel Nazionale"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport Riccione"></div></div>';
@@ -317,7 +327,10 @@ document.addEventListener("click",e=>{
  }
  if(e.target.id==="submitRegistration")submit();
 });
-document.addEventListener('change',e=>{if(e.target.id==='stayCheckIn'||e.target.id==='stayCheckOut')refreshNationalStayEmail()});
+document.addEventListener('change',e=>{
+ if(e.target.id==='stayCheckIn'||e.target.id==='stayCheckOut'){refreshNationalStayEmail();return}
+ const aicsKind=e.target.getAttribute('data-aics-member');if(aicsKind)updateNationalAicsHelp(aicsKind,e.target.value);
+});
 loadTournament();
 </script>
 </body>
