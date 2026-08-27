@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.38.25 · Cruscotto nazionale completo</title>
+<title>Padel Arena Manager V8.2.38.26 · Recupero coppie nazionali</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -3617,7 +3617,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.25 · CRUSCOTTO NAZIONALE</span></div>'+ 
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.26 · RECUPERO COPPIE NAZIONALI</span></div>'+ 
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6046,8 +6046,59 @@ function pamEnsureNationalChildrenV823825(parent){
  const children=pamNationalChildren(parent);
  const ids=children.map(function(child){return child.id});
  if(JSON.stringify(parent.nationalChildIds||[])!==JSON.stringify(ids)){parent.nationalChildIds=ids;changed=true}
- if(changed)save();
+ if(changed){
+  save();
+  if(PAM_SESSION&&pamIsAdmin())setTimeout(function(){Promise.resolve(pamCloudSyncAll()).catch(function(err){console.warn("Sync categorie nazionali:",err)})},0);
+ }
  return children;
+}
+const PAM_NATIONAL_ACCEPTED_SYNC_V823826={};
+function pamNationalPayloadDataV823826(payload){return payload&&payload.data&&typeof payload.data==="object"?payload.data:(payload||{})}
+function pamNationalCategoryV823826(row){
+ const d=pamNationalPayloadDataV823826(row&&row.primary_payload),raw=String(d.nationalCategory||d.national_category||d.category||"").toLowerCase();
+ if(raw.includes("femmin"))return "Femminile";
+ if(raw.includes("mist"))return "Misto";
+ if(raw.includes("masch"))return "Maschile";
+ return "";
+}
+function pamNationalPlayerFromPayloadV823826(payload,knownId){
+ const id=String(knownId||"");if(id&&playerById(id))return id;
+ const d=pamNationalPayloadDataV823826(payload),embedded=String((payload&&(payload.player_id||payload.playerId))||"");if(embedded&&playerById(embedded))return embedded;
+ const email=String(d.email||"").trim().toLowerCase(),phone=String(d.phone||d.telephone||"").replace(/\D/g,"").slice(-9),name=normalizeName((d.firstName||d.first_name||"")+" "+(d.lastName||d.last_name||"")),birth=String(d.birth||d.birthDate||d.birth_date||"");
+ let p=email?(state.players||[]).find(function(x){return String(x.email||"").trim().toLowerCase()===email}):null;
+ if(!p&&phone.length>=7)p=(state.players||[]).find(function(x){return String(x.phone||"").replace(/\D/g,"").slice(-9)===phone});
+ if(!p&&name)p=(state.players||[]).find(function(x){return normalizeName(playerName(x))===name&&(!birth||String(x.birth||x.birthDate||"")===birth)});
+ return p?String(p.id):"";
+}
+async function pamRestoreNationalAcceptedPairsV823826(parentId){
+ const key=String(parentId||"");if(!key||PAM_NATIONAL_ACCEPTED_SYNC_V823826[key])return;
+ PAM_NATIONAL_ACCEPTED_SYNC_V823826[key]=true;
+ try{
+  if(!PAM_SESSION||!pamCloudReady)return;
+  const parent=(state.events||[]).find(function(x){return String(x.id)===key&&x.competitionType==="national_event"});if(!parent)return;
+  const res=await sb.from("public_registrations").select("id,status,primary_payload,partner_payload,primary_player_id,partner_player_id").eq("tournament_id",key).in("status",["accepted","imported"]);
+  if(res.error)throw res.error;
+  const children=pamEnsureNationalChildrenV823825(parent);let changed=false,recovered=0;
+  (res.data||[]).forEach(function(row){
+   const category=pamNationalCategoryV823826(row);if(!category)return;
+   const child=children.find(function(x){return String(x.nationalCategory)===category});if(!child)return;
+   const a=pamNationalPlayerFromPayloadV823826(row.primary_payload,row.primary_player_id),b=pamNationalPlayerFromPayloadV823826(row.partner_payload,row.partner_player_id);
+   if(!a||!b||a===b)return;
+   child.playerIds=(child.playerIds||[]).map(String);child.fixedPairRegistrations=child.fixedPairRegistrations||{};child.playerSnapshots=child.playerSnapshots||{};
+   [a,b].forEach(function(id){
+    if(!child.playerIds.includes(id)){child.playerIds.push(id);changed=true}
+    const p=playerById(id);if(p&&!child.playerSnapshots[id]){child.playerSnapshots[id]={id:id,firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""};changed=true}
+   });
+   if(String(child.fixedPairRegistrations[a]&&child.fixedPairRegistrations[a].partnerId||"")!==b){child.fixedPairRegistrations[a]={mode:"pair",partnerId:b};changed=true}
+   if(String(child.fixedPairRegistrations[b]&&child.fixedPairRegistrations[b].partnerId||"")!==a){child.fixedPairRegistrations[b]={mode:"pair",partnerId:a};changed=true}
+   recovered++;
+  });
+  if(changed){
+   save();await pamCloudSyncAll();
+   if(state.view==="event"&&String(state.currentEventId)===key){render();pamToast(recovered+" coppie accettate recuperate nelle categorie.","success")}
+  }
+ }catch(err){console.error("Recupero coppie nazionali:",err)}
+ finally{delete PAM_NATIONAL_ACCEPTED_SYNC_V823826[key]}
 }
 function pamNationalMatchPlayers(child,m){
  if(!child||!m)return [];
@@ -6321,6 +6372,7 @@ function pamNationalAllMatchesV823825(parent,children){
 }
 function pamNationalEventView(e){
  const children=pamEnsureNationalChildrenV823825(e);
+ setTimeout(function(){pamRestoreNationalAcceptedPairsV823826(e.id)},0);
  const schedule=pamEnsureNationalSchedule(e),missing=(schedule&&schedule.overflow||[]).length;
  const scheduleHtml=!schedule||!schedule.total
   ?'<div class="notice"><b>CALENDARIO UNICO:</b> sarà creato appena generi le partite nelle categorie.</div>'
@@ -8288,7 +8340,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823825",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823826",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });

@@ -1,0 +1,48 @@
+PADEL ARENA MANAGER V8.2.38.26 - RECUPERO COPPIE NAZIONALI
+
+1. Scompatta lo ZIP.
+2. Carica nella cartella principale del repository GitHub tutti i file contenuti nello ZIP, sostituendo quelli esistenti.
+3. Attendi il completamento di GitHub Pages.
+4. Apri l'app e verifica il badge: V8.2.38.26 - RECUPERO COPPIE NAZIONALI.
+
+CORREZIONE V8.2.38.26
+
+La pagina nazionale recupera automaticamente da Supabase tutte le iscrizioni già
+accettate e ricostruisce le coppie nelle rispettive categorie Maschile, Femminile
+e Misto. Non è necessario reinserire o riconfermare le iscrizioni già accettate.
+
+GESTIONE DELLE TRE CATEGORIE
+
+La pagina principale del Campionato nazionale mostra separatamente Doppio Maschile,
+Doppio Femminile e Doppio Misto. Ogni categoria dispone di accessi diretti a partite,
+classifiche gironi, coppie, fasi finali e giocatori.
+
+Il riquadro TUTTE LE PARTITE riunisce invece gli incontri delle tre categorie in un
+solo calendario, ordinato per giorno, orario e campo.
+
+CONFIGURAZIONE DI OGNI CATEGORIA
+
+1. Premi CONFIGURA GIRONI, TESTE DI SERIE E FINALI nella categoria desiderata.
+2. Imposta numero di gironi, coppie per girone e qualificate per girone.
+3. Seleziona le coppie teste di serie.
+4. Scegli finali classiche, Gold/Silver oppure Gold/Silver/Bronze.
+5. Premi SALVA E GENERA GIRONI.
+
+Le impostazioni riguardano esclusivamente la categoria selezionata. La generazione
+distribuisce le teste di serie nei gironi e non modifica gli altri tornei V8.
+
+IMPORTAZIONE COPPIE NEL TORNEO NAZIONALE
+
+1. Apri CAMPIONATI NAZIONALI PADEL 2026.
+2. Apri ISCRIZIONI E RICEVUTE.
+3. Premi IMPORTA COPPIE DA EXCEL.
+4. Seleziona Importazione_Campionato_Nazionale_Padel_2026.xlsx.
+5. Verifica l'anteprima: 28 giocatori e 14 coppie.
+6. Premi CONFERMA IMPORTAZIONE.
+
+Le 14 coppie saranno inserite in Iscrizioni ricevute e resteranno in attesa della conferma amministrativa.
+
+La versione riconosce inoltre automaticamente il file nazionale anche quando viene selezionato per errore dall'importazione dell'anagrafica generale, purché nell'app sia presente un solo evento nazionale.
+
+SUPABASE
+Nessun nuovo comando SQL è richiesto rispetto alla V8.2.38.23.
