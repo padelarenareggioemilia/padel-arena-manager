@@ -44,7 +44,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.12.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.12.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.13.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.13.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -95,6 +95,15 @@ function publicExtrasHtml(){
 }
 
 function showError(msg){document.getElementById("app").innerHTML='<div class="card error">'+esc(msg)+'</div>'}
+function publicRegulationHtml(){
+ const text=String(tournament&&tournament.regulation_text||"").trim();
+ const url=String(tournament&&tournament.regulation_file_url||"").trim();
+ if(!text&&!url)return "";
+ return '<section class="card"><h3>REGOLAMENTO DELL’EVENTO</h3>'+
+  (text?'<div class="notice" style="white-space:pre-wrap">'+esc(text)+'</div>':'')+
+  (url?'<a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">📎 APRI '+esc(tournament.regulation_file_name||"IL REGOLAMENTO")+'</a>':'')+
+ '</section>';
+}
 function isNationalTournament(){
  return String(tournament&&(tournament.competition_type||tournament.competitionType)||"").toLowerCase()==="national_event";
 }
@@ -115,7 +124,7 @@ function renderNational(){
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
   '<section class="card">'+nationalLogosHtml()+'<h2>'+esc(tournament.name||'Campionati Nazionali Padel')+'</h2><div class="muted">'+esc(tournament.date||'')+' · '+esc(tournament.club||'')+'</div>'+
-  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div><div class="notice"><b>QUOTA</b><br>30 € a persona per una categoria · 40 € a persona per la doppia categoria. Per partecipare a due categorie invia una seconda iscrizione scegliendo l’altra categoria e il relativo partner.</div></section>'+
+  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div><div class="notice"><b>QUOTA</b><br>30 € a persona per una categoria · 40 € a persona per la doppia categoria. Per partecipare a due categorie invia una seconda iscrizione scegliendo l’altra categoria e il relativo partner.</div></section>'+publicRegulationHtml()+
   '<section class="card"><h3><span class="national-step">1</span>Scegli la categoria</h3><div class="category-grid">'+['Maschile','Femminile','Misto'].map(c=>'<button type="button" class="'+(nationalCategory===c?'on':'')+'" data-national-category="'+c+'">DOPPIO '+c.toUpperCase()+'</button>').join('')+'</div></section>'+
   (nationalCategory?nationalPersonForm('primary','DATI GIOCATORE / GIOCATRICE 1')+nationalPersonForm('partner','DATI GIOCATORE / GIOCATRICE 2'):'<section class="card notice">Seleziona prima la categoria per proseguire.</section>')+
   (nationalCategory?'<section class="card"><h3><span class="national-step">4</span>Conferma e invia</h3><div class="notice payment-warning"><b>RICEVUTA DEL BONIFICO</b><br>Non devi caricare alcun file. Invia la ricevuta via email a <a href="mailto:nazionalipadel@aicstennis.it">nazionalipadel@aicstennis.it</a>.<br><b>L’iscrizione sarà valida esclusivamente dopo il ricevimento della ricevuta via email.</b></div>'+
@@ -188,7 +197,7 @@ function render(){
  document.getElementById("app").innerHTML=
  '<section class="card"><h2>'+esc(tournament.name)+'</h2><div class="muted">'+esc(tournament.date||"")+' · '+esc(tournament.club||"")+'</div>'+
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
- '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+
+ '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+publicRegulationHtml()+
  publicExtrasHtml()+
  (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
   '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+

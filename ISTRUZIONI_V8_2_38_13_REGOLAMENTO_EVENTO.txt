@@ -1,0 +1,24 @@
+PADEL ARENA MANAGER V8.2.38.13 - LOCANDINA E REGOLAMENTO EVENTO
+
+PRIMA INSTALLAZIONE DEL PACCHETTO NAZIONALE
+1. Apri Supabase > SQL Editor > New query.
+2. Incolla tutto SUPABASE_V8_TORNEI_NAZIONALI.sql e premi RUN una sola volta.
+3. Lo script non cancella e non modifica tornei, giocatori, risultati, aste o gettoni esistenti.
+
+CARICAMENTO SU GITHUB
+1. Carica tutti i file dello ZIP mantenendo la cartella assets.
+2. Conferma la sostituzione dei file omonimi.
+3. Non cancellare gli altri file presenti nel repository.
+
+CREAZIONE EVENTO
+- In Nuovo torneo puoi caricare direttamente una locandina JPG, PNG o WEBP.
+- Nella sezione Regolamento dell’evento puoi scrivere o incollare il testo.
+- Puoi anche allegare un file PDF, Word, JPG, PNG o WEBP, massimo 15 MB.
+- Puoi utilizzare solo il testo, solo il file oppure entrambi.
+- Testo e allegato diventano visibili nella pagina pubblica di iscrizione.
+
+LE ALTRE FUNZIONI RESTANO INVARIATE
+- Timer SÌ mantiene la gestione a tempo.
+- Timer NO gestisce la partita a punteggio usando la durata stimata per il calendario.
+- Sono disponibili tabellone classico, Gold + Silver e Gold + Silver + Bronze.
+- Rodeo, aste, gettoni, classifiche e tornei già esistenti non vengono modificati.

@@ -1,4 +1,4 @@
--- PADEL ARENA MANAGER V8.2.38.11 - TORNEI NAZIONALI
+-- PADEL ARENA MANAGER V8.2.38.13 - TORNEI NAZIONALI, REGOLAMENTO E ALLEGATI
 -- Eseguire una sola volta nel SQL Editor di Supabase.
 -- Non modifica né cancella giocatori, tornei, risultati o iscrizioni esistenti.
 
@@ -150,4 +150,45 @@ $$;
 
 revoke all on function public.pam_resolve_registration_player_v823811(jsonb) from public;
 grant execute on function public.admin_process_public_registration(text,text,integer) to authenticated;
+
+-- Espone nella pagina pubblica anche regolamento testuale ed eventuale allegato.
+-- I dati restano nel JSON del torneo: non vengono aggiunte colonne e non vengono modificati eventi esistenti.
+create or replace function public.public_tournament_for_registration(p_share_token text)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare t public.tournaments; d jsonb; count_ok int;
+begin
+ select * into t from public.tournaments where share_token=p_share_token limit 1;
+ if not found then return null; end if;
+ d=coalesce(t.data,'{}'::jsonb);
+ select count(*) into count_ok from public.public_registrations
+ where tournament_id=t.id and status in('accepted','imported');
+ return jsonb_build_object(
+  'id',t.id,'name',coalesce(t.name,d->>'name'),'date',coalesce(t.event_date::text,d->>'date'),
+  'start_time',d->>'startTime','end_date',d->>'endDate','end_time',d->>'endTime',
+  'club',coalesce(t.club,d->>'club'),'address',d->>'customAddress',
+  'category',coalesce(t.category,d->>'category'),
+  'competition_type',coalesce(t.competition_type,d->>'competitionType'),
+  'logo_url',coalesce(t.logo_url,d->>'logoUrl'),'description',d->>'description',
+  'regulation_text',d->>'regulationText',
+  'regulation_file_url',d->>'regulationFileUrl',
+  'regulation_file_name',d->>'regulationFileName',
+  'entry_fee',coalesce(nullif(d->>'entryFee','')::numeric,0),
+  'max_participants',coalesce(nullif(d->>'registrationCapacity','')::int,nullif(d->>'maxParticipants','')::int),
+  'available_places',greatest(0,coalesce(nullif(d->>'registrationCapacity','')::int,nullif(d->>'maxParticipants','')::int,999)-count_ok),
+  'registration_open',coalesce(nullif(d->>'registrationOpen','')::boolean,true),
+  'poster_theme',coalesce(d->>'posterTheme','eden_summer'),
+  'organizer_name',nullif(trim(d->>'organizerName'),''),
+  'organizer_phone',nullif(trim(d->>'organizerPhone'),''),
+  'organizer_email',nullif(trim(d->>'organizerEmail'),''),
+  'host_club_logo',nullif(d->>'hostClubLogo',''),
+  'organizer_logo',nullif(d->>'organizerLogo',''),
+  'main_sponsor_logo',nullif(d->>'mainSponsorLogo',''),
+  'extra_sponsor_logo_1',nullif(d->>'extraSponsorLogo1',''),
+  'extra_sponsor_logo_2',nullif(d->>'extraSponsorLogo2',''),
+  'accent','#9dff25'
+ );
+end$$;
+
+revoke all on function public.public_tournament_for_registration(text) from public;
+grant execute on function public.public_tournament_for_registration(text) to anon,authenticated;
 notify pgrst,'reload schema';
