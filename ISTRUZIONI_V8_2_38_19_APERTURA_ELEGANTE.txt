@@ -1,0 +1,22 @@
+PADEL ARENA MANAGER V8.2.38.19 — APERTURA ELEGANTE
+
+INSTALLAZIONE
+1. Carica tutto il contenuto dello ZIP nella cartella principale del repository GitHub.
+2. Sovrascrivi i file con lo stesso nome.
+3. Attendi l'aggiornamento di GitHub Pages.
+
+NOVITÀ
+- La prima schermata del modulo nazionale non mostra più prezzi, IBAN, causale, bonifico o indicazioni sulla ricevuta.
+- Se questi dati sono stati scritti nella descrizione dell'evento, le relative righe vengono escluse automaticamente dalla schermata iniziale.
+- La presentazione iniziale resta dedicata all'evento, alle categorie e all'eventuale pernottamento.
+- Prezzi, coordinate bancarie e invio della ricevuta compaiono soltanto dopo l'invio dell'iscrizione.
+- Rimane il pulsante “CONTINUA SENZA PERNOTTAMENTO” con la conferma finale.
+- Rimangono le opzioni SÌ / NO / NON SO per la tessera AICS.
+
+IMPORTANTE
+- Non occorre intervenire su Supabase.
+- Non occorre ricreare o modificare l'evento.
+- Nessun torneo, iscritto o risultato esistente viene modificato.
+
+LINK DI ACCESSO
+https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823819

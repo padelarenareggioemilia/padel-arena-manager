@@ -46,7 +46,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.18.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.18.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.19.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.19.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -170,11 +170,17 @@ function updateNationalStayMailLink(){
 async function copyPublicValue(value){
  try{await navigator.clipboard.writeText(value);alert('Dato copiato.')}catch(_){prompt('Copia questo dato:',value)}
 }
+function nationalIntroDescription(){
+ const description=String(tournament&&tournament.description||'').trim();if(!description)return '';
+ const paymentWords=/(?:€|\beuro\b|\biban\b|\bbonifico\b|\bpagament|\bricevut|coordinate\s+bancarie)/i;
+ return description.split(/\r?\n/).filter(line=>!paymentWords.test(line)).join('\n').trim();
+}
 function renderNational(){
+ const introDescription=nationalIntroDescription();
  document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
  document.getElementById("app").innerHTML=
   '<section class="card">'+nationalLogosHtml()+'<h2>'+esc(tournament.name||'Campionati Nazionali Padel')+'</h2><div class="muted">'+esc(tournament.date||'')+' · '+esc(tournament.club||'')+'</div>'+
-  (tournament.description?'<div class="notice">'+esc(tournament.description)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div>'+nationalPaymentHtml()+'<div class="notice stay-box"><b>PERNOTTAMENTO CON AICS TRAVEL</b><br>Dopo l’iscrizione potrai preparare direttamente un’email a <b>info@aicstravel.it</b>, già compilata con i dati della coppia e le notti richieste, ma completamente modificabile.</div></section>'+publicRegulationHtml()+
+  (introDescription?'<div class="notice" style="white-space:pre-line">'+esc(introDescription)+'</div>':'')+'<div class="notice success"><b>UN SOLO MODULO PER TUTTE LE CATEGORIE</b><br>Scegli la categoria e inserisci i dati completi di entrambi i componenti della coppia.</div><div class="notice stay-box"><b>PERNOTTAMENTO CON AICS TRAVEL</b><br>Dopo l’iscrizione potrai preparare direttamente un’email a <b>info@aicstravel.it</b>, già compilata con i dati della coppia e le notti richieste, ma completamente modificabile.</div></section>'+publicRegulationHtml()+
   '<section class="card"><h3><span class="national-step">1</span>Scegli la categoria</h3><div class="category-grid">'+['Maschile','Femminile','Misto'].map(c=>'<button type="button" class="'+(nationalCategory===c?'on':'')+'" data-national-category="'+c+'">DOPPIO '+c.toUpperCase()+'</button>').join('')+'</div></section>'+
   (nationalCategory?nationalPersonForm('primary','DATI GIOCATORE / GIOCATRICE 1')+nationalPersonForm('partner','DATI GIOCATORE / GIOCATRICE 2'):'<section class="card notice">Seleziona prima la categoria per proseguire.</section>')+
   (nationalCategory?'<section class="card"><h3><span class="national-step">4</span>Conferma e invia</h3>'+nationalPaymentHtml()+
