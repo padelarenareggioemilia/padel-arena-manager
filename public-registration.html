@@ -46,7 +46,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 </head>
 <body>
 <main>
- <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.17.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.17.html?login=1">🔐 LOGIN</a></nav></div>
+ <div class="brand"><img src="assets/padel-arena-manager-logo.png" alt=""><div><h1>Padel Arena Manager</h1><small>ISCRIZIONE PUBBLICA</small></div><nav class="pub-nav"><a class="home" href="index-v8-lab-v8.2.38.18.html">⌂ HOME</a><a class="login" href="index-v8-lab-v8.2.38.18.html?login=1">🔐 LOGIN</a></nav></div>
  <div id="app"><div class="card">Caricamento torneo...</div></div>
 </main>
 <script>
@@ -147,7 +147,11 @@ function nationalStayDefaultText(p1,p2,checkIn,checkOut,companions){
 }
 function nationalStayHtml(p1,p2){
  const text=nationalStayDefaultText(p1,p2,'5 settembre 2026','6 settembre 2026','0');
- return '<section class="card stay-box"><h3>🏨 PRENOTAZIONE PERNOTTAMENTO · AICS TRAVEL</h3><p class="official-note">La sistemazione alberghiera è gestita direttamente da <b>AICS Travel</b>, in base alla disponibilità e alle condizioni convenzionate. Il soggiorno indicato dalla circolare è dalla notte del 5 settembre, con uscita il 6; puoi richiedere altre notti o aggiungere accompagnatori.</p><div class="row"><div><label>Check-in</label><select id="stayCheckIn"><option>4 settembre 2026</option><option selected>5 settembre 2026</option><option>6 settembre 2026</option></select></div><div><label>Check-out</label><select id="stayCheckOut"><option>5 settembre 2026</option><option selected>6 settembre 2026</option><option>7 settembre 2026</option></select></div></div><label>Numero accompagnatori</label><input id="stayCompanions" type="number" min="0" value="0"><label>Testo dell’email modificabile</label><textarea id="stayEmailText">'+esc(text)+'</textarea><a id="sendStayEmail" class="primary mail-link" href="mailto:info@aicstravel.it?subject='+encodeURIComponent('Richiesta pernottamento · Campionato Nazionale AICS Padel 2026')+'&body='+encodeURIComponent(text)+'">INVIA RICHIESTA AD AICS TRAVEL</a><div class="muted" style="margin-top:9px">Destinatario: info@aicstravel.it · Tel. 375 7990658 (Michela Tesi). Prima dell’invio puoi modificare liberamente il testo.</div></section>';
+ return '<section class="card stay-box"><h3>🏨 PRENOTAZIONE PERNOTTAMENTO · AICS TRAVEL</h3><p class="official-note">La sistemazione alberghiera è gestita direttamente da <b>AICS Travel</b>, in base alla disponibilità e alle condizioni convenzionate. Il soggiorno indicato dalla circolare è dalla notte del 5 settembre, con uscita il 6; puoi richiedere altre notti o aggiungere accompagnatori.</p><div class="row"><div><label>Check-in</label><select id="stayCheckIn"><option>4 settembre 2026</option><option selected>5 settembre 2026</option><option>6 settembre 2026</option></select></div><div><label>Check-out</label><select id="stayCheckOut"><option>5 settembre 2026</option><option selected>6 settembre 2026</option><option>7 settembre 2026</option></select></div></div><label>Numero accompagnatori</label><input id="stayCompanions" type="number" min="0" value="0"><label>Testo dell’email modificabile</label><textarea id="stayEmailText">'+esc(text)+'</textarea><a id="sendStayEmail" class="primary mail-link" href="mailto:info@aicstravel.it?subject='+encodeURIComponent('Richiesta pernottamento · Campionato Nazionale AICS Padel 2026')+'&body='+encodeURIComponent(text)+'">INVIA RICHIESTA AD AICS TRAVEL</a><div class="muted" style="margin-top:9px">Destinatario: info@aicstravel.it · Tel. 375 7990658 (Michela Tesi). Prima dell’invio puoi modificare liberamente il testo.</div></section><section class="card"><button type="button" class="secondary" id="finishWithoutStay" style="width:100%;font-size:16px">CONTINUA SENZA PERNOTTAMENTO</button><div class="muted" style="margin-top:9px;text-align:center">La richiesta di pernottamento è facoltativa.</div></section>';
+}
+function finishNationalRegistration(){
+ document.getElementById('app').innerHTML='<section class="card success">'+nationalLogosHtml()+'<h2>ISCRIZIONE CONCLUSA</h2><p>La richiesta della coppia è stata registrata correttamente.</p><div class="notice payment-warning"><b>RICORDA</b><br>L’iscrizione diventerà valida dopo l’invio della ricevuta del bonifico a <a href="mailto:'+NATIONAL_PAYMENT.receiptEmail+'">'+NATIONAL_PAYMENT.receiptEmail+'</a>.</div><p>Non hai richiesto il pernottamento. Puoi chiudere questa pagina.</p></section>';
+ window.scrollTo({top:0,behavior:'smooth'});
 }
 function refreshNationalStayEmail(){
  const people=window.__nationalStayPeople;if(!people)return;
@@ -313,6 +317,7 @@ document.addEventListener("click",e=>{
  const copy=e.target.closest('[data-copy-value]');if(copy){copyPublicValue(copy.getAttribute('data-copy-value'));return}
  const nationalCategoryBtn=e.target.closest('[data-national-category]');if(nationalCategoryBtn){nationalCategory=nationalCategoryBtn.getAttribute('data-national-category');renderNational();return}
  if(e.target.id==='submitNationalRegistration'){submitNational();return}
+ if(e.target.id==='finishWithoutStay'){finishNationalRegistration();return}
  const modeBtn=e.target.closest("[data-mode]");if(modeBtn){mode=modeBtn.dataset.mode;render();return}
  const typeBtn=e.target.closest("[data-person-type]");if(typeBtn){
   const kind=typeBtn.dataset.personType,obj=kind==="primary"?primary:partner;

@@ -1,0 +1,22 @@
+PADEL ARENA MANAGER V8.2.38.18 — CHIUSURA ISCRIZIONE
+
+INSTALLAZIONE
+1. Carica tutto il contenuto dello ZIP nella cartella principale del repository GitHub.
+2. Sovrascrivi i file con lo stesso nome.
+3. Attendi l'aggiornamento di GitHub Pages.
+
+NOVITÀ
+- In fondo alla sezione AICS Travel è presente il pulsante:
+  “CONTINUA SENZA PERNOTTAMENTO”.
+- Il pulsante chiude chiaramente il percorso e mostra “ISCRIZIONE CONCLUSA”.
+- La schermata finale ricorda che l'iscrizione diventerà valida dopo l'invio della ricevuta.
+- La richiesta di pernottamento rimane completamente facoltativa.
+- Rimangono le opzioni SÌ / NO / NON SO per la tessera AICS introdotte nella V8.2.38.17.
+
+IMPORTANTE
+- Non occorre intervenire su Supabase.
+- Non occorre ricreare l'evento.
+- Nessun torneo, iscritto o risultato esistente viene modificato.
+
+LINK DI ACCESSO
+https://padelarenareggioemilia.github.io/padel-arena-manager/?v=823818
