@@ -1,0 +1,20 @@
+PADEL ARENA MANAGER V8.2.38.23 - IMPORTAZIONE RICHIESTE NAZIONALI
+
+1. Apri Supabase > SQL Editor.
+2. Esegui una sola volta il file:
+   SUPABASE_V8_2_38_23_IMPORT_RICHIESTE.sql
+3. Carica tutti i file di questo aggiornamento su GitHub, sostituendo quelli omonimi.
+4. Apri il Campionato Nazionale AICS 2026.
+5. In "Impostazioni evento nazionale" scegli "Importa giocatori e coppie".
+6. Importa il file Excel e conferma.
+
+RISULTATO
+- Le coppie del torneo nazionale vengono inserite in "Iscrizioni ricevute".
+- Ogni coppia resta "IN ATTESA RICEVUTA".
+- Puoi confermare, mettere in lista d'attesa, rifiutare o eliminare ogni richiesta.
+- Le coppie già presenti nelle richieste vengono ignorate, evitando duplicati.
+- I contatti condivisi non fanno più coincidere giocatori diversi.
+
+IMPORTANTE
+- Per tutti gli altri tornei l'importazione continua a funzionare come nella V8.2.38.22.
+- Nessun torneo, risultato, giocatore o saldo viene cancellato.
