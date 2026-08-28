@@ -1,0 +1,27 @@
+PADEL ARENA MANAGER V8.2.38.28 - WHATSAPP BUSINESS
+
+NOVITA
+- Nella pagina Comunicazioni e stato aggiunto il pulsante WhatsApp Business.
+- Resta disponibile anche il pulsante WhatsApp normale.
+- I filtri e la selezione dei destinatari non cambiano.
+- Per piu destinatari viene preparata una coda: un messaggio alla volta, sempre sotto il controllo dell'organizzatore.
+- Tornando alla V8 dopo l'invio, la coda riprende dal destinatario successivo e ricorda se era stato scelto WhatsApp Business.
+
+INSTALLAZIONE SU GITHUB
+1. Aprire il repository padel-arena-manager.
+2. Caricare nella cartella principale tutti i file presenti nello ZIP.
+3. Confermare la sostituzione dei file con lo stesso nome.
+4. Attendere il completamento di GitHub Pages.
+5. Aprire il link con il parametro di aggiornamento indicato sotto.
+
+LINK DI ACCESSO AGGIORNATO
+https://padelarenareggioemilia.github.io/padel-arena-manager/?login=1&v=823828
+
+USO DA IPHONE
+1. Aprire Comunicazioni.
+2. Applicare i filtri e selezionare i giocatori.
+3. Scrivere il messaggio.
+4. Premere WhatsApp Business.
+5. Premere Apri primo/prossimo WhatsApp Business per ogni destinatario.
+
+Questa versione non richiede modifiche a Supabase.
