@@ -1,0 +1,18 @@
+PADEL ARENA MANAGER V8.2.38.30 - ELIMINATORIA RODEO CON 14 GIOCATORI
+
+NOVITA
+- Nei tornei Rodeo a gettoni con 14 giocatori, la fase iniziale resta composta da tutti i 14 partecipanti.
+- All'apertura della fase eliminatoria, il 13° e il 14° classificato vengono esclusi automaticamente.
+- I primi 12 accedono alla fase successiva.
+- I primi 4 passano direttamente; dal 5° al 12° vengono create le due eliminatorie già previste per il formato a 12.
+- I due esclusi restano comunque visibili nella classifica, nei gettoni, nei pagamenti e nell'anagrafica del torneo.
+
+INSTALLAZIONE
+1. Caricare nella cartella principale del repository tutti i file presenti nello ZIP.
+2. Confermare la sostituzione dei file con lo stesso nome.
+3. Attendere il completamento di GitHub Pages.
+4. Aprire:
+
+https://padelarenareggioemilia.github.io/padel-arena-manager/?login=1&v=823830
+
+Non sono necessarie modifiche a Supabase.
