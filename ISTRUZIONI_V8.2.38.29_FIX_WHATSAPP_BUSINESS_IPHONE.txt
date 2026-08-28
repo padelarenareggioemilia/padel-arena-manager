@@ -1,0 +1,17 @@
+PADEL ARENA MANAGER V8.2.38.29 - FIX WHATSAPP BUSINESS IPHONE
+
+CORREZIONE
+- Corretto il collegamento che apre WhatsApp Business su iPhone.
+- Eliminato lo schema non riconosciuto da Safari presente nella V8.2.38.28.
+- Restano disponibili WhatsApp normale ed Email CCN.
+- La selezione, i filtri e la coda dei destinatari non cambiano.
+
+INSTALLAZIONE
+1. Caricare nella cartella principale del repository tutti i file presenti nello ZIP.
+2. Confermare la sostituzione dei file con lo stesso nome.
+3. Attendere il completamento di GitHub Pages.
+4. Aprire il link aggiornato:
+
+https://padelarenareggioemilia.github.io/padel-arena-manager/?login=1&v=823829
+
+Non sono necessarie modifiche a Supabase.
