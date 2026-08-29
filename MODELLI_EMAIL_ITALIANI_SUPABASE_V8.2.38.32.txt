@@ -1,0 +1,58 @@
+PADEL ARENA MANAGER · MODELLI EMAIL SUPABASE IN ITALIANO
+
+Apri Supabase > Authentication > Email Templates.
+
+============================================================
+1. CONFIRM SIGN UP / CONFERMA REGISTRAZIONE
+============================================================
+
+OGGETTO:
+Conferma il tuo account giocatore Padel Arena
+
+CORPO HTML:
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#10233b">
+  <h2>Benvenuto in Padel Arena Manager</h2>
+  <p>Hai richiesto la creazione del tuo account giocatore.</p>
+  <p>Per confermare il tuo indirizzo email e completare la registrazione, premi il pulsante:</p>
+  <p style="text-align:center;margin:28px 0">
+    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;border-radius:10px;background:#9dff25;color:#07111f;text-decoration:none;font-weight:bold">CONFERMA IL MIO ACCOUNT</a>
+  </p>
+  <p>Se non hai richiesto tu questa registrazione, puoi ignorare l’email.</p>
+  <p><b>Padel Arena Manager</b></p>
+</div>
+
+============================================================
+2. RESET PASSWORD / RECUPERO PASSWORD
+============================================================
+
+OGGETTO:
+Reimposta la password del tuo account Padel Arena
+
+CORPO HTML:
+<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#10233b">
+  <h2>Recupero password</h2>
+  <p>Abbiamo ricevuto una richiesta per modificare la password del tuo account giocatore.</p>
+  <p>Premi il pulsante seguente per scegliere una nuova password:</p>
+  <p style="text-align:center;margin:28px 0">
+    <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 24px;border-radius:10px;background:#9dff25;color:#07111f;text-decoration:none;font-weight:bold">SCEGLI UNA NUOVA PASSWORD</a>
+  </p>
+  <p>Se non hai richiesto tu il recupero, ignora questa email: la password attuale non verrà modificata.</p>
+  <p><b>Padel Arena Manager</b></p>
+</div>
+
+============================================================
+3. URL CONFIGURATION OBBLIGATORIA
+============================================================
+
+Apri Supabase > Authentication > URL Configuration.
+
+SITE URL:
+https://padelarenareggioemilia.github.io/padel-arena-manager/
+
+Aggiungi in REDIRECT URLS:
+https://padelarenareggioemilia.github.io/padel-arena-manager/player-invite.html**
+https://padelarenareggioemilia.github.io/padel-arena-manager/reset-password.html**
+https://padelarenareggioemilia.github.io/padel-arena-manager/player-portal.html**
+
+Controlla inoltre in Authentication > Sign In / Providers > Email che
+"Confirm email" sia attivo.
