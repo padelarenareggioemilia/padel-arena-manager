@@ -1,0 +1,37 @@
+PADEL ARENA MANAGER V8.2.38.33 · STABILIZZAZIONE CAMPIONATI NAZIONALI
+
+ORDINE OBBLIGATORIO
+
+1. Carica su GitHub tutti i file contenuti nello ZIP, mantenendo le cartelle già presenti.
+2. Attendi che GitHub Pages mostri il badge:
+   V8.2.38.33 · NAZIONALI STABILI
+3. Apri Supabase > SQL Editor > New query.
+4. Incolla ed esegui una sola volta:
+   SUPABASE_V8_2_38_33_STABILIZZAZIONE_NAZIONALI.sql
+5. Riapri l'app dal link abituale e premi Aggiorna dati.
+
+COSA VIENE CORRETTO
+
+- Ricostruzione non distruttiva delle tre categorie del Campionato Nazionale.
+- Recupero automatico dalle iscrizioni già accettate:
+  Maschile 10 coppie, Femminile 3 coppie, Misto 3 coppie.
+- Conteggio basato sulle coppie realmente confermate.
+- Nessuna creazione automatica di categorie vuote durante la visualizzazione.
+- Collaboratore limitato esclusivamente ai tornei assegnati tramite invito.
+- Per il Nazionale, un solo invito comprende Maschile, Femminile e Misto.
+- Giocatore in sola lettura; nessun accesso ai comandi gestionali.
+- Gli altri eventi restano consultabili soltanto nell'area pubblica Free.
+
+DOPO L'AGGIORNAMENTO
+
+Il collaboratore già esistente non vedrà più automaticamente tutti i tornei.
+Apri il Campionato Nazionale come Admin, entra in "Impostazioni evento nazionale"
+e premi "LINK COLLABORATORE · SOLO QUESTO EVENTO". Invia quel link al collaboratore:
+potrà accedere con l'account già esistente e collegare esclusivamente questo torneo.
+
+NON È NECESSARIO
+
+- ricreare il Campionato Nazionale;
+- reimportare le iscrizioni;
+- eliminare giocatori o coppie;
+- rigenerare il calendario prima di aver controllato i conteggi.
