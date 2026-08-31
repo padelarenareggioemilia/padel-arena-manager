@@ -2399,16 +2399,16 @@ function applyMaleTokenBalancesTappa2(){
 
 function pamApplyFemaleHistoricalBalancesV8224(){
  const balances={
-  "Maurizia Casini":34,
-  "Monia Mazzi":51,
-  "Fabienne De Cup De Saint Paul":9,
-  "Carlotta Rivi":5,
-  "Viviana De Magistris":10,
-  "Stefania Bella":9,
-  "Valentina Labattaglia":16,
-  "Viktoriia Dutka":3,
-  "Sara Sacco'":9,
-  "Elisa Savini":11
+  "Maurizia Casini":49,
+  "Monia Mazzi":62,
+  "Fabienne De Cup De Saint Paul":12,
+  "Carlotta Rivi":8,
+  "Viviana De Magistris":13,
+  "Stefania Bella":12,
+  "Valentina Labattaglia":19,
+  "Viktoriia Dutka":6,
+  "Sara Sacco'":12,
+  "Elisa Savini":14
  };
  let changed=false;
  Object.keys(balances).forEach(function(fullName){
@@ -3986,7 +3986,16 @@ function pamApplyConfirmedMaleFinalBalancesV8232(){
  return changed;
 }
 function pamApplyConfirmedFemaleFinalBalancesV824(){
- const balances={"Maurizia Casini":39,"Chiara Longagnani":8,"Monia Mazzi":51,"Monia Mingardi":32};
+ const balances={
+  "Maurizia Casini":49,"Chiara Longagnani":19,"Monia Mazzi":62,"Monia Mingardi":36,
+  "Arianna Lignola":9,"Manuela Mariotti":9,"Michelle Mereu":0,"Elisa Savini":14,
+  "Sara Sacco'":12,"Chiara Perroni":21,"Fabienne De Cup De Saint Paul":12,
+  "Carlotta Rivi":8,"Viviana De Magistris":13,"Stefania Bella":12,
+  "Valentina Labattaglia":19,"Viktoriia Dutka":6,"Catia Cattini":15,
+  "Stefania Ferri":13,"Elena Veronesi":9,"Loretta Barilli":9,"Mara Amalfi":8,
+  "Clara Fontanili":15,"Morena Borghesi":14,"Sabrina Dungaran":7,
+  "Anna Crasti":6,"Sara Pagliani":4
+ };
  let changed=false;
  Object.keys(balances).forEach(function(name){
   const key=registryTokenKey(name);
@@ -4267,18 +4276,32 @@ function pamCertifiedTokenBalancesV8234(){
   "neri|stefano":4,
   "fontanesi|stefano":4,
 
-  "casini|maurizia":39,
-  "mazzi|monia":51,
-  "chiara|longagnani":8,
-  "mingardi|monia":32,
-  "cup|de|fabienne|paul|saint":9,
-  "carlotta|rivi":5,
-  "de|magistris|viviana":10,
-  "bella|stefania":9,
-  "labattaglia|valentina":16,
-  "dutka|viktoriia":3,
-  "sacco|sara":9,
-  "elisa|savini":11
+  "casini|maurizia":49,
+  "mazzi|monia":62,
+  "chiara|longagnani":19,
+  "mingardi|monia":36,
+  "cup|de|fabienne|paul|saint":12,
+  "carlotta|rivi":8,
+  "de|magistris|viviana":13,
+  "bella|stefania":12,
+  "labattaglia|valentina":19,
+  "dutka|viktoriia":6,
+  "sacco|sara":12,
+  "elisa|savini":14,
+  "cattini|catia":15,
+  "ferri|stefania":13,
+  "elena|veronesi":9,
+  "barilli|loretta":9,
+  "amalfi|mara":8,
+  "chiara|perroni":21,
+  "clara|fontanili":15,
+  "borghesi|morena":14,
+  "dungaran|sabrina":7,
+  "anna|crasti":6,
+  "pagliani|sara":4,
+  "arianna|lignola":9,
+  "manuela|mariotti":9,
+  "mereu|michelle":0
  };
 }
 function pamTokenPersonKeyV8234(name){
@@ -4325,8 +4348,8 @@ function pamLatestTokenBalanceV8234(player){
 
  // Certified values describe the latest verified snapshots supplied by the organizer.
  // If an event is chronologically later than those snapshots, its real final balance wins.
- // Current certified snapshots are dated 2026-08-10.
- const certifiedTime=new Date("2026-08-10T23:59:59+02:00").getTime();
+ // Current certified snapshots are dated 2026-08-24.
+ const certifiedTime=new Date("2026-08-24T23:59:59+02:00").getTime();
  if(eventResult && eventResult.time>certifiedTime)return eventResult.balance;
  if(certified!==undefined)return Math.max(0,Number(certified)||0);
  if(eventResult)return eventResult.balance;
@@ -6191,11 +6214,14 @@ async function pamRestoreNationalAcceptedPairsV823826(parentId){
   const res=await sb.from("public_registrations").select("id,status,primary_payload,partner_payload,primary_player_id,partner_player_id").eq("tournament_id",key).in("status",["accepted","imported"]);
   if(res.error)throw res.error;
   const children=pamEnsureNationalChildrenV823825(parent);let changed=false,recovered=0;
+  const expected={Maschile:{ids:new Set(),links:{}},Femminile:{ids:new Set(),links:{}},Misto:{ids:new Set(),links:{}}};
   (res.data||[]).forEach(function(row){
    const category=pamNationalCategoryV823826(row);if(!category)return;
    const child=children.find(function(x){return String(x.nationalCategory)===category});if(!child)return;
    const a=pamNationalPlayerFromPayloadV823826(row.primary_payload,row.primary_player_id),b=pamNationalPlayerFromPayloadV823826(row.partner_payload,row.partner_player_id);
    if(!a||!b||a===b)return;
+   expected[category].ids.add(a);expected[category].ids.add(b);
+   expected[category].links[a]={mode:"pair",partnerId:b};expected[category].links[b]={mode:"pair",partnerId:a};
    child.playerIds=(child.playerIds||[]).map(String);child.fixedPairRegistrations=child.fixedPairRegistrations||{};child.playerSnapshots=child.playerSnapshots||{};
    [a,b].forEach(function(id){
     if(!child.playerIds.includes(id)){child.playerIds.push(id);changed=true}
@@ -6204,6 +6230,20 @@ async function pamRestoreNationalAcceptedPairsV823826(parentId){
    if(String(child.fixedPairRegistrations[a]&&child.fixedPairRegistrations[a].partnerId||"")!==b){child.fixedPairRegistrations[a]={mode:"pair",partnerId:b};changed=true}
    if(String(child.fixedPairRegistrations[b]&&child.fixedPairRegistrations[b].partnerId||"")!==a){child.fixedPairRegistrations[b]={mode:"pair",partnerId:a};changed=true}
    recovered++;
+  });
+  children.forEach(function(child){
+   const bucket=expected[String(child.nationalCategory||"")];if(!bucket||!bucket.ids.size)return;
+   const nextIds=Array.from(bucket.ids),currentIds=(child.playerIds||[]).map(String);
+   if(nextIds.length!==currentIds.length||nextIds.some(function(id){return !currentIds.includes(id)})){
+    child.playerIds=nextIds;changed=true;
+   }
+   const currentLinks=child.fixedPairRegistrations||{},nextLinks=bucket.links;
+   const currentKeys=Object.keys(currentLinks),nextKeys=Object.keys(nextLinks);
+   if(currentKeys.length!==nextKeys.length||nextKeys.some(function(id){return String(currentLinks[id]&&currentLinks[id].partnerId||"")!==String(nextLinks[id].partnerId)})){
+    child.fixedPairRegistrations=nextLinks;changed=true;
+   }
+   child.payments=child.payments||{};
+   nextIds.forEach(function(id){if(!child.payments[id])child.payments[id]={fee:Number(child.entryFee||parent.entryFee||0),paid:false,method:"",notes:""}});
   });
   if(changed){
    save();await pamCloudSyncAll();
@@ -7890,6 +7930,10 @@ function pamFinalTokenBalanceFromEventV8216(ev,pid){
  if(ev.historicalFinalBalances&&ev.historicalFinalBalances[String(pid)]!==undefined){
   return Math.max(0,Number(ev.historicalFinalBalances[String(pid)])||0);
  }
+ const hasCompletedMatch=(ev.matches||[]).some(function(m){
+  return m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined;
+ });
+ if(!hasCompletedMatch)return null;
  try{
   const row=standings(ev).find(function(x){return String(x.id)===String(pid)});
   if(row&&Number.isFinite(Number(row.balance)))return Math.max(0,Number(row.balance));
