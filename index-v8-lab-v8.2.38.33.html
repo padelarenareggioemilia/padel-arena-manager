@@ -2941,10 +2941,22 @@ async function pamCloudLoad(initial,forceReplace){
  if(pamCloudLoadPromise)return pamCloudLoadPromise;
 
  pamCloudLoadPromise=(async function(){
-  const [playerRows,eventRows]=await Promise.all([
-   pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true),
-   pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false)
-  ]);
+  // I tornei sono pochi e devono comparire subito, anche quando la grande
+  // anagrafica giocatori è lenta o raggiunge il timeout del database.
+  const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
+  const earlyEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",competitionType:r.competition_type||((r.data||{}).competitionType)||"",logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status});
+  });
+  state.events=earlyEvents;state.__cloudEventsCount=earlyEvents.length;
+  if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
+  let playerRows;
+  try{
+   playerRows=await pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true);
+  }catch(playerLoadError){
+   console.warn("Anagrafica online lenta; mantengo la copia locale mentre i tornei restano aggiornati.",playerLoadError);
+   playerRows=(state.players||[]).map(function(p){return{id:p.id,data:p,photo_url:p.photoUrl||"",updated_at:null}});
+   pamToast("Tutti i tornei sono aggiornati. L’anagrafica giocatori sta usando temporaneamente la copia disponibile sul dispositivo.","success");
+  }
 
   const remotePlayersRaw=playerRows.map(function(r){
    return Object.assign({},r.data||{},{
@@ -6458,7 +6470,9 @@ function eventsView(){
    (pamIsAdmin()?'<button class="small" data-duplicate-event="'+e.id+'">Duplica</button><button class="small" data-edit-event="'+e.id+'">Modifica</button><button class="danger" data-delete-event="'+e.id+'">Elimina</button>':'')+
   '</div></details></div>'
  }).join(""):'<div class="muted">Nessuna competizione salvata.</div>';
- return header("Competizioni salvate","Riapri senza perdere i risultati")+'<div class="card">'+rows+'</div>';
+ return header("Competizioni salvate","Riapri senza perdere i risultati")+
+ (pamIsAdmin()?'<div class="row print-hide" style="margin-bottom:12px"><button class="primary" data-global-view="players">👥 GIOCATORI</button><button class="secondary" data-global-view="new">＋ NUOVO TORNEO</button></div>':'')+
+ '<div class="card">'+rows+'</div>';
 }
 function playerById(id){
  const key=String(id||"");
