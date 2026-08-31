@@ -2941,21 +2941,34 @@ async function pamCloudLoad(initial,forceReplace){
  if(pamCloudLoadPromise)return pamCloudLoadPromise;
 
  pamCloudLoadPromise=(async function(){
-  // I tornei sono pochi e devono comparire subito, anche quando la grande
-  // anagrafica giocatori è lenta o raggiunge il timeout del database.
+  // Carica prima i tornei: l'anagrafica è molto più grande e non deve
+  // impedire né ritardare la visualizzazione delle competizioni assegnate.
   const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
   const earlyEvents=eventRows.map(function(r){
-   return Object.assign({},r.data||{},{id:r.id,name:r.name,event_date:r.event_date,date:r.event_date||((r.data||{}).date)||"",club:r.club||((r.data||{}).club)||"",category:r.category||((r.data||{}).category)||"",competitionType:r.competition_type||((r.data||{}).competitionType)||"",logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",shareToken:r.share_token,status:r.status});
+   return Object.assign({},r.data||{},{
+    id:r.id,name:r.name,event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,status:r.status
+   });
   });
   state.events=earlyEvents;state.__cloudEventsCount=earlyEvents.length;
+  if(pamIsCollaborator()){
+   const assignedNow=earlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
+   if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+  }
   if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
+
   let playerRows;
   try{
    playerRows=await pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true);
   }catch(playerLoadError){
    console.warn("Anagrafica online lenta; mantengo la copia locale mentre i tornei restano aggiornati.",playerLoadError);
    playerRows=(state.players||[]).map(function(p){return{id:p.id,data:p,photo_url:p.photoUrl||"",updated_at:null}});
-   pamToast("Tutti i tornei sono aggiornati. L’anagrafica giocatori sta usando temporaneamente la copia disponibile sul dispositivo.","success");
+   pamToast("Torneo assegnato disponibile. L'anagrafica giocatori usa temporaneamente la copia sul dispositivo.","success");
   }
 
   const remotePlayersRaw=playerRows.map(function(r){
@@ -3396,7 +3409,7 @@ function pamRegenerateTournament(id){
    const built=e.nationalParentId?pamBuildNationalFixedPairsV823825(e):buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
    e.pairs=built.pairs||[];e.matches=built.matches||[];
   }else{
-   e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg)||[];
+   e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg,e.category)||[];
   }
   if(!e.matches.length)throw new Error("La generazione non ha prodotto partite.");
   if(e.nationalParentId)pamRebuildNationalSchedule(e.nationalParentId,true);
@@ -5757,10 +5770,27 @@ function pamOptimizeRoundGroups(matches,courts){
  return {groups:groups,wastedSlots:wasted};
 }
 
-function buildMatches(ids,courts,returnLeg){
+function buildMatches(ids,courts,returnLeg,category){
  const playerIds=(ids||[]).slice();
  if(playerIds.length<4)throw new Error("servono almeno 4 giocatori per generare le partite");
  courts=Math.max(1,Number(courts)||1);
+
+ const mixedTournament=String(category||"").trim().toLowerCase()==="misto";
+ function mixedGender(id){
+  const p=playerById(id),g=String((p&&p.gender)||"").trim().toLowerCase();
+  if(g.startsWith("m")||g==="uomo")return "M";
+  if(g.startsWith("f")||g==="donna")return "F";
+  return "";
+ }
+ function sameSexTeam(team){
+  const a=mixedGender(team[0]),b=mixedGender(team[1]);
+  return !!a&&a===b;
+ }
+ const knownGenders=mixedTournament?playerIds.map(mixedGender):[];
+ const maleCount=knownGenders.filter(function(g){return g==="M"}).length;
+ const femaleCount=knownGenders.filter(function(g){return g==="F"}).length;
+ const allGendersKnown=mixedTournament&&knownGenders.every(Boolean);
+ const perfectlyBalancedMixed=allGendersKnown&&maleCount===femaleCount;
 
  function makeMatch(t1,t2){
   return{
@@ -5794,6 +5824,9 @@ function buildMatches(ids,courts,returnLeg){
       [[q[0],q[3]],[q[1],q[2]]]
      ].forEach(function(pairing){
       const m=makeMatch(pairing[0],pairing[1]);
+      // Se uomini e donne sono in pari numero, in un torneo Misto sono
+      // ammesse esclusivamente squadre uomo-donna.
+      if(perfectlyBalancedMixed&&(sameSexTeam(m.t1)||sameSexTeam(m.t2)))return;
       const key=matchKey(m);
       if(!seen.has(key)){seen.add(key);candidates.push(m)}
      });
@@ -5809,7 +5842,7 @@ function buildMatches(ids,courts,returnLeg){
  /* Regola fondamentale Rodeo:
     mai la stessa coppia di compagni; mai lo stesso incontro completo;
     ridurre al minimo gli stessi avversari. */
- if(playerIds.length===6&&target>=6){
+ if(playerIds.length===6&&target>=6&&!mixedTournament){
   const p=shuffle(playerIds);
   selected=[
    makeMatch([p[0],p[1]],[p[2],p[3]]),
@@ -5857,6 +5890,7 @@ function buildMatches(ids,courts,returnLeg){
      });
 
      const score=
+      (mixedTournament?(Number(sameSexTeam(m.t1))+Number(sameSexTeam(m.t2)))*100000000:0)+
       balance*25+
       repeatOpponentTeams*100000+
       repeatOpponents*2500+
@@ -6226,14 +6260,11 @@ async function pamRestoreNationalAcceptedPairsV823826(parentId){
   const res=await sb.from("public_registrations").select("id,status,primary_payload,partner_payload,primary_player_id,partner_player_id").eq("tournament_id",key).in("status",["accepted","imported"]);
   if(res.error)throw res.error;
   const children=pamEnsureNationalChildrenV823825(parent);let changed=false,recovered=0;
-  const expected={Maschile:{ids:new Set(),links:{}},Femminile:{ids:new Set(),links:{}},Misto:{ids:new Set(),links:{}}};
   (res.data||[]).forEach(function(row){
    const category=pamNationalCategoryV823826(row);if(!category)return;
    const child=children.find(function(x){return String(x.nationalCategory)===category});if(!child)return;
    const a=pamNationalPlayerFromPayloadV823826(row.primary_payload,row.primary_player_id),b=pamNationalPlayerFromPayloadV823826(row.partner_payload,row.partner_player_id);
    if(!a||!b||a===b)return;
-   expected[category].ids.add(a);expected[category].ids.add(b);
-   expected[category].links[a]={mode:"pair",partnerId:b};expected[category].links[b]={mode:"pair",partnerId:a};
    child.playerIds=(child.playerIds||[]).map(String);child.fixedPairRegistrations=child.fixedPairRegistrations||{};child.playerSnapshots=child.playerSnapshots||{};
    [a,b].forEach(function(id){
     if(!child.playerIds.includes(id)){child.playerIds.push(id);changed=true}
@@ -6242,20 +6273,6 @@ async function pamRestoreNationalAcceptedPairsV823826(parentId){
    if(String(child.fixedPairRegistrations[a]&&child.fixedPairRegistrations[a].partnerId||"")!==b){child.fixedPairRegistrations[a]={mode:"pair",partnerId:b};changed=true}
    if(String(child.fixedPairRegistrations[b]&&child.fixedPairRegistrations[b].partnerId||"")!==a){child.fixedPairRegistrations[b]={mode:"pair",partnerId:a};changed=true}
    recovered++;
-  });
-  children.forEach(function(child){
-   const bucket=expected[String(child.nationalCategory||"")];if(!bucket||!bucket.ids.size)return;
-   const nextIds=Array.from(bucket.ids),currentIds=(child.playerIds||[]).map(String);
-   if(nextIds.length!==currentIds.length||nextIds.some(function(id){return !currentIds.includes(id)})){
-    child.playerIds=nextIds;changed=true;
-   }
-   const currentLinks=child.fixedPairRegistrations||{},nextLinks=bucket.links;
-   const currentKeys=Object.keys(currentLinks),nextKeys=Object.keys(nextLinks);
-   if(currentKeys.length!==nextKeys.length||nextKeys.some(function(id){return String(currentLinks[id]&&currentLinks[id].partnerId||"")!==String(nextLinks[id].partnerId)})){
-    child.fixedPairRegistrations=nextLinks;changed=true;
-   }
-   child.payments=child.payments||{};
-   nextIds.forEach(function(id){if(!child.payments[id])child.payments[id]={fee:Number(child.entryFee||parent.entryFee||0),paid:false,method:"",notes:""}});
   });
   if(changed){
    save();await pamCloudSyncAll();
@@ -6412,7 +6429,7 @@ function pamUpdateEventFromBuilder(rebuild){
    e.finalStages={elimination:{teamA:[],teamB:[],score1:null,score2:null},auction1:{spending:{}},semifinals:[{id:"semi1",teamA:[],teamB:[],score1:null,score2:null},{id:"semi2",teamA:[],teamB:[],score1:null,score2:null}],auction2:{spending:{}},auction3:{spending:{}},auction4:{spending:{}},final:{teamA:[],teamB:[],score1:null,score2:null}};
    delete e.simpleFinals;delete e.simpleStandings;delete e.sixPlayerState;
    const enough=e.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(e.playerIds.length):e.playerIds.length>=4;
-   if(enough){if(e.competitionType==="fixed_pairs"){if(e.playerIds.length%2===0){const built=buildFixedPairs(e.playerIds,d.pairsPerGroup||4,e.courts,false);e.pairs=built.pairs;e.matches=built.matches}}else e.matches=buildMatches(e.playerIds,e.courts,false)}
+   if(enough){if(e.competitionType==="fixed_pairs"){if(e.playerIds.length%2===0){const built=buildFixedPairs(e.playerIds,d.pairsPerGroup||4,e.courts,false);e.pairs=built.pairs;e.matches=built.matches}}else e.matches=buildMatches(e.playerIds,e.courts,false,e.category)}
    e.playerIds.forEach(function(id){const p=playerById(id);e.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
   }else{
    Object.keys(e.payments||{}).forEach(function(id){e.payments[id].fee=Number(d.fee)||0});
@@ -6446,7 +6463,7 @@ function createEvent(){
    return;
   }
   const enough=event.competitionType==="rodeo_tokens"?[6,8,10,12,16].includes(event.playerIds.length):event.playerIds.length>=4;
-  if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false)}
+  if(enough){if(event.competitionType==="fixed_pairs"){if(event.playerIds.length%2===0){const built=buildFixedPairs(event.playerIds,d.pairsPerGroup||4,event.courts,false);event.pairs=built.pairs;event.matches=built.matches}}else event.matches=buildMatches(event.playerIds,event.courts,false,event.category)}
   event.playerIds.forEach(function(id){const p=playerById(id);event.ledger[id]={carried:Number((p&&p.tokenBalance)||0),spent:0,podium:0}});
   const pendingPoster=window.pamPendingTournamentPosterFile||null;window.pamPendingTournamentPosterFile=null;const pendingRegulation=window.pamPendingTournamentRegulationFile||null;window.pamPendingTournamentRegulationFile=null;
   state.events.unshift(event);state.editingEventId=null;state.currentEventId=event.id;state.view="event";state.tab="matches";save();render();pamToast("Torneo salvato e pronto per essere condiviso","success");
