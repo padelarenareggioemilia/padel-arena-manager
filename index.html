@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Padel Arena Manager V8.2.38.36 · Coppie visibili</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Padel Arena Manager V8.2.38.38 · Gestione collaboratore completa</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1875,7 +1878,9 @@ function pamApplyRole(){
 }
 function pamRestrictCollaboratorUI(){
  if(!pamIsCollaborator()||!PAM_SESSION)return;
- const forbidden=["anagrafica","impostazioni","nuova competizione","crea torneo","genera competizione","elimina","configurazione","importa","esporta","duplica","modifica torneo","carica logo"];
+ // Il collaboratore gestisce integralmente l'evento assegnato. Restano esclusi
+ // soltanto creazione/duplicazione dell'evento e programmazione tecnica.
+ const forbidden=["nuova competizione","nuovo torneo","crea torneo","genera competizione","duplica torneo","modifica dati","configura gironi","ricalcola calendario","rigenera partite"];
  document.querySelectorAll("button,a,[role='button']").forEach(el=>{
   const t=(el.textContent||"").trim().toLowerCase();
   if(forbidden.some(w=>w==="elimina"?(t==="elimina"||t.startsWith("elimina ")):t.includes(w)))el.style.display="none";
@@ -2196,7 +2201,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: 8.0 · Base stabile tornei</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.38 · Gestione collaboratore completa</div>';
 }
 
 function iphoneInstallCard(){
@@ -3352,19 +3357,20 @@ function pamTournamentPlayersModal(id){
   });
  }
 
+ const collaborator=pamIsCollaborator();
  overlay.innerHTML='<div class="pam-modal-card">'+
   '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2>'+
    '<div class="muted">Sono sempre mostrati anche i partecipanti già salvati nel torneo, anche se l’anagrafica online è momentaneamente incompleta.</div>'+
    '<div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div>'+
    '<button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
-  '<div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div>'+
+  (collaborator?'<div class="notice success"><b>Gestione partecipanti:</b> puoi aggiungere o sostituire giocatori senza cancellare partite e risultati. La rigenerazione del calendario resta riservata all’amministratore.</div>':'<div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div>')+
   '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica esistente</label>'+
    '<input id="pamTournamentPlayerSearch" type="search" placeholder="Nome, cognome, telefono o email"></div>'+
    '<button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div>'+
   '<div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button>'+
    '<button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div>'+
   '<div class="pam-player-choice-list" id="pamTournamentPlayerList"></div>'+
-  '<div class="pam-modal-actions"><button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button></div>'+
+  '<div class="pam-modal-actions">'+(collaborator?'<button class="primary" data-save-tournament-participants="'+esc(id)+'">Salva partecipanti senza rigenerare</button>':'<button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button>')+'</div>'+
  '</div>';
 
  document.body.appendChild(overlay);
@@ -3384,15 +3390,31 @@ function pamTournamentPlayersModal(id){
  });
  drawRows();
 }
-function pamRenameTournamentPlayer(playerId){
+function pamSaveTournamentParticipants(id){
+ try{
+  const e=state.events.find(function(x){return String(x.id)===String(id)});if(!e||!pamCanManageEvent(e))throw new Error("Evento non autorizzato.");
+  const overlay=document.getElementById("pamTournamentPlayersOverlay");if(!overlay)throw new Error("Finestra partecipanti non disponibile.");
+  const ids=Array.from(overlay.__pamSelected||[]).map(String);
+  const used=new Set();
+  (e.matches||[]).forEach(function(m){[m.teamA,m.teamB,m.players,m.playerIds].forEach(function(v){(Array.isArray(v)?v:[]).forEach(function(x){used.add(String(x))})})});
+  (e.pairs||[]).forEach(function(p){(p.players||[]).forEach(function(x){used.add(String(x))})});
+  const removed=(e.playerIds||[]).map(String).filter(function(pid){return !ids.includes(pid)&&used.has(pid)});
+  if(removed.length)throw new Error("Per togliere un giocatore già presente nelle partite usa il pulsante Sostituisci, così risultati e calendario restano integri.");
+  e.playerIds=Array.from(new Set(ids));e.payments=e.payments||{};e.ledger=e.ledger||{};e.playerSnapshots=e.playerSnapshots||{};
+  e.playerIds.forEach(function(pid){const p=playerById(pid);if(!e.payments[pid])e.payments[pid]={fee:Number(e.entryFee)||0,paid:false,method:"",notes:""};if(!e.ledger[pid])e.ledger[pid]={carried:Math.max(0,Number(p&&p.tokenBalance)||0),spent:0,podium:0};if(p)e.playerSnapshots[pid]={id:pid,firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""}});
+  save();overlay.remove();render();pamToast(e.playerIds.length+" partecipanti salvati senza modificare partite e risultati.","success");
+ }catch(err){pamToast("Salvataggio non riuscito: "+(err.message||err),"error")}
+}
+async function pamRenameTournamentPlayer(playerId){
  const p=playerById(playerId);if(!p)return;
  const full=prompt("Nome e cognome del giocatore",playerName(p));if(full===null)return;
  const clean=full.trim();if(!clean)return;
  const parts=clean.split(/\s+/);
  p.firstName=parts.shift()||clean;
  p.lastName=parts.join(" ");
- save();
  const e=currentEvent();
+ if(PAM_SESSION&&pamIsCollaborator()&&e){const persisted=await sb.rpc("manage_event_player",{p_tournament_id:String(e.id),p_player_id:String(p.id),p_player_data:p});if(persisted.error){pamToast("Modifica non salvata: "+persisted.error.message,"error");return}}
+ save();
  if(e)pamTournamentPlayersModal(e.id);
 }
 function pamResetEventGeneratedData(e){
@@ -3500,7 +3522,7 @@ async function pamOpenRegistrations(id){
   '<button class="secondary" data-close-registrations>Chiudi</button></div>'+
   '<div class="pam-capacity-row"><b>Capienza iscrizioni:</b> '+(e.registrationCapacity?esc(e.registrationCapacity):"NESSUN LIMITE")+
   ' <button class="secondary" data-set-registration-capacity="'+e.id+'">IMPOSTA</button></div>'+
-  (pamIsAdmin()&&e.competitionType==="national_event"?'<button class="primary" data-open-import-823822="'+e.id+'" style="width:100%;margin:10px 0">IMPORTA COPPIE DA EXCEL</button><div class="notice">Dopo aver scelto il file, controlla l\'anteprima e premi <b>CONFERMA IMPORTAZIONE</b>. Le coppie compariranno qui in attesa della tua conferma.</div>':'')+
+  (pamCanManageEvent(e)&&e.competitionType==="national_event"?'<button class="primary" data-open-import-823822="'+e.id+'" style="width:100%;margin:10px 0">IMPORTA COPPIE DA EXCEL</button><div class="notice">Dopo aver scelto il file, controlla l\'anteprima e premi <b>CONFERMA IMPORTAZIONE</b>. Le coppie compariranno qui in attesa della tua conferma.</div>':'')+
   '<div id="pamRegistrationsBody"><div class="notice">Caricamento richieste...</div></div>'+
  '</div>';
  document.body.appendChild(overlay);
@@ -3544,7 +3566,7 @@ async function pamOpenRegistrations(id){
   }).join("");
 }
 async function pamDeleteRegistration(ids,eventId){
- if(!pamIsAdmin()){pamToast("Solo l’amministratore può eliminare le richieste.","error");return}
+ const e=pamFindEventById(eventId);if(!e||!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}
  const list=String(ids||"").split(",").filter(Boolean);if(!list.length)return;
  if(!confirm(list.length>1?"Eliminare definitivamente le richieste duplicate selezionate?":"Eliminare definitivamente questa richiesta di iscrizione?"))return;
  for(const id of list){
@@ -3621,8 +3643,8 @@ async function pamFileToUploadBodyV82382(file){
  return new Blob([buf],{type:file.type||"application/octet-stream"});
 }
 async function pamUploadTournamentLogo(id,file){
- if(!pamIsAdmin()||!file)return;
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ if(!pamCanManageEvent(e)||!file)return;
  try{
   const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
   const path="tournaments/"+id+"-"+Date.now()+"."+ext;
@@ -3636,8 +3658,8 @@ async function pamUploadTournamentLogo(id,file){
  }catch(err){pamToast("Errore caricamento: "+(err&&err.message?err.message:String(err)),"error")}
 }
 async function pamUploadTournamentPoster(id,file){
- if(!pamIsAdmin()||!file)return;
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
+ if(!pamCanManageEvent(e)||!file)return;
  if(!/^image\//i.test(file.type||"")){pamToast("Seleziona una locandina in formato immagine.","error");return}
  if(file.size>12000000){pamToast("La locandina supera 12 MB. Scegli un file più leggero.","error");return}
  try{
@@ -3676,8 +3698,8 @@ function pamSelectBuilderRegulation(file){
  if(label)label.textContent="File selezionato: "+file.name+" · verrà caricato quando salvi il torneo";
 }
 async function pamUploadTournamentRegulation(id,file){
- if(!pamIsAdmin()||!file)return;
  const e=state.events.find(function(x){return String(x.id)===String(id)});if(!e)return;
+ if(!pamCanManageEvent(e)||!file)return;
  if(!pamRegulationFileAllowed(file)){pamToast("Allega un regolamento PDF, Word o immagine.","error");return}
  if(file.size>15000000){pamToast("Il regolamento supera 15 MB. Scegli un file più leggero.","error");return}
  try{
@@ -3755,7 +3777,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.36 · COPPIE VISIBILI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.38 · GESTIONE COLLABORATORE COMPLETA</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -5286,8 +5308,8 @@ async function pamReadImportFileV823822(file){
  return pamImportRecordsV823822(raw);
 }
 function pamOpenImportV823822(eventId){
- if(!pamIsAdmin())return pamToast("Solo l’amministratore può importare giocatori.","error");
  const target=eventId?(state.events||[]).find(function(e){return String(e.id)===String(eventId)}):null;
+ if(!pamIsAdmin()&&(!target||!pamCanManageEvent(target)))return pamToast("Puoi importare giocatori soltanto nell’evento assegnato.","error");
  if(target&&(target.matches||[]).some(function(m){return m.score1!==null&&m.score2!==null}))return pamToast("Importazione bloccata: nel torneo sono già presenti risultati. Proteggiamo partite e classifiche.","error");
  document.getElementById("pamImportOverlay823822")?.remove();pamPendingImportV823822={eventId:eventId||"",records:[],fileName:""};
  const overlay=document.createElement("div");overlay.id="pamImportOverlay823822";overlay.className="pam-modal-overlay";
@@ -5403,9 +5425,16 @@ async function pamConfirmImportV823822(){
  const importedPairs=new Map();processed.forEach(function(x){if(!x.record.pairKey)return;const key=(x.event?String(x.event.id):"registry")+"|"+String(x.record.pairKey);if(!importedPairs.has(key))importedPairs.set(key,[]);importedPairs.get(key).push(x.player)});
  importedPairs.forEach(function(group){const unique=Array.from(new Map(group.map(function(p){return[String(p.id),p]})).values());if(unique.length===2){unique[0].registryPartnerId=unique[1].id;unique[1].registryPartnerId=unique[0].id}});
  const destinations=Array.from(new Set(processed.map(function(x){return x.event}).filter(Boolean))),summaries=destinations.map(function(e){return pamAddImportRecordsToEventV823822(e,processed)}),warnings=summaries.flatMap(function(x){return x.warnings});
+ if(PAM_SESSION&&pamIsCollaborator()&&target){
+  const uniquePlayers=Array.from(new Map(processed.map(function(x){return[String(x.player.id),x.player]})).values());
+  for(const player of uniquePlayers){
+   const persisted=await sb.rpc("manage_event_player",{p_tournament_id:String(target.id),p_player_id:String(player.id),p_player_data:player});
+   if(persisted.error){pamToast("Importazione interrotta: "+persisted.error.message,"error");return}
+  }
+ }
  if(target&&target.competitionType==="national_event")pamRebuildNationalSchedule(target.id,true);else if(target&&target.nationalParentId)pamRebuildNationalSchedule(target.nationalParentId,true);
  save();document.getElementById("pamImportOverlay823822")?.remove();render();
- try{if(PAM_SESSION&&pamIsAdmin())await pamCloudSyncAll()}catch(err){pamToast("Importazione salvata sul dispositivo; sincronizzazione online da completare.","error");return}
+ try{if(PAM_SESSION&&pamCanManageEvent(target))await pamCloudSyncAll()}catch(err){pamToast("Importazione salvata sul dispositivo; sincronizzazione online da completare.","error");return}
  const added=summaries.reduce(function(n,x){return n+x.players},0),pairs=summaries.reduce(function(n,x){return n+x.pairs},0);pamToast("Importazione completata: "+created+" nuovi · "+updated+" già presenti aggiornati"+(target?" · "+added+" inseriti nel torneo · "+pairs+" coppie":"")+(skipped?" · "+skipped+" righe saltate":"")+(warnings.length?" · controlla le coppie incomplete":"")+".",warnings.length?"error":"success");
 }
 function pamDownloadImportTemplateV823822(){
@@ -5505,7 +5534,7 @@ function pamOpenQuickPlayer(context){
  setTimeout(function(){document.getElementById("pamQuickFirst")?.focus()},50);
 }
 
-function pamSaveQuickPlayer(){
+async function pamSaveQuickPlayer(){
  const first=document.getElementById("pamQuickFirst").value.trim();
  const last=document.getElementById("pamQuickLast").value.trim();
  const msg=document.getElementById("pamQuickPlayerMessage");
@@ -5545,8 +5574,22 @@ function pamSaveQuickPlayer(){
  }else if(ctx.mode==="existing-event"){
   const e=state.events.find(function(x){return x.id===ctx.eventId});
   if(e){
+   if(!pamCanManageEvent(e)){state.players=state.players.filter(function(x){return x.id!==p.id});msg.className="notice error";msg.textContent="Evento non autorizzato.";return}
+   if(PAM_SESSION&&pamIsCollaborator()){
+    const persisted=await sb.rpc("manage_event_player",{p_tournament_id:String(e.id),p_player_id:String(p.id),p_player_data:p});
+    if(persisted.error){state.players=state.players.filter(function(x){return x.id!==p.id});msg.className="notice error";msg.textContent="Salvataggio online non riuscito: "+persisted.error.message;return}
+   }
    let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
-   if(ctx.replaceId)base=base.filter(function(id){return id!==ctx.replaceId});
+   if(ctx.replaceId){
+    const oldId=String(ctx.replaceId),replacementId=String(p.id);
+    function replaceNewPlayerEverywhere(value,key){if(Array.isArray(value))return value.map(function(v){return replaceNewPlayerEverywhere(v,key)});if(value&&typeof value==="object"){Object.keys(value).forEach(function(k){value[k]=replaceNewPlayerEverywhere(value[k],k)});return value}if(typeof value==="string"&&value===oldId&&!/^(id|shareToken|nationalParentId)$/i.test(String(key||"")))return replacementId;return value}
+    replaceNewPlayerEverywhere(e,"");
+    base=base.map(function(id){return String(id)===oldId?replacementId:id});
+    if(e.payments&&e.payments[oldId]&&!e.payments[replacementId])e.payments[replacementId]=e.payments[oldId];
+    if(e.ledger&&e.ledger[oldId]&&!e.ledger[replacementId])e.ledger[replacementId]=e.ledger[oldId];
+    if(e.fixedPairRegistrations&&e.fixedPairRegistrations[oldId]){e.fixedPairRegistrations[replacementId]=e.fixedPairRegistrations[oldId];delete e.fixedPairRegistrations[oldId]}
+    if(e.payments)delete e.payments[oldId];if(e.ledger)delete e.ledger[oldId];
+   }
    if(!base.includes(p.id))base.push(p.id);
    e.playerIds=Array.from(new Set(base));
    save();
@@ -5598,12 +5641,26 @@ function pamApplyReplacement(newId){
   save();overlay.remove();render();
  }else if(ctx.mode==="existing-event"){
   const e=state.events.find(function(x){return x.id===ctx.eventId});if(!e)return;
+  if(!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}
+  const oldId=String(ctx.replaceId),replacementId=String(newId);
+  function replaceEverywhere(value,key){
+   if(Array.isArray(value))return value.map(function(v){return replaceEverywhere(v,key)});
+   if(value&&typeof value==="object"){Object.keys(value).forEach(function(k){value[k]=replaceEverywhere(value[k],k)});return value}
+   if(typeof value==="string"&&value===oldId&&!/^(id|shareToken|nationalParentId)$/i.test(String(key||"")))return replacementId;
+   return value;
+  }
+  replaceEverywhere(e,"");
   let base=Array.isArray(ctx.selectedIds)?ctx.selectedIds.slice():(e.playerIds||[]).slice();
-  base=base.map(function(id){return id===ctx.replaceId?newId:id});
+  base=base.map(function(id){return String(id)===oldId?replacementId:id});
   e.playerIds=Array.from(new Set(base));
+  if(e.payments&&e.payments[oldId]&&!e.payments[replacementId])e.payments[replacementId]=e.payments[oldId];
+  if(e.ledger&&e.ledger[oldId]&&!e.ledger[replacementId])e.ledger[replacementId]=e.ledger[oldId];
+  if(e.fixedPairRegistrations&&e.fixedPairRegistrations[oldId]){e.fixedPairRegistrations[replacementId]=e.fixedPairRegistrations[oldId];delete e.fixedPairRegistrations[oldId]}
+  if(e.playerSnapshots){const p=playerById(replacementId);if(p)e.playerSnapshots[replacementId]={id:replacementId,firstName:p.firstName||"",lastName:p.lastName||"",phone:p.phone||"",email:p.email||"",gender:p.gender||"",level:p.level||"",photoUrl:p.photoUrl||""};delete e.playerSnapshots[oldId]}
+  if(e.payments)delete e.payments[oldId];if(e.ledger)delete e.ledger[oldId];
   save();overlay.remove();pamTournamentPlayersModal(e.id);
  }
- pamToast("Giocatore sostituito. Ricorda di rigenerare le partite.","success");
+ pamToast(ctx.mode==="existing-event"?"Giocatore sostituito senza perdere partite e risultati.":"Giocatore sostituito.","success");
 }
 
 function editPlayer(id){
@@ -6627,7 +6684,7 @@ function pamNationalEventView(e){
  const structureHealth=missingCategories.length?'<div class="notice error"><b>STRUTTURA NAZIONALE INCOMPLETA</b><br>Mancano: '+esc(missingCategories.join(", "))+'. Calendario e configurazioni restano bloccati finché l’amministratore non esegue il riallineamento.</div>':'<div class="notice success"><b>STRUTTURA NAZIONALE VERIFICATA</b><br>Maschile, Femminile e Misto sono collegati allo stesso evento nazionale.</div>';
  return header(e.name,e.date+" · "+e.club+" · CAMPIONATI NAZIONALI")+
  '<div class="pam-national-hub"><div class="pam-national-logos"><div><img src="assets/aics-logo.png" alt="AICS"></div><div><img src="assets/misano-sporting-club.png" alt="Misano Sporting Club"></div><div><img src="assets/mixsport.png" alt="Mixsport"></div></div><div class="notice success"><b>UN SOLO LINK DI ISCRIZIONE</b><br>Gli iscritti scelgono Doppio Maschile, Doppio Femminile o Doppio Misto. Dopo la verifica della ricevuta, la coppia entra automaticamente nella categoria corretta.</div>'+structureHealth+'<button class="primary" data-share-registration="'+e.id+'">📲 CONDIVIDI LINK UNICO</button><button class="secondary" data-open-registrations="'+e.id+'">📥 ISCRIZIONI E RICEVUTE</button>'+scheduleHtml+(pamIsAdmin()&&!missingCategories.length?'<button class="secondary" data-rebuild-national-schedule="'+e.id+'">🗓️ RICALCOLA CALENDARIO UNICO</button>':'')+'<h2 style="margin-top:18px">GESTIONE DELLE 3 CATEGORIE</h2><div class="pam-national-categories">'+cards+'</div>'+allMatches+'<div class="pam-national-payment"><b>Conferma pagamento</b><br>La ricevuta deve arrivare via email a <b>nazionalipadel@aicstennis.it</b>. L’iscrizione diventa valida solo quando premi “Conferma ricevuta e iscrizione”.</div></div>'+pamEventRegulationPanel(e)+
- (pamIsAdmin()?'<details class="pam-actions-menu print-hide"><summary>Impostazioni evento nazionale</summary><div class="pam-actions-content"><button class="primary" data-collaborator-invite-event="'+e.id+'">🧑‍💼 LINK COLLABORATORE · SOLO QUESTO EVENTO</button><button class="primary" data-player-invite-event="'+e.id+'">👤 LINK GIOCATORE · SOLO QUESTO EVENTO</button><button class="secondary" data-repair-national-event-823833="'+e.id+'">🛡️ VERIFICA E RIALLINEA LE 3 CATEGORIE</button><button class="secondary" data-open-import-823822="'+e.id+'">📥 Importa giocatori e coppie</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Vedi locandina</button><button class="secondary" data-create-poster="'+e.id+'">✨ Crea locandina</button><label class="upload-button">📤 Inserisci locandina<input type="file" accept="image/png,image/jpeg,image/webp" data-tournament-poster="'+e.id+'"></label><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati generali</button></div></details>':'')+printFooter(e);
+ (pamCanManageEvent(e)?'<details class="pam-actions-menu print-hide"><summary>Gestione evento nazionale</summary><div class="pam-actions-content">'+(pamIsAdmin()?'<button class="primary" data-collaborator-invite-event="'+e.id+'">🧑‍💼 LINK COLLABORATORE · SOLO QUESTO EVENTO</button><button class="primary" data-player-invite-event="'+e.id+'">👤 LINK GIOCATORE · SOLO QUESTO EVENTO</button><button class="secondary" data-repair-national-event-823833="'+e.id+'">🛡️ VERIFICA E RIALLINEA LE 3 CATEGORIE</button>':'')+'<button class="secondary" data-open-import-823822="'+e.id+'">📥 Importa giocatori e coppie</button><button class="secondary" data-open-poster="'+e.id+'">🖼️ Vedi locandina</button><button class="secondary" data-create-poster="'+e.id+'">✨ Crea locandina</button><label class="upload-button">📤 Inserisci locandina<input type="file" accept="image/png,image/jpeg,image/webp" data-tournament-poster="'+e.id+'"></label>'+(pamIsAdmin()?'<button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati e programmazione</button>':'')+'</div></details>':'')+printFooter(e);
 }
 function eventView(){
  const e=currentEvent();if(!e)return eventsView();
@@ -6672,16 +6729,16 @@ function eventView(){
   '<button class="secondary" data-open-registrations="'+e.id+'">📥 Iscrizioni ricevute</button>'+
   '<button class="secondary" data-open-poster="'+e.id+'">🖼️ Vedi locandina pubblica</button>'+
   '<button class="secondary" data-create-poster="'+e.id+'">✨ Crea locandina</button>'+
-  (pamIsAdmin()?'<label class="upload-button">📤 Inserisci locandina<input type="file" accept="image/png,image/jpeg,image/webp" data-tournament-poster="'+e.id+'"></label>':'')+
+  (pamCanManageEvent(e)?'<label class="upload-button">📤 Inserisci locandina<input type="file" accept="image/png,image/jpeg,image/webp" data-tournament-poster="'+e.id+'"></label>':'')+
   (e.competitionType==="rodeo_tokens"?'<button class="primary" type="button" data-action="recover-last-tokens">↩️ RECUPERA DA TAPPA PRECEDENTE</button>':'')+
-  (pamIsAdmin()?'<button class="primary" data-collaborator-invite-event="'+e.id+'">🧑‍💼 Link collaboratore · solo questo evento</button><button class="primary" data-player-invite-event="'+e.id+'">👤 Link giocatore · solo questo evento</button><button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti / Rigenera</button>':'')+
-  (pamIsAdmin()?'<button class="secondary" data-open-import-823822="'+e.id+'">📥 Importa giocatori e coppie</button>':'')+
- (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+  (pamIsAdmin()?'<button class="primary" data-collaborator-invite-event="'+e.id+'">🧑‍💼 Link collaboratore · solo questo evento</button><button class="primary" data-player-invite-event="'+e.id+'">👤 Link giocatore · solo questo evento</button>':'')+
+  (pamCanManageEvent(e)?'<button class="secondary" data-manage-tournament-players="'+e.id+'">👥 Partecipanti e sostituzioni</button><button class="secondary" data-open-import-823822="'+e.id+'">📥 Importa giocatori e coppie</button><label class="upload-button">🖼️ Carica logo<input type="file" accept="image/*" data-tournament-logo="'+e.id+'"></label>':'')+
+ (pamIsAdmin()?'<button class="secondary" data-duplicate-event="'+e.id+'">📄 Duplica torneo</button><button class="secondary" data-edit-event="'+e.id+'">✏️ Modifica dati e programmazione</button>':'')+
  '</div></details>'+ 
  pamEventRegulationPanel(e)+
  (e.nationalParentId?'<div class="notice success print-hide"><b>Calendario nazionale condiviso:</b> questa categoria utilizza campi e orari coordinati con Maschile, Femminile e Misto. Un giocatore presente in più categorie non viene mai inserito in due partite contemporaneamente.</div>':'')+
  '<div class="notice success print-hide pam-cloud-transient-v8227"><b>Archivio online attivo:</b> risultati e modifiche vengono sincronizzati con Supabase.</div>'+ 
- (!pamIsAdmin()?'<div class="notice success print-hide"><b>Modalità collaboratore:</b> gestione operativa del torneo: risultati, timer, classifica, gettoni, aste, fasi finali, pagamenti, iscrizioni, PDF e condivisione. Partecipanti, sostituzioni e rigenerazione restano riservati all’amministratore.</div>':'')+
+ (pamIsCollaborator()?'<div class="notice success print-hide"><b>Modalità collaboratore completa:</b> puoi gestire iscrizioni, partecipanti, coppie, sostituzioni, risultati, timer, classifiche, gettoni, aste, fasi finali, pagamenti, contatti, locandina, PDF e condivisione. Creazione dell’evento, configurazione e programmazione del calendario restano riservate all’amministratore.</div>':'')+
  '<details class="pam-actions-menu pam-detail-menu print-hide"><summary>Dettagli programmazione e PDF</summary><div class="pam-actions-content">'+
  '<b>Programmazione:</b> inizio ore '+esc(e.startTime||"20:00")+
  (e.matchMode==="score"?' · partita a punteggio · timer disattivato · durata stimata '+Number(e.estimatedMatchDuration||e.slotDuration||60)+' minuti · nuova partita ogni '+Number(e.slotDuration||e.estimatedMatchDuration||60)+' minuti':' · partita a tempo · durata effettiva '+Number(e.timerDuration||e.matchDuration||15)+' minuti · nuova partita ogni '+Number(e.slotDuration||e.matchDuration||20)+' minuti · pausa prevista '+Math.max(0,Number(e.slotDuration||e.matchDuration||20)-Number(e.timerDuration||e.matchDuration||15))+' minuti<br>Fase iniziale: '+(e.initialTimerEnabled?"timer attivo":"timer disattivo")+' · Eliminatorie: '+(e.eliminationTimerEnabled?"attivo":"disattivo")+' · Semifinali: '+(e.semifinalTimerEnabled?"attivo":"disattivo")+' · Finale: '+(e.finalTimerEnabled?"attivo":"disattivo"))+'<br><br><b>PDF condivisibile:</b> apri la sezione desiderata e premi “PDF pagina”.'+
@@ -8148,8 +8205,8 @@ document.addEventListener("click",function(ev){
 
  const dup=ev.target.closest("[data-duplicate-event]");if(dup){pamDuplicateEvent(dup.getAttribute("data-duplicate-event"));return}
  const editEventBtn=ev.target.closest("[data-edit-event]");if(editEventBtn){pamEditEvent(editEventBtn.getAttribute("data-edit-event"));return}
- const managePlayers=ev.target.closest("[data-manage-tournament-players]");if(managePlayers){if(!pamIsAdmin()){pamToast("Solo l’amministratore può modificare i partecipanti o rigenerare le partite.","error");return}pamTournamentPlayersModal(managePlayers.getAttribute("data-manage-tournament-players"));return}
- const openImport=ev.target.closest("[data-open-import-823822]");if(openImport){if(!pamIsAdmin()){pamToast("Solo l’amministratore può importare giocatori.","error");return}pamOpenImportV823822(openImport.getAttribute("data-open-import-823822")||"");return}
+ const managePlayers=ev.target.closest("[data-manage-tournament-players]");if(managePlayers){const e=pamFindEventById(managePlayers.getAttribute("data-manage-tournament-players"));if(!e||!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}pamTournamentPlayersModal(e.id);return}
+ const openImport=ev.target.closest("[data-open-import-823822]");if(openImport){pamOpenImportV823822(openImport.getAttribute("data-open-import-823822")||"");return}
  const closeImport=ev.target.closest("[data-close-import-823822]");if(closeImport){document.getElementById("pamImportOverlay823822")?.remove();return}
  const confirmImport=ev.target.closest("[data-confirm-import-823822]");if(confirmImport){pamConfirmImportV823822();return}
  const templateImport=ev.target.closest("[data-download-import-template-823822]");if(templateImport){pamDownloadImportTemplateV823822();return}
@@ -8157,7 +8214,8 @@ document.addEventListener("click",function(ev){
  const exportXlsx=ev.target.closest("[data-registry-export-xlsx-823822]");if(exportXlsx){pamRegistryExportExcelV823822();return}
  const exportCsv=ev.target.closest("[data-registry-export-csv-823822]");if(exportCsv){pamRegistryExportCsvV823822();return}
  const closePlayers=ev.target.closest("[data-close-tournament-players]");if(closePlayers){document.getElementById("pamTournamentPlayersOverlay")?.remove();return}
- const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){if(!pamIsAdmin()){pamToast("Solo l’amministratore può modificare i giocatori del torneo.","error");return}pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
+ const renameTournamentPlayer=ev.target.closest("[data-rename-tournament-player]");if(renameTournamentPlayer){const e=currentEvent();if(!e||!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}pamRenameTournamentPlayer(renameTournamentPlayer.getAttribute("data-rename-tournament-player"));return}
+ const saveTournamentParticipants=ev.target.closest("[data-save-tournament-participants]");if(saveTournamentParticipants){pamSaveTournamentParticipants(saveTournamentParticipants.getAttribute("data-save-tournament-participants"));return}
  const regenerateTournament=ev.target.closest("[data-regenerate-tournament]");if(regenerateTournament){if(!pamIsAdmin()){pamToast("Solo l’amministratore può rigenerare le partite.","error");return}pamRegenerateTournament(regenerateTournament.getAttribute("data-regenerate-tournament"));return}
  const generateFixedFinals=ev.target.closest("[data-generate-fixed-finals]");if(generateFixedFinals){
   try{pamGenerateFixedFinals(currentEvent())}catch(err){pamToast(err.message,"error")}
@@ -8188,9 +8246,9 @@ document.addEventListener("click",function(ev){
  }
  const quickNewEvent=ev.target.closest("[data-quick-player-new-event]");if(quickNewEvent){pamOpenQuickPlayer({mode:"new-event",category:state.draft.category});return}
  const quickExisting=ev.target.closest("[data-quick-player-existing-event]");if(quickExisting){
-  if(!pamIsAdmin()){pamToast("Solo l’amministratore può aggiungere giocatori al torneo.","error");return}
   const eventId=quickExisting.getAttribute("data-quick-player-existing-event");
   const e=state.events.find(function(x){return x.id===eventId});
+  if(!e||!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}
   pamOpenQuickPlayer({
    mode:"existing-event",
    eventId:eventId,
@@ -8201,7 +8259,7 @@ document.addEventListener("click",function(ev){
  }
  const replaceNewEvent=ev.target.closest("[data-replace-new-event-player]");if(replaceNewEvent){pamOpenReplacePlayer({mode:"new-event",replaceId:replaceNewEvent.getAttribute("data-replace-new-event-player"),category:state.draft.category});return}
  const replaceExisting=ev.target.closest("[data-replace-existing-event-player]");if(replaceExisting){
-  if(!pamIsAdmin()){pamToast("Solo l’amministratore può sostituire i giocatori del torneo.","error");return}
+  const e=pamFindEventById(replaceExisting.getAttribute("data-event-id"));if(!e||!pamCanManageEvent(e)){pamToast("Evento non autorizzato.","error");return}
   pamOpenReplacePlayer({
    mode:"existing-event",
    eventId:replaceExisting.getAttribute("data-event-id"),
@@ -8618,7 +8676,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823833",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823838",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
