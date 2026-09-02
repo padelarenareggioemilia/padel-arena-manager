@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.42 · Protezione archivio online</title>
+<title>Padel Arena Manager V8.2.38.43 · Coppie nazionali protette</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1402,7 +1402,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823842">
+<link rel="manifest" href="manifest.webmanifest?v=823843">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2214,7 +2214,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.42 · Protezione archivio online</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.43 · Coppie nazionali protette</div>';
 }
 
 function iphoneInstallCard(){
@@ -3866,7 +3866,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.42 · ARCHIVIO ONLINE PROTETTO</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.43 · COPPIE NAZIONALI PROTETTE</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6435,6 +6435,9 @@ function pamNationalPlayerFromPayloadV823826(payload,knownId){
  return p?String(p.id):"";
 }
 async function pamRestoreNationalAcceptedPairsV823826(parentId){
+ // Non eseguire più il recupero automatico dalle vecchie iscrizioni:
+ // può contenere partner sostituiti e corrompere le coppie confermate.
+ return;
  const key=String(parentId||"");if(!key||PAM_NATIONAL_ACCEPTED_SYNC_V823826[key])return;
  PAM_NATIONAL_ACCEPTED_SYNC_V823826[key]=true;
  try{
@@ -6749,7 +6752,6 @@ function pamNationalConfirmedPairsV823833(child){
 }
 function pamNationalEventView(e){
  const children=pamEnsureNationalChildrenV823825(e);
- if(pamIsAdmin())setTimeout(function(){pamRestoreNationalAcceptedPairsV823826(e.id)},0);
  const requiredCategories=["Maschile","Femminile","Misto"];
  const missingCategories=requiredCategories.filter(function(category){return !children.some(function(child){return String(child.nationalCategory)===category})});
  const schedule=pamEnsureNationalSchedule(e),missing=(schedule&&schedule.overflow||[]).length;
@@ -8772,7 +8774,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823842",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823843",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
