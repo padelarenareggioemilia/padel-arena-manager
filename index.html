@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.39 · Correzione icona iPhone</title>
+<title>Padel Arena Manager V8.2.38.41 · Stabilità calendario e timer</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1402,7 +1402,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823839">
+<link rel="manifest" href="manifest.webmanifest?v=823841">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1778,6 +1778,12 @@ let pamSyncTimer=null;
 let pamRealtimeChannel=null;
 let pamRemoteRefreshTimer=null;
 let pamUploading=false;
+let pamOperationalRevision=0;
+let pamOperationalDirty=false;
+let pamOperationalEventId=null;
+let pamPendingEventSyncId=null;
+let pamPendingFullSync=false;
+let pamEventSyncRetryDelay=1000;
 let PAM_TOURNAMENT_ACCESS=[];
 
 function pamIsAdmin(){
@@ -2201,7 +2207,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.39 · Correzione icona iPhone</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.41 · Stabilità calendario e timer</div>';
 }
 
 function iphoneInstallCard(){
@@ -2552,14 +2558,24 @@ function pamCleanupLegacyLocalStateV82385(){
 }
 pamCleanupLegacyLocalStateV82385();
 
-function save(){
+function save(options){
+ options=options||{};
  pamEnsureEventPlayerSnapshots();
  pamProtectCurrentEdit(5000);
+ if(options.operational===true){
+  pamOperationalRevision++;
+  pamOperationalDirty=true;
+  const active=currentEvent();
+  pamOperationalEventId=String(options.eventId||(active&&active.id)||"")||null;
+ }
  const localResult=pamPersistStateLocalV82381();
  if(!localResult.ok){
   console.warn("Cache locale non disponibile: i dati completi restano su Supabase.");
  }
- if(pamCloudReady&&PAM_SESSION)pamScheduleCloudSync();
+ if(!options.localOnly&&pamCloudReady&&PAM_SESSION){
+  if(options.eventOnly===true&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+  else pamScheduleCloudSync();
+ }
 }
 function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
 function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
@@ -2680,6 +2696,11 @@ function pamScheduleCloudSync(){
  clearTimeout(pamSyncTimer);
  pamSyncTimer=setTimeout(pamCloudSyncAll,650);
 }
+function pamScheduleEventCloudSync(eventId){
+ const id=String(eventId||"");if(!id)return;
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(function(){pamCloudSyncEvent(id)},220);
+}
 function pamUniqueRowsByIdV8225(items,rowFn){
  const byId=new Map();
  (items||[]).forEach(function(item){
@@ -2689,7 +2710,9 @@ function pamUniqueRowsByIdV8225(items,rowFn){
  return Array.from(byId.values()).map(rowFn);
 }
 async function pamCloudSyncAll(){
- if(!pamCloudReady||!PAM_SESSION||pamUploading)return;
+ if(!pamCloudReady||!PAM_SESSION)return;
+ if(pamUploading){pamPendingFullSync=true;return}
+ const syncRevision=pamOperationalRevision;
  pamUploading=true;
  try{
   if(pamIsAdmin()){
@@ -2715,12 +2738,52 @@ async function pamCloudSyncAll(){
    }
   }
   pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
   pamSetConnectionState(true);
  }catch(err){
   console.error("Sincronizzazione Supabase:",err);
   pamSetConnectionState(false);
   pamToast("Sincronizzazione non riuscita: "+err.message,"error");
- }finally{pamUploading=false}
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const id=pamPendingEventSyncId;pamPendingEventSyncId=null;pamScheduleEventCloudSync(id)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+async function pamCloudSyncEvent(eventId){
+ const id=String(eventId||"");
+ if(!pamCloudReady||!PAM_SESSION||!id)return;
+ if(pamUploading){pamPendingEventSyncId=id;return}
+ const e=pamFindEventById(id);if(!e||!pamCanManageEvent(e))return;
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  let er;
+  if(pamIsAdmin()){
+   er=await sb.from("tournaments").upsert([pamEventRow(e)],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+  }else{
+   er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+  }
+  if(er.error)throw er.error;
+  if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  else pamPendingEventSyncId=String(pamOperationalEventId||id);
+  pamEventSyncRetryDelay=1000;
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione evento:",err);
+  pamOperationalDirty=true;pamOperationalEventId=id;
+  pamSetConnectionState(false);
+  if(pamEventSyncRetryDelay<=1000)pamToast("Evento salvato sul dispositivo; nuovo tentativo online in corso.","error");
+  pamEventSyncRetryDelay=Math.min(30000,pamEventSyncRetryDelay*2);
+  pamPendingEventSyncId=id;
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const next=pamPendingEventSyncId,delay=pamEventSyncRetryDelay;pamPendingEventSyncId=null;setTimeout(function(){pamScheduleEventCloudSync(next)},delay)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
 }
 
 let pamConnectionFailuresV8222=0;
@@ -2764,7 +2827,7 @@ async function pamForceUploadLocal(){
 async function pamForceDownloadCloud(){
  if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
  pamToast("Scaricamento archivio online...");
- await pamCloudLoad(false,true);
+ await pamCloudLoad(false,"manual");
  await pamRefreshSyncPanel();
  pamToast("Archivio online scaricato.","success");
 }
@@ -2972,6 +3035,11 @@ async function pamCloudLoad(initial,forceReplace){
  if(pamCloudLoadPromise)return pamCloudLoadPromise;
 
  pamCloudLoadPromise=(async function(){
+  const loadRevision=pamOperationalRevision;
+  const explicitOverwrite=forceReplace==="manual";
+  const canApplySnapshot=function(){
+   return explicitOverwrite||(!pamOperationalDirty&&loadRevision===pamOperationalRevision);
+  };
   // Carica prima i tornei: l'anagrafica è molto più grande e non deve
   // impedire né ritardare la visualizzazione delle competizioni assegnate.
   const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
@@ -2987,12 +3055,14 @@ async function pamCloudLoad(initial,forceReplace){
    });
   });
   const visibleEarlyEvents=pamFilterEventsForRole(earlyEvents);
-  state.events=visibleEarlyEvents;state.__cloudEventsCount=visibleEarlyEvents.length;
-  if(pamIsCollaborator()){
-   const assignedNow=visibleEarlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
-   if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+  if(canApplySnapshot()){
+   state.events=visibleEarlyEvents;state.__cloudEventsCount=visibleEarlyEvents.length;
+   if(pamIsCollaborator()){
+    const assignedNow=visibleEarlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
+    if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+   }
+   if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
   }
-  if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
 
   let playerRows;
   try{
@@ -3033,6 +3103,15 @@ async function pamCloudLoad(initial,forceReplace){
    throw new Error("Snapshot giocatori vuoto rifiutato.");
   if(pamCloudStableSnapshot.events>0 && remoteEvents.length===0)
    throw new Error("Snapshot tornei vuoto rifiutato.");
+
+  // Una rigenerazione o un timer avviati mentre il download era in corso
+  // hanno sempre precedenza sullo snapshot remoto iniziato prima.
+  if(!canApplySnapshot()){
+   pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+   pamCloudLastOkAt=Date.now();pamCloudReady=true;pamSyncLabel(true,"cloud");
+   if(pamOperationalDirty&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+   return Object.assign({},pamCloudStableSnapshot,{skipped:true});
+  }
 
   state.players=remotePlayers;
   state.events=remoteEvents;
@@ -3462,17 +3541,11 @@ function pamRegenerateTournament(id){
   }
   if(!e.matches.length)throw new Error("La generazione non ha prodotto partite.");
   if(e.nationalParentId)pamRebuildNationalSchedule(e.nationalParentId,true);
-  save();
+  save({operational:true,eventOnly:!e.nationalParentId,eventId:e.id});
   overlay.remove();
   state.currentEventId=e.id;state.view="event";state.tab="matches";
   render();
   pamToast(ids.length+" partecipanti salvati · "+e.matches.length+" partite generate.","success");
-  if(PAM_SESSION&&pamIsAdmin()){
-   Promise.resolve(pamCloudSyncAll()).catch(function(err){
-    console.warn("Sync torneo dopo rigenerazione:",err);
-    pamToast("Partite create sul dispositivo; sincronizzazione cloud da completare.","error");
-   });
-  }
  }catch(err){
   console.error("Rigenerazione torneo:",err);
   pamToast("Rigenerazione non riuscita: "+(err.message||err),"error");
@@ -3757,15 +3830,15 @@ function pamOpenAssignedCollaboratorEventV823833(){
 const PAM_VIEW_HISTORY=[];
 function pamCurrentNavState(){return {view:state.view||"home",tab:state.tab||"",eventId:state.currentEventId||"",teamId:state.champTeamId||""}}
 function pamPushViewHistory(){const x=pamCurrentNavState(),last=PAM_VIEW_HISTORY[PAM_VIEW_HISTORY.length-1];if(!last||JSON.stringify(last)!==JSON.stringify(x))PAM_VIEW_HISTORY.push(x);if(PAM_VIEW_HISTORY.length>40)PAM_VIEW_HISTORY.shift()}
-function setView(v){if(v!==state.view)pamPushViewHistory();state.view=v;save();render()}
-function setTab(v){state.tab=v;save();render()}
+function setView(v){if(v!==state.view)pamPushViewHistory();state.view=v;save({localOnly:true});render()}
+function setTab(v){state.tab=v;save({localOnly:true});render()}
 function pamGoHome(){
  if(state.view==="new"&&!confirm("Hai modifiche non salvate. Vuoi tornare alla Home?"))return;
  PAM_VIEW_HISTORY.length=0;
  if(pamIsCollaborator()&&pamOpenAssignedCollaboratorEventV823833())return;
- state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save();render()
+ state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save({localOnly:true});render()
 }
-function pamGoBack(){if(pamIsCollaborator()){pamGoHome();return}if(state.view==="new"&&!confirm("Hai modifiche non salvate. Vuoi uscire comunque?"))return;const prev=PAM_VIEW_HISTORY.pop();if(prev){state.view=prev.view;state.tab=prev.tab;state.currentEventId=prev.eventId||null;state.champTeamId=prev.teamId||null;save();render();return}if(state.view!=="home"){state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save();render();return}pamGoHome()}
+function pamGoBack(){if(pamIsCollaborator()){pamGoHome();return}if(state.view==="new"&&!confirm("Hai modifiche non salvate. Vuoi uscire comunque?"))return;const prev=PAM_VIEW_HISTORY.pop();if(prev){state.view=prev.view;state.tab=prev.tab;state.currentEventId=prev.eventId||null;state.champTeamId=prev.teamId||null;save({localOnly:true});render();return}if(state.view!=="home"){state.view="home";state.tab="";state.currentEventId=null;state.champTeamId=null;save({localOnly:true});render();return}pamGoHome()}
 
 function header(title,sub){
  const e=state.view==="event"?currentEvent():null;
@@ -3777,7 +3850,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.39 · ICONA IPHONE AGGIORNATA</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.41 · CALENDARIO E TIMER STABILI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6649,10 +6722,10 @@ function pamNationalAllMatchesV823825(parent,children){
 }
 function pamNationalConfirmedPairsV823833(child){
  if(!child)return 0;
- const seen=new Set(),links=child.fixedPairRegistrations||{};
+ const seen=new Set(),links=child.fixedPairRegistrations||{},active=new Set((child.playerIds||[]).map(String));
  Object.keys(links).forEach(function(id){
   const partner=String(links[id]&&links[id].partnerId||"");
-  if(!partner||String(id)===partner)return;
+  if(!partner||String(id)===partner||!active.has(String(id))||!active.has(partner))return;
   seen.add([String(id),partner].sort().join("|"));
  });
  if(seen.size)return seen.size;
@@ -6889,18 +6962,20 @@ function startTimer(key){
  const old=e.timers[key]||{};
  const full=Math.max(1,Number(e.timerDuration||e.matchDuration)||15)*60000;
  const remaining=!old.endAt&&old.pausedRemaining!==undefined?Math.max(0,Number(old.pausedRemaining)||0):full;
- e.timers[key]={endAt:Date.now()+remaining,alerted:false};
+ const now=Date.now();
+ e.timers[key]={endAt:now+remaining,startedAt:now,durationMs:remaining,alerted:false};
  dismissTimerAlert();
- save();render();
+ save({operational:true,eventOnly:true,eventId:e.id});render();
 }
 function pauseTimer(key){
  const e=currentEvent();if(!e)return;e.timers=e.timers||{};
  const old=e.timers[key];if(!old||!old.endAt)return;
- e.timers[key]={pausedRemaining:Math.max(0,old.endAt-Date.now()),alerted:false};
- dismissTimerAlert();save();render();
+ const now=Date.now();
+ e.timers[key]={pausedRemaining:Math.max(0,old.endAt-now),pausedAt:now,durationMs:old.durationMs,alerted:false};
+ dismissTimerAlert();save({operational:true,eventOnly:true,eventId:e.id});render();
 }
 function resetTimer(key){
- const e=currentEvent();e.timers=e.timers||{};delete e.timers[key];dismissTimerAlert();save();render();
+ const e=currentEvent();if(!e)return;e.timers=e.timers||{};delete e.timers[key];dismissTimerAlert();save({operational:true,eventOnly:true,eventId:e.id});render();
 }
 function updateTimers(){
  const e=currentEvent();if(!e)return;
@@ -6924,9 +6999,14 @@ function updateTimers(){
    showTimerAlert(key);
   }
  });
- if(changed)save();
+ if(changed)save({operational:true,eventOnly:true,eventId:e.id});
 }
 setInterval(updateTimers,1000);
+// Safari può sospendere gli intervalli in background: al ritorno si ricalcola
+// sempre dai timestamp assoluti, senza ripartire dalla durata iniziale.
+document.addEventListener("visibilitychange",function(){if(!document.hidden)updateTimers()});
+window.addEventListener("pageshow",updateTimers);
+window.addEventListener("focus",updateTimers);
 function pairById(e,id){return (e.pairs||[]).find(function(p){return p.id===id})}
 function pairName(e,id){const p=pairById(e,id);return p?names(p.players):"Coppia"}
 function matchesView(e){
@@ -8301,7 +8381,7 @@ document.addEventListener("click",function(ev){
  const createChamp=ev.target.closest("[data-create-champ-team]");if(createChamp){if(!pamIsAdmin()){pamToast("Solo l’amministratore può creare nuove squadre.","error");return}document.getElementById("pamUniversalMenu")?.remove();setView("championship-new-team");return}
  const saveNewChamp=ev.target.closest("[data-save-new-champ-team]");if(saveNewChamp){pamCreateChampTeam();return}
 
- const openChamp=ev.target.closest("[data-open-champ-team]");if(openChamp){state.champTeamId=openChamp.getAttribute("data-open-champ-team");state.view="championship-team";save();render();setTimeout(function(){pamLoadAdminRoster(openChamp.getAttribute("data-open-champ-team"))},40);return}
+ const openChamp=ev.target.closest("[data-open-champ-team]");if(openChamp){state.champTeamId=openChamp.getAttribute("data-open-champ-team");state.view="championship-team";save({localOnly:true});render();setTimeout(function(){pamLoadAdminRoster(openChamp.getAttribute("data-open-champ-team"))},40);return}
  const toggleChamp=ev.target.closest("[data-toggle-team-access]");if(toggleChamp){pamToggleTeamAccess(toggleChamp.getAttribute("data-toggle-team-access"));return}
  const shareChamp=ev.target.closest("[data-share-team-invite]");if(shareChamp){pamShareTeamInvite(shareChamp.getAttribute("data-share-team-invite"));return}
  const saveChamp=ev.target.closest("[data-save-champ-team]");if(saveChamp){pamSaveChampTeamForm(saveChamp.getAttribute("data-save-champ-team"));return}
@@ -8351,9 +8431,9 @@ document.addEventListener("click",function(ev){
  const openNational=ev.target.closest("[data-open-national-category]");if(openNational){
   const child=pamResolveNationalChildV823827(openNational.getAttribute("data-national-parent"),openNational.getAttribute("data-open-national-category"));
   if(!child){pamToast("Categoria nazionale non trovata. Aggiorna i dati e riprova.","error");return}
-  state.currentEventId=child.id;state.view="event";state.tab=openNational.getAttribute("data-target-tab")||"matches";save();render();return
+  state.currentEventId=child.id;state.view="event";state.tab=openNational.getAttribute("data-target-tab")||"matches";save({localOnly:true});render();return
  }
- const open=ev.target.closest("[data-open-event]");if(open){const found=pamFindEventById(open.getAttribute("data-open-event"));if(!found){pamToast("Torneo non trovato. Aggiorna i dati e riprova.","error");return}state.currentEventId=found.id;state.view="event";state.tab=open.getAttribute("data-target-tab")||"matches";save();render();return}
+ const open=ev.target.closest("[data-open-event]");if(open){const found=pamFindEventById(open.getAttribute("data-open-event"));if(!found){pamToast("Torneo non trovato. Aggiorna i dati e riprova.","error");return}state.currentEventId=found.id;state.view="event";state.tab=open.getAttribute("data-target-tab")||"matches";save({localOnly:true});render();return}
  const del=ev.target.closest("[data-delete-event]");if(del){deleteEvent(del.getAttribute("data-delete-event"));return}
  const edit=ev.target.closest("[data-edit-player]");if(edit){editPlayer(edit.getAttribute("data-edit-player"));return}
 });
@@ -8676,7 +8756,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823839",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823841",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
