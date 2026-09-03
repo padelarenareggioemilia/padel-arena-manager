@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.45 · Risultati per singolo set</title>
+<title>Padel Arena Manager V8.2.38.46 · Fasi finali nazionali</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1368,6 +1368,33 @@ nav{display:none!important}
 .match .team-stack,.match-card .team-stack{
  font-size:20px!important;line-height:1.08!important;gap:1px!important;padding:2px 0!important
 }
+
+/* Calendario nazionale: leggibilità a schermo, senza alterare le schede operative. */
+.pam-national-all-matches .team-stack,
+.pam-national-all-matches .team-stack > div{
+ color:#f8fafc!important;
+ opacity:1!important;
+ font-size:21px!important;
+ line-height:1.12!important;
+ font-weight:950!important;
+ text-shadow:0 2px 5px rgba(0,0,0,.8)!important;
+}
+.pam-national-all-matches .vs-divider,
+.pam-national-all-matches .vs-divider span{
+ color:#73b9ff!important;
+}
+@media print{
+ .pam-national-all-matches .team-stack,
+ .pam-national-all-matches .team-stack > div{
+  color:#102c48!important;
+  font-size:10.5pt!important;
+  line-height:1.08!important;
+  font-weight:900!important;
+  text-shadow:none!important;
+ }
+ .pam-national-all-matches .vs-divider,
+ .pam-national-all-matches .vs-divider span{color:#1e3a5f!important}
+}
 .match .vs-divider,.match-card .vs-divider{margin:2px 0!important;min-height:16px!important}
 .match .vs-divider span,.match-card .vs-divider span{font-size:15px!important}
 .match .vs-divider::before,.match .vs-divider::after,
@@ -1407,7 +1434,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823845">
+<link rel="manifest" href="manifest.webmanifest?v=823846">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2219,7 +2246,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.45 · Risultati per singolo set</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.46 · Fasi finali nazionali e risultati per set</div>';
 }
 
 function iphoneInstallCard(){
@@ -3877,7 +3904,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.45 · RISULTATI PER SINGOLO SET</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.46 · FASI FINALI NAZIONALI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6562,10 +6589,59 @@ function pamBuildNationalSchedule(parent){
  });
  return {version:1,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:tasks.length,overflow:overflow,days:Array.from(new Set(slots.map(function(s){return s.date}))),courts:Math.max(1,Number(parent.courts)||1),slotDuration:Math.max(1,Number(parent.slotDuration||parent.estimatedMatchDuration||parent.matchDuration)||20)};
 }
+function pamNationalFinalDateV823846(parent){
+ const base=new Date(String(parent.date||"")+"T12:00:00");
+ if(!Number.isFinite(base.getTime()))return String(parent.endDate||parent.date||"");
+ base.setDate(base.getDate()+1);
+ return [base.getFullYear(),String(base.getMonth()+1).padStart(2,"0"),String(base.getDate()).padStart(2,"0")].join("-");
+}
+function pamNationalFinalSlotV823846(category,tier,round,index){
+ const key=String(category||"").toLowerCase(),level=String(tier||"").toLowerCase(),stage=String(round||"").toUpperCase();
+ const slots={
+  maschile:{
+   gold:{"QUARTI DI FINALE":[["10:30",1],["10:30",2],["11:20",1],["11:20",2]],"SEMIFINALI":[["12:30",1],["12:30",2]],"FINALE":[["13:20",1]]},
+   silver:{"PRELIMINARI":[["12:30",3],["12:30",4]],"SEMIFINALI":[["13:20",2],["13:20",3]],"FINALE":[["14:10",1]]}
+  },
+  femminile:{gold:{"FINALE":[["10:30",3]]},silver:{"FINALE":[["11:20",3]]}},
+  misto:{
+   gold:{"PRELIMINARI":[["14:10",2],["14:10",3]],"SEMIFINALI":[["15:00",1],["15:00",2]],"FINALE":[["15:50",1]]},
+   silver:{"PRELIMINARI":[["14:10",4]],"FINALE":[["15:00",3]]}
+  }
+ };
+ return slots[key]&&slots[key][level]&&slots[key][level][stage]?slots[key][level][stage][index]||null:null;
+}
+function pamBuildNationalFinalScheduleV823846(parent){
+ const previous=parent.nationalSchedule&&parent.nationalSchedule.assignments||{},assignments={},overflow=[];
+ Object.keys(previous).forEach(function(key){if(key.includes("|match|"))assignments[key]=previous[key]});
+ const finalDate=pamNationalFinalDateV823846(parent);
+ pamNationalChildren(parent).forEach(function(child){
+  const brackets=child.fixedFinalsAdvanced&&child.fixedFinalsAdvanced.brackets||{};
+  ["gold","silver"].forEach(function(tierKey){
+   const bracket=brackets[tierKey];if(!bracket)return;
+   (bracket.rounds||[]).forEach(function(round){
+    (round.matches||[]).forEach(function(match,index){
+     const slot=pamNationalFinalSlotV823846(child.nationalCategory||child.category,tierKey,round.name,index);
+     const taskKey=String(child.id)+"|final|"+String(match.id);
+     if(!slot){overflow.push({key:taskKey,category:child.nationalCategory||child.category||"",label:(bracket.name||tierKey)+" · "+(match.label||round.name)});return}
+     assignments[taskKey]={date:finalDate,time:slot[0],court:slot[1],category:child.nationalCategory||child.category||"",label:(bracket.name||tierKey)+" · "+(match.label||round.name)};
+    });
+   });
+  });
+ });
+ return {version:2,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:pamNationalScheduleTasks(parent).length,overflow:overflow,days:Array.from(new Set(Object.values(assignments).map(function(a){return a.date}))).sort(),courts:4,slotDuration:50,preserveGroupAssignments:true,finalsRule:"gold_top_2_silver_remaining"};
+}
+function pamApplyNationalFinalScheduleV823846(parentId){
+ const parent=(state.events||[]).find(function(event){return String(event.id)===String(parentId)&&event.competitionType==="national_event"});
+ if(!parent)return null;
+ parent.nationalSchedule=pamBuildNationalFinalScheduleV823846(parent);
+ return parent.nationalSchedule;
+}
 function pamEnsureNationalSchedule(parent){
  if(!parent)return null;
  const fingerprint=pamNationalScheduleFingerprint(parent);
- if(!parent.nationalSchedule||parent.nationalSchedule.fingerprint!==fingerprint)parent.nationalSchedule=pamBuildNationalSchedule(parent);
+ if(!parent.nationalSchedule||parent.nationalSchedule.fingerprint!==fingerprint){
+  parent.nationalSchedule=parent.nationalSchedule&&parent.nationalSchedule.preserveGroupAssignments?pamBuildNationalFinalScheduleV823846(parent):pamBuildNationalSchedule(parent);
+ }
  return parent.nationalSchedule;
 }
 function pamRebuildNationalSchedule(parentId,silent){
@@ -7492,20 +7568,74 @@ function pamTierSplit(rows,mode){
   {key:"bronze",name:"BRONZE",entrants:ids.slice(goldCount+silverCount)}
  ].filter(function(t){return t.entrants.length>=2});
 }
+function pamNationalGoldSilverTiers(e){
+ const grouped={};
+ pairStandings(e).forEach(function(row){(grouped[row.group]||(grouped[row.group]=[])).push(row)});
+ const groups=Object.keys(grouped).sort();
+ groups.forEach(function(group){
+  grouped[group].sort(function(a,b){return b.points-a.points||b.diff-a.diff||b.gf-a.gf});
+ });
+ function band(position){
+  return groups.map(function(group){return grouped[group][position]}).filter(Boolean).sort(function(a,b){
+   return b.points-a.points||b.diff-a.diff||b.gf-a.gf||a.group.localeCompare(b.group);
+  });
+ }
+ const gold=band(0).concat(band(1));
+ const silver=[];
+ const max=Math.max(0,...groups.map(function(group){return grouped[group].length}));
+ for(let position=2;position<max;position++)silver.push.apply(silver,band(position));
+ return[
+  {key:"gold",name:"GOLD",entrants:gold.map(function(row){return row.id})},
+  {key:"silver",name:"SILVER",entrants:silver.map(function(row){return row.id})}
+ ].filter(function(tier){return tier.entrants.length>=2});
+}
+function pamNationalArrangeEntrants(e,entrants){
+ const ids=entrants.slice(),n=ids.length;
+ if(n<4)return ids;
+ const target=pamHighestPowerOfTwo(n),prelimCount=n-target,byeCount=target-prelimCount;
+ const segmentStart=prelimCount>0?byeCount:0;
+ const segmentLength=prelimCount>0?prelimCount*2:n;
+ const half=segmentLength/2;
+ if(!Number.isInteger(half)||half<1)return ids;
+ const left=ids.slice(segmentStart,segmentStart+half);
+ const right=ids.slice(segmentStart+half,segmentStart+segmentLength);
+ const groupById={};(e.pairs||[]).forEach(function(pair){groupById[String(pair.id)]=String(pair.group||"")});
+ let best=right.slice(),bestConflicts=Infinity,bestShift=Infinity;
+ function visit(prefix,remaining){
+  if(!remaining.length){
+   let conflicts=0,shift=0;
+   prefix.forEach(function(id,index){
+    if(groupById[String(left[index])]&&groupById[String(left[index])]===groupById[String(id)])conflicts++;
+    shift+=Math.abs(right.indexOf(id)-index);
+   });
+   if(conflicts<bestConflicts||(conflicts===bestConflicts&&shift<bestShift)){best=prefix.slice();bestConflicts=conflicts;bestShift=shift}
+   return;
+  }
+  remaining.forEach(function(id,index){visit(prefix.concat(id),remaining.slice(0,index).concat(remaining.slice(index+1)))})
+ }
+ visit([],right);
+ const arranged=ids.slice();
+ // pamSeedPairings abbina il lato sinistro con il lato destro in ordine inverso.
+ best.slice().reverse().forEach(function(id,index){arranged[segmentStart+half+index]=id});
+ return arranged;
+}
 function pamGenerateFixedFinals(e){
- const source=document.getElementById("pamFinalRankingSource").value;
- const countValue=document.getElementById("pamFinalQualifiedCount").value;
- const mode=document.getElementById("pamFinalMode").value;
+ const nationalRule=!!e.nationalParentId;
+ const source=nationalRule?"groups":document.getElementById("pamFinalRankingSource").value;
+ const countValue=nationalRule?"national_rule":document.getElementById("pamFinalQualifiedCount").value;
+ const mode=nationalRule?"gold_silver":document.getElementById("pamFinalMode").value;
+ if(nationalRule&&(e.matches||[]).some(function(match){return match.score1===null||match.score2===null}))throw new Error("Completa tutti i risultati dei gironi prima di generare Gold e Silver.");
  const ranking=pamFixedRanking(e,source);
- let count=countValue==="all"?ranking.length:Number(countValue);
+ let count=countValue==="all"||countValue==="national_rule"?ranking.length:Number(countValue);
  count=Math.min(count,ranking.length);
  if(count<2)throw new Error("Servono almeno 2 coppie qualificate.");
  const selected=ranking.slice(0,count);
  const old=(e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.brackets)||{};
- const tiers=pamTierSplit(selected,mode);
+ const tiers=nationalRule?pamNationalGoldSilverTiers(e):pamTierSplit(selected,mode);
+ tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
  e.finalsOption=mode;
  e.fixedFinalsAdvanced={
-  config:{source:source,count:countValue,mode:mode},
+  config:{source:source,count:countValue,mode:mode,nationalRule:nationalRule},
   ranking:selected.map(function(r){return r.id}),
   brackets:{}
  };
@@ -7513,17 +7643,18 @@ function pamGenerateFixedFinals(e){
   const oldResults=old[tier.key]&&old[tier.key].results?old[tier.key].results:{};
   e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(tier,oldResults);
  });
- if(e.nationalParentId)pamRebuildNationalSchedule(e.nationalParentId,true);
+ if(e.nationalParentId)pamApplyNationalFinalScheduleV823846(e.nationalParentId);
  save();render();
 }
 function pamRefreshFixedFinals(e){
  if(!e.fixedFinalsAdvanced)return;
  const cfg=e.fixedFinalsAdvanced.config;
  const ranking=pamFixedRanking(e,cfg.source);
- let count=cfg.count==="all"?ranking.length:Number(cfg.count);
+ let count=cfg.count==="all"||cfg.count==="national_rule"?ranking.length:Number(cfg.count);
  count=Math.min(count,ranking.length);
  const selected=ranking.slice(0,count);
- const tiers=pamTierSplit(selected,cfg.mode);
+ const tiers=cfg.nationalRule?pamNationalGoldSilverTiers(e):pamTierSplit(selected,cfg.mode);
+ tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
  const old=e.fixedFinalsAdvanced.brackets||{};
  e.fixedFinalsAdvanced.ranking=selected.map(function(r){return r.id});
  e.fixedFinalsAdvanced.brackets={};
@@ -7566,6 +7697,9 @@ function pamFixedTierView(e,key,bracket){
  return '<section class="pam-tier-block pam-tier-'+key+'"><div class="pam-tier-title"><h2>'+esc(bracket.name)+'</h2><span>'+bracket.entrants.length+' coppie</span></div>'+champion+rounds+'</section>';
 }
 function pamFixedFinalsConfigView(e){
+ if(e.nationalParentId){
+  return '<div class="card pam-finals-config"><h2>FASI FINALI NAZIONALI</h2><div class="notice"><b>Regola automatica:</b> prime e seconde di ogni girone nel tabellone GOLD; terze ed eventuali quarte nel tabellone SILVER. I passaggi diretti spettano alle migliori classificate per punti, differenza game e game fatti. Il primo turno evita, quando possibile, coppie provenienti dallo stesso girone.</div><button class="primary" data-generate-fixed-finals>GENERA GOLD E SILVER</button>'+(e.fixedFinalsAdvanced?'<button class="secondary" data-reset-fixed-finals>AZZERA FASI FINALI</button>':'')+'</div>';
+ }
  const programmedCount=e.nationalParentId?Math.min((e.pairs||[]).length,Math.max(2,(Number(e.nationalGroupCount)||1)*(Number(e.nationalQualifiersPerGroup)||2))):"all";
  const cfg=e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config||{source:e.nationalParentId?"groups":"general",count:programmedCount,mode:e.finalsOption||"classic"};
  const total=(e.pairs||[]).length;
@@ -8409,7 +8543,7 @@ document.addEventListener("click",function(ev){
  }
  const resetFixedFinals=ev.target.closest("[data-reset-fixed-finals]");if(resetFixedFinals){
   if(confirm("Azzerare tabelloni e risultati delle fasi finali?")){
-   const event=currentEvent();delete event.fixedFinalsAdvanced;if(event.nationalParentId)pamRebuildNationalSchedule(event.nationalParentId,true);save();render();
+   const event=currentEvent();delete event.fixedFinalsAdvanced;if(event.nationalParentId)pamApplyNationalFinalScheduleV823846(event.nationalParentId);save();render();
   }
   return
  }
@@ -8868,7 +9002,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823845",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823846",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });

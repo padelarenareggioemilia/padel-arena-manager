@@ -3,7 +3,7 @@
   "short_name": "Padel Arena",
   "description": "Gestione tornei, giocatori e campionati Padel Arena",
   "id": "./padel-arena-manager",
-  "start_url": "./index.html?source=home&v=823845",
+  "start_url": "./index.html?source=home&v=823846",
   "scope": "./",
   "display": "standalone",
   "background_color": "#061426",
