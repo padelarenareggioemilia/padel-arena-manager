@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.46 · Fasi finali nazionali</title>
+<title>Padel Arena Manager V8.2.38.47 · Nazionali pubblici</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1290,9 +1290,10 @@ nav button[data-view]:focus,nav button[data-view]:active{color:var(--club-accent
 .pam-public-partners{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.pam-public-partners img{width:100%;height:92px;object-fit:contain;background:#fff;border-radius:16px;padding:10px}
 .pam-public-footer{margin-top:38px;border-top:1px solid #294262;padding:22px 0;color:#8fa4bb;text-align:center}
 .pam-event-info-overlay{position:fixed;inset:0;z-index:120000;background:rgba(2,9,18,.9);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto}.pam-event-info-card{width:min(680px,100%);max-height:92vh;overflow:auto;background:#10233b;border:1px solid #365474;border-radius:24px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.5)}.pam-event-info-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.pam-event-info-head h2{margin:0;font-size:clamp(25px,5vw,38px)}.pam-event-info-close{width:42px;height:42px;border:1px solid #496988;border-radius:50%;background:#17304e;color:#fff;font-size:21px}.pam-event-info-description{white-space:pre-wrap;line-height:1.55;color:#d5e2ef;margin:18px 0}.pam-event-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pam-event-info-grid div{background:#09182a;border:1px solid #294262;border-radius:14px;padding:12px}.pam-event-info-grid span{display:block;color:#9fb1c6;font-size:11px;text-transform:uppercase;font-weight:900}.pam-event-info-grid b{display:block;margin-top:5px}.pam-event-info-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}.pam-event-info-actions a{text-align:center;text-decoration:none;padding:13px;border-radius:13px;font-weight:900}.pam-event-info-actions .primary{grid-column:1/-1}
+.pam-national-live-card{width:min(1050px,100%);max-height:94vh}.pam-national-live-tabs{display:flex;gap:8px;overflow:auto;margin:14px 0}.pam-national-live-tabs button{width:auto;white-space:nowrap;padding:10px 13px;border:1px solid #365474;border-radius:999px;background:#09182a;color:#d5e2ef;font-weight:900}.pam-national-live-tabs button.on{background:#9dff25;color:#07111f;border-color:#9dff25}.pam-national-live-list{display:grid;gap:10px}.pam-national-live-match,.pam-national-live-pair{border:1px solid #294262;border-radius:15px;background:#09182a;padding:13px}.pam-national-live-match-head{display:flex;justify-content:space-between;gap:12px;color:#9fb1c6;font-size:12px;font-weight:900}.pam-national-live-teams{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;text-align:center;margin-top:12px}.pam-national-live-teams b{font-size:16px;line-height:1.25}.pam-national-live-score{font-size:22px;color:#9dff25;font-weight:1000;white-space:nowrap}.pam-national-live-status{display:inline-block;margin-top:9px;padding:5px 8px;border-radius:999px;background:#17304e;color:#d5e2ef;font-size:11px;font-weight:900}.pam-national-live-status.started{background:#9dff25;color:#07111f}.pam-national-standing-table{width:100%;border-collapse:collapse;min-width:620px}.pam-national-standing-table th,.pam-national-standing-table td{padding:10px 8px;border-bottom:1px solid #294262;text-align:center}.pam-national-standing-table th:nth-child(2),.pam-national-standing-table td:nth-child(2){text-align:left}.pam-national-group-title{margin:18px 0 8px;color:#9dff25}.pam-national-closed{border-color:#9dff25}.pam-national-closed strong{color:#9dff25}
 body.pam-public-mode #pamRoleBadge,body.pam-public-mode #pamLogoutBtn,body.pam-public-mode nav{display:none!important}
 @media(max-width:850px){.pam-public-tournaments{grid-template-columns:1fr 1fr}.pam-public-champ-grid{grid-template-columns:1fr}.pam-public-partners{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.pam-public-top{align-items:flex-start;flex-direction:column}.pam-public-brand img{width:64px;height:64px}.pam-public-actions{width:100%}.pam-public-actions button{flex:1}.pam-public-tournaments{grid-template-columns:1fr}.pam-public-section-head{align-items:flex-start;flex-direction:column}.pam-public-standing{grid-template-columns:28px 1fr 40px 40px 45px}.pam-public-partners{grid-template-columns:repeat(2,1fr)}.pam-event-info-grid,.pam-event-info-actions{grid-template-columns:1fr}.pam-event-info-actions .primary{grid-column:auto}}
+@media(max-width:600px){.pam-public-top{align-items:flex-start;flex-direction:column}.pam-public-brand img{width:64px;height:64px}.pam-public-actions{width:100%}.pam-public-actions button{flex:1}.pam-public-tournaments{grid-template-columns:1fr}.pam-public-section-head{align-items:flex-start;flex-direction:column}.pam-public-standing{grid-template-columns:28px 1fr 40px 40px 45px}.pam-public-partners{grid-template-columns:repeat(2,1fr)}.pam-event-info-grid,.pam-event-info-actions{grid-template-columns:1fr}.pam-event-info-actions .primary{grid-column:auto}.pam-national-live-card{padding:14px}.pam-national-live-teams{grid-template-columns:1fr}.pam-national-live-score{padding:6px 0}.pam-national-live-match-head{flex-direction:column;gap:3px}}
 
 
 /* V8.1.9 - UI più pulita: menu richiudibili e rosso solo per allarmi */
@@ -1434,7 +1435,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823846">
+<link rel="manifest" href="manifest.webmanifest?v=823847">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1982,6 +1983,7 @@ pamSubscribeRealtime();
 }
 
 const PAM_PUBLIC_DATA={tournaments:[],matches:[],standings:[],lineups:[],series:"Tutte"};
+const PAM_PUBLIC_NATIONAL={token:"",data:null,category:"Maschile",view:"matches"};
 function pamPublicEsc(v){return String(v??"").replace(/[&<>\"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
 function pamPublicBase(){
  try{
@@ -1993,10 +1995,14 @@ function pamPublicBase(){
 }
 function pamPublicRegistrationUrl(t){return pamPublicBase()+"/public-registration.html?tournament="+encodeURIComponent(t.share_token||"")}
 function pamPublicPosterUrl(t){return pamPublicBase()+"/poster.html?tournament="+encodeURIComponent(t.share_token||"")}
+function pamPublicNationalUrl(t){return pamPublicBase()+"/?live="+encodeURIComponent(t.share_token||"")}
 function pamPublicDate(v){if(!v)return "Data da definire";try{return new Date(v+"T12:00:00").toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"short",year:"numeric"})}catch(_){return v}}
 function pamPublicFormatType(v){return v==="national_event"?"CAMPIONATI NAZIONALI":String(v||"TORNEO").replaceAll("_"," ").toUpperCase()}
 function pamPublicLogo(t){return t.logo_url||"assets/padel-arena-manager-logo.png"}
 function pamPublicEventCard(t){
+ if(t.competition_type==="national_event"){
+  return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>CAMPIONATI NAZIONALI</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Campionati Nazionali Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"Maschile · Femminile · Misto")+'</div></div><div class="pam-public-places pam-national-closed"><strong>ISCRIZIONI CHIUSE</strong><div class="pam-public-muted">Segui gratuitamente la competizione in diretta.</div></div><div class="pam-public-event-actions"><button class="primary wide" data-public-national-live="'+pamPublicEsc(t.share_token||'')+'">PARTITE · RISULTATI · CLASSIFICHE</button><button class="secondary wide" data-public-national-pairs="'+pamPublicEsc(t.share_token||'')+'">COPPIE E GIRONI</button><button class="secondary" data-public-info-event="'+pamPublicEsc(t.share_token||'')+'">INFO EVENTO</button><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary wide" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button></div></div></article>';
+ }
  const open=t.registration_open!==false,available=Number(t.available_places??0),wait=t.waitlist_enabled!==false;
  const action=open?'<a class="primary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>':wait?'<a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">LISTA D’ATTESA</a>':'<span class="secondary wide" style="opacity:.7">ISCRIZIONI CHIUSE</span>';
  return '<article class="pam-public-event"><div class="pam-public-event-cover"><span>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</span><img src="'+pamPublicEsc(pamPublicLogo(t))+'" alt=""></div><div class="pam-public-event-body"><h3>'+pamPublicEsc(t.name||"Torneo Padel")+'</h3><div class="pam-public-event-meta"><div><b>📅 '+pamPublicEsc(pamPublicDate(t.event_date))+'</b> · '+pamPublicEsc(t.start_time||"")+'</div><div>📍 '+pamPublicEsc(t.club||"")+(t.address?' · '+pamPublicEsc(t.address):'')+'</div><div>🎾 '+pamPublicEsc(t.category||"OPEN")+' · € '+Number(t.entry_fee||0).toFixed(0)+'</div></div><div class="pam-public-places"><strong>'+(open?available+' posti disponibili':wait?'Lista d’attesa attiva':'Iscrizioni concluse')+'</strong><div class="pam-public-muted">'+Number(t.registered_count||0)+' iscritti su '+(t.max_participants||'—')+'</div></div><div class="pam-public-event-actions">'+action+'<button class="secondary wide" data-public-info-event="'+pamPublicEsc(t.share_token||'')+'">INFO EVENTO</button><a class="secondary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">VEDI ISCRITTI</a><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">LOCANDINA</a><button class="secondary wide" data-public-share-event="'+pamPublicEsc(t.share_token||'')+'">CONDIVIDI</button><a class="secondary wide" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'#organizzatore">CONTATTA ORGANIZZATORE</a></div></div></article>';
@@ -2008,8 +2014,62 @@ function pamPublicInfoEvent(token){
  const description=String(t.description||"").trim()||"Tutte le informazioni essenziali dell’evento sono riepilogate qui sotto.";
  const phone=String(t.organizer_phone||"").replace(/\D/g,"");
  const contact=phone?'<a class="secondary" href="https://wa.me/'+pamPublicEsc(phone)+'">CONTATTA ORGANIZZATORE</a>':'';
- const html='<div class="pam-event-info-overlay" id="pamEventInfoOverlay"><section class="pam-event-info-card"><div class="pam-event-info-head"><div><span class="pam-public-kicker">INFO EVENTO</span><h2>'+pamPublicEsc(t.name||"Torneo")+'</h2></div><button class="pam-event-info-close" data-close-event-info aria-label="Chiudi">×</button></div><div class="pam-event-info-description">'+pamPublicEsc(description)+'</div><div class="pam-event-info-grid"><div><span>Data e ora</span><b>'+pamPublicEsc(pamPublicDate(t.event_date))+' · '+pamPublicEsc(t.start_time||"Da definire")+'</b></div><div><span>Luogo</span><b>'+pamPublicEsc(t.club||"Da definire")+(t.address?' · '+pamPublicEsc(t.address):'')+'</b></div><div><span>Categoria</span><b>'+pamPublicEsc(t.category||"OPEN")+'</b></div><div><span>Formula</span><b>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</b></div><div><span>Quota</span><b>€ '+Number(t.entry_fee||0).toFixed(0)+'</b></div><div><span>Disponibilità</span><b>'+Number(t.available_places||0)+' posti su '+pamPublicEsc(t.max_participants||"—")+'</b></div></div><div class="pam-event-info-actions"><a class="primary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a><a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">VEDI LOCANDINA</a>'+contact+'</div></section></div>';
+ const national=t.competition_type==='national_event';
+ const html='<div class="pam-event-info-overlay" id="pamEventInfoOverlay"><section class="pam-event-info-card"><div class="pam-event-info-head"><div><span class="pam-public-kicker">INFO EVENTO</span><h2>'+pamPublicEsc(t.name||"Torneo")+'</h2></div><button class="pam-event-info-close" data-close-event-info aria-label="Chiudi">×</button></div><div class="pam-event-info-description">'+pamPublicEsc(description)+'</div><div class="pam-event-info-grid"><div><span>Data e ora</span><b>'+pamPublicEsc(pamPublicDate(t.event_date))+' · '+pamPublicEsc(t.start_time||"Da definire")+'</b></div><div><span>Luogo</span><b>'+pamPublicEsc(t.club||"Da definire")+(t.address?' · '+pamPublicEsc(t.address):'')+'</b></div><div><span>Categoria</span><b>'+pamPublicEsc(t.category||"OPEN")+'</b></div><div><span>Formula</span><b>'+pamPublicEsc(pamPublicFormatType(t.competition_type))+'</b></div><div><span>Quota</span><b>€ '+Number(t.entry_fee||0).toFixed(0)+'</b></div><div><span>Iscrizioni</span><b>'+(national?'CHIUSE':(t.registration_open!==false?'APERTE':'CHIUSE'))+'</b></div></div><div class="pam-event-info-actions">'+(national?'<button class="primary" data-public-national-live="'+pamPublicEsc(t.share_token||'')+'">SEGUI PARTITE E RISULTATI</button>':'<a class="primary" href="'+pamPublicEsc(pamPublicRegistrationUrl(t))+'">ISCRIVITI ORA</a>')+'<a class="secondary" href="'+pamPublicEsc(pamPublicPosterUrl(t))+'">VEDI LOCANDINA</a>'+contact+'</div></section></div>';
  document.body.insertAdjacentHTML("beforeend",html);
+}
+function pamPublicNationalCategory(){
+ const categories=PAM_PUBLIC_NATIONAL.data&&PAM_PUBLIC_NATIONAL.data.categories||[];
+ return categories.find(function(c){return c.category===PAM_PUBLIC_NATIONAL.category})||categories[0]||null;
+}
+function pamPublicNationalPairMap(category){
+ const out={};(category&&category.pairs||[]).forEach(function(p){out[p.id]=[p.player1,p.player2].filter(Boolean).join(' / ')});return out;
+}
+function pamPublicNationalSchedule(category,kind,id){
+ const all=PAM_PUBLIC_NATIONAL.data&&PAM_PUBLIC_NATIONAL.data.schedule||{};
+ return all[String(category.id)+'|'+String(kind||'match')+'|'+String(id)]||{};
+}
+function pamPublicNationalMatchesHtml(category){
+ const names=pamPublicNationalPairMap(category),rows=(category.matches||[]).slice();
+ rows.sort(function(a,b){const sa=pamPublicNationalSchedule(category,'match',a.id),sb=pamPublicNationalSchedule(category,'match',b.id);return String(sa.date||'9999') .localeCompare(String(sb.date||'9999'))||String(sa.time||'99:99').localeCompare(String(sb.time||'99:99'))||Number(sa.court||99)-Number(sb.court||99)});
+ if(!rows.length)return '<div class="pam-public-empty">Le partite saranno pubblicate dall’organizzazione.</div>';
+ return '<div class="pam-national-live-list">'+rows.map(function(m){
+  const s=pamPublicNationalSchedule(category,'match',m.id),played=m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined;
+  const score=played?pamPublicEsc(m.score1)+' : '+pamPublicEsc(m.score2):'VS';
+  const status=played?'RISULTATO':m.started?'IN CAMPO':'DA GIOCARE';
+  return '<article class="pam-national-live-match"><div class="pam-national-live-match-head"><span>'+pamPublicEsc(s.date?pamPublicDate(s.date):'Data da definire')+' · '+pamPublicEsc(s.time||'Orario da definire')+'</span><span>'+pamPublicEsc(s.label||('Girone '+(m.group||'')))+(s.court?' · CAMPO '+pamPublicEsc(s.court):'')+'</span></div><div class="pam-national-live-teams"><b>'+pamPublicEsc(names[m.pair1]||'Coppia da definire')+'</b><span class="pam-national-live-score">'+score+'</span><b>'+pamPublicEsc(names[m.pair2]||'Coppia da definire')+'</b></div><span class="pam-national-live-status '+(m.started&&!played?'started':'')+'">'+status+'</span></article>';
+ }).join('')+'</div>';
+}
+function pamPublicNationalStandings(category){
+ const rows={},names=pamPublicNationalPairMap(category);
+ (category.pairs||[]).forEach(function(p){rows[p.id]={id:p.id,name:names[p.id],group:p.group||'',played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
+ (category.matches||[]).forEach(function(m){if(m.score1===null||m.score1===undefined||m.score2===null||m.score2===undefined)return;const a=rows[m.pair1],b=rows[m.pair2];if(!a||!b)return;const s1=Number(m.score1)||0,s2=Number(m.score2)||0;a.played++;b.played++;a.gf+=s1;a.gs+=s2;b.gf+=s2;b.gs+=s1;if(s1===s2){a.points++;b.points++;a.d++;b.d++}else if(s1>s2){a.points+=3;a.w++;b.l++}else{b.points+=3;b.w++;a.l++}});
+ Object.values(rows).forEach(function(r){r.diff=r.gf-r.gs});
+ return Object.values(rows).sort(function(a,b){return a.group.localeCompare(b.group)||b.points-a.points||b.diff-a.diff||b.gf-a.gf||a.name.localeCompare(b.name)});
+}
+function pamPublicNationalStandingsHtml(category){
+ const grouped={};pamPublicNationalStandings(category).forEach(function(r){(grouped[r.group]||(grouped[r.group]=[])).push(r)});
+ const groups=Object.keys(grouped).sort();if(!groups.length)return '<div class="pam-public-empty">Le classifiche saranno disponibili dopo la pubblicazione dei gironi.</div>';
+ return groups.map(function(group){return '<h3 class="pam-national-group-title">GIRONE '+pamPublicEsc(group)+'</h3><div style="overflow:auto"><table class="pam-national-standing-table"><thead><tr><th>POS.</th><th>COPPIA</th><th>PG</th><th>PT</th><th>GF</th><th>GS</th><th>DIFF.</th></tr></thead><tbody>'+grouped[group].map(function(r,i){return '<tr><td>'+(i+1)+'</td><td><b>'+pamPublicEsc(r.name)+'</b></td><td>'+r.played+'</td><td><b>'+r.points+'</b></td><td>'+r.gf+'</td><td>'+r.gs+'</td><td>'+(r.diff>0?'+':'')+r.diff+'</td></tr>'}).join('')+'</tbody></table></div>'}).join('');
+}
+function pamPublicNationalPairsHtml(category){
+ const groups={};(category.pairs||[]).forEach(function(p){(groups[p.group||'']||(groups[p.group||'']=[])).push(p)});const keys=Object.keys(groups).sort();
+ if(!keys.length)return '<div class="pam-public-empty">Le coppie saranno pubblicate dall’organizzazione.</div>';
+ return keys.map(function(group){return '<h3 class="pam-national-group-title">GIRONE '+pamPublicEsc(group)+'</h3><div class="pam-national-live-list">'+groups[group].map(function(p,i){return '<article class="pam-national-live-pair"><b>'+(i+1)+'. '+pamPublicEsc(p.player1)+' / '+pamPublicEsc(p.player2)+'</b></article>'}).join('')+'</div>'}).join('');
+}
+function pamRenderPublicNationalLive(){
+ const overlay=document.getElementById('pamNationalLiveOverlay'),data=PAM_PUBLIC_NATIONAL.data;if(!overlay||!data)return;
+ const categories=data.categories||[],category=pamPublicNationalCategory();if(category)PAM_PUBLIC_NATIONAL.category=category.category;
+ const view=PAM_PUBLIC_NATIONAL.view,content=!category?'<div class="pam-public-empty">Categorie non disponibili.</div>':view==='standings'?pamPublicNationalStandingsHtml(category):view==='pairs'?pamPublicNationalPairsHtml(category):pamPublicNationalMatchesHtml(category);
+ overlay.innerHTML='<section class="pam-event-info-card pam-national-live-card"><div class="pam-event-info-head"><div><span class="pam-public-kicker">ACCESSO PUBBLICO · SENZA LOGIN</span><h2>'+pamPublicEsc(data.event&&data.event.name||'Campionati Nazionali')+'</h2><div class="pam-public-muted">'+pamPublicEsc(pamPublicDate(data.event&&data.event.date))+' · '+pamPublicEsc(data.event&&data.event.club||'')+'</div></div><button class="pam-event-info-close" data-close-national-live aria-label="Chiudi">×</button></div><div class="pam-national-live-tabs">'+categories.map(function(c){return '<button class="'+(c.category===PAM_PUBLIC_NATIONAL.category?'on':'')+'" data-national-category-tab="'+pamPublicEsc(c.category)+'">'+pamPublicEsc(String(c.category||'').toUpperCase())+'</button>'}).join('')+'</div><div class="pam-national-live-tabs"><button class="'+(view==='matches'?'on':'')+'" data-national-view-tab="matches">PARTITE / RISULTATI</button><button class="'+(view==='standings'?'on':'')+'" data-national-view-tab="standings">CLASSIFICHE</button><button class="'+(view==='pairs'?'on':'')+'" data-national-view-tab="pairs">COPPIE / GIRONI</button></div><div>'+content+'</div></section>';
+}
+async function pamOpenPublicNationalLive(token,view){
+ PAM_PUBLIC_NATIONAL.token=String(token||'');PAM_PUBLIC_NATIONAL.view=view||'matches';PAM_PUBLIC_NATIONAL.data=null;
+ document.getElementById('pamEventInfoOverlay')?.remove();document.getElementById('pamNationalLiveOverlay')?.remove();
+ document.body.insertAdjacentHTML('beforeend','<div class="pam-event-info-overlay" id="pamNationalLiveOverlay"><section class="pam-event-info-card pam-national-live-card"><div class="pam-event-info-head"><div><span class="pam-public-kicker">CAMPIONATI NAZIONALI</span><h2>Caricamento dati sportivi…</h2></div><button class="pam-event-info-close" data-close-national-live>×</button></div></section></div>');
+ const res=await sb.rpc('public_national_event_live',{p_share_token:PAM_PUBLIC_NATIONAL.token});
+ if(res.error||!res.data){const box=document.getElementById('pamNationalLiveOverlay');if(box)box.innerHTML='<section class="pam-event-info-card"><div class="pam-event-info-head"><h2>Dati non disponibili</h2><button class="pam-event-info-close" data-close-national-live>×</button></div><div class="pam-public-empty">'+pamPublicEsc(res.error&&res.error.message||'Riprova tra poco.')+'</div></section>';return}
+ PAM_PUBLIC_NATIONAL.data=res.data;const first=(res.data.categories||[])[0];PAM_PUBLIC_NATIONAL.category=first&&first.category||'Maschile';pamRenderPublicNationalLive();
 }
 function pamPublicMatchesHtml(){const rows=PAM_PUBLIC_DATA.matches.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.slice(0,12).map(m=>'<div class="pam-public-match"><div><b>'+pamPublicEsc(pamPublicDate(m.event_date))+'</b><div class="pam-public-muted">'+pamPublicEsc(m.start_time||'')+'</div></div><div><b>'+pamPublicEsc(m.home_team_name||'Da definire')+'</b><div class="pam-public-muted">vs '+pamPublicEsc(m.away_team_name||'Da definire')+' · '+pamPublicEsc(m.series||'')+'</div></div><div class="pam-public-score">'+(m.home_score==null?'–':pamPublicEsc(m.home_score))+' : '+(m.away_score==null?'–':pamPublicEsc(m.away_score))+'</div></div>').join(''):'<div class="pam-public-empty">Calendario e risultati saranno pubblicati dall’organizzazione.</div>'}
 function pamPublicStandingsHtml(){const rows=PAM_PUBLIC_DATA.standings.filter(x=>PAM_PUBLIC_DATA.series==='Tutte'||x.series===PAM_PUBLIC_DATA.series);return rows.length?rows.map((r,i)=>'<div class="pam-public-standing"><b>'+(i+1)+'</b><div><b>'+pamPublicEsc(r.team_name||'')+'</b><div class="pam-public-muted">'+pamPublicEsc(r.series||'')+'</div></div><span title="Giocate">'+Number(r.played||0)+'</span><span title="Vinte">'+Number(r.won||0)+'</span><b title="Punti">'+Number(r.points||0)+'</b></div>').join(''):'<div class="pam-public-empty">Le classifiche saranno visibili dopo l’inizio del campionato.</div>'}
@@ -2035,16 +2095,23 @@ async function pamLoadPublicHomeData(){
   const events=document.getElementById('pamPublicTournaments');if(events)events.innerHTML=pamPublicUpcomingHtml();
   const count=document.getElementById('pamPublicTournamentCount');if(count)count.textContent=PAM_PUBLIC_DATA.tournaments.length+' EVENTI';
   pamRenderPublicChampContent();
+  const liveToken=new URLSearchParams(location.search).get('live');
+  if(liveToken&&PAM_PUBLIC_DATA.tournaments.some(function(x){return String(x.share_token)===String(liveToken)&&x.competition_type==='national_event'}))pamOpenPublicNationalLive(liveToken,'matches');
  }catch(err){console.error(err);const events=document.getElementById('pamPublicTournaments');if(events)events.innerHTML='<div class="pam-public-empty" style="grid-column:1/-1">Impossibile caricare momentaneamente gli eventi. Riprova tra poco.</div>';pamRenderPublicChampContent()}
 }
 async function pamPublicShareHome(){const url=pamPublicBase()+'/';const text='Scopri i tornei in programma, segui i campionati e iscriviti agli eventi su Padel Arena Manager.';try{if(navigator.share)await navigator.share({title:'Padel Arena Manager',text,url});else{await navigator.clipboard.writeText(text+'\n'+url);alert('Link della pagina copiato.')}}catch(e){if(e.name!=='AbortError')prompt('Copia il link:',url)}}
-async function pamPublicShareEvent(token){const t=PAM_PUBLIC_DATA.tournaments.find(x=>x.share_token===token);if(!t)return;const url=pamPublicRegistrationUrl(t),text='Iscriviti a '+(t.name||'questo torneo')+' su Padel Arena Manager.';try{if(navigator.share)await navigator.share({title:t.name||'Torneo',text,url});else{await navigator.clipboard.writeText(text+'\n'+url);alert('Invito copiato.')}}catch(e){}}
+async function pamPublicShareEvent(token){const t=PAM_PUBLIC_DATA.tournaments.find(x=>x.share_token===token);if(!t)return;const national=t.competition_type==='national_event',url=national?pamPublicNationalUrl(t):pamPublicRegistrationUrl(t),text=national?'Segui partite, risultati e classifiche di '+(t.name||'Campionati Nazionali')+'.':'Iscriviti a '+(t.name||'questo torneo')+' su Padel Arena Manager.';try{if(navigator.share)await navigator.share({title:t.name||'Torneo',text,url});else{await navigator.clipboard.writeText(text+'\n'+url);alert('Link copiato.')}}catch(e){}}
 document.addEventListener('click',function(ev){
  const info=ev.target.closest('[data-public-info-event]');if(info){pamPublicInfoEvent(info.getAttribute('data-public-info-event'));return}
  if(ev.target.closest('[data-close-event-info]')||ev.target.id==='pamEventInfoOverlay'){document.getElementById('pamEventInfoOverlay')?.remove();return}
  const login=ev.target.closest('[data-public-login]');if(login){pamRenderLogin();return}
  if(ev.target.closest('[data-public-share-home]')){pamPublicShareHome();return}
  const share=ev.target.closest('[data-public-share-event]');if(share){pamPublicShareEvent(share.getAttribute('data-public-share-event'));return}
+ const live=ev.target.closest('[data-public-national-live]');if(live){pamOpenPublicNationalLive(live.getAttribute('data-public-national-live'),'matches');return}
+ const pairs=ev.target.closest('[data-public-national-pairs]');if(pairs){pamOpenPublicNationalLive(pairs.getAttribute('data-public-national-pairs'),'pairs');return}
+ if(ev.target.closest('[data-close-national-live]')||ev.target.id==='pamNationalLiveOverlay'){document.getElementById('pamNationalLiveOverlay')?.remove();return}
+ const nationalCategory=ev.target.closest('[data-national-category-tab]');if(nationalCategory){PAM_PUBLIC_NATIONAL.category=nationalCategory.getAttribute('data-national-category-tab');pamRenderPublicNationalLive();return}
+ const nationalView=ev.target.closest('[data-national-view-tab]');if(nationalView){PAM_PUBLIC_NATIONAL.view=nationalView.getAttribute('data-national-view-tab');pamRenderPublicNationalLive();return}
  const tab=ev.target.closest('[data-public-champ-tab]');if(tab){document.querySelectorAll('[data-public-champ-tab]').forEach(b=>b.classList.toggle('on',b===tab));const box=document.getElementById('pamPublicChampContent');if(box)box.dataset.tab=tab.getAttribute('data-public-champ-tab');pamRenderPublicChampContent();return}
 });
 
@@ -2246,7 +2313,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.46 · Fasi finali nazionali e risultati per set</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.47 · Nazionali pubblici e iscrizioni chiuse</div>';
 }
 
 function iphoneInstallCard(){
@@ -3904,7 +3971,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.46 · FASI FINALI NAZIONALI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.47 · NAZIONALI PUBBLICI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -9002,7 +9069,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823846",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823847",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
