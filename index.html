@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.44 · Controllo partite e campi</title>
+<title>Padel Arena Manager V8.2.38.45 · Risultati per singolo set</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1407,7 +1407,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823844">
+<link rel="manifest" href="manifest.webmanifest?v=823845">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2219,7 +2219,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.44 · Controllo partite e campi</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.45 · Risultati per singolo set</div>';
 }
 
 function iphoneInstallCard(){
@@ -3877,7 +3877,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.44 · CONTROLLO PARTITE E CAMPI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.45 · RISULTATI PER SINGOLO SET</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -7011,10 +7011,46 @@ function pamSaveMatchSets(input){
  input.value=count;pamMatchOperation(e,key).sets=count;
  save({operational:true,eventOnly:true,eventId:e.id});
  pamToast("Numero di set aggiornato per questa partita.","success");
+ render();
 }
 function pamMatchOperationsHtml(e,key){
  const op=pamMatchOperation(e,key),sets=Math.min(5,Math.max(1,Number(op.sets)||Number(e.defaultSets)||1));
  return '<div class="pam-match-operations print-hide"><div class="field"><label>Numero set</label><input type="number" min="1" max="5" step="1" value="'+sets+'" data-match-sets="'+esc(key)+'"></div><button class="'+(op.started?'secondary':'primary')+'" data-action="toggle-match-started" data-match-key="'+esc(key)+'">'+(op.started?'✓ IN CAMPO · TERMINA PARTITA':'▶ PARTITA INIZIATA')+'</button></div>';
+}
+function pamSetScoreInputsHtml(e,key){
+ const op=pamMatchOperation(e,key),sets=Math.min(5,Math.max(1,Number(op.sets)||Number(e.defaultSets)||1));
+ const previous=Array.isArray(op.setScores)?op.setScores:[];
+ return '<div class="pam-set-scores" data-set-score-box="'+esc(key)+'">'+Array.from({length:sets},function(_,i){
+  const row=previous[i]||{};
+  return '<div class="score-row"><label><b>Set '+(i+1)+' · Coppia A</b><input data-set-score-a="'+i+'" type="number" min="0" step="1" inputmode="numeric" value="'+(row.a===undefined?'':Number(row.a))+'" placeholder="Game A"></label><label><b>Set '+(i+1)+' · Coppia B</b><input data-set-score-b="'+i+'" type="number" min="0" step="1" inputmode="numeric" value="'+(row.b===undefined?'':Number(row.b))+'" placeholder="Game B"></label></div>';
+ }).join('')+'</div>';
+}
+function pamReadSetScores(card,e,key,allowDraw){
+ const inputs=Array.from(card.querySelectorAll('[data-set-score-a]')),rows=[];
+ let skipped=false;
+ inputs.forEach(function(aInput){
+  const index=aInput.getAttribute('data-set-score-a'),bInput=card.querySelector('[data-set-score-b="'+CSS.escape(index)+'"]');
+  if(!bInput)throw new Error('campo punteggio non disponibile');
+  if(aInput.value===""&&bInput.value===""){skipped=true;return}
+  if(aInput.value===""||bInput.value==="")throw new Error('completa entrambi i punteggi del set '+(Number(index)+1));
+  if(skipped)throw new Error('compila i set in ordine, senza lasciare righe vuote');
+  const a=Number(aInput.value),b=Number(bInput.value);
+  if(!Number.isFinite(a)||!Number.isFinite(b)||a<0||b<0)throw new Error('punteggio non valido');
+  rows.push({a:a,b:b});
+ });
+ if(!rows.length)throw new Error('nessun set disponibile');
+ const winsA=rows.filter(function(x){return x.a>x.b}).length,winsB=rows.filter(function(x){return x.b>x.a}).length;
+ const target=Math.floor(inputs.length/2)+1;
+ if(rows.length<inputs.length&&Math.max(winsA,winsB)<target)throw new Error('mancano i set necessari per determinare il risultato');
+ const score1=rows.length===1?rows[0].a:winsA,score2=rows.length===1?rows[0].b:winsB;
+ if(!allowDraw&&score1===score2)throw new Error('la partita non può terminare in parità: aggiungi o modifica il set decisivo');
+ pamMatchOperation(e,key).setScores=rows;
+ return {score1:score1,score2:score2,setScores:rows};
+}
+function pamSavedSetScoresHtml(e,key){
+ const rows=pamMatchOperation(e,key).setScores;
+ if(!Array.isArray(rows)||!rows.length)return '';
+ return '<div class="notice"><b>Parziali:</b> '+rows.map(function(x,i){return 'Set '+(i+1)+' '+x.a+'-'+x.b}).join(' · ')+'</div>';
 }
 function pamMatchStartedClass(e,key){return pamMatchOperation(e,key).started?' pam-match-started':''}
 function pamCourtOccupancyHtml(e){
@@ -7093,8 +7129,8 @@ function matchesView(e){
   matchMetaHtml(e,i,roundLabel,m.court,"match",m.id)+timerHtml(e,"match-"+m.id,"initial")+
   (e.competitionType==="fixed_pairs"?matchupStackHtml(pairStackHtml(e,m.pair1),pairStackHtml(e,m.pair2)):matchupStackHtml(teamStackHtml(m.t1),teamStackHtml(m.t2)))+
   pamMatchOperationsHtml(e,operationKey)+
-  (saved?'<div class="notice success">Risultato salvato: <b>'+m.score1+' - '+m.score2+'</b></div><button class="secondary" data-action="edit-result" data-match-id="'+m.id+'">Modifica risultato</button>':
-  '<div class="score-row"><input data-score-a type="number" min="0" step="1" inputmode="numeric" placeholder="Game coppia A"><input data-score-b type="number" min="0" step="1" inputmode="numeric" placeholder="Game coppia B"></div><input data-note placeholder="Nota facoltativa"><div class="match-message"></div><button class="primary" style="margin-top:10px" data-action="save-result" data-match-id="'+m.id+'">Salva risultato</button>')+
+  (saved?'<div class="notice success">Risultato salvato: <b>'+m.score1+' - '+m.score2+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-action="edit-result" data-match-id="'+m.id+'">Modifica risultato</button>':
+  pamSetScoreInputsHtml(e,operationKey)+'<input data-note placeholder="Nota facoltativa"><div class="match-message"></div><button class="primary" style="margin-top:10px" data-action="save-result" data-match-id="'+m.id+'">Salva risultato</button>')+
   '</div>';
  }).join("");
  const quality=pamRodeoQuality(e);
@@ -7105,10 +7141,8 @@ function saveResult(button){
  const e=currentEvent();const id=button.getAttribute("data-match-id");const card=button.closest("[data-match-card]");const msg=card.querySelector(".match-message");
  try{
   const m=e.matches.find(function(x){return x.id===id});if(!m)throw new Error("partita non trovata");
-  const a=card.querySelector("[data-score-a]").value;const b=card.querySelector("[data-score-b]").value;
-  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
-  const na=Number(a),nb=Number(b);if(!Number.isFinite(na)||!Number.isFinite(nb)||na<0||nb<0)throw new Error("punteggio non valido");
-  m.score1=na;m.score2=nb;m.note=card.querySelector("[data-note]").value||"";
+  const result=pamReadSetScores(card,e,"match-"+m.id,true);
+  m.score1=result.score1;m.score2=result.score2;m.note=card.querySelector("[data-note]").value||"";
   pamSetMatchStarted(e,"match-"+m.id,false,false);
   save();render();
  }catch(err){msg.className="notice error";msg.textContent="Errore: "+err.message}
@@ -7278,17 +7312,15 @@ function simpleStageCard(e,m,label){
  const baseIndex=(e.matches||[]).length+(label.indexOf("Semifinale")===0?Number(label.replace(/\D/g,""))-1:2);
  const operationKey="simple-"+m.id;
  return '<div class="match'+pamMatchStartedClass(e,operationKey)+'" data-simple-stage="'+m.id+'"><span class="pill">'+label+'</span>'+matchMetaHtml(e,baseIndex,label,((baseIndex)%Math.max(1,e.courts))+1)+timerHtml(e,operationKey,label.indexOf("Semifinale")===0?"semifinal":"final")+matchupStackHtml(simplePairStackHtml(e,m.pair1),simplePairStackHtml(e,m.pair2))+pamMatchOperationsHtml(e,operationKey)+
- (saved?'<div class="notice success">Risultato: <b>'+m.score1+' - '+m.score2+'</b></div><button class="secondary" data-action="edit-simple-result" data-simple-id="'+m.id+'">Modifica risultato</button>':
- '<div class="score-row"><input data-simple-a type="number" min="0" placeholder="Game A"><input data-simple-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-action="save-simple-result" data-simple-id="'+m.id+'">Salva risultato</button>')+'</div>';
+ (saved?'<div class="notice success">Risultato: <b>'+m.score1+' - '+m.score2+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-action="edit-simple-result" data-simple-id="'+m.id+'">Modifica risultato</button>':
+ pamSetScoreInputsHtml(e,operationKey)+'<div class="match-message"></div><button class="primary" data-action="save-simple-result" data-simple-id="'+m.id+'">Salva risultato</button>')+'</div>';
 }
 function saveSimpleResult(button){
  const e=currentEvent(),sf=ensureSimpleFinals(e),id=button.getAttribute("data-simple-id");
  const m=sf.semifinals.concat([sf.final]).find(function(x){return x.id===id}),card=button.closest("[data-simple-stage]"),msg=card.querySelector(".match-message");
  try{
-  const a=card.querySelector("[data-simple-a]").value,b=card.querySelector("[data-simple-b]").value;
-  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
-  if(Number(a)===Number(b))throw new Error("nelle fasi finali non è previsto il pareggio");
-  m.score1=Number(a);m.score2=Number(b);
+  const result=pamReadSetScores(card,e,"simple-"+m.id,false);
+  m.score1=result.score1;m.score2=result.score2;
   pamSetMatchStarted(e,"simple-"+m.id,false,false);save();render();
  }catch(err){msg.className="notice error";msg.textContent="Errore: "+err.message}
 }
@@ -7515,8 +7547,8 @@ function pamFixedBracketMatchCard(e,bracket,m,index){
   matchMetaHtml(e,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1,"final",m.id)+
   matchupStackHtml(pamFixedMatchTeam(e,m.pair1),pamFixedMatchTeam(e,m.pair2))+pamMatchOperationsHtml(e,operationKey)+
   (!ready?'<div class="notice">Completa il turno precedente per conoscere le coppie.</div>':
-   saved?'<div class="notice success">Risultato: <b>'+res.a+' - '+res.b+'</b></div><button class="secondary" data-edit-fixed-final="'+esc(m.id)+'">MODIFICA RISULTATO</button>':
-   '<div class="score-row"><input data-fixed-score-a type="number" min="0" placeholder="Game A"><input data-fixed-score-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-save-fixed-final="'+esc(m.id)+'">SALVA RISULTATO</button>')+
+   saved?'<div class="notice success">Risultato: <b>'+res.a+' - '+res.b+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-edit-fixed-final="'+esc(m.id)+'">MODIFICA RISULTATO</button>':
+   pamSetScoreInputsHtml(e,operationKey)+'<div class="match-message"></div><button class="primary" data-save-fixed-final="'+esc(m.id)+'">SALVA RISULTATO</button>')+
  '</div>';
 }
 function pamFixedTierView(e,key,bracket){
@@ -7587,13 +7619,10 @@ function pamSaveFixedFinalResult(button){
  const e=currentEvent(),id=button.getAttribute("data-save-fixed-final");
  const found=pamFindFixedFinalMatch(e,id);if(!found)return;
  const card=button.closest("[data-fixed-final-match]");
- const a=card.querySelector("[data-fixed-score-a]").value;
- const b=card.querySelector("[data-fixed-score-b]").value;
  const msg=card.querySelector(".match-message");
  try{
-  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
-  if(Number(a)===Number(b))throw new Error("nelle fasi finali non è previsto il pareggio");
-  found.bracket.results[id]={a:Number(a),b:Number(b)};
+  const result=pamReadSetScores(card,e,"fixed-final-"+id,false);
+  found.bracket.results[id]={a:result.score1,b:result.score2};
   pamSetMatchStarted(e,"fixed-final-"+id,false,false);
   save();render();
  }catch(err){
@@ -7690,8 +7719,8 @@ function stageLegCard(e,stage,m,label,leg,index,court,phase){
  '<span class="pill">'+label+' · '+(ret?"Ritorno":"Andata")+'</span>'+
  matchMetaHtml(e,index,label+(ret?" - Ritorno":" - Andata"),court)+timerHtml(e,"stage-"+stage+"-"+leg,phase)+
  matchupStackHtml(teamStackHtml(m.teamA),teamStackHtml(m.teamB))+pamMatchOperationsHtml(e,operationKey)+
- (saved?'<div class="notice success">Risultato: <b>'+a+' - '+b+'</b></div><button class="secondary" data-action="edit-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Modifica risultato</button>':
- '<div class="score-row"><input data-stage-score-a type="number" min="0" placeholder="Game A"><input data-stage-score-b type="number" min="0" placeholder="Game B"></div><div class="match-message"></div><button class="primary" data-action="save-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Salva risultato</button>')+
+ (saved?'<div class="notice success">Risultato: <b>'+a+' - '+b+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-action="edit-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Modifica risultato</button>':
+ pamSetScoreInputsHtml(e,operationKey)+'<div class="match-message"></div><button class="primary" data-action="save-stage-result" data-stage="'+stage+'" data-leg="'+leg+'">Salva risultato</button>')+
  '</div>';
 }
 function stagePlayerOptions(ids,selected){
@@ -8159,9 +8188,8 @@ function saveStageResult(button){
  const e=currentEvent(),stage=button.getAttribute("data-stage"),leg=Number(button.getAttribute("data-leg")||1),m=stageMatch(e,stage),card=button.closest("[data-stage-card]"),msg=card.querySelector(".match-message");
  try{
   if(stage!=="elimination"&&!validateStageTeams(m))throw new Error("seleziona quattro giocatori diversi");
-  const a=card.querySelector("[data-stage-score-a]").value,b=card.querySelector("[data-stage-score-b]").value;
-  if(a===""||b==="")throw new Error("inserisci entrambi i punteggi");
-  if(leg===2){m.score1R=Number(a);m.score2R=Number(b)}else{m.score1=Number(a);m.score2=Number(b)}
+  const result=pamReadSetScores(card,e,"stage-"+stage+"-"+leg,false);
+  if(leg===2){m.score1R=result.score1;m.score2R=result.score2}else{m.score1=result.score1;m.score2=result.score2}
   pamSetMatchStarted(e,"stage-"+stage+"-"+leg,false,false);
   if(stage==="final"&&e.competitionType==="rodeo_tokens"){
    e.playerIds.forEach(function(id){e.ledger[id].podium=0});
@@ -8840,7 +8868,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823844",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823845",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
