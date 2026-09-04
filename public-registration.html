@@ -20,6 +20,7 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .national-step{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#07111f;margin-right:8px;font-weight:1000}.payment-warning{border:2px solid #facc15;background:#30270b;color:#fff5b8;font-size:15px;line-height:1.5}.payment-warning a{color:#fff;font-weight:1000}.privacy-check{display:flex;gap:10px;align-items:flex-start;margin-top:13px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#09182a}.privacy-check input{width:22px;height:22px;flex:0 0 auto;margin:0}
 .bank-details{display:grid;gap:7px;margin-top:10px;padding:13px;border-radius:13px;background:#111d2d;border:1px solid #536b85}.bank-details span{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:900}.bank-details b{word-break:break-word}.stay-box{border:2px solid #38bdf8;background:#08263a}.stay-box textarea{min-height:210px;line-height:1.45}.mail-link{display:block;text-align:center;text-decoration:none;margin-top:12px}.copy-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}.copy-row button{padding:12px}.official-note{font-size:13px;line-height:1.5;color:#dbeafe}
 .aics-help{margin-top:8px;padding:11px 12px;border-radius:12px;border:1px solid #4ade80;background:#0b2a20;color:#dcfce7;font-size:13px;line-height:1.45;font-weight:700}
+.public-regulation{padding:0;overflow:hidden}.public-regulation summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px;cursor:pointer;font-weight:1000;list-style:none}.public-regulation summary::-webkit-details-marker{display:none}.public-regulation summary::after{content:"⌄";font-size:24px;line-height:1;color:var(--accent);transition:transform .18s ease}.public-regulation[open] summary::after{transform:rotate(180deg)}.public-regulation-content{padding:0 18px 18px;border-top:1px solid var(--line)}
 @media(max-width:650px){.row,.mode-grid{grid-template-columns:1fr}.brand h1{font-size:20px}}
 @media(max-width:650px){.national-logos{grid-template-columns:1fr 1fr}.national-logos div:first-child{grid-column:1/-1}.category-grid{grid-template-columns:1fr}}
 
@@ -101,10 +102,10 @@ function publicRegulationHtml(){
  const text=String(tournament&&tournament.regulation_text||"").trim();
  const url=String(tournament&&tournament.regulation_file_url||"").trim();
  if(!text&&!url)return "";
- return '<section class="card"><h3>REGOLAMENTO DELL’EVENTO</h3>'+
+ return '<details class="card public-regulation"><summary>📘 REGOLAMENTO DELL’EVENTO</summary><div class="public-regulation-content">'+
   (text?'<div class="notice" style="white-space:pre-wrap">'+esc(text)+'</div>':'')+
   (url?'<a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">📎 APRI '+esc(tournament.regulation_file_name||"IL REGOLAMENTO")+'</a>':'')+
- '</section>';
+ '</div></details>';
 }
 function isNationalTournament(){
  return String(tournament&&(tournament.competition_type||tournament.competitionType)||"").toLowerCase()==="national_event";
@@ -233,7 +234,7 @@ function existingSearch(kind,p){
  return '<label>Scrivi almeno una parte del nome o del cognome</label>'+
   '<input type="search" data-search-person="'+kind+'" placeholder="Esempio: Franc Lig">'+
   '<div class="search-results" id="'+kind+'Results"></div>'+
-  (p.id?'<div class="selected-person"><b>SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button></div><div class="notice"><b>Conferma e completa i dati obbligatori.</b> Per tutelare la privacy non mostriamo i dati già presenti.</div>'+newForm(kind):'');
+  (p.id?'<div class="selected-person"><b>GIOCATORE TROVATO E SELEZIONATO</b><br>'+esc(p.name)+' <button type="button" class="danger" data-clear-person="'+kind+'">Cambia</button></div><div class="notice success"><b>Dati già presenti in anagrafica.</b><br>Non devi compilare altro per questa persona.</div>':'');
 }
 function newForm(kind){
  const f=n=>kind+"_"+n;
@@ -253,8 +254,13 @@ function newForm(kind){
 function isFixedPairsTournament(){
  return String(tournament&&tournament.competition_type||"").toLowerCase()==="fixed_pairs";
 }
+function allowsSingleRegistration(){
+ const value=tournament&&(tournament.allow_single_registration!==undefined?tournament.allow_single_registration:tournament.allowSingleRegistration);
+ return value!==false&&String(value).toLowerCase()!=="false";
+}
 function normalizeRegistrationMode(){
  if(!isFixedPairsTournament())mode="single";
+ else if(!allowsSingleRegistration())mode="pair";
 }
 function render(){
  if(isNationalTournament()){renderNational();return}
@@ -265,10 +271,10 @@ function render(){
  (tournament.address?'<div class="notice">'+esc(tournament.address)+'</div>':'')+
  '<div class="notice success"><b>Nessun accesso richiesto.</b><br>Puoi esclusivamente inviare la tua iscrizione. Non puoi modificare il torneo, gli altri giocatori o i risultati.</div></section>'+publicRegulationHtml()+
  publicExtrasHtml()+
- (isFixedPairsTournament()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
+ (isFixedPairsTournament()&&allowsSingleRegistration()?'<section class="card"><h3>COME VUOI ISCRIVERTI?</h3><div class="mode-grid">'+
   '<button type="button" class="secondary '+(mode==="single"?"on":"")+'" data-mode="single">ISCRIZIONE INDIVIDUALE</button>'+
   '<button type="button" class="secondary '+(mode==="pair"?"on":"")+'" data-mode="pair">ISCRIZIONE CON PARTNER</button>'+
- '</div><div class="muted" style="margin-top:10px">Nei tornei a coppie puoi iscriverti singolarmente oppure indicare il partner.</div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo a gettoni e Rodeo semplice ogni giocatore si iscrive singolarmente.</div></section>')+
+ '</div><div class="muted" style="margin-top:10px">Nei tornei a coppie puoi iscriverti singolarmente oppure indicare il partner.</div></section>':isFixedPairsTournament()?'<section class="card"><div class="notice success"><b>ISCRIZIONE IN COPPIA</b><br>Per questo torneo è richiesta l’iscrizione con il proprio partner.</div></section>':'<section class="card"><div class="notice success"><b>ISCRIZIONE INDIVIDUALE</b><br>Nei tornei Rodeo a gettoni e Rodeo semplice ogni giocatore si iscrive singolarmente.</div></section>')+
  personSection("primary","I TUOI DATI")+
  (mode==="pair"?personSection("partner","DATI DEL PARTNER"):"")+
  '<section class="card"><div class="privacy">I dati vengono utilizzati esclusivamente per gestire l’iscrizione al torneo e aggiornare l’anagrafica sportiva dell’organizzatore.</div>'+
@@ -300,7 +306,7 @@ function payloadFor(kind){
  const p=kind==="primary"?primary:partner;
  if(p.type==="existing"){
   if(!p.id)throw new Error(kind==="primary"?"Seleziona il tuo nominativo.":"Seleziona il partner.");
-  return {kind:"existing",player_id:p.id,data:readNew(kind).data};
+  return {kind:"existing",player_id:p.id};
  }
  return readNew(kind);
 }
@@ -309,6 +315,7 @@ async function submit(){
  try{
   btn.disabled=true;btn.textContent="INVIO IN CORSO...";
   normalizeRegistrationMode();
+  if(isFixedPairsTournament()&&!allowsSingleRegistration()&&mode!=="pair")throw new Error("Per questo torneo è richiesta una coppia completa.");
   const primaryPayload=payloadFor("primary");
   const partnerPayload=mode==="pair"?payloadFor("partner"):null;
   if(mode==="pair"&&primaryPayload.kind==="existing"&&partnerPayload.kind==="existing"&&primaryPayload.player_id===partnerPayload.player_id)throw new Error("Il giocatore e il partner devono essere persone diverse.");
