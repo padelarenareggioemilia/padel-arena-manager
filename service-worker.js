@@ -1,4 +1,4 @@
-const PAM_SW_VERSION="823850";
+const PAM_SW_VERSION="823851";
 self.addEventListener("install",event=>{self.skipWaiting()});
 self.addEventListener("activate",event=>{
  event.waitUntil((async()=>{

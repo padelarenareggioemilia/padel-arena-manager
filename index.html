@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.50 · Formula Nazionale</title>
+<title>Padel Arena Manager V8.2.38.51 · Nuovi tornei vuoti</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1436,7 +1436,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823850">
+<link rel="manifest" href="manifest.webmanifest?v=823851">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2321,7 +2321,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.50 · Formula Nazionale 2 set ai 4</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.51 · Nuovi tornei isolati e formula Nazionale</div>';
 }
 
 function iphoneInstallCard(){
@@ -3488,6 +3488,27 @@ function pamEditEvent(id){
  save();render();
  pamToast("Configuratore completo aperto: puoi modificare ogni dettaglio.","success");
 }
+function pamPrepareCleanNewEventDraft(){
+ const previous=state.draft||{},clean=freshState().draft,today=new Date().toISOString().slice(0,10);
+ Object.assign(clean,{date:today,endDate:today,endTime:"23:00",startTime:"20:00",description:"",customAddress:"",matchMode:"timed",defaultSets:1,matchDuration:20,timerDuration:15,slotDuration:20,estimatedMatchDuration:60,minParticipants:0,maxParticipants:16,registrationMode:"automatic",waitlistEnabled:true,registrationOpen:true,registrationCloseDate:today,registrationCloseTime:"20:00",returnLeg:false,eliminationReturnLeg:false,semifinalReturnLeg:false,finalReturnLeg:false,initialTimerEnabled:true,eliminationTimerEnabled:false,semifinalTimerEnabled:false,finalTimerEnabled:false,organizerName:"",organizerPhone:"",organizerEmail:"",regulationText:"",regulationFileUrl:"",regulationFileName:"",fixedPairRegistrations:{},showSelectedOnly:false});
+ // Conserva soltanto dati organizzativi e grafici riutilizzabili.
+ // Partecipanti, coppie e file temporanei non devono mai passare a un nuovo torneo.
+ ["club","customAddress","organizerName","organizerPhone","organizerEmail","hostClubLogo","organizerLogo","mainSponsorLogo","extraSponsorLogo1","extraSponsorLogo2","posterTheme"].forEach(function(key){
+  if(previous[key]!==undefined)clean[key]=previous[key];
+ });
+ clean.name="";
+ clean.description="";
+ clean.regulationText="";
+ clean.regulationFileUrl="";
+ clean.regulationFileName="";
+ clean.selected=[];
+ clean.fixedPairRegistrations={};
+ clean.showSelectedOnly=false;
+ state.draft=clean;
+ state.editingEventId=null;
+ window.pamPendingTournamentPosterFile=null;
+ window.pamPendingTournamentRegulationFile=null;
+}
 function pamTournamentPlayersModal(id){
  const e=state.events.find(function(x){return x.id===id});if(!e)return;
  document.getElementById("pamTournamentPlayersOverlay")?.remove();
@@ -3979,7 +4000,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.50 · FORMULA NAZIONALE</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.51 · TORNEI ISOLATI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -8872,7 +8893,7 @@ document.addEventListener("click",function(ev){
  const globalHome=ev.target.closest("[data-global-home]");if(globalHome){pamGoHome();return}
  const globalMenu=ev.target.closest("[data-global-menu]");if(globalMenu){pamOpenUniversalMenu();return}
  const closeGlobal=ev.target.closest("[data-close-global-menu]");if(closeGlobal){document.getElementById("pamUniversalMenu")?.remove();return}
- const globalView=ev.target.closest("[data-global-view]");if(globalView){document.getElementById("pamUniversalMenu")?.remove();setView(globalView.getAttribute("data-global-view"));return}
+ const globalView=ev.target.closest("[data-global-view]");if(globalView){const requested=globalView.getAttribute("data-global-view");document.getElementById("pamUniversalMenu")?.remove();if(requested==="new")pamPrepareCleanNewEventDraft();setView(requested);return}
  const globalPublicFree=ev.target.closest("[data-global-public-free]");if(globalPublicFree){document.getElementById("pamUniversalMenu")?.remove();pamRenderPublicHome();return}
  const globalLogout=ev.target.closest("[data-global-logout]");if(globalLogout){document.getElementById("pamUniversalMenu")?.remove();document.getElementById("pamLogoutBtn")?.click();return}
  const createChamp=ev.target.closest("[data-create-champ-team]");if(createChamp){if(!pamIsAdmin()){pamToast("Solo l’amministratore può creare nuove squadre.","error");return}document.getElementById("pamUniversalMenu")?.remove();setView("championship-new-team");return}
@@ -8892,7 +8913,7 @@ document.addEventListener("click",function(ev){
    pamToast("Il collaboratore può gestire i tornei, ma non può accedere all’anagrafica generale o creare nuove competizioni.","error");
    return;
   }
-  if(requested==="new")state.editingEventId=null;
+  if(requested==="new")pamPrepareCleanNewEventDraft();
   setView(requested);return
  }
  const tabBtn=ev.target.closest("[data-tab]");if(tabBtn){setTab(tabBtn.getAttribute("data-tab"));return}
@@ -9263,7 +9284,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823850",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823851",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
