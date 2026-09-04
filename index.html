@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.49 · Modifica manuale partite</title>
+<title>Padel Arena Manager V8.2.38.50 · Formula Nazionale</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1436,7 +1436,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823849">
+<link rel="manifest" href="manifest.webmanifest?v=823850">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2036,7 +2036,8 @@ function pamPublicNationalMatchesHtml(category){
  if(!rows.length)return '<div class="pam-public-empty">Le partite saranno pubblicate dall’organizzazione.</div>';
  return '<div class="pam-national-live-list">'+rows.map(function(m){
   const s=pamPublicNationalSchedule(category,'match',m.id),played=m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined;
-  const score=played?pamPublicEsc(m.score1)+' : '+pamPublicEsc(m.score2):'VS';
+  const partials=Array.isArray(m.set_scores)?m.set_scores:[],mtb=m.match_tie_break;
+  const score=played?(partials.length?partials.map(function(x){return pamPublicEsc(x.a)+'-'+pamPublicEsc(x.b)}).join(' · ')+(mtb?' · MTB '+pamPublicEsc(mtb.a)+'-'+pamPublicEsc(mtb.b):''):pamPublicEsc(m.score1)+' : '+pamPublicEsc(m.score2)):'VS';
   const status=played?'RISULTATO':m.started?'IN CAMPO':'DA GIOCARE';
   return '<article class="pam-national-live-match"><div class="pam-national-live-match-head"><span>'+pamPublicEsc(s.date?pamPublicDate(s.date):'Data da definire')+' · '+pamPublicEsc(s.time||'Orario da definire')+'</span><span>'+pamPublicEsc(s.label||('Girone '+(m.group||'')))+(s.court?' · CAMPO '+pamPublicEsc(s.court):'')+'</span></div><div class="pam-national-live-teams"><b>'+pamPublicEsc(names[m.pair1]||'Coppia da definire')+'</b><span class="pam-national-live-score">'+score+'</span><b>'+pamPublicEsc(names[m.pair2]||'Coppia da definire')+'</b></div><span class="pam-national-live-status '+(m.started&&!played?'started':'')+'">'+status+'</span></article>';
  }).join('')+'</div>';
@@ -2044,9 +2045,15 @@ function pamPublicNationalMatchesHtml(category){
 function pamPublicNationalStandings(category){
  const rows={},names=pamPublicNationalPairMap(category);
  (category.pairs||[]).forEach(function(p){rows[p.id]={id:p.id,name:names[p.id],group:p.group||'',played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
- (category.matches||[]).forEach(function(m){if(m.score1===null||m.score1===undefined||m.score2===null||m.score2===undefined)return;const a=rows[m.pair1],b=rows[m.pair2];if(!a||!b)return;const s1=Number(m.score1)||0,s2=Number(m.score2)||0;a.played++;b.played++;a.gf+=s1;a.gs+=s2;b.gf+=s2;b.gs+=s1;if(s1===s2){a.points++;b.points++;a.d++;b.d++}else if(s1>s2){a.points+=3;a.w++;b.l++}else{b.points+=3;b.w++;a.l++}});
+ (category.matches||[]).forEach(function(m){if(m.score1===null||m.score1===undefined||m.score2===null||m.score2===undefined)return;const a=rows[m.pair1],b=rows[m.pair2];if(!a||!b)return;const s1=Number(m.score1)||0,s2=Number(m.score2)||0,g=m.game_totals||{},partials=Array.isArray(m.set_scores)?m.set_scores:[],ga=g.a!==undefined?Number(g.a)||0:partials.reduce(function(t,x){return t+(Number(x.a)||0)},0),gb=g.b!==undefined?Number(g.b)||0:partials.reduce(function(t,x){return t+(Number(x.b)||0)},0);a.played++;b.played++;a.gf+=ga;a.gs+=gb;b.gf+=gb;b.gs+=ga;if(s1>s2){a.points+=2;a.w++;b.l++}else if(s2>s1){b.points+=2;b.w++;a.l++}});
  Object.values(rows).forEach(function(r){r.diff=r.gf-r.gs});
- return Object.values(rows).sort(function(a,b){return a.group.localeCompare(b.group)||b.points-a.points||b.diff-a.diff||b.gf-a.gf||a.name.localeCompare(b.name)});
+ return Object.values(rows).sort(function(a,b){
+  if(a.group!==b.group)return a.group.localeCompare(b.group);
+  if(b.points!==a.points)return b.points-a.points;
+  const direct=(category.matches||[]).find(function(m){return m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined&&((m.pair1===a.id&&m.pair2===b.id)||(m.pair1===b.id&&m.pair2===a.id))});
+  if(direct&&Number(direct.score1)!==Number(direct.score2)){const winner=Number(direct.score1)>Number(direct.score2)?direct.pair1:direct.pair2;if(winner===a.id)return -1;if(winner===b.id)return 1}
+  return b.w-a.w||b.gf-a.gf||a.gs-b.gs||a.name.localeCompare(b.name);
+ });
 }
 function pamPublicNationalStandingsHtml(category){
  const grouped={};pamPublicNationalStandings(category).forEach(function(r){(grouped[r.group]||(grouped[r.group]=[])).push(r)});
@@ -2314,7 +2321,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.49 · Calendario protetto e modifica manuale partite</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.50 · Formula Nazionale 2 set ai 4</div>';
 }
 
 function iphoneInstallCard(){
@@ -3972,7 +3979,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.49 · MODIFICA PARTITE</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.50 · FORMULA NAZIONALE</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -7280,19 +7287,65 @@ function pamSaveMatchSets(input){
  pamToast("Numero di set aggiornato per questa partita.","success");
  render();
 }
+function pamIsNationalCategoryEvent(e){
+ return !!(e&&e.nationalParentId&&e.competitionType==="fixed_pairs");
+}
 function pamMatchOperationsHtml(e,key){
  const op=pamMatchOperation(e,key),sets=Math.min(5,Math.max(1,Number(op.sets)||Number(e.defaultSets)||1));
+ if(pamIsNationalCategoryEvent(e))return '<div class="pam-match-operations print-hide"><div class="notice"><b>Formula Nazionale:</b> 2 set ai 4 game · tie-break a 7 sul 3-3 (punto secco sul 6-6) · sull’1-1 match tie-break a 10 (punto secco sul 9-9).</div><button class="'+(op.started?'secondary':'primary')+'" data-action="toggle-match-started" data-match-key="'+esc(key)+'">'+(op.started?'✓ IN CAMPO · TERMINA PARTITA':'▶ PARTITA INIZIATA')+'</button></div>';
  return '<div class="pam-match-operations print-hide"><div class="field"><label>Numero set</label><input type="number" min="1" max="5" step="1" value="'+sets+'" data-match-sets="'+esc(key)+'"></div><button class="'+(op.started?'secondary':'primary')+'" data-action="toggle-match-started" data-match-key="'+esc(key)+'">'+(op.started?'✓ IN CAMPO · TERMINA PARTITA':'▶ PARTITA INIZIATA')+'</button></div>';
 }
 function pamSetScoreInputsHtml(e,key){
  const op=pamMatchOperation(e,key),sets=Math.min(5,Math.max(1,Number(op.sets)||Number(e.defaultSets)||1));
  const previous=Array.isArray(op.setScores)?op.setScores:[];
+ if(pamIsNationalCategoryEvent(e)){
+  const mtb=op.matchTieBreak||{};
+  const split=previous.length>=2&&((previous[0].a>previous[0].b)!==(previous[1].a>previous[1].b));
+  return '<div class="pam-set-scores" data-set-score-box="'+esc(key)+'">'+[0,1].map(function(i){const row=previous[i]||{};return '<div class="score-row"><label><b>Set '+(i+1)+' · Coppia A</b><input data-set-score-a="'+i+'" type="number" min="0" max="4" step="1" inputmode="numeric" value="'+(row.a===undefined?'':Number(row.a))+'" placeholder="Game A"></label><label><b>Set '+(i+1)+' · Coppia B</b><input data-set-score-b="'+i+'" type="number" min="0" max="4" step="1" inputmode="numeric" value="'+(row.b===undefined?'':Number(row.b))+'" placeholder="Game B"></label></div>'}).join('')+'<div class="pam-national-decider" data-national-decider="'+esc(key)+'" '+(split?'':'hidden')+'><div class="notice"><b>Set pari 1-1:</b> inserisci il match tie-break decisivo a 10.</div><div class="score-row"><label><b>Match tie-break · Coppia A</b><input data-match-tiebreak-a type="number" min="0" max="10" step="1" inputmode="numeric" value="'+(mtb.a===undefined?'':Number(mtb.a))+'" placeholder="Punti A"></label><label><b>Match tie-break · Coppia B</b><input data-match-tiebreak-b type="number" min="0" max="10" step="1" inputmode="numeric" value="'+(mtb.b===undefined?'':Number(mtb.b))+'" placeholder="Punti B"></label></div></div></div>';
+ }
  return '<div class="pam-set-scores" data-set-score-box="'+esc(key)+'">'+Array.from({length:sets},function(_,i){
   const row=previous[i]||{};
   return '<div class="score-row"><label><b>Set '+(i+1)+' · Coppia A</b><input data-set-score-a="'+i+'" type="number" min="0" step="1" inputmode="numeric" value="'+(row.a===undefined?'':Number(row.a))+'" placeholder="Game A"></label><label><b>Set '+(i+1)+' · Coppia B</b><input data-set-score-b="'+i+'" type="number" min="0" step="1" inputmode="numeric" value="'+(row.b===undefined?'':Number(row.b))+'" placeholder="Game B"></label></div>';
  }).join('')+'</div>';
 }
+function pamValidNationalSet(a,b){
+ return Number.isInteger(a)&&Number.isInteger(b)&&((a===4&&b>=0&&b<=3)||(b===4&&a>=0&&a<=3));
+}
+function pamValidNationalMatchTieBreak(a,b){
+ return Number.isInteger(a)&&Number.isInteger(b)&&((a===10&&b>=0&&b<=9)||(b===10&&a>=0&&a<=9));
+}
+function pamNationalSetWinnerFromCard(card,index){
+ const a=card.querySelector('[data-set-score-a="'+index+'"]'),b=card.querySelector('[data-set-score-b="'+index+'"]');
+ if(!a||!b||a.value===""||b.value==="")return 0;
+ const av=Number(a.value),bv=Number(b.value);return av===bv?0:(av>bv?1:2);
+}
+function pamUpdateNationalDecider(card){
+ if(!card)return;
+ const box=card.querySelector('[data-national-decider]');if(!box)return;
+ const needed=pamNationalSetWinnerFromCard(card,0)>0&&pamNationalSetWinnerFromCard(card,1)>0&&pamNationalSetWinnerFromCard(card,0)!==pamNationalSetWinnerFromCard(card,1);
+ box.hidden=!needed;box.querySelectorAll('input').forEach(function(input){input.disabled=!needed});
+}
 function pamReadSetScores(card,e,key,allowDraw){
+ if(pamIsNationalCategoryEvent(e)){
+  const rows=[];
+  for(let i=0;i<2;i++){
+   const aInput=card.querySelector('[data-set-score-a="'+i+'"]'),bInput=card.querySelector('[data-set-score-b="'+i+'"]');
+   if(!aInput||!bInput||aInput.value===""||bInput.value==="")throw new Error('completa il risultato del set '+(i+1));
+   const a=Number(aInput.value),b=Number(bInput.value);
+   if(!pamValidNationalSet(a,b))throw new Error('set '+(i+1)+' non valido: deve terminare 4-0, 4-1, 4-2 oppure 4-3');
+   rows.push({a:a,b:b});
+  }
+  let winsA=rows.filter(function(x){return x.a>x.b}).length,winsB=rows.filter(function(x){return x.b>x.a}).length,matchTieBreak=null;
+  if(winsA===winsB){
+   const aInput=card.querySelector('[data-match-tiebreak-a]'),bInput=card.querySelector('[data-match-tiebreak-b]');
+   if(!aInput||!bInput||aInput.value===""||bInput.value==="")throw new Error('sull’1-1 devi inserire il match tie-break decisivo');
+   const a=Number(aInput.value),b=Number(bInput.value);
+   if(!pamValidNationalMatchTieBreak(a,b))throw new Error('match tie-break non valido: deve terminare a 10, con massimo 9 punti alla coppia perdente');
+   matchTieBreak={a:a,b:b};if(a>b)winsA++;else winsB++;
+  }
+  const op=pamMatchOperation(e,key);op.sets=2;op.setScores=rows;op.matchTieBreak=matchTieBreak;op.gameTotals={a:rows[0].a+rows[1].a,b:rows[0].b+rows[1].b};
+  return {score1:winsA,score2:winsB,setScores:rows,matchTieBreak:matchTieBreak,gameTotals:op.gameTotals};
+ }
  const inputs=Array.from(card.querySelectorAll('[data-set-score-a]')),rows=[];
  let skipped=false;
  inputs.forEach(function(aInput){
@@ -7315,9 +7368,9 @@ function pamReadSetScores(card,e,key,allowDraw){
  return {score1:score1,score2:score2,setScores:rows};
 }
 function pamSavedSetScoresHtml(e,key){
- const rows=pamMatchOperation(e,key).setScores;
+ const op=pamMatchOperation(e,key),rows=op.setScores;
  if(!Array.isArray(rows)||!rows.length)return '';
- return '<div class="notice"><b>Parziali:</b> '+rows.map(function(x,i){return 'Set '+(i+1)+' '+x.a+'-'+x.b}).join(' · ')+'</div>';
+ return '<div class="notice"><b>Parziali:</b> '+rows.map(function(x,i){return 'Set '+(i+1)+' '+x.a+'-'+x.b}).join(' · ')+(op.matchTieBreak?' · Match tie-break '+op.matchTieBreak.a+'-'+op.matchTieBreak.b:'')+'</div>';
 }
 function pamMatchStartedClass(e,key){return pamMatchOperation(e,key).started?' pam-match-started':''}
 function pamCourtOccupancyHtml(e){
@@ -7601,12 +7654,20 @@ function pairStandings(e){
  (e.pairs||[]).forEach(function(p){rows[p.id]={id:p.id,group:p.group,played:0,points:0,gf:0,gs:0,w:0,d:0,l:0}});
  e.matches.forEach(function(m){
   if(m.score1===null||m.score2===null)return;
-  const a=rows[m.pair1],b=rows[m.pair2];a.played++;b.played++;a.gf+=m.score1;a.gs+=m.score2;b.gf+=m.score2;b.gs+=m.score1;
+  const a=rows[m.pair1],b=rows[m.pair2],national=pamIsNationalCategoryEvent(e),op=e.matchOperations&&e.matchOperations["match-"+m.id]||{},games=op.gameTotals;
+  const gfA=national&&games?Number(games.a)||0:Number(m.score1)||0,gfB=national&&games?Number(games.b)||0:Number(m.score2)||0;
+  a.played++;b.played++;a.gf+=gfA;a.gs+=gfB;b.gf+=gfB;b.gs+=gfA;
   if(m.score1===m.score2){a.points++;b.points++;a.d++;b.d++}
-  else if(m.score1>m.score2){a.points+=3;a.w++;b.l++}else{b.points+=3;b.w++;a.l++}
+  else if(m.score1>m.score2){a.points+=national?2:3;a.w++;b.l++}else{b.points+=national?2:3;b.w++;a.l++}
  });
  Object.values(rows).forEach(function(x){x.diff=x.gf-x.gs});
- return Object.values(rows).sort(function(a,b){return a.group.localeCompare(b.group)||b.points-a.points||b.diff-a.diff||b.gf-a.gf});
+ return Object.values(rows).sort(function(a,b){
+  if(a.group!==b.group)return a.group.localeCompare(b.group);
+  if(b.points!==a.points)return b.points-a.points;
+  const direct=(e.matches||[]).find(function(m){return m.score1!==null&&m.score2!==null&&((m.pair1===a.id&&m.pair2===b.id)||(m.pair1===b.id&&m.pair2===a.id))});
+  if(direct&&direct.score1!==direct.score2){const winner=direct.score1>direct.score2?direct.pair1:direct.pair2;if(winner===a.id)return -1;if(winner===b.id)return 1}
+  return b.w-a.w||b.gf-a.gf||a.gs-b.gs;
+ });
 }
 function pairStandingsView(e){
  const groups={};pairStandings(e).forEach(function(r){(groups[r.group]||(groups[r.group]=[])).push(r)});
@@ -8882,6 +8943,10 @@ document.addEventListener("change",function(ev){
  const registryPlayer=ev.target.closest&&ev.target.closest("[data-registry-player-823822]");
  if(registryPlayer){const id=String(registryPlayer.getAttribute("data-registry-player-823822")||"");if(registryPlayer.checked)pamRegistryExportSelectionV823822.add(id);else pamRegistryExportSelectionV823822.delete(id);pamRegistryRenderV823822()}
 });
+document.addEventListener("input",function(ev){
+ const setScore=ev.target.closest&&ev.target.closest("[data-set-score-a],[data-set-score-b]");
+ if(setScore)pamUpdateNationalDecider(setScore.closest('[data-match-card],[data-simple-stage],[data-fixed-final-match],[data-stage-card]'));
+});
 
 
 function pamFilterChampTeams(){
@@ -9198,7 +9263,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823849",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823850",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
