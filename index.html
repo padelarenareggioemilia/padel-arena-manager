@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.47 · Nazionali pubblici</title>
+<title>Padel Arena Manager V8.2.38.49 · Modifica manuale partite</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -24,8 +24,9 @@ input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px soli
 .match.pam-match-started{border:3px solid #9dff25!important;background:linear-gradient(145deg,rgba(25,78,49,.98),rgba(7,31,40,.98))!important;box-shadow:0 0 0 2px rgba(157,255,37,.16),0 12px 28px rgba(0,0,0,.3)!important}
 .pam-match-operations{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:10px;align-items:end;margin:10px 0;padding:10px;border:1px solid rgba(72,174,255,.45);border-radius:13px;background:rgba(4,19,34,.68)}
 .pam-match-operations .field{margin:0}.pam-match-operations button{min-height:48px}.pam-match-started .pam-match-operations button{background:#ffcf33!important;color:#102033!important}
+.pam-manual-match-editor{margin:10px 0;border:1px solid rgba(183,255,60,.5);border-radius:13px;background:rgba(4,19,34,.78);padding:10px}.pam-manual-match-editor>summary{cursor:pointer;font-weight:900;color:var(--accent);list-style:none}.pam-manual-match-editor>summary::-webkit-details-marker{display:none}.pam-manual-match-grid{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin-top:12px}.pam-manual-team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pam-manual-match-editor .field{margin:0}.pam-manual-match-editor button{margin-top:12px}
 .pam-court-occupancy{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:2px solid #48aeff;background:linear-gradient(135deg,#102b48,#0b1b30);padding:13px 15px;border-radius:16px;margin:0 0 14px}.pam-court-occupancy strong{font-size:24px;color:#9dff25}.pam-court-occupancy.pam-full{border-color:#9dff25}.pam-court-occupancy.pam-over{border-color:#ff5d6c;background:#3b1520}.pam-court-occupancy small{display:block;color:#b9cadc;margin-top:3px}
-@media(max-width:560px){.pam-match-operations{grid-template-columns:1fr}.pam-match-operations button{width:100%}.pam-court-occupancy strong{font-size:20px}}
+@media(max-width:560px){.pam-match-operations,.pam-manual-match-grid,.pam-manual-team-grid{grid-template-columns:1fr}.pam-match-operations button{width:100%}.pam-court-occupancy strong{font-size:20px}}
 .error{border-color:rgba(251,113,133,.4);background:rgba(251,113,133,.12);color:#ffdbe2}.success{border-color:rgba(183,255,60,.35);background:rgba(183,255,60,.09);color:#efffd5}
 .table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}.table th{font-size:11px;text-transform:uppercase;color:var(--muted)}
 .checklist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.check{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:13px;padding:11px;background:#0b182a}.check input{width:auto}
@@ -1435,7 +1436,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823847">
+<link rel="manifest" href="manifest.webmanifest?v=823849">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2313,7 +2314,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.47 · Nazionali pubblici e iscrizioni chiuse</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.49 · Calendario protetto e modifica manuale partite</div>';
 }
 
 function iphoneInstallCard(){
@@ -3971,7 +3972,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.47 · NAZIONALI PUBBLICI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.49 · MODIFICA PARTITE</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6590,7 +6591,9 @@ function pamNationalFinalTasks(child){
   const bracket=advanced.brackets[key];if(!bracket)return;
   (bracket.rounds||[]).forEach(function(round){
    (round.matches||[]).forEach(function(m){
-    out.push({child:child,id:String(m.id),kind:"final",players:pamNationalMatchPlayers(child,m),exclusive:true,label:(bracket.name||key)+" · "+(m.label||round.name||"Fase finale")});
+    const manual=child.matchOperations&&child.matchOperations["fixed-final-"+m.id]||{};
+    const scheduledMatch=manual.manualPair1||manual.manualPair2?Object.assign({},m,{pair1:manual.manualPair1||m.pair1,pair2:manual.manualPair2||m.pair2}):m;
+    out.push({child:child,id:String(m.id),kind:"final",players:pamNationalMatchPlayers(child,scheduledMatch),exclusive:true,label:(bracket.name||key)+" · "+(m.label||round.name||"Fase finale")});
    });
   });
  });
@@ -6654,7 +6657,7 @@ function pamBuildNationalSchedule(parent){
   }
   if(!placed)overflow.push({key:pamNationalTaskKey(task),category:task.child.nationalCategory||"",label:task.label||"Partita"});
  });
- return {version:1,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:tasks.length,overflow:overflow,days:Array.from(new Set(slots.map(function(s){return s.date}))),courts:Math.max(1,Number(parent.courts)||1),slotDuration:Math.max(1,Number(parent.slotDuration||parent.estimatedMatchDuration||parent.matchDuration)||20)};
+ return {version:1,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:tasks.length,overflow:overflow,days:Array.from(new Set(slots.map(function(s){return s.date}))),courts:Math.max(1,Number(parent.courts)||1),slotDuration:Math.max(1,Number(parent.slotDuration||parent.estimatedMatchDuration||parent.matchDuration)||20),locked:true};
 }
 function pamNationalFinalDateV823846(parent){
  const base=new Date(String(parent.date||"")+"T12:00:00");
@@ -6695,7 +6698,7 @@ function pamBuildNationalFinalScheduleV823846(parent){
    });
   });
  });
- return {version:2,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:pamNationalScheduleTasks(parent).length,overflow:overflow,days:Array.from(new Set(Object.values(assignments).map(function(a){return a.date}))).sort(),courts:4,slotDuration:50,preserveGroupAssignments:true,finalsRule:"gold_top_2_silver_remaining"};
+ return {version:2,generatedAt:new Date().toISOString(),fingerprint:pamNationalScheduleFingerprint(parent),assignments:assignments,scheduled:Object.keys(assignments).length,total:pamNationalScheduleTasks(parent).length,overflow:overflow,days:Array.from(new Set(Object.values(assignments).map(function(a){return a.date}))).sort(),courts:4,slotDuration:50,preserveGroupAssignments:true,finalsRule:"gold_top_2_silver_remaining",locked:true};
 }
 function pamApplyNationalFinalScheduleV823846(parentId){
  const parent=(state.events||[]).find(function(event){return String(event.id)===String(parentId)&&event.competitionType==="national_event"});
@@ -6705,21 +6708,24 @@ function pamApplyNationalFinalScheduleV823846(parentId){
 }
 function pamEnsureNationalSchedule(parent){
  if(!parent)return null;
- const fingerprint=pamNationalScheduleFingerprint(parent);
- if(!parent.nationalSchedule||parent.nationalSchedule.fingerprint!==fingerprint){
-  parent.nationalSchedule=parent.nationalSchedule&&parent.nationalSchedule.preserveGroupAssignments?pamBuildNationalFinalScheduleV823846(parent):pamBuildNationalSchedule(parent);
- }
+ // Un calendario gia salvato e una programmazione ufficiale: non deve mai
+ // essere rigenerato durante apertura, refresh Realtime o caricamento giocatori.
+ // Soltanto il comando esplicito "Ricalcola calendario unico" puo sostituirlo.
+ if(!parent.nationalSchedule)parent.nationalSchedule=pamBuildNationalSchedule(parent);
  return parent.nationalSchedule;
+}
+function pamNationalScheduleNeedsReview(parent){
+ if(!parent||!parent.nationalSchedule)return false;
+ return String(parent.nationalSchedule.fingerprint||"")!==String(pamNationalScheduleFingerprint(parent));
 }
 function pamRebuildNationalSchedule(parentId,silent){
  const parent=(state.events||[]).find(function(x){return String(x.id)===String(parentId)&&x.competitionType==="national_event"});
  if(!parent)return null;
  parent.nationalSchedule=pamBuildNationalSchedule(parent);
  if(!silent){
-  save();render();
+  save({operational:true,eventOnly:true,eventId:parent.id});render();
   const missing=(parent.nationalSchedule.overflow||[]).length;
   pamToast(missing?"Calendario ricalcolato: "+missing+" partite non entrano negli orari disponibili.":"Calendario unico verificato: nessuna sovrapposizione di campi o giocatori.",missing?"error":"success");
-  if(PAM_SESSION&&pamIsAdmin())Promise.resolve(pamCloudSyncAll()).catch(function(err){console.warn("Sync calendario nazionale:",err)});
  }
  return parent.nationalSchedule;
 }
@@ -6909,12 +6915,14 @@ function pamNationalEventView(e){
  const children=pamEnsureNationalChildrenV823825(e);
  const requiredCategories=["Maschile","Femminile","Misto"];
  const missingCategories=requiredCategories.filter(function(category){return !children.some(function(child){return String(child.nationalCategory)===category})});
- const schedule=pamEnsureNationalSchedule(e),missing=(schedule&&schedule.overflow||[]).length;
+ const schedule=pamEnsureNationalSchedule(e),missing=(schedule&&schedule.overflow||[]).length,scheduleNeedsReview=pamNationalScheduleNeedsReview(e);
  const scheduleHtml=!schedule||!schedule.total
   ?'<div class="notice"><b>CALENDARIO UNICO:</b> sarà creato appena generi le partite nelle categorie.</div>'
   :missing
    ?'<div class="notice error"><b>CALENDARIO NON COMPLETO</b><br>'+schedule.scheduled+' partite programmate · '+missing+' non entrano tra '+esc(e.startTime||"20:00")+' e '+esc(e.endTime||"23:00")+' nelle giornate disponibili. Le partite mancanti non sono state sovrapposte.</div>'
-   :'<div class="notice success"><b>CALENDARIO UNICO VERIFICATO</b><br>'+schedule.scheduled+' partite distribuite su '+schedule.courts+' campi senza sovrapposizioni di campi, giocatori o categorie.</div>';
+   :scheduleNeedsReview
+    ?'<div class="notice"><b>PROGRAMMA BLOCCATO E PROTETTO</b><br>Le coppie o i giocatori sono stati aggiornati, ma date, orari e campi salvati non sono stati modificati. Usa “Ricalcola calendario unico” soltanto se vuoi sostituire l’intera programmazione.</div>'
+    :'<div class="notice success"><b>CALENDARIO UNICO VERIFICATO</b><br>'+schedule.scheduled+' partite distribuite su '+schedule.courts+' campi senza sovrapposizioni di campi, giocatori o categorie.</div>';
  const cards=requiredCategories.map(function(category){
   const child=children.find(function(x){return String(x.nationalCategory)===category});
   if(!child)return '<div class="pam-national-category" style="border-color:#ef4444"><span class="pam-national-child-badge">DOPPIO '+esc(category.toUpperCase())+'</span><h3>Categoria non collegata</h3><div class="notice error">La categoria non è stata caricata. Nessuna categoria vuota è stata creata automaticamente.</div>'+(pamIsAdmin()?'<button class="secondary" data-repair-national-event-823833="'+e.id+'">🛡️ RIALLINEA DALLE ISCRIZIONI CONFERMATE</button>':'<div class="muted">Avvisa l’amministratore.</div>')+'</div>';
@@ -7002,9 +7010,15 @@ function scheduleInfo(e,index,phase,court,scheduleKind,scheduleId){
  const national=scheduleId?pamNationalScheduleAssignment(e,scheduleKind||"match",scheduleId):null;
  if(national){
   const nationalDate=new Date(national.date+"T12:00:00");
-  return {day:nationalDate.toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}),hour:national.time,court:national.court,phase:phase,national:true};
+  return {date:national.date,day:nationalDate.toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}),hour:national.time,court:national.court,phase:phase,national:true};
  }
  if(e&&e.nationalParentId&&scheduleId)return {day:"CALENDARIO COMPLETO",hour:"DA PROGRAMMARE",court:"—",phase:phase,national:true,overflow:true};
+ const operationKey=(scheduleKind==="final"?"fixed-final-":"match-")+String(scheduleId||"");
+ const manual=scheduleId&&pamMatchOperation(e,operationKey).manualSchedule;
+ if(manual&&manual.date&&manual.time){
+  const manualDate=new Date(manual.date+"T12:00:00");
+  return {date:manual.date,day:manualDate.toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"}),hour:manual.time,court:manual.court,phase:phase,manual:true};
+ }
  const dateText=e.date||new Date().toISOString().slice(0,10);
  const timeText=e.startTime||"20:00";
  const parts=timeText.split(":");
@@ -7014,11 +7028,121 @@ function scheduleInfo(e,index,phase,court,scheduleKind,scheduleId){
  base.setMinutes(base.getMinutes()+slot*slotDuration);
  const day=base.toLocaleDateString("it-IT",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
  const hour=base.toLocaleTimeString("it-IT",{hour:"2-digit",minute:"2-digit"});
- return {day:day,hour:hour,court:court||((index%Math.max(1,Number(e.courts)||1))+1),phase:phase};
+ return {date:dateText,day:day,hour:hour,court:court||((index%Math.max(1,Number(e.courts)||1))+1),phase:phase};
 }
 function matchMetaHtml(e,index,phase,court,scheduleKind,scheduleId){
  const s=scheduleInfo(e,index,phase,court,scheduleKind,scheduleId);
  return '<div class="notice '+(s.overflow?'error':'')+'"><b>'+esc(s.phase)+'</b> · '+esc(s.day)+' · ore '+esc(s.hour)+' · Campo '+s.court+' · '+phaseFormula(e,phase)+(s.national&&!s.overflow?' · CALENDARIO NAZIONALE CONDIVISO':'')+'</div>';
+}
+function pamManualPairOptions(e,selected){
+ return (e.pairs||[]).map(function(pair){return '<option value="'+esc(pair.id)+'" '+(String(pair.id)===String(selected)?'selected':'')+'>'+esc(pairName(e,pair.id))+'</option>'}).join('');
+}
+function pamManualPlayerOptions(e,selected){
+ return (e.playerIds||[]).map(function(id){const player=playerById(id);return '<option value="'+esc(id)+'" '+(String(id)===String(selected)?'selected':'')+'>'+esc(playerName(player))+'</option>'}).join('');
+}
+function pamAdminManualMatchEditorHtml(e,m,index,phase,court,kind){
+ if(!pamIsAdmin()||!e||!m)return '';
+ kind=kind||'match';
+ const info=scheduleInfo(e,index,phase,court,kind,m.id),parent=pamNationalParentForEvent(e);
+ const maxCourts=Math.max(1,Number((parent||e).courts)||1),dateValue=info.date||e.date||new Date().toISOString().slice(0,10);
+ let teams='';
+ if(e.competitionType==='fixed_pairs'){
+  teams='<div class="pam-manual-team-grid"><div class="field"><label>Coppia A</label><select data-manual-pair-a>'+pamManualPairOptions(e,m.pair1)+'</select></div><div class="field"><label>Coppia B</label><select data-manual-pair-b>'+pamManualPairOptions(e,m.pair2)+'</select></div></div>';
+ }else{
+  const teamA=Array.isArray(m.t1)?m.t1:[],teamB=Array.isArray(m.t2)?m.t2:[];
+  teams='<div class="pam-manual-team-grid"><div><div class="field"><label>Giocatore A1</label><select data-manual-player="a1">'+pamManualPlayerOptions(e,teamA[0])+'</select></div><div class="field"><label>Giocatore A2</label><select data-manual-player="a2">'+pamManualPlayerOptions(e,teamA[1])+'</select></div></div><div><div class="field"><label>Giocatore B1</label><select data-manual-player="b1">'+pamManualPlayerOptions(e,teamB[0])+'</select></div><div class="field"><label>Giocatore B2</label><select data-manual-player="b2">'+pamManualPlayerOptions(e,teamB[1])+'</select></div></div></div>';
+ }
+ return '<details class="pam-manual-match-editor print-hide"><summary>✏️ MODIFICA MANUALMENTE QUESTA PARTITA · SOLO ADMIN</summary><div class="pam-manual-match-grid"><div class="field"><label>Giorno</label><input type="date" value="'+esc(dateValue)+'" data-manual-match-date></div><div class="field"><label>Ora</label><input type="time" value="'+esc(info.hour||e.startTime||'20:00')+'" data-manual-match-time></div><div class="field"><label>Campo</label><input type="number" min="1" max="'+maxCourts+'" step="1" value="'+esc(info.court==='—'?1:info.court)+'" data-manual-match-court></div></div>'+teams+'<div class="match-message"></div><button class="secondary" data-save-manual-match="'+esc(m.id)+'" data-manual-match-kind="'+esc(kind)+'">SALVA SOLO QUESTA PARTITA</button></details>';
+}
+function pamManualMatchPlayerIds(e,m){
+ if(e.competitionType==='fixed_pairs'){
+  const ids=[];[m.pair1,m.pair2].forEach(function(pairId){const pair=pairById(e,pairId);(pair&&pair.players||[]).forEach(function(id){if(!ids.includes(String(id)))ids.push(String(id))})});return ids;
+ }
+ return (m.t1||[]).concat(m.t2||[]).map(String);
+}
+async function pamCloudSyncManualMatchV823849(eventIds,attempt){
+ attempt=Number(attempt)||0;
+ const ids=Array.from(new Set((eventIds||[]).map(String).filter(Boolean)));
+ if(!ids.length||!pamCloudReady||!pamInitialCloudHydrated||!PAM_SESSION||!pamIsAdmin())return false;
+ if(pamUploading){
+  if(attempt<20)setTimeout(function(){pamCloudSyncManualMatchV823849(ids,attempt+1)},250);
+  else pamToast('Salvataggio online occupato: riapri la modifica e premi nuovamente Salva.','error');
+  return false;
+ }
+ clearTimeout(pamSyncTimer);pamUploading=true;
+ try{
+  const events=ids.map(pamFindEventById).filter(Boolean),rows=events.map(pamEventRow);
+  if(rows.length!==ids.length)throw new Error('evento collegato non disponibile');
+  const result=await sb.from('tournaments').upsert(rows,{onConflict:'id',defaultToNull:false}).select('id,share_token');
+  if(result.error)throw result.error;
+  (result.data||[]).forEach(function(row){const event=pamFindEventById(row.id);if(event&&row.share_token)event.shareToken=row.share_token});
+  pamOperationalDirty=false;pamOperationalEventId=null;pamEventSyncRetryDelay=1000;pamPersistStateLocalV82381();pamSetConnectionState(true);
+  pamToast('Partita modificata e salvata online.','success');
+  return true;
+ }catch(err){
+  pamOperationalDirty=true;pamSetConnectionState(false);console.error('Salvataggio manuale partita:',err);
+  if(attempt<2)setTimeout(function(){pamCloudSyncManualMatchV823849(ids,attempt+1)},700*(attempt+1));
+  else pamToast('Modifica non salvata online: controlla la connessione e riprova.','error');
+  return false;
+ }finally{pamUploading=false}
+}
+function pamSaveManualMatchEdit(button){
+ if(!pamIsAdmin()){pamToast('Modifica riservata all’amministratore.','error');return}
+ const e=currentEvent(),id=String(button.getAttribute('data-save-manual-match')||''),kind=button.getAttribute('data-manual-match-kind')||'match';
+ const card=button.closest(kind==='final'?'[data-fixed-final-match]':'[data-match-card]'),msg=card&&card.querySelector('.match-message');
+ let m=null,oldTeams=null;
+ try{
+  if(!e||!card)throw new Error('partita non disponibile');
+  const found=kind==='final'?pamFindFixedFinalMatch(e,id):null;
+  m=kind==='final'?(found&&found.match):(e.matches||[]).find(function(match){return String(match.id)===id});
+  if(!m)throw new Error('partita non trovata');
+  const date=card.querySelector('[data-manual-match-date]').value,time=card.querySelector('[data-manual-match-time]').value,court=Number(card.querySelector('[data-manual-match-court]').value);
+  const parent=pamNationalParentForEvent(e),maxCourts=Math.max(1,Number((parent||e).courts)||1);
+  if(!date||!time)throw new Error('inserisci giorno e ora');
+  if(!Number.isInteger(court)||court<1||court>maxCourts)throw new Error('il campo deve essere compreso tra 1 e '+maxCourts);
+  oldTeams={pair1:m.pair1,pair2:m.pair2,t1:Array.isArray(m.t1)?m.t1.slice():null,t2:Array.isArray(m.t2)?m.t2.slice():null};
+  let teamsChanged=false;
+  if(e.competitionType==='fixed_pairs'){
+   const pair1=card.querySelector('[data-manual-pair-a]').value,pair2=card.querySelector('[data-manual-pair-b]').value;
+   if(!pair1||!pair2||pair1===pair2)throw new Error('scegli due coppie diverse');
+   const firstPlayers=(pairById(e,pair1)&&pairById(e,pair1).players||[]).map(String),secondPlayers=(pairById(e,pair2)&&pairById(e,pair2).players||[]).map(String);
+   if(firstPlayers.some(function(playerId){return secondPlayers.includes(playerId)}))throw new Error('lo stesso giocatore non può essere presente in entrambe le coppie');
+   teamsChanged=String(m.pair1)!==pair1||String(m.pair2)!==pair2;m.pair1=pair1;m.pair2=pair2;
+  }else{
+   const values=['a1','a2','b1','b2'].map(function(key){return card.querySelector('[data-manual-player="'+key+'"]').value});
+   if(values.some(function(value){return !value})||new Set(values).size!==4)throw new Error('scegli quattro giocatori diversi');
+   teamsChanged=JSON.stringify((m.t1||[]).concat(m.t2||[]).map(String))!==JSON.stringify(values);m.t1=values.slice(0,2);m.t2=values.slice(2);
+  }
+  const operationKey=(kind==='final'?'fixed-final-':'match-')+id,op=pamMatchOperation(e,operationKey);
+  const hasResult=kind==='final'?!!(found&&found.bracket&&found.bracket.results&&found.bracket.results[id]&&found.bracket.results[id].a!==null&&found.bracket.results[id].b!==null):(m.score1!==null&&m.score1!==undefined&&m.score2!==null&&m.score2!==undefined);
+  if(teamsChanged&&hasResult&&!confirm('Questa partita ha già un risultato. Cambiando i partecipanti verranno cancellati soltanto il risultato e i parziali di questa partita. Continuare?')){
+   m.pair1=oldTeams.pair1;m.pair2=oldTeams.pair2;if(oldTeams.t1)m.t1=oldTeams.t1;if(oldTeams.t2)m.t2=oldTeams.t2;return;
+  }
+  if(parent){
+   const schedule=pamEnsureNationalSchedule(parent),assignments=schedule.assignments||(schedule.assignments={}),taskKey=String(e.id)+'|'+kind+'|'+id;
+   const conflict=Object.keys(assignments).find(function(key){const a=assignments[key];return key!==taskKey&&a&&a.date===date&&a.time===time&&Number(a.court)===court});
+   if(conflict)throw new Error('il Campo '+court+' è già occupato il '+date+' alle '+time);
+   const selectedPlayers=new Set(pamManualMatchPlayerIds(e,m)),tasks=pamNationalScheduleTasks(parent),taskByKey={};tasks.forEach(function(task){taskByKey[pamNationalTaskKey(task)]=task});
+   const playerConflict=Object.keys(assignments).find(function(key){if(key===taskKey)return false;const a=assignments[key],task=taskByKey[key];return a&&task&&a.date===date&&a.time===time&&task.players.some(function(playerId){return selectedPlayers.has(String(playerId))})});
+   if(playerConflict)throw new Error('uno dei giocatori scelti è già impegnato in un’altra partita alle '+time);
+   const oldAssignment=assignments[taskKey]||{};
+   assignments[taskKey]={date:date,time:time,court:court,category:oldAssignment.category||e.nationalCategory||e.category||'',label:oldAssignment.label||m.label||m.round||''};
+   schedule.locked=true;schedule.scheduled=Object.keys(assignments).length;schedule.manualUpdatedAt=new Date().toISOString();schedule.fingerprint=pamNationalScheduleFingerprint(parent);
+  }else op.manualSchedule={date:date,time:time,court:court};
+  if(kind==='final'){
+   op.manualPair1=m.pair1||null;op.manualPair2=m.pair2||null;
+   if(teamsChanged&&found&&found.bracket&&found.bracket.results)delete found.bracket.results[id];
+  }else if(teamsChanged){m.score1=null;m.score2=null;delete m.note}
+  if(teamsChanged)delete op.setScores;
+  if(parent){
+   save({operational:true,localOnly:true,eventId:e.id});render();
+   pamToast('Modifica applicata. Salvataggio online in corso…','success');
+   pamCloudSyncManualMatchV823849([e.id,parent.id]);
+  }else{save({operational:true,eventOnly:true,eventId:e.id});render();pamToast('Partita modificata.','success')}
+ }catch(err){
+  if(m&&oldTeams){m.pair1=oldTeams.pair1;m.pair2=oldTeams.pair2;if(oldTeams.t1)m.t1=oldTeams.t1;if(oldTeams.t2)m.t2=oldTeams.t2}
+  if(msg){msg.className='notice error';msg.textContent='Errore: '+err.message}else pamToast(err.message,'error');
+ }
 }
 function timerEnabledForPhase(e,phase){
  if(e.matchMode==="score")return false;
@@ -7271,6 +7395,7 @@ function matchesView(e){
   return '<div class="match'+pamMatchStartedClass(e,operationKey)+'" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
   matchMetaHtml(e,i,roundLabel,m.court,"match",m.id)+timerHtml(e,"match-"+m.id,"initial")+
   (e.competitionType==="fixed_pairs"?matchupStackHtml(pairStackHtml(e,m.pair1),pairStackHtml(e,m.pair2)):matchupStackHtml(teamStackHtml(m.t1),teamStackHtml(m.t2)))+
+  pamAdminManualMatchEditorHtml(e,m,i,roundLabel,m.court,"match")+
   pamMatchOperationsHtml(e,operationKey)+
   (saved?'<div class="notice success">Risultato salvato: <b>'+m.score1+' - '+m.score2+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-action="edit-result" data-match-id="'+m.id+'">Modifica risultato</button>':
   pamSetScoreInputsHtml(e,operationKey)+'<input data-note placeholder="Nota facoltativa"><div class="match-message"></div><button class="primary" style="margin-top:10px" data-action="save-result" data-match-id="'+m.id+'">Salva risultato</button>')+
@@ -7736,14 +7861,16 @@ function pamFixedMatchTeam(e,id){
  return id?pairStackHtml(e,id):'<div class="team-stack pam-waiting-team"><div>IN ATTESA</div></div>';
 }
 function pamFixedBracketMatchCard(e,bracket,m,index){
+ const operationKey="fixed-final-"+m.id,manual=pamMatchOperation(e,operationKey);
+ if(manual.manualPair1)m.pair1=manual.manualPair1;
+ if(manual.manualPair2)m.pair2=manual.manualPair2;
  const res=(bracket.results||{})[m.id]||{a:null,b:null};
  const ready=!!(m.pair1&&m.pair2);
  const saved=res.a!==null&&res.b!==null;
- const operationKey="fixed-final-"+m.id;
  return '<div class="match pam-bracket-match'+pamMatchStartedClass(e,operationKey)+'" data-fixed-final-match="'+esc(m.id)+'" data-fixed-tier="'+esc(bracket.name)+'">'+
   '<span class="pill">'+esc(m.label)+'</span>'+
   matchMetaHtml(e,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1,"final",m.id)+
-  matchupStackHtml(pamFixedMatchTeam(e,m.pair1),pamFixedMatchTeam(e,m.pair2))+pamMatchOperationsHtml(e,operationKey)+
+  matchupStackHtml(pamFixedMatchTeam(e,m.pair1),pamFixedMatchTeam(e,m.pair2))+pamAdminManualMatchEditorHtml(e,m,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1,"final")+pamMatchOperationsHtml(e,operationKey)+
   (!ready?'<div class="notice">Completa il turno precedente per conoscere le coppie.</div>':
    saved?'<div class="notice success">Risultato: <b>'+res.a+' - '+res.b+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-edit-fixed-final="'+esc(m.id)+'">MODIFICA RISULTATO</button>':
    pamSetScoreInputsHtml(e,operationKey)+'<div class="match-message"></div><button class="primary" data-save-fixed-final="'+esc(m.id)+'">SALVA RISULTATO</button>')+
@@ -8577,8 +8704,10 @@ document.addEventListener("click",function(ev){
  const deleteDuplicates=ev.target.closest("[data-delete-duplicate-registrations]");if(deleteDuplicates){pamDeleteRegistration(deleteDuplicates.getAttribute("data-delete-duplicate-registrations"),deleteDuplicates.getAttribute("data-event-id"));return}
  const rebuildNationalSchedule=ev.target.closest("[data-rebuild-national-schedule]");if(rebuildNationalSchedule){
   if(!pamIsAdmin()){pamToast("Solo l’amministratore può ricalcolare il calendario nazionale.","error");return}
+  if(!confirm("ATTENZIONE: questa operazione sostituirà date, orari e campi dell’attuale calendario nazionale. Coppie, gironi e risultati non verranno modificati. Vuoi davvero ricalcolare tutta la programmazione?"))return;
   pamRebuildNationalSchedule(rebuildNationalSchedule.getAttribute("data-rebuild-national-schedule"),false);return
  }
+ const saveManualMatch=ev.target.closest("[data-save-manual-match]");if(saveManualMatch){pamSaveManualMatchEdit(saveManualMatch);return}
  const repairNationalEvent=ev.target.closest("[data-repair-national-event-823833]");if(repairNationalEvent){pamRepairNationalEventV823833(repairNationalEvent.getAttribute("data-repair-national-event-823833"),true);return}
  const nationalCategorySettings=ev.target.closest("[data-national-category-settings-823825]");if(nationalCategorySettings){
   if(!pamIsAdmin()){pamToast("Solo l’amministratore può configurare i gironi.","error");return}
@@ -9069,7 +9198,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823847",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823849",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
