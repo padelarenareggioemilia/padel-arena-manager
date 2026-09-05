@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.54 · Iscrizioni a coppie configurabili</title>
+<title>Padel Arena Manager V8.2.38.55 · Partite concluse evidenziate</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -22,6 +22,8 @@ input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px soli
 .tabs{display:flex;gap:6px;overflow:auto;margin-bottom:14px}.tabs button{white-space:nowrap;border:1px solid var(--line);background:#0d1a2c;color:var(--muted);padding:10px 12px;border-radius:11px;font-weight:800}.tabs .on{background:var(--accent);color:#07111f}
 .match{border:1px solid var(--line);background:#0b182a;border-radius:16px;padding:14px;margin-bottom:10px}.team{font-weight:900}.score-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.notice{padding:11px 12px;border-radius:13px;border:1px solid rgba(94,234,212,.24);background:rgba(94,234,212,.08);color:#dbfffa;margin-bottom:12px;font-size:13px}
 .match.pam-match-started{border:3px solid #9dff25!important;background:linear-gradient(145deg,rgba(25,78,49,.98),rgba(7,31,40,.98))!important;box-shadow:0 0 0 2px rgba(157,255,37,.16),0 12px 28px rgba(0,0,0,.3)!important}
+.match.pam-match-completed,.pam-national-all-matches .card.pam-match-completed{border:2px solid rgba(251,113,133,.72)!important;background:linear-gradient(145deg,rgba(91,38,52,.72),rgba(28,24,38,.96))!important;box-shadow:0 0 0 2px rgba(251,113,133,.08),0 12px 28px rgba(0,0,0,.22)!important}
+.pam-match-completed .pill{background:rgba(251,113,133,.22);color:#ffd6de}
 .pam-match-operations{display:grid;grid-template-columns:minmax(100px,160px) 1fr;gap:10px;align-items:end;margin:10px 0;padding:10px;border:1px solid rgba(72,174,255,.45);border-radius:13px;background:rgba(4,19,34,.68)}
 .pam-match-operations .field{margin:0}.pam-match-operations button{min-height:48px}.pam-match-started .pam-match-operations button{background:#ffcf33!important;color:#102033!important}
 .pam-manual-match-editor{margin:10px 0;border:1px solid rgba(183,255,60,.5);border-radius:13px;background:rgba(4,19,34,.78);padding:10px}.pam-manual-match-editor>summary{cursor:pointer;font-weight:900;color:var(--accent);list-style:none}.pam-manual-match-editor>summary::-webkit-details-marker{display:none}.pam-manual-match-grid{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;margin-top:12px}.pam-manual-team-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pam-manual-match-editor .field{margin:0}.pam-manual-match-editor button{margin-top:12px}.pam-manual-match-actions{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.pam-manual-match-actions .danger{min-height:42px}
@@ -1436,7 +1438,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823854">
+<link rel="manifest" href="manifest.webmanifest?v=823855">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2321,7 +2323,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.54 · Regolamento richiudibile e iscrizioni a coppie configurabili</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.55 · Partite concluse evidenziate</div>';
 }
 
 function iphoneInstallCard(){
@@ -4003,7 +4005,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.54 · ISCRIZIONI CONFIGURABILI</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.55 · PARTITE CONCLUSE</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6923,7 +6925,7 @@ function pamNationalAllMatchesV823825(parent,children){
  return '<div class="pam-national-all-matches">'+rows.map(function(row){
   const child=row.child,match=row.match,a=row.assignment;
   const played=match.score1!==null&&match.score2!==null;
-  return '<article class="card" style="border-left:5px solid '+(row.category==="Maschile"?'#1cb5ff':row.category==="Femminile"?'#ff5aa5':'#9dff1f')+'">'+
+  return '<article class="card'+pamMatchVisualClass(child,"match-"+match.id,played)+'" style="border-left:5px solid '+(row.category==="Maschile"?'#1cb5ff':row.category==="Femminile"?'#ff5aa5':'#9dff1f')+'">'+
    '<div class="row" style="align-items:center"><span class="pam-national-child-badge">DOPPIO '+esc(String(row.category).toUpperCase())+'</span><span class="muted">Girone '+esc(match.group||match.round||'—')+'</span></div>'+
    '<div class="muted" style="margin:8px 0">'+(a?esc(a.date)+' · ore '+esc(a.time)+' · Campo '+esc(a.court):'<b>DA PROGRAMMARE NEL CALENDARIO UNICO</b>')+'</div>'+
    matchupStackHtml(pairStackHtml(child,match.pair1),pairStackHtml(child,match.pair2))+
@@ -7434,7 +7436,10 @@ function pamSavedSetScoresHtml(e,key){
  if(!Array.isArray(rows)||!rows.length)return '';
  return '<div class="notice"><b>Parziali:</b> '+rows.map(function(x,i){return 'Set '+(i+1)+' '+x.a+'-'+x.b}).join(' · ')+(op.matchTieBreak?' · Match tie-break '+op.matchTieBreak.a+'-'+op.matchTieBreak.b:'')+'</div>';
 }
-function pamMatchStartedClass(e,key){return pamMatchOperation(e,key).started?' pam-match-started':''}
+function pamMatchVisualClass(e,key,completed){
+ if(completed)return ' pam-match-completed';
+ return pamMatchOperation(e,key).started?' pam-match-started':'';
+}
 function pamCourtOccupancyHtml(e){
  e.matchOperations=e.matchOperations||{};
  const occupied=Object.keys(e.matchOperations).filter(function(key){return !!(e.matchOperations[key]&&e.matchOperations[key].started)}).length;
@@ -7507,7 +7512,7 @@ function matchesView(e){
   const legLabel=(m.leg===2?" · Ritorno":" · Andata");
   const roundLabel=(e.competitionType==="fixed_pairs"?"Girone "+m.group:"Turno "+m.round)+legLabel;
   const operationKey="match-"+m.id;
-  return '<div class="match'+pamMatchStartedClass(e,operationKey)+'" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
+  return '<div class="match'+pamMatchVisualClass(e,operationKey,saved)+'" data-match-card="'+m.id+'"><div><span class="pill">Partita '+(i+1)+'</span></div>'+
   matchMetaHtml(e,i,roundLabel,m.court,"match",m.id)+timerHtml(e,"match-"+m.id,"initial")+
   (e.competitionType==="fixed_pairs"?matchupStackHtml(pairStackHtml(e,m.pair1),pairStackHtml(e,m.pair2)):matchupStackHtml(teamStackHtml(m.t1),teamStackHtml(m.t2)))+
   pamAdminManualMatchEditorHtml(e,m,i,roundLabel,m.court,"match")+
@@ -7694,7 +7699,7 @@ function simpleStageCard(e,m,label){
  const saved=m.score1!==null&&m.score2!==null;
  const baseIndex=(e.matches||[]).length+(label.indexOf("Semifinale")===0?Number(label.replace(/\D/g,""))-1:2);
  const operationKey="simple-"+m.id;
- return '<div class="match'+pamMatchStartedClass(e,operationKey)+'" data-simple-stage="'+m.id+'"><span class="pill">'+label+'</span>'+matchMetaHtml(e,baseIndex,label,((baseIndex)%Math.max(1,e.courts))+1)+timerHtml(e,operationKey,label.indexOf("Semifinale")===0?"semifinal":"final")+matchupStackHtml(simplePairStackHtml(e,m.pair1),simplePairStackHtml(e,m.pair2))+pamMatchOperationsHtml(e,operationKey)+
+ return '<div class="match'+pamMatchVisualClass(e,operationKey,saved)+'" data-simple-stage="'+m.id+'"><span class="pill">'+label+'</span>'+matchMetaHtml(e,baseIndex,label,((baseIndex)%Math.max(1,e.courts))+1)+timerHtml(e,operationKey,label.indexOf("Semifinale")===0?"semifinal":"final")+matchupStackHtml(simplePairStackHtml(e,m.pair1),simplePairStackHtml(e,m.pair2))+pamMatchOperationsHtml(e,operationKey)+
  (saved?'<div class="notice success">Risultato: <b>'+m.score1+' - '+m.score2+'</b></div>'+pamSavedSetScoresHtml(e,operationKey)+'<button class="secondary" data-action="edit-simple-result" data-simple-id="'+m.id+'">Modifica risultato</button>':
  pamSetScoreInputsHtml(e,operationKey)+'<div class="match-message"></div><button class="primary" data-action="save-simple-result" data-simple-id="'+m.id+'">Salva risultato</button>')+'</div>';
 }
@@ -7990,7 +7995,7 @@ function pamFixedBracketMatchCard(e,bracket,m,index){
  const res=(bracket.results||{})[m.id]||{a:null,b:null};
  const ready=!!(m.pair1&&m.pair2);
  const saved=res.a!==null&&res.b!==null;
- return '<div class="match pam-bracket-match'+pamMatchStartedClass(e,operationKey)+'" data-fixed-final-match="'+esc(m.id)+'" data-fixed-tier="'+esc(bracket.name)+'">'+
+ return '<div class="match pam-bracket-match'+pamMatchVisualClass(e,operationKey,saved)+'" data-fixed-final-match="'+esc(m.id)+'" data-fixed-tier="'+esc(bracket.name)+'">'+
   '<span class="pill">'+esc(m.label)+'</span>'+
   matchMetaHtml(e,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1,"final",m.id)+
   matchupStackHtml(pamFixedMatchTeam(e,m.pair1),pamFixedMatchTeam(e,m.pair2))+pamAdminManualMatchEditorHtml(e,m,(e.matches||[]).length+index,m.round,((index)%Math.max(1,e.courts))+1,"final")+pamMatchOperationsHtml(e,operationKey)+
@@ -8166,7 +8171,7 @@ function stageLegCard(e,stage,m,label,leg,index,court,phase){
  const a=ret?m.score1R:m.score1,b=ret?m.score2R:m.score2;
  const saved=a!==null&&a!==undefined&&b!==null&&b!==undefined;
  const operationKey="stage-"+stage+"-"+leg;
- return '<div class="match'+pamMatchStartedClass(e,operationKey)+'" data-stage-card="'+stage+'" data-stage-leg="'+leg+'">'+
+ return '<div class="match'+pamMatchVisualClass(e,operationKey,saved)+'" data-stage-card="'+stage+'" data-stage-leg="'+leg+'">'+
  '<span class="pill">'+label+' · '+(ret?"Ritorno":"Andata")+'</span>'+
  matchMetaHtml(e,index,label+(ret?" - Ritorno":" - Andata"),court)+timerHtml(e,"stage-"+stage+"-"+leg,phase)+
  matchupStackHtml(teamStackHtml(m.teamA),teamStackHtml(m.teamB))+pamMatchOperationsHtml(e,operationKey)+
@@ -9329,7 +9334,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823854",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823855",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
