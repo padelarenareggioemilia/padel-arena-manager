@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Padel Arena Manager V8.2.38.55 · Partite concluse evidenziate</title>
+<title>Padel Arena Manager V8.2.38.56 · Fasi finali nazionali per categoria</title>
 <style>
 :root{--bg:#07111f;--panel:#122139;--panel2:#192c49;--line:#2b4267;--text:#f8fafc;--muted:#a5b4ca;--accent:#b7ff3c;--aqua:#5eead4;--danger:#fb7185;--warn:#facc15}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#07101d,#0b1729);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -1438,7 +1438,7 @@ nav{display:none!important}
 
 </style>
 
-<link rel="manifest" href="manifest.webmanifest?v=823855">
+<link rel="manifest" href="manifest.webmanifest?v=823856">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="theme-color" content="#0b5f8a">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2323,7 +2323,7 @@ function printFooter(e){
  '</footer>';
 }
 function iphoneVersionBanner(){
- return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.55 · Partite concluse evidenziate</div>';
+ return '<div class="notice success" style="font-weight:900">Versione attiva: V8.2.38.56 · Fasi finali nazionali per categoria</div>';
 }
 
 function iphoneInstallCard(){
@@ -4005,7 +4005,7 @@ function header(title,sub){
    '<div><h1>'+esc(title||"Padel Arena Manager")+'</h1><small>'+esc(sub||"Tournament Management System")+'</small></div>'+
   '</div>'+
   (c?'<div class="pam-host-mini"><span>Club / ente</span><img src="'+esc(e.logoUrl||c.logo)+'" alt=""><b>'+esc(c.name)+'</b></div>':'')+
-  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.55 · PARTITE CONCLUSE</span></div>'+
+  '<div class="print-hide pam-header-actions"><button class="secondary" data-action="print-pdf">PDF / Condividi</button><span class="badge">V8.2.38.56 · FINALI NAZIONALI</span></div>'+
  '</div>';
 }
 function pamUniversalNav(){return '<div class="pam-universal-nav print-hide"><button type="button" data-global-back>← Indietro</button><button type="button" data-global-home>⌂ Home</button><button type="button" data-global-menu>☰ Menu</button></div>'}
@@ -6705,10 +6705,10 @@ function pamNationalFinalSlotV823846(category,tier,round,index){
    gold:{"QUARTI DI FINALE":[["10:30",1],["10:30",2],["11:20",1],["11:20",2]],"SEMIFINALI":[["12:30",1],["12:30",2]],"FINALE":[["13:20",1]]},
    silver:{"PRELIMINARI":[["12:30",3],["12:30",4]],"SEMIFINALI":[["13:20",2],["13:20",3]],"FINALE":[["14:10",1]]}
   },
-  femminile:{gold:{"FINALE":[["10:30",3]]},silver:{"FINALE":[["11:20",3]]}},
+  femminile:{gold:{"SEMIFINALI":[["10:30",3],["11:20",3]],"FINALE":[["13:20",4]]},silver:{"FINALE":[["14:10",4]]}},
   misto:{
-   gold:{"PRELIMINARI":[["14:10",2],["14:10",3]],"SEMIFINALI":[["15:00",1],["15:00",2]],"FINALE":[["15:50",1]]},
-   silver:{"PRELIMINARI":[["14:10",4]],"FINALE":[["15:00",3]]}
+   gold:{"QUARTI DI FINALE":[["15:00",1],["15:00",2]],"SEMIFINALI":[["15:50",1],["15:50",2]],"FINALE":[["16:40",1]]},
+   silver:{"SEMIFINALE":[["15:00",3]],"FINALE":[["15:50",3]]}
   }
  };
  return slots[key]&&slots[key][level]&&slots[key][level][stage]?slots[key][level][stage][index]||null:null;
@@ -7813,8 +7813,16 @@ function pamFixedWinner(bracket,matchId){
  if(!match)return null;
  return Number(result.a)>Number(result.b)?match.pair1:match.pair2;
 }
+function pamFixedLoser(bracket,matchId){
+ const result=(bracket.results||{})[matchId];
+ if(!result||result.a===null||result.b===null||Number(result.a)===Number(result.b))return null;
+ const match=(bracket.matchIndex||{})[matchId];
+ if(!match)return null;
+ return Number(result.a)>Number(result.b)?match.pair2:match.pair1;
+}
 function pamBuildTierBracket(tier,oldResults){
  const entrants=tier.entrants.slice();
+ const seedOrder=(tier.seedOrder||tier.entrants).slice();
  const n=entrants.length;
  const target=pamHighestPowerOfTwo(n);
  const prelimCount=n-target;
@@ -7841,7 +7849,13 @@ function pamBuildTierBracket(tier,oldResults){
    prelimMatches.push(m);bracket.matchIndex[id]=m;
   }
   bracket.rounds.push({name:"PRELIMINARI",matches:prelimMatches});
-  prelimMatches.forEach(function(m){mainEntrants.push(pamFixedWinner(bracket,m.id))});
+  const prelimWinners=prelimMatches.map(function(m){return pamFixedWinner(bracket,m.id)});
+  if(tier.reseedAfterPrelim)prelimWinners.sort(function(a,b){
+   const ai=a?seedOrder.indexOf(a):Number.MAX_SAFE_INTEGER;
+   const bi=b?seedOrder.indexOf(b):Number.MAX_SAFE_INTEGER;
+   return ai-bi;
+  });
+  prelimWinners.forEach(function(id){mainEntrants.push(id)});
  }else{
   mainEntrants=entrants.slice();
  }
@@ -7939,6 +7953,67 @@ function pamNationalArrangeEntrants(e,entrants){
  best.slice().reverse().forEach(function(id,index){arranged[segmentStart+half+index]=id});
  return arranged;
 }
+function pamSameFinalEntrants(a,b){
+ if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+ return a.every(function(id,index){return String(id||"")===String(b[index]||"")});
+}
+function pamBuildNationalFinalBrackets(e,old){
+ const category=String(e.nationalCategory||e.category||"").trim().toLowerCase();
+ old=old||{};
+
+ // Femminile nazionale: 1a-4a e 2a-3a. Le vincitrici giocano la
+ // finale Gold; le perdenti la finale Silver.
+ if(category==="femminile"){
+  const ranked=pamFixedGroupRanking(e).slice(0,4).map(function(row){return row.id});
+  if(ranked.length!==4)throw new Error("Per le finali femminili servono esattamente 4 coppie classificate.");
+  const gold=pamBuildTierBracket(
+   {key:"female_gold",name:"GOLD",entrants:ranked},
+   old.gold&&old.gold.results?old.gold.results:{}
+  );
+  const semifinals=(gold.rounds.find(function(round){return round.name==="SEMIFINALI"})||{matches:[]}).matches;
+  const silverEntrants=semifinals.map(function(match){return pamFixedLoser(gold,match.id)});
+  const keepSilver=old.silver&&pamSameFinalEntrants(old.silver.entrants,silverEntrants);
+  const silver=pamBuildTierBracket(
+   {key:"female_silver",name:"SILVER",entrants:silverEntrants},
+   keepSilver&&old.silver.results?old.silver.results:{}
+  );
+  return{gold:gold,silver:silver};
+ }
+
+ const tiers=pamNationalGoldSilverTiers(e);
+ // Nel Misto le due migliori prime conservano il passaggio diretto. Il
+ // primo turno evita, quando possibile, una rivincita dello stesso girone;
+ // dopo i quarti le vincitrici vengono riordinate per merito prima delle semifinali.
+ tiers.forEach(function(tier){
+  if(category==="misto")tier.seedOrder=tier.entrants.slice();
+  tier.entrants=pamNationalArrangeEntrants(e,tier.entrants);
+  if(category==="misto"&&tier.key==="gold")tier.reseedAfterPrelim=true;
+ });
+ const brackets={};
+ tiers.forEach(function(tier){
+  brackets[tier.key]=pamBuildTierBracket(tier,old[tier.key]&&old[tier.key].results?old[tier.key].results:{});
+ });
+ if(category==="misto"){
+  const goldFirst=brackets.gold&&brackets.gold.rounds&&brackets.gold.rounds[0];
+  if(goldFirst&&goldFirst.name==="PRELIMINARI"){
+   goldFirst.name="QUARTI DI FINALE";
+   goldFirst.matches.forEach(function(match,index){match.round=goldFirst.name;match.label="QUARTO DI FINALE "+(index+1)});
+  }
+  const silverFirst=brackets.silver&&brackets.silver.rounds&&brackets.silver.rounds[0];
+  if(silverFirst&&silverFirst.name==="PRELIMINARI"){
+   silverFirst.name="SEMIFINALE";
+   silverFirst.matches.forEach(function(match){match.round=silverFirst.name;match.label="SEMIFINALE SILVER"});
+  }
+ }
+ return brackets;
+}
+function pamCompatibleNationalFinalResults(e,old,formulaVersion){
+ const category=String(e.nationalCategory||e.category||"").trim().toLowerCase();
+ // Il Maschile usa lo stesso schema precedente e conserva i risultati.
+ // Femminile e Misto cambiano struttura: i risultati di un vecchio tabellone
+ // non devono mai essere attribuiti per errore ai nuovi incroci.
+ return category==="maschile"||Number(formulaVersion)===2?old:{};
+}
 function pamGenerateFixedFinals(e){
  const nationalRule=!!e.nationalParentId;
  const source=nationalRule?"groups":document.getElementById("pamFinalRankingSource").value;
@@ -7951,18 +8026,22 @@ function pamGenerateFixedFinals(e){
  if(count<2)throw new Error("Servono almeno 2 coppie qualificate.");
  const selected=ranking.slice(0,count);
  const old=(e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.brackets)||{};
- const tiers=nationalRule?pamNationalGoldSilverTiers(e):pamTierSplit(selected,mode);
- tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
+ const oldFormulaVersion=Number(e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config&&e.fixedFinalsAdvanced.config.nationalFormulaVersion||0);
  e.finalsOption=mode;
  e.fixedFinalsAdvanced={
-  config:{source:source,count:countValue,mode:mode,nationalRule:nationalRule},
+  config:{source:source,count:countValue,mode:mode,nationalRule:nationalRule,nationalFormulaVersion:nationalRule?2:0},
   ranking:selected.map(function(r){return r.id}),
   brackets:{}
  };
- tiers.forEach(function(tier){
-  const oldResults=old[tier.key]&&old[tier.key].results?old[tier.key].results:{};
-  e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(tier,oldResults);
- });
+ if(nationalRule)e.fixedFinalsAdvanced.brackets=pamBuildNationalFinalBrackets(e,pamCompatibleNationalFinalResults(e,old,oldFormulaVersion));
+ else{
+  const tiers=pamTierSplit(selected,mode);
+  tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
+  tiers.forEach(function(tier){
+   const oldResults=old[tier.key]&&old[tier.key].results?old[tier.key].results:{};
+   e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(tier,oldResults);
+  });
+ }
  if(e.nationalParentId)pamApplyNationalFinalScheduleV823846(e.nationalParentId);
  save();render();
 }
@@ -7973,17 +8052,23 @@ function pamRefreshFixedFinals(e){
  let count=cfg.count==="all"||cfg.count==="national_rule"?ranking.length:Number(cfg.count);
  count=Math.min(count,ranking.length);
  const selected=ranking.slice(0,count);
- const tiers=cfg.nationalRule?pamNationalGoldSilverTiers(e):pamTierSplit(selected,cfg.mode);
- tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
  const old=e.fixedFinalsAdvanced.brackets||{};
+ const oldFormulaVersion=Number(cfg.nationalFormulaVersion||0);
  e.fixedFinalsAdvanced.ranking=selected.map(function(r){return r.id});
- e.fixedFinalsAdvanced.brackets={};
- tiers.forEach(function(tier){
-  e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(
-   tier,
-   old[tier.key]&&old[tier.key].results?old[tier.key].results:{}
-  );
- });
+ if(cfg.nationalRule){
+  e.fixedFinalsAdvanced.config.nationalFormulaVersion=2;
+  e.fixedFinalsAdvanced.brackets=pamBuildNationalFinalBrackets(e,pamCompatibleNationalFinalResults(e,old,oldFormulaVersion));
+ }else{
+  const tiers=pamTierSplit(selected,cfg.mode);
+  tiers.forEach(function(tier){tier.entrants=pamNationalArrangeEntrants(e,tier.entrants)});
+  e.fixedFinalsAdvanced.brackets={};
+  tiers.forEach(function(tier){
+   e.fixedFinalsAdvanced.brackets[tier.key]=pamBuildTierBracket(
+    tier,
+    old[tier.key]&&old[tier.key].results?old[tier.key].results:{}
+   );
+  });
+ }
 }
 function pamFixedMatchTeam(e,id){
  return id?pairStackHtml(e,id):'<div class="team-stack pam-waiting-team"><div>IN ATTESA</div></div>';
@@ -8018,9 +8103,15 @@ function pamFixedTierView(e,key,bracket){
  }
  return '<section class="pam-tier-block pam-tier-'+key+'"><div class="pam-tier-title"><h2>'+esc(bracket.name)+'</h2><span>'+bracket.entrants.length+' coppie</span></div>'+champion+rounds+'</section>';
 }
+function pamNationalFinalRuleDescription(e){
+ const category=String(e.nationalCategory||e.category||"").trim().toLowerCase();
+ if(category==="femminile")return '<b>Femminile:</b> semifinale 1ª contro 4ª e 2ª contro 3ª; le vincitrici disputano la finale GOLD e le perdenti la finale SILVER.';
+ if(category==="misto")return '<b>Misto GOLD:</b> le due migliori prime vanno direttamente in semifinale; la peggiore prima e le tre seconde disputano i quarti con ordine meritocratico. <b>Misto SILVER:</b> le due peggiori terze si incontrano e la vincitrice affronta in finale la migliore terza.';
+ return '<b>Maschile:</b> prime e seconde di ogni girone nel GOLD; terze ed eventuali quarte nel SILVER. Restano invariati passaggi diretti e criterio anti-incrocio tra coppie dello stesso girone.';
+}
 function pamFixedFinalsConfigView(e){
  if(e.nationalParentId){
-  return '<div class="card pam-finals-config"><h2>FASI FINALI NAZIONALI</h2><div class="notice"><b>Regola automatica:</b> prime e seconde di ogni girone nel tabellone GOLD; terze ed eventuali quarte nel tabellone SILVER. I passaggi diretti spettano alle migliori classificate per punti, differenza game e game fatti. Il primo turno evita, quando possibile, coppie provenienti dallo stesso girone.</div><button class="primary" data-generate-fixed-finals>GENERA GOLD E SILVER</button>'+(e.fixedFinalsAdvanced?'<button class="secondary" data-reset-fixed-finals>AZZERA FASI FINALI</button>':'')+'</div>';
+  return '<div class="card pam-finals-config"><h2>FASI FINALI NAZIONALI</h2><div class="notice">'+pamNationalFinalRuleDescription(e)+'</div><button class="primary" data-generate-fixed-finals>GENERA FASI FINALI</button>'+(e.fixedFinalsAdvanced?'<button class="secondary" data-reset-fixed-finals>AZZERA FASI FINALI</button>':'')+'</div>';
  }
  const programmedCount=e.nationalParentId?Math.min((e.pairs||[]).length,Math.max(2,(Number(e.nationalGroupCount)||1)*(Number(e.nationalQualifiersPerGroup)||2))):"all";
  const cfg=e.fixedFinalsAdvanced&&e.fixedFinalsAdvanced.config||{source:e.nationalParentId?"groups":"general",count:programmedCount,mode:e.finalsOption||"classic"};
@@ -9334,7 +9425,7 @@ else pamRenderPublicHome();
 
 if("serviceWorker" in navigator){
  window.addEventListener("load",function(){
-  navigator.serviceWorker.register("./service-worker.js?v=823855",{updateViaCache:"none"})
+  navigator.serviceWorker.register("./service-worker.js?v=823856",{updateViaCache:"none"})
    .then(function(reg){reg.update().catch(function(){})})
    .catch(function(err){console.warn("Service worker non registrato:",err)});
  });
