@@ -42,6 +42,10 @@ label{display:block;font-weight:800;font-size:13px;margin:10px 0 5px}input,selec
 .pub-contact-actions a{padding:13px 16px;border-radius:12px;background:#17304e;border:1px solid #3c5d7d;color:white;text-align:center;text-decoration:none;font-weight:900}
 .pub-player{padding:9px 0;border-bottom:1px solid #294262}.pub-player:last-child{border-bottom:0}
 @media(max-width:650px){.pub-contact-actions{grid-template-columns:1fr}}
+.circuit-stage{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.circuit-stage:last-child{border-bottom:0}.circuit-stage-title{font-size:20px;font-weight:1000}
+.circuit-stage a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-width:170px}
+@media(max-width:650px){.circuit-stage{grid-template-columns:1fr}.circuit-stage a{width:100%}}
 </style>
 
 </head>
@@ -64,11 +68,39 @@ let partner={type:"existing",id:null,name:""};
 let nationalCategory="";
 
 const esc=v=>String(v??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+function isCircuitContainer(data){
+ return String(data&&(data.competition_kind||data.competitionKind)||"").toLowerCase()==="circuit";
+}
+function circuitDateLabel(value){
+ if(!value)return "Data da definire";
+ const d=new Date(String(value)+"T12:00:00");
+ return isNaN(d.getTime())?String(value):d.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+}
+async function renderCircuitStageChoice(){
+ const {data,error}=await sb.rpc("public_circuit_registration_stages",{p_share_token:token});
+ if(error){showError(error.message||"Impossibile caricare le tappe del circuito.");return}
+ const rows=data||[];
+ document.documentElement.style.setProperty("--accent",tournament.accent||"#9dff25");
+ document.getElementById("app").innerHTML=
+  '<section class="card"><h2>'+esc(tournament.name||"Circuito")+'</h2><div class="muted">'+esc(tournament.club||"")+'</div>'+
+  '<div class="notice success"><b>SCEGLI LA TAPPA</b><br>Puoi iscriverti a una, due oppure a tutte le tappe. Ogni iscrizione resta collegata alla tappa selezionata.</div></section>'+
+  '<section class="card"><h3>TAPPE DISPONIBILI</h3>'+
+  (rows.length?rows.map(function(r){
+    const when=circuitDateLabel(r.stage_date)+(r.stage_start_time?' · '+String(r.stage_start_time).slice(0,5):'')+(r.stage_end_time?'–'+String(r.stage_end_time).slice(0,5):'');
+    return '<div class="circuit-stage"><div><div class="circuit-stage-title">Tappa '+Number(r.stage_number||0)+(r.category?' · '+esc(r.category):'')+'</div><div class="muted">'+esc(when)+'</div></div>'+
+      (r.registration_open?'<a class="primary" href="public-registration.html?tournament='+encodeURIComponent(r.share_token)+'&circuit='+encodeURIComponent(token)+'">ISCRIVITI A QUESTA TAPPA</a>':'<span class="secondary" style="padding:13px 16px;border-radius:12px;text-align:center">ISCRIZIONI CHIUSE</span>')+
+    '</div>';
+  }).join(""):'<div class="notice">Nessuna tappa disponibile.</div>')+
+  '</section>';
+}
 async function loadTournament(){
  if(!token){showError("Link di iscrizione non valido.");return}
  const {data,error}=await sb.rpc("public_tournament_for_registration",{p_share_token:token});
  if(error||!data){showError(error?.message||"Torneo non trovato.");return}
- tournament=data;organizerContact={name:data?.organizer_name||data?.organizerName||"",phone:data?.organizer_phone||data?.organizerPhone||"",email:data?.organizer_email||data?.organizerEmail||""};await loadPublicExtras();render();
+ tournament=data;
+ organizerContact={name:data?.organizer_name||data?.organizerName||"",phone:data?.organizer_phone||data?.organizerPhone||"",email:data?.organizer_email||data?.organizerEmail||""};
+ if(isCircuitContainer(tournament)){await renderCircuitStageChoice();return}
+ await loadPublicExtras();render();
 }
 
 async function loadPublicExtras(){
@@ -323,7 +355,9 @@ async function submit(){
    p_share_token:token,p_mode:mode,p_primary:primaryPayload,p_partner:partnerPayload
   });
   if(error)throw error;
-  document.getElementById("app").innerHTML='<div class="card success"><h2>RICHIESTA INVIATA</h2><p>'+esc(data.message||"La richiesta è stata inviata all’organizzatore.")+'</p><p>Puoi chiudere questa pagina.</p></div>';
+  const circuitToken=new URLSearchParams(location.search).get("circuit");
+   document.getElementById("app").innerHTML='<div class="card success"><h2>RICHIESTA INVIATA</h2><p>'+esc(data.message||"La richiesta è stata inviata all’organizzatore.")+'</p>'+
+    (circuitToken?'<a class="primary" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="public-registration.html?tournament='+encodeURIComponent(circuitToken)+'">TORNA ALLE ALTRE TAPPE</a>':'<p>Puoi chiudere questa pagina.</p>')+'</div>';
  }catch(err){
   msg.className="notice error";msg.textContent=err.message;
   btn.disabled=false;btn.textContent="CONFERMA ISCRIZIONE";
