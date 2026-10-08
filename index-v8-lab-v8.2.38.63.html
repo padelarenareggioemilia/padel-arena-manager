@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Padel Arena Manager V8.2.38.63 · CIRCUITI LIVE</title>
+</head>
+<body>
+<div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;text-align:center">
+  <strong>Caricamento Padel Arena Manager V8.2.38.63…</strong>
+</div>
+<script>
+(async function () {
+  const SOURCE = "./index-v8-lab-v8.2.38.62.html";
+
+  try {
+    const response = await fetch(SOURCE + "?pam63=" + Date.now(), {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      throw new Error("Impossibile caricare la versione 8.2.38.62 (" + response.status + ")");
+    }
+
+    let source = await response.text();
+
+    // Aggiornamento versione.
+    source = source.replaceAll("V8.2.38.62", "V8.2.38.63");
+    source = source.replaceAll("v8.2.38.62", "v8.2.38.63");
+
+    // Nuova chiave di cache del service worker.
+    source = source.replaceAll("service-worker.js?v=823858", "service-worker.js?v=823963");
+
+    // Guard di avvio: evita una seconda esecuzione di pamBootAuth
+    // se il callback DOMContentLoaded dovesse essere richiamato più volte.
+    const oldBoot =
+      'setTimeout(function(){\n' +
+      '  Promise.resolve(pamBootAuth()).catch(function(err){console.error("Avvio autenticazione:",err)})\n' +
+      '   .finally(function(){pamBootCompletedV8217=true});\n' +
+      ' },0);';
+
+    const newBoot =
+      'setTimeout(function(){\n' +
+      '  if(window.__PAM_BOOT_AUTH_V823963__) return;\n' +
+      '  window.__PAM_BOOT_AUTH_V823963__=true;\n' +
+      '  Promise.resolve(pamBootAuth()).catch(function(err){console.error("Avvio autenticazione:",err)})\n' +
+      '   .finally(function(){pamBootCompletedV8217=true});\n' +
+      ' },0);';
+
+    if (source.includes(oldBoot)) {
+      source = source.replace(oldBoot, newBoot);
+    }
+
+    // Piccolo controllo globale per rendere evidente un errore di caricamento,
+    // senza modificare la logica applicativa della V8.
+    const stabilization =
+      '<script id="pam-v823963-stability">' +
+      '(function(){' +
+      'window.addEventListener("unhandledrejection",function(e){console.error("PAM V8.2.38.63 - Promise non gestita:",e.reason)});' +
+      'window.addEventListener("error",function(e){console.error("PAM V8.2.38.63 - errore runtime:",e.error||e.message)});' +
+      '})();' +
+      '<\/script>';
+
+    source = source.replace("</body>", stabilization + "</body>");
+
+    document.open();
+    document.write(source);
+    document.close();
+  } catch (error) {
+    document.body.innerHTML =
+      '<div style="font-family:system-ui;padding:24px;max-width:700px;margin:auto">' +
+      '<h2>Errore di caricamento V8.2.38.63</h2>' +
+      '<p>' + String(error.message || error) + '</p>' +
+      '<p>Controlla che <b>index-v8-lab-v8.2.38.62.html</b> sia presente nella stessa cartella.</p>' +
+      '</div>';
+    console.error(error);
+  }
+})();
+</script>
+</body>
+</html>
