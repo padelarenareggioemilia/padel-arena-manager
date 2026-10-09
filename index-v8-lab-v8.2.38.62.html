@@ -6304,6 +6304,10 @@ function buildMatches(ids,courts,returnLeg,category){
  }
 
  // Next Gen Rodeo: 9 giocatori (5 uomini + 4 donne), 2 campi.
+ // Non generare un calendario non misto se mancano i dati di genere.
+ if(mixedTournament&&playerIds.length===9&&courts>=2&&(!allGendersKnown||maleCount!==5||femaleCount!==4)){
+  throw new Error("Per il Rodeo misto con 9 giocatori, completa il sesso nell'anagrafica di tutti i partecipanti: servono 5 uomini e 4 donne.");
+ }
  // Ogni turno giocano tutte le donne e 4 uomini; un uomo diverso riposa.
  // Ogni coppia uomo-donna viene usata una sola volta nei 5 turni.
  if(mixedTournament&&playerIds.length===9&&courts>=2&&allGendersKnown&&maleCount===5&&femaleCount===4){
