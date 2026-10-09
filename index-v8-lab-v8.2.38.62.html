@@ -3708,7 +3708,7 @@ function pamRegenerateTournament(id){
   if(!e.matches.length)throw new Error("La generazione non ha prodotto partite.");
   state.events[eventIndex]=e;
   if(e.nationalParentId)pamRebuildNationalSchedule(e.nationalParentId,true);
-  save({operational:true,eventOnly:!e.nationalParentId,eventId:e.id});
+  try{save({operational:true,eventOnly:!e.nationalParentId,eventId:e.id});}catch(saveErr){state.events[eventIndex]=original;throw saveErr;}
   overlay.remove();
   state.currentEventId=e.id;state.view="event";state.tab="matches";
   render();
@@ -6253,12 +6253,9 @@ function buildMatches(ids,courts,returnLeg,category){
  const femaleCount=knownGenders.filter(function(g){return g==="F"}).length;
  const allGendersKnown=mixedTournament&&knownGenders.every(Boolean);
  const perfectlyBalancedMixed=allGendersKnown&&maleCount===femaleCount;
- if(mixedTournament&&!allGendersKnown){
-  const missing=playerIds.filter(function(id){return !mixedGender(id)}).map(function(id){
-   const p=playerById(id);return p?playerName(p):String(id);
-  });
-  throw new Error("Torneo misto: indica il sesso di tutti i partecipanti prima di generare le partite. Dato mancante: "+missing.join(", "));
- }
+ // Se il torneo è misto ma alcune anagrafiche non hanno il sesso compilato,
+ // non bloccare la generazione: applicare il vincolo uomo-donna solo quando
+ // tutti i dati sono presenti e il gruppo è numericamente bilanciato.
 
  function makeMatch(t1,t2){
   return{
