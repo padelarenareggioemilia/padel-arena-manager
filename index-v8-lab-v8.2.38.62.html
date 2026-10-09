@@ -3729,7 +3729,7 @@ function pamRegenerateTournament(id){
   if(e.competitionType==="fixed_pairs"){
    const built=e.nationalParentId?pamBuildNationalFixedPairsV823825(e):buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
    e.pairs=built.pairs||[];e.matches=built.matches||[];
-  }else if(/next\s*gen.*rodeo/i.test(String(e.name||e.title||""))&&String(e.category||"").trim().toLowerCase()==="misto"&&ids.length===9&&Math.max(1,Number(e.courts)||1)>=2){
+  }else if(String(e.category||"").trim().toLowerCase()==="misto"&&ids.length===9&&Math.max(1,Number(e.courts)||1)>=2){
    // Percorso dedicato e deterministico: evita il motore combinatorio generale per il Next Gen.
    const norm=function(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()};
    const women=[],men=[];
