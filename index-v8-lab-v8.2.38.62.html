@@ -6347,8 +6347,11 @@ function buildMatches(ids,courts,returnLeg,category){
  }else{
   let best=null;
   let bestPenalty=Infinity;
+  // Rodeo: evitare cicli di ricerca troppo lunghi che possono congelare Safari.
+  // Con 9 o più giocatori il numero di combinazioni cresce rapidamente.
+  const maxAttempts=playerIds.length>=9?120:(playerIds.length>=7?300:600);
 
-  for(let attempt=0;attempt<1800;attempt++){
+  for(let attempt=0;attempt<maxAttempts;attempt++){
    const pool=shuffle(candidates);
    const chosen=[];
    const appearances={};
