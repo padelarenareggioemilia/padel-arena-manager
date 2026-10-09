@@ -3592,19 +3592,20 @@ function pamTournamentPlayersModal(id){
  }
 
  const collaborator=pamIsCollaborator();
+ const admin=pamIsAdmin();
  overlay.innerHTML='<div class="pam-modal-card">'+
   '<div class="pam-modal-head"><div><h2>Partecipanti del torneo</h2>'+
    '<div class="muted">Sono sempre mostrati anche i partecipanti già salvati nel torneo, anche se l’anagrafica online è momentaneamente incompleta.</div>'+
    '<div class="pill" id="pamTournamentSelectedCount">'+selected.size+' selezionati</div></div>'+
    '<button class="secondary" data-close-tournament-players>Chiudi</button></div>'+
-  (collaborator?'<div class="notice success"><b>Gestione partecipanti:</b> puoi aggiungere o sostituire giocatori senza cancellare partite e risultati. La rigenerazione del calendario resta riservata all’amministratore.</div>':'<div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div>')+
+  (collaborator||!admin?'<div class="notice success"><b>Gestione partecipanti:</b> puoi aggiungere o sostituire giocatori senza cancellare partite e risultati. La rigenerazione del calendario resta riservata all’amministratore.</div>':'<div class="notice error"><b>Attenzione:</b> la rigenerazione cancella risultati, timer e fasi finali del torneo, ma non i saldi generali.</div>')+
   '<div class="pam-inline-create"><div class="field"><label>Cerca nell’anagrafica esistente</label>'+
    '<input id="pamTournamentPlayerSearch" type="search" placeholder="Nome, cognome, telefono o email"></div>'+
    '<button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div>'+
   '<div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button>'+
    '<button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div>'+
   '<div class="pam-player-choice-list" id="pamTournamentPlayerList"></div>'+
-  '<div class="pam-modal-actions">'+(collaborator?'<button class="primary" data-save-tournament-participants="'+esc(id)+'">Salva partecipanti senza rigenerare</button>':'<button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button>')+'</div>'+
+  '<div class="pam-modal-actions">'+(collaborator||!admin?'<button class="primary" data-save-tournament-participants="'+esc(id)+'">Salva partecipanti senza rigenerare</button>':'<button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button>')+'</div>'+
  '</div>';
 
  document.body.appendChild(overlay);
@@ -3671,16 +3672,25 @@ function pamResetEventGeneratedData(e){
  e.fixedFinals={semifinals:[],final:{pair1:null,pair2:null,score1:null,score2:null}};
 }
 function pamRegenerateTournament(id){
+ let overlay=null,button=null;
  try{
-  const e=state.events.find(function(x){return String(x.id)===String(id)});if(!e)throw new Error("Torneo non trovato.");
-  const overlay=document.getElementById("pamTournamentPlayersOverlay");
+  const eventIndex=state.events.findIndex(function(x){return String(x.id)===String(id)});
+  if(eventIndex<0)throw new Error("Torneo non trovato.");
+  const original=state.events[eventIndex];
+  if(!pamIsAdmin())throw new Error("Solo l’amministratore può rigenerare le partite. Puoi salvare i partecipanti senza rigenerare.");
+  overlay=document.getElementById("pamTournamentPlayersOverlay");
   if(!overlay)throw new Error("Finestra partecipanti non disponibile.");
+  button=overlay.querySelector("[data-regenerate-tournament]");
   const ids=overlay.__pamSelected
    ? Array.from(overlay.__pamSelected).map(String)
    : Array.from(overlay.querySelectorAll("[data-tournament-player]:checked")).map(function(x){return String(x.getAttribute("data-tournament-player"))});
+  if(new Set(ids).size!==ids.length)throw new Error("La selezione contiene giocatori duplicati. Chiudi e riapri la finestra.");
   if(ids.length<4)throw new Error("Seleziona almeno 4 giocatori.");
-  if(e.competitionType==="fixed_pairs"&&ids.length%2!==0)throw new Error("Per le coppie fisse serve un numero pari di giocatori.");
-  if(!confirm("Confermi la nuova lista partecipanti? Partite e risultati di questo torneo verranno rigenerati."))return;
+  if(original.competitionType==="fixed_pairs"&&ids.length%2!==0)throw new Error("Per le coppie fisse serve un numero pari di giocatori.");
+  if(!confirm("Confermi la nuova lista partecipanti? Partite, risultati, timer e fasi finali verranno rigenerati. I saldi generali non verranno cancellati."))return;
+  if(button){button.disabled=true;button.textContent="GENERAZIONE IN CORSO…"}
+  // Work on a detached copy: if generation fails, the saved in-memory event remains untouched.
+  const e=JSON.parse(JSON.stringify(original));
   e.playerIds=ids.slice();
   e.payments=defaultPayments(ids,e.entryFee||0);
   e.ledger={};
@@ -3696,8 +3706,9 @@ function pamRegenerateTournament(id){
    e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg,e.category)||[];
   }
   if(!e.matches.length)throw new Error("La generazione non ha prodotto partite.");
+  state.events[eventIndex]=e;
   if(e.nationalParentId)pamRebuildNationalSchedule(e.nationalParentId,true);
-  save({operational:true,eventOnly:!e.nationalParentId,eventId:e.id});
+  try{save({operational:true,eventOnly:!e.nationalParentId,eventId:e.id});}catch(saveErr){state.events[eventIndex]=original;throw saveErr;}
   overlay.remove();
   state.currentEventId=e.id;state.view="event";state.tab="matches";
   render();
@@ -3705,10 +3716,9 @@ function pamRegenerateTournament(id){
  }catch(err){
   console.error("Rigenerazione torneo:",err);
   pamToast("Rigenerazione non riuscita: "+(err.message||err),"error");
+  if(button&&button.isConnected){button.disabled=false;button.textContent="Salva partecipanti e rigenera partite"}
  }
 }
-
-
 
 function pamRegistrationPersonName(person){
  if(!person)return "Giocatore";
@@ -6243,12 +6253,9 @@ function buildMatches(ids,courts,returnLeg,category){
  const femaleCount=knownGenders.filter(function(g){return g==="F"}).length;
  const allGendersKnown=mixedTournament&&knownGenders.every(Boolean);
  const perfectlyBalancedMixed=allGendersKnown&&maleCount===femaleCount;
- if(mixedTournament&&!allGendersKnown){
-  const missing=playerIds.filter(function(id){return !mixedGender(id)}).map(function(id){
-   const p=playerById(id);return p?playerName(p):String(id);
-  });
-  throw new Error("Torneo misto: indica il sesso di tutti i partecipanti prima di generare le partite. Dato mancante: "+missing.join(", "));
- }
+ // Se il torneo è misto ma alcune anagrafiche non hanno il sesso compilato,
+ // non bloccare la generazione: applicare il vincolo uomo-donna solo quando
+ // tutti i dati sono presenti e il gruppo è numericamente bilanciato.
 
  function makeMatch(t1,t2){
   return{
