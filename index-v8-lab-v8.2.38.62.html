@@ -3393,6 +3393,2226 @@ function pamOpenPlayerInviteDialog(scope,e,url){
  overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+(eventOnly?'Invito giocatore · singolo evento':'Invito giocatore · piattaforma')+'</h2><div class="muted">'+(eventOnly?esc(e&&e.name||'Evento'):'Accesso generale con permessi giocatore')+'</div></div><button class="secondary" data-close-player-invite>Chiudi</button></div><div class="notice success"><b>'+(eventOnly?'SOLO QUESTO EVENTO':'ESPLORA LA PIATTAFORMA')+'</b><br>'+(eventOnly?'Il giocatore creerà la propria anagrafica e vedrà esclusivamente questo evento.':'Il giocatore creerà la propria anagrafica e potrà esplorare gli eventi pubblicati.')+'</div><div class="notice"><b>Limiti sempre attivi:</b> nessun accesso ad anagrafiche altrui, pagamenti, creazione tornei, risultati o comandi organizzativi.</div><div class="field"><label>Link pronto da inviare</label><input id="pamPlayerInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-player-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-player-invite>CONDIVIDI</button></div></div>';
  document.body.appendChild(overlay);const input=document.getElementById("pamPlayerInviteValue");if(input){input.focus();input.select()}
 }
+async async function pamCopyInviteLinkV8(inputId,title,text,successMessage){
+ const input=document.getElementById(inputId);if(!input)return;
+ try{
+  if(arguments.length>4&&arguments[4]&&navigator.share)await navigator.share({title:title,text:text,url:input.value});
+  else{await navigator.clipboard.writeText(input.value);pamToast(successMessage,"success")}
+ }catch(err){if(err.name!=="AbortError"){input.focus();input.select();document.execCommand("copy");pamToast(successMessage,"success")}}
+}
+function pamCopyPlayerInvite(nativeShare){
+ const input=document.getElementById("pamPlayerInviteValue");if(!input)return;
+ return pamCopyInviteLinkV8("pamPlayerInviteValue","Invito giocatore Padel Arena","Crea la tua anagrafica giocatore","Link giocatore copiato",nativeShare);
+}
+
+function pamCleanupLegacyLocalStateV82385(){
+ try{
+  const raw=localStorage.getItem(KEY);
+  if(!raw)return;
+  const parsed=JSON.parse(raw);
+  if(parsed&&parsed.__localCacheV82385===true)return;
+  // La vecchia chiave poteva contenere migliaia di record e immagini.
+  pamPersistStateLocalV82381();
+ }catch(_){
+  try{localStorage.removeItem(KEY)}catch(__){}
+ }
+}
+pamCleanupLegacyLocalStateV82385();
+
+function save(options){
+ options=options||{};
+ pamEnsureEventPlayerSnapshots();
+ pamProtectCurrentEdit(5000);
+ if(options.operational===true){
+  pamOperationalRevision++;
+  pamOperationalDirty=true;
+  const active=currentEvent();
+  pamOperationalEventId=String(options.eventId||(active&&active.id)||"")||null;
+ }
+ const localResult=pamPersistStateLocalV82381();
+ if(!localResult.ok){
+  console.warn("Cache locale non disponibile: i dati completi restano su Supabase.");
+ }
+ if(!options.localOnly&&pamCloudReady&&pamInitialCloudHydrated&&!pamCloudApplyingSnapshot&&PAM_SESSION){
+  if(options.eventOnly===true&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+  else pamScheduleCloudSync();
+ }
+}
+function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
+function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
+function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
+function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
+let pamEdenImportRunning=false;
+async function pamImportEdenClients(){
+ if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
+ pamEdenImportRunning=true;
+ try{
+  const response=await fetch("assets/eden-clients-clean.json",{cache:"no-store"});
+  if(!response.ok)throw new Error("Archivio Eden non disponibile");
+  const records=await response.json();
+  let added=0,updated=0;
+  records.forEach(function(r){
+   const email=pamCleanContactEmail(r.email),phone=pamCleanContactPhone(r.phone),key=String(r.nameKey||registryTokenKey(r.displayName));
+   let match=null;
+   if(Array.isArray(r.sourceClientIds)&&r.sourceClientIds.length){
+    match=(state.players||[]).find(function(p){return (p.edenClientIds||[]).some(function(id){return r.sourceClientIds.includes(String(id))})})||null;
+   }
+   if(!match&&email)match=(state.players||[]).find(function(p){return pamCleanContactEmail(p.email)===email||((p.alternateEmails||[]).map(pamCleanContactEmail).includes(email))})||null;
+   if(!match&&phone)match=(state.players||[]).find(function(p){return pamCleanContactPhone(p.phone)===phone||((p.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))})||null;
+   if(!match){
+    const candidates=(state.players||[]).filter(function(p){
+     if(registryTokenKey(playerName(p))!==key)return false;
+     const pp=pamCleanContactPhone(p.phone),pe=pamCleanContactEmail(p.email),birth=String(p.birth||"");
+     if(pp&&phone&&pp!==phone)return false;
+     if(pe&&email&&pe!==email)return false;
+     if(birth&&r.birth&&birth!==r.birth)return false;
+     return true;
+    });
+    if(candidates.length===1)match=candidates[0];
+   }
+   if(!match){
+    match={id:"eden_"+r.importKey,firstName:r.displayName,lastName:"",phone:phone,email:email,birth:r.birth||"",birthPlace:r.birthPlace||"",postalCode:r.postalCode||"",residenceTown:r.residenceTown||"",residenceProvince:r.residenceProvince||"",gender:r.gender||"",level:r.level||"",notes:"Importato e ripulito da Gestione Clienti Eden",tokenBalance:0,edenClientIds:r.sourceClientIds||[],edenImportKey:r.importKey,nameOrderNeedsReview:true};
+    state.players.push(match);added++;return;
+   }
+   let changed=false;
+   function fill(field,value){if(value&&!String(match[field]||"").trim()){match[field]=value;changed=true}}
+   fill("phone",phone);fill("email",email);fill("birth",r.birth);fill("birthPlace",r.birthPlace);fill("postalCode",r.postalCode);fill("residenceTown",r.residenceTown);fill("residenceProvince",r.residenceProvince);fill("gender",r.gender);fill("level",r.level);
+   const beforeIds=JSON.stringify(match.edenClientIds||[]);
+   match.edenClientIds=Array.from(new Set([...(match.edenClientIds||[]).map(String),...(r.sourceClientIds||[]).map(String)]));
+   if(beforeIds!==JSON.stringify(match.edenClientIds))changed=true;
+   if(!match.edenImportKey){match.edenImportKey=r.importKey;changed=true}
+   if(phone&&pamCleanContactPhone(match.phone)!==phone&&!((match.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))){match.alternatePhones=[...(match.alternatePhones||[]),phone];changed=true}
+   if(email&&pamCleanContactEmail(match.email)!==email&&!((match.alternateEmails||[]).map(pamCleanContactEmail).includes(email))){match.alternateEmails=[...(match.alternateEmails||[]),email];changed=true}
+   if(changed)updated++;
+  });
+  if(added||updated){save();await pamCloudSyncAll();render()}
+  return{added:added,updated:updated,total:records.length};
+ }finally{pamEdenImportRunning=false}
+}
+function pamFindEventById(id){
+ const key=String(id??"");
+ return (state.events||[]).find(function(e){return String((e&&e.id)??"")===key})||null;
+}
+function currentEvent(){return pamFindEventById(state.currentEventId)}
+
+function pamRepairEventPlayerIdsFromMatches(e){
+ if(!e||typeof e!=="object")return 0;
+ // Nei Campionati Nazionali le coppie confermate sono la fonte ufficiale.
+ // Le partite possono appartenere a un calendario precedente e non devono
+ // mai reintrodurre automaticamente giocatori sostituiti o ritirati.
+ if(e.nationalParentId||e.competitionType==="national_category")return 0;
+ const before=JSON.stringify({playerIds:e.playerIds||[],ledger:e.ledger||{},payments:e.payments||{}});
+ const oldIds=(e.playerIds||[]).filter(Boolean).map(String);
+ // e.playerIds è l'elenco ufficiale degli iscritti. Il calendario può essere
+ // incompleto o appartenere a una versione precedente: non deve mai aggiungere
+ // né eliminare partecipanti. Deduplichiamo solo ID identici, non nomi uguali.
+ const repaired=[];const seenIds=new Set();
+ oldIds.forEach(function(id){
+  const key=String(id);
+  if(!key||seenIds.has(key))return;
+  seenIds.add(key);repaired.push(key);
+ });
+ const oldLedger=e.ledger&&typeof e.ledger==="object"?e.ledger:{};
+ const oldPayments=e.payments&&typeof e.payments==="object"?e.payments:{};
+ const allOldKeys=Array.from(new Set(oldIds.concat(Object.keys(oldLedger),Object.keys(oldPayments))));
+ const cleanLedger={},cleanPayments={};
+ repaired.forEach(function(id){
+  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"";
+  const sameNameKeys=allOldKeys.filter(function(oldId){const op=playerById(oldId);return nameKey&&op&&registryTokenKey(playerName(op))===nameKey});
+  const ledgers=[id].concat(sameNameKeys).map(function(k){return oldLedger[k]}).filter(Boolean);
+  const base=oldLedger[id]||{};
+  cleanLedger[id]={
+   carried:Math.max(Number((p&&p.tokenBalance)||0),...ledgers.map(function(x){return Number(x.carried)||0})),
+   spent:Number(base.spent)||0,podium:Number(base.podium)||0
+  };
+  const payment=oldPayments[id]||sameNameKeys.map(function(k){return oldPayments[k]}).find(function(x){return x&&x.paid})||{};
+  cleanPayments[id]={fee:Number(payment.fee!==undefined?payment.fee:e.entryFee)||0,paid:!!payment.paid,method:payment.method||"",notes:payment.notes||""};
+ });
+ e.playerIds=repaired;e.ledger=cleanLedger;e.payments=cleanPayments;
+ const after=JSON.stringify({playerIds:e.playerIds,ledger:e.ledger,payments:e.payments});
+ return before===after?0:repaired.length;
+}
+
+function pamEventRow(e){
+ if(!e.shareToken)e.shareToken=pamUuid();
+ return{
+  id:e.id,
+  name:e.name||"Torneo",
+  event_date:e.date||null,
+  club:e.club||null,
+  category:e.category||null,
+  competition_type:e.competitionType||null,
+  logo_url:e.logoUrl||null,
+  share_token:e.shareToken,
+  status:e.status||"published",
+  data:e
+ };
+}
+function pamPlayerRow(p){
+ return{id:p.id,data:p,photo_url:p.photoUrl||null};
+}
+function pamScheduleCloudSync(){
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(pamCloudSyncAll,650);
+}
+function pamScheduleEventCloudSync(eventId){
+ const id=String(eventId||"");if(!id)return;
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(function(){pamCloudSyncEvent(id)},220);
+}
+function pamUniqueRowsByIdV8225(items,rowFn){
+ const byId=new Map();
+ (items||[]).forEach(function(item){
+  if(!item||item.id===undefined||item.id===null)return;
+  byId.set(String(item.id),item);
+ });
+ return Array.from(byId.values()).map(rowFn);
+}
+async function pamCloudSyncAll(){
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION)return;
+ if(pamUploading){pamPendingFullSync=true;return}
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  if(pamIsAdmin()){
+   const dedupedPlayers=pamDedupePlayersV821(state.players||[]);
+   if(dedupedPlayers.length){
+    const pr=await sb.from("players").upsert(pamUniqueRowsByIdV8225(dedupedPlayers,pamPlayerRow),{onConflict:"id"}).select("id");
+    if(pr.error)throw pr.error;
+   }
+   if((state.events||[]).length){
+    const er=await sb.from("tournaments").upsert(pamUniqueRowsByIdV8225(state.events||[],pamEventRow),{onConflict:"id",defaultToNull:false}).select("id,share_token");
+    if(er.error)throw er.error;
+    (er.data||[]).forEach(function(row){
+     const e=(state.events||[]).find(function(x){return String(x.id)===String(row.id)});
+     if(e)e.shareToken=row.share_token;
+    });
+   }
+  }else{
+   const e=currentEvent();
+   if(e&&pamCanManageEvent(e)){
+    const er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+    if(er.error)throw er.error;
+    if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+   }
+  }
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione Supabase:",err);
+  pamSetConnectionState(false);
+  pamToast("Sincronizzazione non riuscita: "+err.message,"error");
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const id=pamPendingEventSyncId;pamPendingEventSyncId=null;pamScheduleEventCloudSync(id)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+async function pamCloudSyncEvent(eventId){
+ const id=String(eventId||"");
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION||!id)return;
+ if(pamUploading){pamPendingEventSyncId=id;return}
+ const e=pamFindEventById(id);if(!e||!pamCanManageEvent(e))return;
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  let er;
+  if(pamIsAdmin()){
+   er=await sb.from("tournaments").upsert([pamEventRow(e)],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+  }else{
+   er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+  }
+  if(er.error)throw er.error;
+  if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  else pamPendingEventSyncId=String(pamOperationalEventId||id);
+  pamEventSyncRetryDelay=1000;
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione evento:",err);
+  pamOperationalDirty=true;pamOperationalEventId=id;
+  pamSetConnectionState(false);
+  if(pamEventSyncRetryDelay<=1000)pamToast("Evento salvato sul dispositivo; nuovo tentativo online in corso.","error");
+  pamEventSyncRetryDelay=Math.min(30000,pamEventSyncRetryDelay*2);
+  pamPendingEventSyncId=id;
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const next=pamPendingEventSyncId,delay=pamEventSyncRetryDelay;pamPendingEventSyncId=null;setTimeout(function(){pamScheduleEventCloudSync(next)},delay)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+let pamConnectionFailuresV8222=0;
+function pamSetConnectionState(ok){
+ const badge=document.getElementById("pamRoleBadge");
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ if(!badge)return;
+
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.title=effectiveOk
+  ? ("Ultima sincronizzazione valida: "+new Date(pamCloudLastOkAt||Date.now()).toLocaleTimeString("it-IT"))
+  : "Connessione a Supabase non disponibile dopo più tentativi";
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+}
+window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
+window.addEventListener("offline",function(){pamSetConnectionState(false)});
+
+
+async function pamGetCloudCounts(){
+ const [p,e]=await Promise.all([
+  sb.from("players").select("id",{count:"exact",head:true}),
+  sb.from("tournaments").select("id",{count:"exact",head:true})
+ ]);
+ if(p.error)throw p.error;
+ if(e.error)throw e.error;
+ return{players:p.count||0,events:e.count||0};
+}
+async function pamForceUploadLocal(){
+ if(!pamIsAdmin()){pamToast("Solo l'amministratore può trasferire l'archivio locale.","error");return}
+ if(!confirm("Trasferire su Supabase tutti i giocatori e i tornei presenti su questo dispositivo? I record con lo stesso ID verranno aggiornati."))return;
+ pamToast("Trasferimento archivio locale in corso...");
+ const oldReady=pamCloudReady;
+ const oldHydrated=pamInitialCloudHydrated;
+ pamCloudReady=true;
+ pamInitialCloudHydrated=true;
+ await pamCloudSyncAll();
+ pamCloudReady=oldReady||true;
+ pamInitialCloudHydrated=oldHydrated||true;
+ await pamRefreshSyncPanel();
+ pamToast("Archivio locale trasferito online.","success");
+}
+async function pamForceDownloadCloud(){
+ if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
+ pamToast("Scaricamento archivio online...");
+ await pamCloudLoad(false,"manual");
+ await pamRefreshSyncPanel();
+ pamToast("Archivio online scaricato.","success");
+}
+async function pamRefreshSyncPanel(){
+ const el=document.getElementById("pamSyncPanel");
+ if(!el||!PAM_SESSION)return;
+ try{
+  const c=await pamGetCloudCounts();
+  const lp=document.getElementById("pamLocalPlayers");
+  const le=document.getElementById("pamLocalEvents");
+  const cp=document.getElementById("pamCloudPlayers");
+  const ce=document.getElementById("pamCloudEvents");
+  if(lp)lp.textContent=state.players.length;
+  if(le)le.textContent=state.events.length;
+  if(cp)cp.textContent=c.players;
+  if(ce)ce.textContent=c.events;
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT");
+  pamSetConnectionState(true);
+ }catch(err){
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Errore collegamento: "+err.message;
+  pamSetConnectionState(false);
+ }
+}
+function pamSyncPanelHtml(){
+ if(!PAM_SESSION)return"";
+ return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
+  '<h2>☁️ Archivio condiviso</h2>'+
+  '<div class="muted">Confronta i dati salvati sul dispositivo con quelli presenti su Supabase.</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori sul dispositivo</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei sul dispositivo</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Stato</span><b style="font-size:17px">'+(navigator.onLine?"CONNESSO":"OFFLINE")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori online</span><b id="pamCloudPlayers">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei online</span><b id="pamCloudEvents">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Account</span><b style="font-size:15px">'+esc(PAM_PROFILE?.role||"")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-actions">'+
+   '<button class="secondary" data-action="cloud-check">Aggiorna conteggi</button>'+
+   (pamIsAdmin()?'<button class="primary" data-action="cloud-upload-local">Carica questo dispositivo online</button>':'')+
+   '<button class="secondary" data-action="cloud-download">Scarica archivio online</button>'+
+  '</div>'+
+  '<div id="pamSyncLog" class="pam-sync-log">Controllo in corso…</div>'+
+ '</section>';
+}
+
+let pamCloudLoadPromise=null;
+let pamCloudStableSnapshot={players:0,events:0};
+let pamCloudLastOkAt=0;
+
+async function pamFetchAllRows(table,columns,orderColumn,ascending){
+ const pageSize=1000;
+ let from=0,all=[];
+ while(true){
+  let q=sb.from(table).select(columns).range(from,from+pageSize-1);
+  if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
+  const res=await q;
+  if(res.error)throw res.error;
+  const rows=res.data||[];
+  all=all.concat(rows);
+  if(rows.length<pageSize)break;
+  from+=pageSize;
+  if(from>=100000)throw new Error("Limite di sicurezza archivio superato.");
+ }
+ return all;
+}
+
+function pamSyncLabel(ok,mode){
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ const badge=document.getElementById("pamRoleBadge");
+ if(!badge)return;
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+ badge.title=effectiveOk
+  ? ((mode==="realtime"?"Realtime attivo":"Cloud attivo")+
+     (pamCloudLastOkAt?" · "+new Date(pamCloudLastOkAt).toLocaleTimeString("it-IT"):""))
+  : "Connessione Supabase non disponibile dopo più tentativi";
+}
+
+
+
+function pamNormHistoricalNameV8222(s){
+ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+}
+function pamNameTokensV8222(s){
+ return pamNormHistoricalNameV8222(s).split(/\s+/).filter(Boolean);
+}
+function pamHistoricalFindPlayerV8222(remotePlayers,target){
+ const t=pamNameTokensV8222(target);
+ if(!t.length)return null;
+ const exact=(remotePlayers||[]).find(function(p){return pamNormHistoricalNameV8222(playerName(p))===pamNormHistoricalNameV8222(target)});
+ if(exact)return exact;
+ let best=null,bestScore=0;
+ (remotePlayers||[]).forEach(function(p){
+  const pTokens=pamNameTokensV8222(playerName(p));
+  let score=0;
+  t.forEach(function(x){if(pTokens.includes(x))score++});
+  if(score>bestScore){bestScore=score;best=p}
+ });
+ return bestScore>=Math.min(2,t.length)?best:null;
+}
+function pamBuildSecondFemaleV8222(remotePlayers){
+ const historicalFinalByName={
+  "Fabienne De Cup De Saint Paul":9,
+  "Carlotta Rivi":5,
+  "Viviana De Magistris":10,
+  "Stefania Bella":9,
+  "Valentina Labattaglia":16,
+  "Viktoriia Dutka":3,
+  "Sara Sacco'":9,
+  "Elisa Savini":11,
+  "Monia Mazzi":51,
+  "Maurizia Casini":34
+ };
+ const seedNames=Object.keys(historicalFinalByName);
+
+ const ids=[],historicalFinalBalances={};
+ seedNames.forEach(function(name,i){
+  const p=pamHistoricalFindPlayerV8222(remotePlayers,name);
+  if(p){
+   ids[i]=p.id;
+   historicalFinalBalances[String(p.id)]=historicalFinalByName[name];
+  }
+ });
+
+ const schedule=[
+  [1,"20:00","Campo Blu",0,9,2,7],[1,"20:00","Campo Verde",3,6,4,5],
+  [2,"20:20","Campo Blu",0,8,1,6],[2,"20:20","Campo Verde",9,7,3,4],
+  [3,"20:40","Campo Blu",8,6,9,5],[3,"20:40","Campo Verde",1,4,2,3],
+  [4,"21:00","Campo Blu",0,6,8,4],[4,"21:00","Campo Verde",7,5,1,2],
+  [5,"21:20","Campo Blu",0,5,9,1],[5,"21:20","Campo Verde",7,3,8,2]
+ ];
+ const matches=[];
+ schedule.forEach(function(m,i){
+  if(ids[m[3]]&&ids[m[4]]&&ids[m[5]]&&ids[m[6]]){
+   matches.push({
+    id:"m_fem2_"+(i+1),round:m[0],time:m[1],court:m[2],
+    t1:[ids[m[3]],ids[m[4]]],t2:[ids[m[5]],ids[m[6]]],
+    score1:null,score2:null
+   });
+  }
+ });
+
+ const playerIds=ids.filter(Boolean);
+ const ledger={};
+ playerIds.forEach(function(id){
+   const finalValue=Number(historicalFinalBalances[String(id)]||0);
+   // Carried is only a display-compatible fallback. Exact historical balance is protected separately.
+   ledger[id]={carried:Math.max(0,finalValue-3),spent:0,podium:0};
+ });
+
+ return {
+  id:"e_femmina_20260727_ripristinata",
+  name:"2ª TAPPA FEMMINILE RODEO CUPRA 2026",
+  date:"2026-07-27",
+  club:"Eden Padel Club",
+  category:"Femminile",
+  competitionType:"rodeo_tokens",
+  status:"published",
+  playerIds:playerIds,
+  matches:matches,
+  ledger:ledger,
+  historicalFinalBalances:historicalFinalBalances,
+  historicalBalanceSource:"V8.1.x archivio storico",
+  historicalLocked:true,
+  shareToken:"femmina-20260727-ripristinata",
+  startTime:"20:00",
+  maxParticipants:10,
+  minParticipants:10,
+  entryFee:25,
+  createdAt:"2026-07-27T18:00:00.000Z",
+  restoredBy:"V8.2.23"
+ };
+}
+function pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents){
+ const existing=(remoteEvents||[]).find(function(e){
+  const n=pamNormHistoricalNameV8222(e&&e.name);
+  return String(e&&e.date||"")==="2026-07-27"&&n.includes("femmin");
+ });
+ const rebuilt=pamBuildSecondFemaleV8222(remotePlayers);
+ if(existing){
+  // V8.2.38.4: se la tappa è già online NON riscriverla a ogni sync.
+  // Manteniamo esattamente il record ricevuto da Supabase.
+  return {restored:false,event:existing,repaired:false};
+ }
+ remoteEvents.push(rebuilt);
+ remoteEvents.sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
+ return {restored:true,event:rebuilt,repaired:false};
+}
+async function pamUpsertSecondFemaleV8222(e){
+ if(!e||!PAM_SESSION||!pamIsAdmin())return;
+ const row=pamEventRow(e);
+ const res=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(res.error)throw res.error;
+ if(res.data&&res.data.share_token)e.shareToken=res.data.share_token;
+}
+
+
+async function pamCloudLoad(initial,forceReplace){
+ if(pamCloudLoadPromise)return pamCloudLoadPromise;
+
+ pamCloudApplyingSnapshot=true;
+ pamCloudLoadPromise=(async function(){
+  const loadRevision=pamOperationalRevision;
+  const explicitOverwrite=forceReplace==="manual";
+  const canApplySnapshot=function(){
+   return explicitOverwrite||(!pamOperationalDirty&&loadRevision===pamOperationalRevision);
+  };
+  // Carica prima i tornei: l'anagrafica è molto più grande e non deve
+  // impedire né ritardare la visualizzazione delle competizioni assegnate.
+  const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
+  const earlyEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,name:r.name,event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,status:r.status
+   });
+  });
+  const visibleEarlyEvents=pamFilterEventsForRole(earlyEvents);
+  if(canApplySnapshot()){
+   state.events=visibleEarlyEvents;state.__cloudEventsCount=visibleEarlyEvents.length;
+   if(pamIsCollaborator()){
+    const assignedNow=visibleEarlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
+    if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+   }
+   if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
+  }
+
+  let playerRows;
+  try{
+   playerRows=await pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true);
+  }catch(playerLoadError){
+   console.warn("Anagrafica online lenta; mantengo la copia locale mentre i tornei restano aggiornati.",playerLoadError);
+   playerRows=(state.players||[]).map(function(p){return{id:p.id,data:p,photo_url:p.photoUrl||"",updated_at:null}});
+   pamToast("Torneo assegnato disponibile. L'anagrafica giocatori usa temporaneamente la copia sul dispositivo.","success");
+  }
+
+  const remotePlayersRaw=playerRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
+   });
+  });
+  const __normV822=pamNormalizeAndDedupeV822(remotePlayersRaw);
+  const remotePlayers=__normV822.players;
+
+  const remoteEventsRaw=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    name:r.name,
+    event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,
+    status:r.status
+   });
+  });
+  const remoteEvents=pamFilterEventsForRole(remoteEventsRaw.map(function(e){return pamReplaceIdsDeepV822(e,__normV822.idMap)}));
+  const secondFemaleV8222=pamIsAdmin()?pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents):{restored:false,event:null,repaired:false};
+
+  if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
+   throw new Error("Snapshot giocatori vuoto rifiutato.");
+  if(pamCloudStableSnapshot.events>0 && remoteEvents.length===0)
+   throw new Error("Snapshot tornei vuoto rifiutato.");
+
+  // Una rigenerazione o un timer avviati mentre il download era in corso
+  // hanno sempre precedenza sullo snapshot remoto iniziato prima.
+  if(!canApplySnapshot()){
+   pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+   pamCloudLastOkAt=Date.now();pamCloudReady=true;pamSyncLabel(true,"cloud");
+   if(pamOperationalDirty&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+   return Object.assign({},pamCloudStableSnapshot,{skipped:true});
+  }
+
+  state.players=remotePlayers;
+  state.events=remoteEvents;
+  pamReconcileTokensV8232();
+  state.events.forEach(pamRepairEventPlayerIdsFromMatches);
+  state.__playersSource="Supabase completo";
+  state.__cloudPlayersCount=remotePlayers.length;
+  state.__cloudEventsCount=remoteEvents.length;
+
+  pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+  pamCloudLastOkAt=Date.now();
+  pamCloudReady=true;
+  pamInitialCloudHydrated=true;
+  pamSyncLabel(true,"cloud");
+  
+  if(secondFemaleV8222.restored&&PAM_SESSION&&pamIsAdmin()){
+   setTimeout(function(){
+    pamUpsertSecondFemaleV8222(secondFemaleV8222.event).then(function(){
+      pamSetConnectionState(true);
+
+    }).catch(function(err){
+      console.error("Ripristino 2ª tappa femminile:",err);
+
+    });
+   },300);
+  }
+
+  if(state.currentEventId&&!state.events.some(function(e){return String(e.id)===String(state.currentEventId)}))
+   state.currentEventId=null;
+
+  if(typeof saveState==="function")saveState();
+
+  if(!pamIsUserEditing()){
+   if(forceReplace===true && initial!==true){
+    // Realtime e polling aggiornano i dati ma NON ricostruiscono la pagina visibile.
+    pamMarkBackgroundSyncV8212();
+    pamApplyRole();
+   }else{
+    // Avvio o aggiornamento manuale: un solo repaint, con posizione/focus preservati.
+    pamBackgroundDataPendingV8212=false;
+    pamStableRenderV8212();
+    pamApplyRole();
+   }
+  }
+  setTimeout(pamRefreshSyncPanel,50);
+  return pamCloudStableSnapshot;
+ })();
+
+ try{return await pamCloudLoadPromise}
+ finally{pamCloudApplyingSnapshot=false;pamCloudLoadPromise=null}
+}
+function pamSubscribeRealtime(){
+ if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
+ const refreshFromCloud=function(){
+  clearTimeout(pamRemoteRefreshTimer);
+  const attempt=function(){
+   if(pamIsUserEditing()){
+    pamRemoteRefreshTimer=setTimeout(attempt,1200);
+    return;
+   }
+   if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true);
+  };
+  pamRemoteRefreshTimer=setTimeout(attempt,700);
+ };
+ pamRealtimeChannel=sb.channel("padel-arena-live-v71")
+  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"players"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"public_registrations"},function(){
+    refreshFromCloud();
+    const openTeam=document.querySelector('[data-admin-roster-area]');
+    if(openTeam&&openTeam.dataset.teamId) pamLoadAdminRoster(openTeam.dataset.teamId);
+  })
+  .subscribe(function(status){
+   if(status==="SUBSCRIBED"){
+    pamCloudLastOkAt=Date.now();
+    pamSyncLabel(true,"realtime");
+   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+    console.warn("Realtime Supabase:",status);
+   }
+  });
+ clearInterval(window.__pamCloudRefreshInterval);
+ window.__pamCloudRefreshInterval=setInterval(function(){
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
+ },30000);
+}
+function pamToast(message,type){
+ const n=document.createElement("div");
+ n.className="pam-toast "+(type||"");
+ n.textContent=message;
+ document.body.appendChild(n);
+ setTimeout(function(){n.remove()},3500);
+}
+function pamShareUrl(e){
+ if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
+ return location.href.split("?")[0].split("#")[0]+"?tournament="+encodeURIComponent(e.shareToken);
+}
+function pamRegistrationUrl(e){
+ const base=pamPublicBase();
+ return base+"/public-registration.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
+async function pamEnsureEventPublishedForRegistration(e){
+ if(!e)throw new Error("Evento non disponibile");
+ if(!PAM_SESSION||!pamIsAdmin())throw new Error("Accedi come amministratore per pubblicare il link");
+ if(!e.shareToken)e.shareToken=pamUuid();
+ const row=pamEventRow(e);
+ const saved=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(saved.error)throw saved.error;
+ if(saved.data&&saved.data.share_token)e.shareToken=saved.data.share_token;
+ const check=await sb.from("tournaments").select("id,share_token").eq("id",String(e.id)).eq("share_token",String(e.shareToken)).maybeSingle();
+ if(check.error)throw check.error;
+ if(!check.data)throw new Error("Supabase non ha confermato la pubblicazione dell’evento");
+ pamPersistStateLocalV82381();
+ return e;
+}
+async function pamShareRegistration(id){
+ const e=pamFindEventById(id);if(!e){pamToast("Evento non trovato. Aggiorna i dati e riprova.","error");return}
+ try{
+  pamToast("Pubblicazione e verifica del link in corso...");
+  await pamEnsureEventPublishedForRegistration(e);
+  pamOpenRegistrationLinkDialog(e,pamRegistrationUrl(e));
+ }catch(err){
+  console.error("Pubblicazione link iscrizioni:",err);
+  pamToast("Link non pubblicato: "+(err&&err.message?err.message:String(err)),"error");
+ }
+}
+function pamOpenRegistrationLinkDialog(e,url){
+ document.getElementById("pamRegistrationLinkOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamRegistrationLinkOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Link unico di iscrizione</h2><div class="muted">'+esc(e.name)+'</div></div><button class="secondary" data-close-registration-link>Chiudi</button></div><div class="notice success">Questo è il link unico per Doppio Maschile, Doppio Femminile e Doppio Misto.</div><div class="field"><label>Link pronto da condividere</label><input id="pamRegistrationLinkValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-registration-link>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">APRI MODULO</a><button class="secondary" data-native-share-registration>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);
+ const input=document.getElementById("pamRegistrationLinkValue");if(input){input.focus();input.select()}
+}
+async function pamCreatePlayerInvite(scope,eventId){
+ try{
+  if(!pamIsAdmin())throw new Error("Operazione riservata all’amministratore");
+  let e=null;
+  if(scope==="event"){
+   e=pamFindEventById(eventId);if(!e)throw new Error("Evento non trovato");
+   pamToast("Preparo l’invito giocatore per questo evento…");
+   await pamEnsureEventPublishedForRegistration(e);
+  }
+  const res=await sb.rpc("admin_create_player_invite",{p_scope:scope,p_tournament_id:scope==="event"?String(e.id):null});
+  if(res.error)throw res.error;
+  const token=res.data&&res.data.token;if(!token)throw new Error("Supabase non ha restituito l’invito");
+  pamOpenPlayerInviteDialog(scope,e,pamPublicBase()+"/player-invite.html?invite="+encodeURIComponent(token));
+ }catch(err){console.error("Invito giocatore:",err);pamToast("Invito non creato: "+(err&&err.message?err.message:String(err)),"error")}
+}
+function pamOpenPlayerInviteDialog(scope,e,url){
+ document.getElementById("pamPlayerInviteOverlay")?.remove();
+ const eventOnly=scope==="event",overlay=document.createElement("div");overlay.id="pamPlayerInviteOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+(eventOnly?'Invito giocatore · singolo evento':'Invito giocatore · piattaforma')+'</h2><div class="muted">'+(eventOnly?esc(e&&e.name||'Evento'):'Accesso generale con permessi giocatore')+'</div></div><button class="secondary" data-close-player-invite>Chiudi</button></div><div class="notice success"><b>'+(eventOnly?'SOLO QUESTO EVENTO':'ESPLORA LA PIATTAFORMA')+'</b><br>'+(eventOnly?'Il giocatore creerà la propria anagrafica e vedrà esclusivamente questo evento.':'Il giocatore creerà la propria anagrafica e potrà esplorare gli eventi pubblicati.')+'</div><div class="notice"><b>Limiti sempre attivi:</b> nessun accesso ad anagrafiche altrui, pagamenti, creazione tornei, risultati o comandi organizzativi.</div><div class="field"><label>Link pronto da inviare</label><input id="pamPlayerInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-player-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-player-invite>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);const input=document.getElementById("pamPlayerInviteValue");if(input){input.focus();input.select()}
+}
+async function pamCopyPlayerInvite(nativeShare){
+ const input=document.getElementById("pamPlayerInviteValue");if(!input)return;
+ try{if(nativeShare&&navigator.share)await navigator.share({title:"Invito giocatore Padel Arena",text:"Crea la tua anagrafica giocatore",url:input.value});else{await navigator.clipboard.writeText(input.value);pamToast("Link giocatore copiato","success")}}
+ catch(err){if(err.name!=="AbortError"){input.focus();input.select();document.execCommand("copy");pamToast("Link giocatore copiato","success")}}
+}
+async function pamCreateCollaboratorInvite(eventId){
+ try{
+  if(!pamIsAdmin())throw new Error("Operazione riservata all’amministratore");
+  const e=pamFindEventById(eventId);if(!e)throw new Error("Evento non trovato");
+  pamToast("Preparo l’accesso collaboratore per questo evento…");
+  await pamEnsureEventPublishedForRegistration(e);
+  const res=await sb.rpc("admin_create_collaborator_invite",{p_tournament_id:String(e.id)});
+  if(res.error)throw res.error;
+  const token=res.data&&res.data.token;if(!token)throw new Error("Supabase non ha restituito l’invito");
+  pamOpenCollaboratorInviteDialog(e,pamPublicBase()+"/collaborator-invite.html?invite="+encodeURIComponent(token));
+ }catch(err){console.error("Invito collaboratore:",err);pamToast("Invito collaboratore non creato: "+(err&&err.message?err.message:String(err)),"error")}
+}
+function pamOpenCollaboratorInviteDialog(e,url){
+ document.getElementById("pamCollaboratorInviteOverlay")?.remove();
+ const overlay=document.createElement("div");overlay.id="pamCollaboratorInviteOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Collaboratore · singolo evento</h2><div class="muted">'+esc(e&&e.name||"Evento")+'</div></div><button class="secondary" data-close-collaborator-invite>Chiudi</button></div><div class="notice success"><b>ACCESSO OPERATIVO LIMITATO</b><br>Il collaboratore potrà gestire risultati, timer e funzioni sportive esclusivamente di questo torneo. Per un evento nazionale il permesso comprende automaticamente Maschile, Femminile e Misto.</div><div class="notice">Negli altri eventi manterrà soltanto la consultazione pubblica da account Free.</div><div class="field"><label>Link personale da inviare</label><input id="pamCollaboratorInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-collaborator-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-collaborator-invite>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);const input=document.getElementById("pamCollaboratorInviteValue");if(input){input.focus();input.select()}
+}
+async function pamCopyCollaboratorInvite(nativeShare){
+ const input=document.getElementById("pamCollaboratorInviteValue");if(!input)return;
+ return pamCopyInviteLinkV8("pamCollaboratorInviteValue","Invito collaboratore Padel Arena","Accesso operativo al torneo assegnato","Link collaboratore copiato",nativeShare);
+}
+
+function pamCleanupLegacyLocalStateV82385(){
+ try{
+  const raw=localStorage.getItem(KEY);
+  if(!raw)return;
+  const parsed=JSON.parse(raw);
+  if(parsed&&parsed.__localCacheV82385===true)return;
+  // La vecchia chiave poteva contenere migliaia di record e immagini.
+  pamPersistStateLocalV82381();
+ }catch(_){
+  try{localStorage.removeItem(KEY)}catch(__){}
+ }
+}
+pamCleanupLegacyLocalStateV82385();
+
+function save(options){
+ options=options||{};
+ pamEnsureEventPlayerSnapshots();
+ pamProtectCurrentEdit(5000);
+ if(options.operational===true){
+  pamOperationalRevision++;
+  pamOperationalDirty=true;
+  const active=currentEvent();
+  pamOperationalEventId=String(options.eventId||(active&&active.id)||"")||null;
+ }
+ const localResult=pamPersistStateLocalV82381();
+ if(!localResult.ok){
+  console.warn("Cache locale non disponibile: i dati completi restano su Supabase.");
+ }
+ if(!options.localOnly&&pamCloudReady&&pamInitialCloudHydrated&&!pamCloudApplyingSnapshot&&PAM_SESSION){
+  if(options.eventOnly===true&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+  else pamScheduleCloudSync();
+ }
+}
+function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
+function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
+function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
+function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
+let pamEdenImportRunning=false;
+async function pamImportEdenClients(){
+ if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
+ pamEdenImportRunning=true;
+ try{
+  const response=await fetch("assets/eden-clients-clean.json",{cache:"no-store"});
+  if(!response.ok)throw new Error("Archivio Eden non disponibile");
+  const records=await response.json();
+  let added=0,updated=0;
+  records.forEach(function(r){
+   const email=pamCleanContactEmail(r.email),phone=pamCleanContactPhone(r.phone),key=String(r.nameKey||registryTokenKey(r.displayName));
+   let match=null;
+   if(Array.isArray(r.sourceClientIds)&&r.sourceClientIds.length){
+    match=(state.players||[]).find(function(p){return (p.edenClientIds||[]).some(function(id){return r.sourceClientIds.includes(String(id))})})||null;
+   }
+   if(!match&&email)match=(state.players||[]).find(function(p){return pamCleanContactEmail(p.email)===email||((p.alternateEmails||[]).map(pamCleanContactEmail).includes(email))})||null;
+   if(!match&&phone)match=(state.players||[]).find(function(p){return pamCleanContactPhone(p.phone)===phone||((p.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))})||null;
+   if(!match){
+    const candidates=(state.players||[]).filter(function(p){
+     if(registryTokenKey(playerName(p))!==key)return false;
+     const pp=pamCleanContactPhone(p.phone),pe=pamCleanContactEmail(p.email),birth=String(p.birth||"");
+     if(pp&&phone&&pp!==phone)return false;
+     if(pe&&email&&pe!==email)return false;
+     if(birth&&r.birth&&birth!==r.birth)return false;
+     return true;
+    });
+    if(candidates.length===1)match=candidates[0];
+   }
+   if(!match){
+    match={id:"eden_"+r.importKey,firstName:r.displayName,lastName:"",phone:phone,email:email,birth:r.birth||"",birthPlace:r.birthPlace||"",postalCode:r.postalCode||"",residenceTown:r.residenceTown||"",residenceProvince:r.residenceProvince||"",gender:r.gender||"",level:r.level||"",notes:"Importato e ripulito da Gestione Clienti Eden",tokenBalance:0,edenClientIds:r.sourceClientIds||[],edenImportKey:r.importKey,nameOrderNeedsReview:true};
+    state.players.push(match);added++;return;
+   }
+   let changed=false;
+   function fill(field,value){if(value&&!String(match[field]||"").trim()){match[field]=value;changed=true}}
+   fill("phone",phone);fill("email",email);fill("birth",r.birth);fill("birthPlace",r.birthPlace);fill("postalCode",r.postalCode);fill("residenceTown",r.residenceTown);fill("residenceProvince",r.residenceProvince);fill("gender",r.gender);fill("level",r.level);
+   const beforeIds=JSON.stringify(match.edenClientIds||[]);
+   match.edenClientIds=Array.from(new Set([...(match.edenClientIds||[]).map(String),...(r.sourceClientIds||[]).map(String)]));
+   if(beforeIds!==JSON.stringify(match.edenClientIds))changed=true;
+   if(!match.edenImportKey){match.edenImportKey=r.importKey;changed=true}
+   if(phone&&pamCleanContactPhone(match.phone)!==phone&&!((match.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))){match.alternatePhones=[...(match.alternatePhones||[]),phone];changed=true}
+   if(email&&pamCleanContactEmail(match.email)!==email&&!((match.alternateEmails||[]).map(pamCleanContactEmail).includes(email))){match.alternateEmails=[...(match.alternateEmails||[]),email];changed=true}
+   if(changed)updated++;
+  });
+  if(added||updated){save();await pamCloudSyncAll();render()}
+  return{added:added,updated:updated,total:records.length};
+ }finally{pamEdenImportRunning=false}
+}
+function pamFindEventById(id){
+ const key=String(id??"");
+ return (state.events||[]).find(function(e){return String((e&&e.id)??"")===key})||null;
+}
+function currentEvent(){return pamFindEventById(state.currentEventId)}
+
+function pamRepairEventPlayerIdsFromMatches(e){
+ if(!e||typeof e!=="object")return 0;
+ // Nei Campionati Nazionali le coppie confermate sono la fonte ufficiale.
+ // Le partite possono appartenere a un calendario precedente e non devono
+ // mai reintrodurre automaticamente giocatori sostituiti o ritirati.
+ if(e.nationalParentId||e.competitionType==="national_category")return 0;
+ const before=JSON.stringify({playerIds:e.playerIds||[],ledger:e.ledger||{},payments:e.payments||{}});
+ const oldIds=(e.playerIds||[]).filter(Boolean).map(String);
+ // e.playerIds è l'elenco ufficiale degli iscritti. Il calendario può essere
+ // incompleto o appartenere a una versione precedente: non deve mai aggiungere
+ // né eliminare partecipanti. Deduplichiamo solo ID identici, non nomi uguali.
+ const repaired=[];const seenIds=new Set();
+ oldIds.forEach(function(id){
+  const key=String(id);
+  if(!key||seenIds.has(key))return;
+  seenIds.add(key);repaired.push(key);
+ });
+ const oldLedger=e.ledger&&typeof e.ledger==="object"?e.ledger:{};
+ const oldPayments=e.payments&&typeof e.payments==="object"?e.payments:{};
+ const allOldKeys=Array.from(new Set(oldIds.concat(Object.keys(oldLedger),Object.keys(oldPayments))));
+ const cleanLedger={},cleanPayments={};
+ repaired.forEach(function(id){
+  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"";
+  const sameNameKeys=allOldKeys.filter(function(oldId){const op=playerById(oldId);return nameKey&&op&&registryTokenKey(playerName(op))===nameKey});
+  const ledgers=[id].concat(sameNameKeys).map(function(k){return oldLedger[k]}).filter(Boolean);
+  const base=oldLedger[id]||{};
+  cleanLedger[id]={
+   carried:Math.max(Number((p&&p.tokenBalance)||0),...ledgers.map(function(x){return Number(x.carried)||0})),
+   spent:Number(base.spent)||0,podium:Number(base.podium)||0
+  };
+  const payment=oldPayments[id]||sameNameKeys.map(function(k){return oldPayments[k]}).find(function(x){return x&&x.paid})||{};
+  cleanPayments[id]={fee:Number(payment.fee!==undefined?payment.fee:e.entryFee)||0,paid:!!payment.paid,method:payment.method||"",notes:payment.notes||""};
+ });
+ e.playerIds=repaired;e.ledger=cleanLedger;e.payments=cleanPayments;
+ const after=JSON.stringify({playerIds:e.playerIds,ledger:e.ledger,payments:e.payments});
+ return before===after?0:repaired.length;
+}
+
+function pamEventRow(e){
+ if(!e.shareToken)e.shareToken=pamUuid();
+ return{
+  id:e.id,
+  name:e.name||"Torneo",
+  event_date:e.date||null,
+  club:e.club||null,
+  category:e.category||null,
+  competition_type:e.competitionType||null,
+  logo_url:e.logoUrl||null,
+  share_token:e.shareToken,
+  status:e.status||"published",
+  data:e
+ };
+}
+function pamPlayerRow(p){
+ return{id:p.id,data:p,photo_url:p.photoUrl||null};
+}
+function pamScheduleCloudSync(){
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(pamCloudSyncAll,650);
+}
+function pamScheduleEventCloudSync(eventId){
+ const id=String(eventId||"");if(!id)return;
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(function(){pamCloudSyncEvent(id)},220);
+}
+function pamUniqueRowsByIdV8225(items,rowFn){
+ const byId=new Map();
+ (items||[]).forEach(function(item){
+  if(!item||item.id===undefined||item.id===null)return;
+  byId.set(String(item.id),item);
+ });
+ return Array.from(byId.values()).map(rowFn);
+}
+async function pamCloudSyncAll(){
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION)return;
+ if(pamUploading){pamPendingFullSync=true;return}
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  if(pamIsAdmin()){
+   const dedupedPlayers=pamDedupePlayersV821(state.players||[]);
+   if(dedupedPlayers.length){
+    const pr=await sb.from("players").upsert(pamUniqueRowsByIdV8225(dedupedPlayers,pamPlayerRow),{onConflict:"id"}).select("id");
+    if(pr.error)throw pr.error;
+   }
+   if((state.events||[]).length){
+    const er=await sb.from("tournaments").upsert(pamUniqueRowsByIdV8225(state.events||[],pamEventRow),{onConflict:"id",defaultToNull:false}).select("id,share_token");
+    if(er.error)throw er.error;
+    (er.data||[]).forEach(function(row){
+     const e=(state.events||[]).find(function(x){return String(x.id)===String(row.id)});
+     if(e)e.shareToken=row.share_token;
+    });
+   }
+  }else{
+   const e=currentEvent();
+   if(e&&pamCanManageEvent(e)){
+    const er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+    if(er.error)throw er.error;
+    if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+   }
+  }
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione Supabase:",err);
+  pamSetConnectionState(false);
+  pamToast("Sincronizzazione non riuscita: "+err.message,"error");
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const id=pamPendingEventSyncId;pamPendingEventSyncId=null;pamScheduleEventCloudSync(id)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+async function pamCloudSyncEvent(eventId){
+ const id=String(eventId||"");
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION||!id)return;
+ if(pamUploading){pamPendingEventSyncId=id;return}
+ const e=pamFindEventById(id);if(!e||!pamCanManageEvent(e))return;
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  let er;
+  if(pamIsAdmin()){
+   er=await sb.from("tournaments").upsert([pamEventRow(e)],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+  }else{
+   er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+  }
+  if(er.error)throw er.error;
+  if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  else pamPendingEventSyncId=String(pamOperationalEventId||id);
+  pamEventSyncRetryDelay=1000;
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione evento:",err);
+  pamOperationalDirty=true;pamOperationalEventId=id;
+  pamSetConnectionState(false);
+  if(pamEventSyncRetryDelay<=1000)pamToast("Evento salvato sul dispositivo; nuovo tentativo online in corso.","error");
+  pamEventSyncRetryDelay=Math.min(30000,pamEventSyncRetryDelay*2);
+  pamPendingEventSyncId=id;
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const next=pamPendingEventSyncId,delay=pamEventSyncRetryDelay;pamPendingEventSyncId=null;setTimeout(function(){pamScheduleEventCloudSync(next)},delay)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+let pamConnectionFailuresV8222=0;
+function pamSetConnectionState(ok){
+ const badge=document.getElementById("pamRoleBadge");
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ if(!badge)return;
+
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.title=effectiveOk
+  ? ("Ultima sincronizzazione valida: "+new Date(pamCloudLastOkAt||Date.now()).toLocaleTimeString("it-IT"))
+  : "Connessione a Supabase non disponibile dopo più tentativi";
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+}
+window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
+window.addEventListener("offline",function(){pamSetConnectionState(false)});
+
+
+async function pamGetCloudCounts(){
+ const [p,e]=await Promise.all([
+  sb.from("players").select("id",{count:"exact",head:true}),
+  sb.from("tournaments").select("id",{count:"exact",head:true})
+ ]);
+ if(p.error)throw p.error;
+ if(e.error)throw e.error;
+ return{players:p.count||0,events:e.count||0};
+}
+async function pamForceUploadLocal(){
+ if(!pamIsAdmin()){pamToast("Solo l'amministratore può trasferire l'archivio locale.","error");return}
+ if(!confirm("Trasferire su Supabase tutti i giocatori e i tornei presenti su questo dispositivo? I record con lo stesso ID verranno aggiornati."))return;
+ pamToast("Trasferimento archivio locale in corso...");
+ const oldReady=pamCloudReady;
+ const oldHydrated=pamInitialCloudHydrated;
+ pamCloudReady=true;
+ pamInitialCloudHydrated=true;
+ await pamCloudSyncAll();
+ pamCloudReady=oldReady||true;
+ pamInitialCloudHydrated=oldHydrated||true;
+ await pamRefreshSyncPanel();
+ pamToast("Archivio locale trasferito online.","success");
+}
+async function pamForceDownloadCloud(){
+ if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
+ pamToast("Scaricamento archivio online...");
+ await pamCloudLoad(false,"manual");
+ await pamRefreshSyncPanel();
+ pamToast("Archivio online scaricato.","success");
+}
+async function pamRefreshSyncPanel(){
+ const el=document.getElementById("pamSyncPanel");
+ if(!el||!PAM_SESSION)return;
+ try{
+  const c=await pamGetCloudCounts();
+  const lp=document.getElementById("pamLocalPlayers");
+  const le=document.getElementById("pamLocalEvents");
+  const cp=document.getElementById("pamCloudPlayers");
+  const ce=document.getElementById("pamCloudEvents");
+  if(lp)lp.textContent=state.players.length;
+  if(le)le.textContent=state.events.length;
+  if(cp)cp.textContent=c.players;
+  if(ce)ce.textContent=c.events;
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT");
+  pamSetConnectionState(true);
+ }catch(err){
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Errore collegamento: "+err.message;
+  pamSetConnectionState(false);
+ }
+}
+function pamSyncPanelHtml(){
+ if(!PAM_SESSION)return"";
+ return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
+  '<h2>☁️ Archivio condiviso</h2>'+
+  '<div class="muted">Confronta i dati salvati sul dispositivo con quelli presenti su Supabase.</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori sul dispositivo</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei sul dispositivo</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Stato</span><b style="font-size:17px">'+(navigator.onLine?"CONNESSO":"OFFLINE")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori online</span><b id="pamCloudPlayers">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei online</span><b id="pamCloudEvents">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Account</span><b style="font-size:15px">'+esc(PAM_PROFILE?.role||"")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-actions">'+
+   '<button class="secondary" data-action="cloud-check">Aggiorna conteggi</button>'+
+   (pamIsAdmin()?'<button class="primary" data-action="cloud-upload-local">Carica questo dispositivo online</button>':'')+
+   '<button class="secondary" data-action="cloud-download">Scarica archivio online</button>'+
+  '</div>'+
+  '<div id="pamSyncLog" class="pam-sync-log">Controllo in corso…</div>'+
+ '</section>';
+}
+
+let pamCloudLoadPromise=null;
+let pamCloudStableSnapshot={players:0,events:0};
+let pamCloudLastOkAt=0;
+
+async function pamFetchAllRows(table,columns,orderColumn,ascending){
+ const pageSize=1000;
+ let from=0,all=[];
+ while(true){
+  let q=sb.from(table).select(columns).range(from,from+pageSize-1);
+  if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
+  const res=await q;
+  if(res.error)throw res.error;
+  const rows=res.data||[];
+  all=all.concat(rows);
+  if(rows.length<pageSize)break;
+  from+=pageSize;
+  if(from>=100000)throw new Error("Limite di sicurezza archivio superato.");
+ }
+ return all;
+}
+
+function pamSyncLabel(ok,mode){
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ const badge=document.getElementById("pamRoleBadge");
+ if(!badge)return;
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+ badge.title=effectiveOk
+  ? ((mode==="realtime"?"Realtime attivo":"Cloud attivo")+
+     (pamCloudLastOkAt?" · "+new Date(pamCloudLastOkAt).toLocaleTimeString("it-IT"):""))
+  : "Connessione Supabase non disponibile dopo più tentativi";
+}
+
+
+
+function pamNormHistoricalNameV8222(s){
+ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+}
+function pamNameTokensV8222(s){
+ return pamNormHistoricalNameV8222(s).split(/\s+/).filter(Boolean);
+}
+function pamHistoricalFindPlayerV8222(remotePlayers,target){
+ const t=pamNameTokensV8222(target);
+ if(!t.length)return null;
+ const exact=(remotePlayers||[]).find(function(p){return pamNormHistoricalNameV8222(playerName(p))===pamNormHistoricalNameV8222(target)});
+ if(exact)return exact;
+ let best=null,bestScore=0;
+ (remotePlayers||[]).forEach(function(p){
+  const pTokens=pamNameTokensV8222(playerName(p));
+  let score=0;
+  t.forEach(function(x){if(pTokens.includes(x))score++});
+  if(score>bestScore){bestScore=score;best=p}
+ });
+ return bestScore>=Math.min(2,t.length)?best:null;
+}
+function pamBuildSecondFemaleV8222(remotePlayers){
+ const historicalFinalByName={
+  "Fabienne De Cup De Saint Paul":9,
+  "Carlotta Rivi":5,
+  "Viviana De Magistris":10,
+  "Stefania Bella":9,
+  "Valentina Labattaglia":16,
+  "Viktoriia Dutka":3,
+  "Sara Sacco'":9,
+  "Elisa Savini":11,
+  "Monia Mazzi":51,
+  "Maurizia Casini":34
+ };
+ const seedNames=Object.keys(historicalFinalByName);
+
+ const ids=[],historicalFinalBalances={};
+ seedNames.forEach(function(name,i){
+  const p=pamHistoricalFindPlayerV8222(remotePlayers,name);
+  if(p){
+   ids[i]=p.id;
+   historicalFinalBalances[String(p.id)]=historicalFinalByName[name];
+  }
+ });
+
+ const schedule=[
+  [1,"20:00","Campo Blu",0,9,2,7],[1,"20:00","Campo Verde",3,6,4,5],
+  [2,"20:20","Campo Blu",0,8,1,6],[2,"20:20","Campo Verde",9,7,3,4],
+  [3,"20:40","Campo Blu",8,6,9,5],[3,"20:40","Campo Verde",1,4,2,3],
+  [4,"21:00","Campo Blu",0,6,8,4],[4,"21:00","Campo Verde",7,5,1,2],
+  [5,"21:20","Campo Blu",0,5,9,1],[5,"21:20","Campo Verde",7,3,8,2]
+ ];
+ const matches=[];
+ schedule.forEach(function(m,i){
+  if(ids[m[3]]&&ids[m[4]]&&ids[m[5]]&&ids[m[6]]){
+   matches.push({
+    id:"m_fem2_"+(i+1),round:m[0],time:m[1],court:m[2],
+    t1:[ids[m[3]],ids[m[4]]],t2:[ids[m[5]],ids[m[6]]],
+    score1:null,score2:null
+   });
+  }
+ });
+
+ const playerIds=ids.filter(Boolean);
+ const ledger={};
+ playerIds.forEach(function(id){
+   const finalValue=Number(historicalFinalBalances[String(id)]||0);
+   // Carried is only a display-compatible fallback. Exact historical balance is protected separately.
+   ledger[id]={carried:Math.max(0,finalValue-3),spent:0,podium:0};
+ });
+
+ return {
+  id:"e_femmina_20260727_ripristinata",
+  name:"2ª TAPPA FEMMINILE RODEO CUPRA 2026",
+  date:"2026-07-27",
+  club:"Eden Padel Club",
+  category:"Femminile",
+  competitionType:"rodeo_tokens",
+  status:"published",
+  playerIds:playerIds,
+  matches:matches,
+  ledger:ledger,
+  historicalFinalBalances:historicalFinalBalances,
+  historicalBalanceSource:"V8.1.x archivio storico",
+  historicalLocked:true,
+  shareToken:"femmina-20260727-ripristinata",
+  startTime:"20:00",
+  maxParticipants:10,
+  minParticipants:10,
+  entryFee:25,
+  createdAt:"2026-07-27T18:00:00.000Z",
+  restoredBy:"V8.2.23"
+ };
+}
+function pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents){
+ const existing=(remoteEvents||[]).find(function(e){
+  const n=pamNormHistoricalNameV8222(e&&e.name);
+  return String(e&&e.date||"")==="2026-07-27"&&n.includes("femmin");
+ });
+ const rebuilt=pamBuildSecondFemaleV8222(remotePlayers);
+ if(existing){
+  // V8.2.38.4: se la tappa è già online NON riscriverla a ogni sync.
+  // Manteniamo esattamente il record ricevuto da Supabase.
+  return {restored:false,event:existing,repaired:false};
+ }
+ remoteEvents.push(rebuilt);
+ remoteEvents.sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
+ return {restored:true,event:rebuilt,repaired:false};
+}
+async function pamUpsertSecondFemaleV8222(e){
+ if(!e||!PAM_SESSION||!pamIsAdmin())return;
+ const row=pamEventRow(e);
+ const res=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(res.error)throw res.error;
+ if(res.data&&res.data.share_token)e.shareToken=res.data.share_token;
+}
+
+
+async function pamCloudLoad(initial,forceReplace){
+ if(pamCloudLoadPromise)return pamCloudLoadPromise;
+
+ pamCloudApplyingSnapshot=true;
+ pamCloudLoadPromise=(async function(){
+  const loadRevision=pamOperationalRevision;
+  const explicitOverwrite=forceReplace==="manual";
+  const canApplySnapshot=function(){
+   return explicitOverwrite||(!pamOperationalDirty&&loadRevision===pamOperationalRevision);
+  };
+  // Carica prima i tornei: l'anagrafica è molto più grande e non deve
+  // impedire né ritardare la visualizzazione delle competizioni assegnate.
+  const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
+  const earlyEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,name:r.name,event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,status:r.status
+   });
+  });
+  const visibleEarlyEvents=pamFilterEventsForRole(earlyEvents);
+  if(canApplySnapshot()){
+   state.events=visibleEarlyEvents;state.__cloudEventsCount=visibleEarlyEvents.length;
+   if(pamIsCollaborator()){
+    const assignedNow=visibleEarlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
+    if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+   }
+   if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
+  }
+
+  let playerRows;
+  try{
+   playerRows=await pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true);
+  }catch(playerLoadError){
+   console.warn("Anagrafica online lenta; mantengo la copia locale mentre i tornei restano aggiornati.",playerLoadError);
+   playerRows=(state.players||[]).map(function(p){return{id:p.id,data:p,photo_url:p.photoUrl||"",updated_at:null}});
+   pamToast("Torneo assegnato disponibile. L'anagrafica giocatori usa temporaneamente la copia sul dispositivo.","success");
+  }
+
+  const remotePlayersRaw=playerRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
+   });
+  });
+  const __normV822=pamNormalizeAndDedupeV822(remotePlayersRaw);
+  const remotePlayers=__normV822.players;
+
+  const remoteEventsRaw=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    name:r.name,
+    event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,
+    status:r.status
+   });
+  });
+  const remoteEvents=pamFilterEventsForRole(remoteEventsRaw.map(function(e){return pamReplaceIdsDeepV822(e,__normV822.idMap)}));
+  const secondFemaleV8222=pamIsAdmin()?pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents):{restored:false,event:null,repaired:false};
+
+  if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
+   throw new Error("Snapshot giocatori vuoto rifiutato.");
+  if(pamCloudStableSnapshot.events>0 && remoteEvents.length===0)
+   throw new Error("Snapshot tornei vuoto rifiutato.");
+
+  // Una rigenerazione o un timer avviati mentre il download era in corso
+  // hanno sempre precedenza sullo snapshot remoto iniziato prima.
+  if(!canApplySnapshot()){
+   pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+   pamCloudLastOkAt=Date.now();pamCloudReady=true;pamSyncLabel(true,"cloud");
+   if(pamOperationalDirty&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+   return Object.assign({},pamCloudStableSnapshot,{skipped:true});
+  }
+
+  state.players=remotePlayers;
+  state.events=remoteEvents;
+  pamReconcileTokensV8232();
+  state.events.forEach(pamRepairEventPlayerIdsFromMatches);
+  state.__playersSource="Supabase completo";
+  state.__cloudPlayersCount=remotePlayers.length;
+  state.__cloudEventsCount=remoteEvents.length;
+
+  pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+  pamCloudLastOkAt=Date.now();
+  pamCloudReady=true;
+  pamInitialCloudHydrated=true;
+  pamSyncLabel(true,"cloud");
+  
+  if(secondFemaleV8222.restored&&PAM_SESSION&&pamIsAdmin()){
+   setTimeout(function(){
+    pamUpsertSecondFemaleV8222(secondFemaleV8222.event).then(function(){
+      pamSetConnectionState(true);
+
+    }).catch(function(err){
+      console.error("Ripristino 2ª tappa femminile:",err);
+
+    });
+   },300);
+  }
+
+  if(state.currentEventId&&!state.events.some(function(e){return String(e.id)===String(state.currentEventId)}))
+   state.currentEventId=null;
+
+  if(typeof saveState==="function")saveState();
+
+  if(!pamIsUserEditing()){
+   if(forceReplace===true && initial!==true){
+    // Realtime e polling aggiornano i dati ma NON ricostruiscono la pagina visibile.
+    pamMarkBackgroundSyncV8212();
+    pamApplyRole();
+   }else{
+    // Avvio o aggiornamento manuale: un solo repaint, con posizione/focus preservati.
+    pamBackgroundDataPendingV8212=false;
+    pamStableRenderV8212();
+    pamApplyRole();
+   }
+  }
+  setTimeout(pamRefreshSyncPanel,50);
+  return pamCloudStableSnapshot;
+ })();
+
+ try{return await pamCloudLoadPromise}
+ finally{pamCloudApplyingSnapshot=false;pamCloudLoadPromise=null}
+}
+function pamSubscribeRealtime(){
+ if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
+ const refreshFromCloud=function(){
+  clearTimeout(pamRemoteRefreshTimer);
+  const attempt=function(){
+   if(pamIsUserEditing()){
+    pamRemoteRefreshTimer=setTimeout(attempt,1200);
+    return;
+   }
+   if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true);
+  };
+  pamRemoteRefreshTimer=setTimeout(attempt,700);
+ };
+ pamRealtimeChannel=sb.channel("padel-arena-live-v71")
+  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"players"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"public_registrations"},function(){
+    refreshFromCloud();
+    const openTeam=document.querySelector('[data-admin-roster-area]');
+    if(openTeam&&openTeam.dataset.teamId) pamLoadAdminRoster(openTeam.dataset.teamId);
+  })
+  .subscribe(function(status){
+   if(status==="SUBSCRIBED"){
+    pamCloudLastOkAt=Date.now();
+    pamSyncLabel(true,"realtime");
+   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+    console.warn("Realtime Supabase:",status);
+   }
+  });
+ clearInterval(window.__pamCloudRefreshInterval);
+ window.__pamCloudRefreshInterval=setInterval(function(){
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
+ },30000);
+}
+function pamToast(message,type){
+ const n=document.createElement("div");
+ n.className="pam-toast "+(type||"");
+ n.textContent=message;
+ document.body.appendChild(n);
+ setTimeout(function(){n.remove()},3500);
+}
+function pamShareUrl(e){
+ if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
+ return location.href.split("?")[0].split("#")[0]+"?tournament="+encodeURIComponent(e.shareToken);
+}
+function pamRegistrationUrl(e){
+ const base=pamPublicBase();
+ return base+"/public-registration.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
+async function pamEnsureEventPublishedForRegistration(e){
+ if(!e)throw new Error("Evento non disponibile");
+ if(!PAM_SESSION||!pamIsAdmin())throw new Error("Accedi come amministratore per pubblicare il link");
+ if(!e.shareToken)e.shareToken=pamUuid();
+ const row=pamEventRow(e);
+ const saved=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(saved.error)throw saved.error;
+ if(saved.data&&saved.data.share_token)e.shareToken=saved.data.share_token;
+ const check=await sb.from("tournaments").select("id,share_token").eq("id",String(e.id)).eq("share_token",String(e.shareToken)).maybeSingle();
+ if(check.error)throw check.error;
+ if(!check.data)throw new Error("Supabase non ha confermato la pubblicazione dell’evento");
+ pamPersistStateLocalV82381();
+ return e;
+}
+async function pamShareRegistration(id){
+ const e=pamFindEventById(id);if(!e){pamToast("Evento non trovato. Aggiorna i dati e riprova.","error");return}
+ try{
+  pamToast("Pubblicazione e verifica del link in corso...");
+  await pamEnsureEventPublishedForRegistration(e);
+  pamOpenRegistrationLinkDialog(e,pamRegistrationUrl(e));
+ }catch(err){
+  console.error("Pubblicazione link iscrizioni:",err);
+  pamToast("Link non pubblicato: "+(err&&err.message?err.message:String(err)),"error");
+ }
+}
+function pamOpenRegistrationLinkDialog(e,url){
+ document.getElementById("pamRegistrationLinkOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamRegistrationLinkOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Link unico di iscrizione</h2><div class="muted">'+esc(e.name)+'</div></div><button class="secondary" data-close-registration-link>Chiudi</button></div><div class="notice success">Questo è il link unico per Doppio Maschile, Doppio Femminile e Doppio Misto.</div><div class="field"><label>Link pronto da condividere</label><input id="pamRegistrationLinkValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-registration-link>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">APRI MODULO</a><button class="secondary" data-native-share-registration>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);
+ const input=document.getElementById("pamRegistrationLinkValue");if(input){input.focus();input.select()}
+}
+async function pamCreatePlayerInvite(scope,eventId){
+ try{
+  if(!pamIsAdmin())throw new Error("Operazione riservata all’amministratore");
+  let e=null;
+  if(scope==="event"){
+   e=pamFindEventById(eventId);if(!e)throw new Error("Evento non trovato");
+   pamToast("Preparo l’invito giocatore per questo evento…");
+   await pamEnsureEventPublishedForRegistration(e);
+  }
+  const res=await sb.rpc("admin_create_player_invite",{p_scope:scope,p_tournament_id:scope==="event"?String(e.id):null});
+  if(res.error)throw res.error;
+  const token=res.data&&res.data.token;if(!token)throw new Error("Supabase non ha restituito l’invito");
+  pamOpenPlayerInviteDialog(scope,e,pamPublicBase()+"/player-invite.html?invite="+encodeURIComponent(token));
+ }catch(err){console.error("Invito giocatore:",err);pamToast("Invito non creato: "+(err&&err.message?err.message:String(err)),"error")}
+}
+function pamOpenPlayerInviteDialog(scope,e,url){
+ document.getElementById("pamPlayerInviteOverlay")?.remove();
+ const eventOnly=scope==="event",overlay=document.createElement("div");overlay.id="pamPlayerInviteOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+(eventOnly?'Invito giocatore · singolo evento':'Invito giocatore · piattaforma')+'</h2><div class="muted">'+(eventOnly?esc(e&&e.name||'Evento'):'Accesso generale con permessi giocatore')+'</div></div><button class="secondary" data-close-player-invite>Chiudi</button></div><div class="notice success"><b>'+(eventOnly?'SOLO QUESTO EVENTO':'ESPLORA LA PIATTAFORMA')+'</b><br>'+(eventOnly?'Il giocatore creerà la propria anagrafica e vedrà esclusivamente questo evento.':'Il giocatore creerà la propria anagrafica e potrà esplorare gli eventi pubblicati.')+'</div><div class="notice"><b>Limiti sempre attivi:</b> nessun accesso ad anagrafiche altrui, pagamenti, creazione tornei, risultati o comandi organizzativi.</div><div class="field"><label>Link pronto da inviare</label><input id="pamPlayerInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-player-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-player-invite>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);const input=document.getElementById("pamPlayerInviteValue");if(input){input.focus();input.select()}
+}
+async function pamCopyPlayerInvite(nativeShare){
+ const input=document.getElementById("pamPlayerInviteValue");if(!input)return;
+ return pamCopyInviteLinkV8("pamPlayerInviteValue","Invito giocatore Padel Arena","Crea la tua anagrafica giocatore","Link giocatore copiato",nativeShare);
+}
+
+function pamCleanupLegacyLocalStateV82385(){
+ try{
+  const raw=localStorage.getItem(KEY);
+  if(!raw)return;
+  const parsed=JSON.parse(raw);
+  if(parsed&&parsed.__localCacheV82385===true)return;
+  // La vecchia chiave poteva contenere migliaia di record e immagini.
+  pamPersistStateLocalV82381();
+ }catch(_){
+  try{localStorage.removeItem(KEY)}catch(__){}
+ }
+}
+pamCleanupLegacyLocalStateV82385();
+
+function save(options){
+ options=options||{};
+ pamEnsureEventPlayerSnapshots();
+ pamProtectCurrentEdit(5000);
+ if(options.operational===true){
+  pamOperationalRevision++;
+  pamOperationalDirty=true;
+  const active=currentEvent();
+  pamOperationalEventId=String(options.eventId||(active&&active.id)||"")||null;
+ }
+ const localResult=pamPersistStateLocalV82381();
+ if(!localResult.ok){
+  console.warn("Cache locale non disponibile: i dati completi restano su Supabase.");
+ }
+ if(!options.localOnly&&pamCloudReady&&pamInitialCloudHydrated&&!pamCloudApplyingSnapshot&&PAM_SESSION){
+  if(options.eventOnly===true&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+  else pamScheduleCloudSync();
+ }
+}
+function esc(v){return String(v==null?"":v).replace(/[&<>"]/g,function(m){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]})}
+function playerName(p){if(!p)return "Giocatore non disponibile";return ((p.firstName||"")+" "+(p.lastName||"")).trim()||"Giocatore senza nome"}
+function pamCleanContactPhone(v){return String(v||"").replace(/\D/g,"")}
+function pamCleanContactEmail(v){return String(v||"").trim().toLowerCase().replace(/\s+/g,"")}
+let pamEdenImportRunning=false;
+async function pamImportEdenClients(){
+ if(!pamIsAdmin()||pamEdenImportRunning)return{added:0,updated:0};
+ pamEdenImportRunning=true;
+ try{
+  const response=await fetch("assets/eden-clients-clean.json",{cache:"no-store"});
+  if(!response.ok)throw new Error("Archivio Eden non disponibile");
+  const records=await response.json();
+  let added=0,updated=0;
+  records.forEach(function(r){
+   const email=pamCleanContactEmail(r.email),phone=pamCleanContactPhone(r.phone),key=String(r.nameKey||registryTokenKey(r.displayName));
+   let match=null;
+   if(Array.isArray(r.sourceClientIds)&&r.sourceClientIds.length){
+    match=(state.players||[]).find(function(p){return (p.edenClientIds||[]).some(function(id){return r.sourceClientIds.includes(String(id))})})||null;
+   }
+   if(!match&&email)match=(state.players||[]).find(function(p){return pamCleanContactEmail(p.email)===email||((p.alternateEmails||[]).map(pamCleanContactEmail).includes(email))})||null;
+   if(!match&&phone)match=(state.players||[]).find(function(p){return pamCleanContactPhone(p.phone)===phone||((p.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))})||null;
+   if(!match){
+    const candidates=(state.players||[]).filter(function(p){
+     if(registryTokenKey(playerName(p))!==key)return false;
+     const pp=pamCleanContactPhone(p.phone),pe=pamCleanContactEmail(p.email),birth=String(p.birth||"");
+     if(pp&&phone&&pp!==phone)return false;
+     if(pe&&email&&pe!==email)return false;
+     if(birth&&r.birth&&birth!==r.birth)return false;
+     return true;
+    });
+    if(candidates.length===1)match=candidates[0];
+   }
+   if(!match){
+    match={id:"eden_"+r.importKey,firstName:r.displayName,lastName:"",phone:phone,email:email,birth:r.birth||"",birthPlace:r.birthPlace||"",postalCode:r.postalCode||"",residenceTown:r.residenceTown||"",residenceProvince:r.residenceProvince||"",gender:r.gender||"",level:r.level||"",notes:"Importato e ripulito da Gestione Clienti Eden",tokenBalance:0,edenClientIds:r.sourceClientIds||[],edenImportKey:r.importKey,nameOrderNeedsReview:true};
+    state.players.push(match);added++;return;
+   }
+   let changed=false;
+   function fill(field,value){if(value&&!String(match[field]||"").trim()){match[field]=value;changed=true}}
+   fill("phone",phone);fill("email",email);fill("birth",r.birth);fill("birthPlace",r.birthPlace);fill("postalCode",r.postalCode);fill("residenceTown",r.residenceTown);fill("residenceProvince",r.residenceProvince);fill("gender",r.gender);fill("level",r.level);
+   const beforeIds=JSON.stringify(match.edenClientIds||[]);
+   match.edenClientIds=Array.from(new Set([...(match.edenClientIds||[]).map(String),...(r.sourceClientIds||[]).map(String)]));
+   if(beforeIds!==JSON.stringify(match.edenClientIds))changed=true;
+   if(!match.edenImportKey){match.edenImportKey=r.importKey;changed=true}
+   if(phone&&pamCleanContactPhone(match.phone)!==phone&&!((match.alternatePhones||[]).map(pamCleanContactPhone).includes(phone))){match.alternatePhones=[...(match.alternatePhones||[]),phone];changed=true}
+   if(email&&pamCleanContactEmail(match.email)!==email&&!((match.alternateEmails||[]).map(pamCleanContactEmail).includes(email))){match.alternateEmails=[...(match.alternateEmails||[]),email];changed=true}
+   if(changed)updated++;
+  });
+  if(added||updated){save();await pamCloudSyncAll();render()}
+  return{added:added,updated:updated,total:records.length};
+ }finally{pamEdenImportRunning=false}
+}
+function pamFindEventById(id){
+ const key=String(id??"");
+ return (state.events||[]).find(function(e){return String((e&&e.id)??"")===key})||null;
+}
+function currentEvent(){return pamFindEventById(state.currentEventId)}
+
+function pamRepairEventPlayerIdsFromMatches(e){
+ if(!e||typeof e!=="object")return 0;
+ // Nei Campionati Nazionali le coppie confermate sono la fonte ufficiale.
+ // Le partite possono appartenere a un calendario precedente e non devono
+ // mai reintrodurre automaticamente giocatori sostituiti o ritirati.
+ if(e.nationalParentId||e.competitionType==="national_category")return 0;
+ const before=JSON.stringify({playerIds:e.playerIds||[],ledger:e.ledger||{},payments:e.payments||{}});
+ const oldIds=(e.playerIds||[]).filter(Boolean).map(String);
+ // e.playerIds è l'elenco ufficiale degli iscritti. Il calendario può essere
+ // incompleto o appartenere a una versione precedente: non deve mai aggiungere
+ // né eliminare partecipanti. Deduplichiamo solo ID identici, non nomi uguali.
+ const repaired=[];const seenIds=new Set();
+ oldIds.forEach(function(id){
+  const key=String(id);
+  if(!key||seenIds.has(key))return;
+  seenIds.add(key);repaired.push(key);
+ });
+ const oldLedger=e.ledger&&typeof e.ledger==="object"?e.ledger:{};
+ const oldPayments=e.payments&&typeof e.payments==="object"?e.payments:{};
+ const allOldKeys=Array.from(new Set(oldIds.concat(Object.keys(oldLedger),Object.keys(oldPayments))));
+ const cleanLedger={},cleanPayments={};
+ repaired.forEach(function(id){
+  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"";
+  const sameNameKeys=allOldKeys.filter(function(oldId){const op=playerById(oldId);return nameKey&&op&&registryTokenKey(playerName(op))===nameKey});
+  const ledgers=[id].concat(sameNameKeys).map(function(k){return oldLedger[k]}).filter(Boolean);
+  const base=oldLedger[id]||{};
+  cleanLedger[id]={
+   carried:Math.max(Number((p&&p.tokenBalance)||0),...ledgers.map(function(x){return Number(x.carried)||0})),
+   spent:Number(base.spent)||0,podium:Number(base.podium)||0
+  };
+  const payment=oldPayments[id]||sameNameKeys.map(function(k){return oldPayments[k]}).find(function(x){return x&&x.paid})||{};
+  cleanPayments[id]={fee:Number(payment.fee!==undefined?payment.fee:e.entryFee)||0,paid:!!payment.paid,method:payment.method||"",notes:payment.notes||""};
+ });
+ e.playerIds=repaired;e.ledger=cleanLedger;e.payments=cleanPayments;
+ const after=JSON.stringify({playerIds:e.playerIds,ledger:e.ledger,payments:e.payments});
+ return before===after?0:repaired.length;
+}
+
+function pamEventRow(e){
+ if(!e.shareToken)e.shareToken=pamUuid();
+ return{
+  id:e.id,
+  name:e.name||"Torneo",
+  event_date:e.date||null,
+  club:e.club||null,
+  category:e.category||null,
+  competition_type:e.competitionType||null,
+  logo_url:e.logoUrl||null,
+  share_token:e.shareToken,
+  status:e.status||"published",
+  data:e
+ };
+}
+function pamPlayerRow(p){
+ return{id:p.id,data:p,photo_url:p.photoUrl||null};
+}
+function pamScheduleCloudSync(){
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(pamCloudSyncAll,650);
+}
+function pamScheduleEventCloudSync(eventId){
+ const id=String(eventId||"");if(!id)return;
+ clearTimeout(pamSyncTimer);
+ pamSyncTimer=setTimeout(function(){pamCloudSyncEvent(id)},220);
+}
+function pamUniqueRowsByIdV8225(items,rowFn){
+ const byId=new Map();
+ (items||[]).forEach(function(item){
+  if(!item||item.id===undefined||item.id===null)return;
+  byId.set(String(item.id),item);
+ });
+ return Array.from(byId.values()).map(rowFn);
+}
+async function pamCloudSyncAll(){
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION)return;
+ if(pamUploading){pamPendingFullSync=true;return}
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  if(pamIsAdmin()){
+   const dedupedPlayers=pamDedupePlayersV821(state.players||[]);
+   if(dedupedPlayers.length){
+    const pr=await sb.from("players").upsert(pamUniqueRowsByIdV8225(dedupedPlayers,pamPlayerRow),{onConflict:"id"}).select("id");
+    if(pr.error)throw pr.error;
+   }
+   if((state.events||[]).length){
+    const er=await sb.from("tournaments").upsert(pamUniqueRowsByIdV8225(state.events||[],pamEventRow),{onConflict:"id",defaultToNull:false}).select("id,share_token");
+    if(er.error)throw er.error;
+    (er.data||[]).forEach(function(row){
+     const e=(state.events||[]).find(function(x){return String(x.id)===String(row.id)});
+     if(e)e.shareToken=row.share_token;
+    });
+   }
+  }else{
+   const e=currentEvent();
+   if(e&&pamCanManageEvent(e)){
+    const er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+    if(er.error)throw er.error;
+    if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+   }
+  }
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione Supabase:",err);
+  pamSetConnectionState(false);
+  pamToast("Sincronizzazione non riuscita: "+err.message,"error");
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const id=pamPendingEventSyncId;pamPendingEventSyncId=null;pamScheduleEventCloudSync(id)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+async function pamCloudSyncEvent(eventId){
+ const id=String(eventId||"");
+ if(!pamCloudReady||!pamInitialCloudHydrated||pamCloudApplyingSnapshot||!PAM_SESSION||!id)return;
+ if(pamUploading){pamPendingEventSyncId=id;return}
+ const e=pamFindEventById(id);if(!e||!pamCanManageEvent(e))return;
+ const syncRevision=pamOperationalRevision;
+ pamUploading=true;
+ try{
+  let er;
+  if(pamIsAdmin()){
+   er=await sb.from("tournaments").upsert([pamEventRow(e)],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+  }else{
+   er=await sb.from("tournaments").update({data:e,status:e.status||"published"}).eq("id",e.id).select("id,share_token").maybeSingle();
+  }
+  if(er.error)throw er.error;
+  if(er.data&&er.data.share_token)e.shareToken=er.data.share_token;
+  pamPersistStateLocalV82381();
+  if(syncRevision===pamOperationalRevision){pamOperationalDirty=false;pamOperationalEventId=null}
+  else pamPendingEventSyncId=String(pamOperationalEventId||id);
+  pamEventSyncRetryDelay=1000;
+  pamSetConnectionState(true);
+ }catch(err){
+  console.error("Sincronizzazione evento:",err);
+  pamOperationalDirty=true;pamOperationalEventId=id;
+  pamSetConnectionState(false);
+  if(pamEventSyncRetryDelay<=1000)pamToast("Evento salvato sul dispositivo; nuovo tentativo online in corso.","error");
+  pamEventSyncRetryDelay=Math.min(30000,pamEventSyncRetryDelay*2);
+  pamPendingEventSyncId=id;
+ }finally{
+  pamUploading=false;
+  if(pamPendingEventSyncId){const next=pamPendingEventSyncId,delay=pamEventSyncRetryDelay;pamPendingEventSyncId=null;setTimeout(function(){pamScheduleEventCloudSync(next)},delay)}
+  else if(pamPendingFullSync){pamPendingFullSync=false;pamScheduleCloudSync()}
+ }
+}
+
+let pamConnectionFailuresV8222=0;
+function pamSetConnectionState(ok){
+ const badge=document.getElementById("pamRoleBadge");
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ if(!badge)return;
+
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.title=effectiveOk
+  ? ("Ultima sincronizzazione valida: "+new Date(pamCloudLastOkAt||Date.now()).toLocaleTimeString("it-IT"))
+  : "Connessione a Supabase non disponibile dopo più tentativi";
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+}
+window.addEventListener("online",function(){pamSetConnectionState(true);if(PAM_SESSION)pamCloudLoad(false)});
+window.addEventListener("offline",function(){pamSetConnectionState(false)});
+
+
+async function pamGetCloudCounts(){
+ const [p,e]=await Promise.all([
+  sb.from("players").select("id",{count:"exact",head:true}),
+  sb.from("tournaments").select("id",{count:"exact",head:true})
+ ]);
+ if(p.error)throw p.error;
+ if(e.error)throw e.error;
+ return{players:p.count||0,events:e.count||0};
+}
+async function pamForceUploadLocal(){
+ if(!pamIsAdmin()){pamToast("Solo l'amministratore può trasferire l'archivio locale.","error");return}
+ if(!confirm("Trasferire su Supabase tutti i giocatori e i tornei presenti su questo dispositivo? I record con lo stesso ID verranno aggiornati."))return;
+ pamToast("Trasferimento archivio locale in corso...");
+ const oldReady=pamCloudReady;
+ const oldHydrated=pamInitialCloudHydrated;
+ pamCloudReady=true;
+ pamInitialCloudHydrated=true;
+ await pamCloudSyncAll();
+ pamCloudReady=oldReady||true;
+ pamInitialCloudHydrated=oldHydrated||true;
+ await pamRefreshSyncPanel();
+ pamToast("Archivio locale trasferito online.","success");
+}
+async function pamForceDownloadCloud(){
+ if(!confirm("Scaricare l'archivio online su questo dispositivo? I dati locali verranno sostituiti dalla versione presente su Supabase."))return;
+ pamToast("Scaricamento archivio online...");
+ await pamCloudLoad(false,"manual");
+ await pamRefreshSyncPanel();
+ pamToast("Archivio online scaricato.","success");
+}
+async function pamRefreshSyncPanel(){
+ const el=document.getElementById("pamSyncPanel");
+ if(!el||!PAM_SESSION)return;
+ try{
+  const c=await pamGetCloudCounts();
+  const lp=document.getElementById("pamLocalPlayers");
+  const le=document.getElementById("pamLocalEvents");
+  const cp=document.getElementById("pamCloudPlayers");
+  const ce=document.getElementById("pamCloudEvents");
+  if(lp)lp.textContent=state.players.length;
+  if(le)le.textContent=state.events.length;
+  if(cp)cp.textContent=c.players;
+  if(ce)ce.textContent=c.events;
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Ultimo controllo: "+new Date().toLocaleTimeString("it-IT");
+  pamSetConnectionState(true);
+ }catch(err){
+  const log=document.getElementById("pamSyncLog");
+  if(log)log.textContent="Errore collegamento: "+err.message;
+  pamSetConnectionState(false);
+ }
+}
+function pamSyncPanelHtml(){
+ if(!PAM_SESSION)return"";
+ return '<section id="pamSyncPanel" class="card pam-sync-panel">'+
+  '<h2>☁️ Archivio condiviso</h2>'+
+  '<div class="muted">Confronta i dati salvati sul dispositivo con quelli presenti su Supabase.</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori sul dispositivo</span><b id="pamLocalPlayers">'+state.players.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei sul dispositivo</span><b id="pamLocalEvents">'+state.events.length+'</b></div>'+
+   '<div class="pam-sync-stat"><span>Stato</span><b style="font-size:17px">'+(navigator.onLine?"CONNESSO":"OFFLINE")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-grid">'+
+   '<div class="pam-sync-stat"><span>Giocatori online</span><b id="pamCloudPlayers">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Tornei online</span><b id="pamCloudEvents">…</b></div>'+
+   '<div class="pam-sync-stat"><span>Account</span><b style="font-size:15px">'+esc(PAM_PROFILE?.role||"")+'</b></div>'+
+  '</div>'+
+  '<div class="pam-sync-actions">'+
+   '<button class="secondary" data-action="cloud-check">Aggiorna conteggi</button>'+
+   (pamIsAdmin()?'<button class="primary" data-action="cloud-upload-local">Carica questo dispositivo online</button>':'')+
+   '<button class="secondary" data-action="cloud-download">Scarica archivio online</button>'+
+  '</div>'+
+  '<div id="pamSyncLog" class="pam-sync-log">Controllo in corso…</div>'+
+ '</section>';
+}
+
+let pamCloudLoadPromise=null;
+let pamCloudStableSnapshot={players:0,events:0};
+let pamCloudLastOkAt=0;
+
+async function pamFetchAllRows(table,columns,orderColumn,ascending){
+ const pageSize=1000;
+ let from=0,all=[];
+ while(true){
+  let q=sb.from(table).select(columns).range(from,from+pageSize-1);
+  if(orderColumn)q=q.order(orderColumn,{ascending:ascending!==false});
+  const res=await q;
+  if(res.error)throw res.error;
+  const rows=res.data||[];
+  all=all.concat(rows);
+  if(rows.length<pageSize)break;
+  from+=pageSize;
+  if(from>=100000)throw new Error("Limite di sicurezza archivio superato.");
+ }
+ return all;
+}
+
+function pamSyncLabel(ok,mode){
+ if(ok)pamConnectionFailuresV8222=0;
+ else pamConnectionFailuresV8222++;
+ const badge=document.getElementById("pamRoleBadge");
+ if(!badge)return;
+ const effectiveOk=ok||pamConnectionFailuresV8222<3;
+ badge.textContent=pamRoleLabel()+(effectiveOk?" · SUPABASE CONNESSO":" · NON SINCRONIZZATO");
+ badge.style.background=effectiveOk?"#071a2b":"#7f1d1d";
+ badge.title=effectiveOk
+  ? ((mode==="realtime"?"Realtime attivo":"Cloud attivo")+
+     (pamCloudLastOkAt?" · "+new Date(pamCloudLastOkAt).toLocaleTimeString("it-IT"):""))
+  : "Connessione Supabase non disponibile dopo più tentativi";
+}
+
+
+
+function pamNormHistoricalNameV8222(s){
+ return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+}
+function pamNameTokensV8222(s){
+ return pamNormHistoricalNameV8222(s).split(/\s+/).filter(Boolean);
+}
+function pamHistoricalFindPlayerV8222(remotePlayers,target){
+ const t=pamNameTokensV8222(target);
+ if(!t.length)return null;
+ const exact=(remotePlayers||[]).find(function(p){return pamNormHistoricalNameV8222(playerName(p))===pamNormHistoricalNameV8222(target)});
+ if(exact)return exact;
+ let best=null,bestScore=0;
+ (remotePlayers||[]).forEach(function(p){
+  const pTokens=pamNameTokensV8222(playerName(p));
+  let score=0;
+  t.forEach(function(x){if(pTokens.includes(x))score++});
+  if(score>bestScore){bestScore=score;best=p}
+ });
+ return bestScore>=Math.min(2,t.length)?best:null;
+}
+function pamBuildSecondFemaleV8222(remotePlayers){
+ const historicalFinalByName={
+  "Fabienne De Cup De Saint Paul":9,
+  "Carlotta Rivi":5,
+  "Viviana De Magistris":10,
+  "Stefania Bella":9,
+  "Valentina Labattaglia":16,
+  "Viktoriia Dutka":3,
+  "Sara Sacco'":9,
+  "Elisa Savini":11,
+  "Monia Mazzi":51,
+  "Maurizia Casini":34
+ };
+ const seedNames=Object.keys(historicalFinalByName);
+
+ const ids=[],historicalFinalBalances={};
+ seedNames.forEach(function(name,i){
+  const p=pamHistoricalFindPlayerV8222(remotePlayers,name);
+  if(p){
+   ids[i]=p.id;
+   historicalFinalBalances[String(p.id)]=historicalFinalByName[name];
+  }
+ });
+
+ const schedule=[
+  [1,"20:00","Campo Blu",0,9,2,7],[1,"20:00","Campo Verde",3,6,4,5],
+  [2,"20:20","Campo Blu",0,8,1,6],[2,"20:20","Campo Verde",9,7,3,4],
+  [3,"20:40","Campo Blu",8,6,9,5],[3,"20:40","Campo Verde",1,4,2,3],
+  [4,"21:00","Campo Blu",0,6,8,4],[4,"21:00","Campo Verde",7,5,1,2],
+  [5,"21:20","Campo Blu",0,5,9,1],[5,"21:20","Campo Verde",7,3,8,2]
+ ];
+ const matches=[];
+ schedule.forEach(function(m,i){
+  if(ids[m[3]]&&ids[m[4]]&&ids[m[5]]&&ids[m[6]]){
+   matches.push({
+    id:"m_fem2_"+(i+1),round:m[0],time:m[1],court:m[2],
+    t1:[ids[m[3]],ids[m[4]]],t2:[ids[m[5]],ids[m[6]]],
+    score1:null,score2:null
+   });
+  }
+ });
+
+ const playerIds=ids.filter(Boolean);
+ const ledger={};
+ playerIds.forEach(function(id){
+   const finalValue=Number(historicalFinalBalances[String(id)]||0);
+   // Carried is only a display-compatible fallback. Exact historical balance is protected separately.
+   ledger[id]={carried:Math.max(0,finalValue-3),spent:0,podium:0};
+ });
+
+ return {
+  id:"e_femmina_20260727_ripristinata",
+  name:"2ª TAPPA FEMMINILE RODEO CUPRA 2026",
+  date:"2026-07-27",
+  club:"Eden Padel Club",
+  category:"Femminile",
+  competitionType:"rodeo_tokens",
+  status:"published",
+  playerIds:playerIds,
+  matches:matches,
+  ledger:ledger,
+  historicalFinalBalances:historicalFinalBalances,
+  historicalBalanceSource:"V8.1.x archivio storico",
+  historicalLocked:true,
+  shareToken:"femmina-20260727-ripristinata",
+  startTime:"20:00",
+  maxParticipants:10,
+  minParticipants:10,
+  entryFee:25,
+  createdAt:"2026-07-27T18:00:00.000Z",
+  restoredBy:"V8.2.23"
+ };
+}
+function pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents){
+ const existing=(remoteEvents||[]).find(function(e){
+  const n=pamNormHistoricalNameV8222(e&&e.name);
+  return String(e&&e.date||"")==="2026-07-27"&&n.includes("femmin");
+ });
+ const rebuilt=pamBuildSecondFemaleV8222(remotePlayers);
+ if(existing){
+  // V8.2.38.4: se la tappa è già online NON riscriverla a ogni sync.
+  // Manteniamo esattamente il record ricevuto da Supabase.
+  return {restored:false,event:existing,repaired:false};
+ }
+ remoteEvents.push(rebuilt);
+ remoteEvents.sort(function(a,b){return pamEventTimeV8216(b)-pamEventTimeV8216(a)});
+ return {restored:true,event:rebuilt,repaired:false};
+}
+async function pamUpsertSecondFemaleV8222(e){
+ if(!e||!PAM_SESSION||!pamIsAdmin())return;
+ const row=pamEventRow(e);
+ const res=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(res.error)throw res.error;
+ if(res.data&&res.data.share_token)e.shareToken=res.data.share_token;
+}
+
+
+async function pamCloudLoad(initial,forceReplace){
+ if(pamCloudLoadPromise)return pamCloudLoadPromise;
+
+ pamCloudApplyingSnapshot=true;
+ pamCloudLoadPromise=(async function(){
+  const loadRevision=pamOperationalRevision;
+  const explicitOverwrite=forceReplace==="manual";
+  const canApplySnapshot=function(){
+   return explicitOverwrite||(!pamOperationalDirty&&loadRevision===pamOperationalRevision);
+  };
+  // Carica prima i tornei: l'anagrafica è molto più grande e non deve
+  // impedire né ritardare la visualizzazione delle competizioni assegnate.
+  const eventRows=await pamFetchAllRows("tournaments","id,name,event_date,club,category,competition_type,logo_url,share_token,status,data,updated_at","event_date",false);
+  const earlyEvents=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,name:r.name,event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,status:r.status
+   });
+  });
+  const visibleEarlyEvents=pamFilterEventsForRole(earlyEvents);
+  if(canApplySnapshot()){
+   state.events=visibleEarlyEvents;state.__cloudEventsCount=visibleEarlyEvents.length;
+   if(pamIsCollaborator()){
+    const assignedNow=visibleEarlyEvents.filter(function(e){return e&&e.status!=="internal"&&!e.nationalParentId});
+    if(assignedNow.length===1){state.currentEventId=assignedNow[0].id;state.view="event";state.tab="matches"}
+   }
+   if(!pamIsUserEditing()){pamStableRenderV8212();pamApplyRole()}
+  }
+
+  let playerRows;
+  try{
+   playerRows=await pamFetchAllRows("players","id,data,photo_url,updated_at","updated_at",true);
+  }catch(playerLoadError){
+   console.warn("Anagrafica online lenta; mantengo la copia locale mentre i tornei restano aggiornati.",playerLoadError);
+   playerRows=(state.players||[]).map(function(p){return{id:p.id,data:p,photo_url:p.photoUrl||"",updated_at:null}});
+   pamToast("Torneo assegnato disponibile. L'anagrafica giocatori usa temporaneamente la copia sul dispositivo.","success");
+  }
+
+  const remotePlayersRaw=playerRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    photoUrl:r.photo_url||((r.data||{}).photoUrl)||""
+   });
+  });
+  const __normV822=pamNormalizeAndDedupeV822(remotePlayersRaw);
+  const remotePlayers=__normV822.players;
+
+  const remoteEventsRaw=eventRows.map(function(r){
+   return Object.assign({},r.data||{},{
+    id:r.id,
+    name:r.name,
+    event_date:r.event_date,
+    date:r.event_date||((r.data||{}).date)||"",
+    club:r.club||((r.data||{}).club)||"",
+    category:r.category||((r.data||{}).category)||"",
+    competitionType:r.competition_type||((r.data||{}).competitionType)||"",
+    logoUrl:r.logo_url||((r.data||{}).logoUrl)||"",
+    shareToken:r.share_token,
+    status:r.status
+   });
+  });
+  const remoteEvents=pamFilterEventsForRole(remoteEventsRaw.map(function(e){return pamReplaceIdsDeepV822(e,__normV822.idMap)}));
+  const secondFemaleV8222=pamIsAdmin()?pamEnsureSecondFemaleV8222(remotePlayers,remoteEvents):{restored:false,event:null,repaired:false};
+
+  if(pamCloudStableSnapshot.players>0 && remotePlayers.length===0)
+   throw new Error("Snapshot giocatori vuoto rifiutato.");
+  if(pamCloudStableSnapshot.events>0 && remoteEvents.length===0)
+   throw new Error("Snapshot tornei vuoto rifiutato.");
+
+  // Una rigenerazione o un timer avviati mentre il download era in corso
+  // hanno sempre precedenza sullo snapshot remoto iniziato prima.
+  if(!canApplySnapshot()){
+   pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+   pamCloudLastOkAt=Date.now();pamCloudReady=true;pamSyncLabel(true,"cloud");
+   if(pamOperationalDirty&&pamOperationalEventId)pamScheduleEventCloudSync(pamOperationalEventId);
+   return Object.assign({},pamCloudStableSnapshot,{skipped:true});
+  }
+
+  state.players=remotePlayers;
+  state.events=remoteEvents;
+  pamReconcileTokensV8232();
+  state.events.forEach(pamRepairEventPlayerIdsFromMatches);
+  state.__playersSource="Supabase completo";
+  state.__cloudPlayersCount=remotePlayers.length;
+  state.__cloudEventsCount=remoteEvents.length;
+
+  pamCloudStableSnapshot={players:remotePlayers.length,events:remoteEvents.length};
+  pamCloudLastOkAt=Date.now();
+  pamCloudReady=true;
+  pamInitialCloudHydrated=true;
+  pamSyncLabel(true,"cloud");
+  
+  if(secondFemaleV8222.restored&&PAM_SESSION&&pamIsAdmin()){
+   setTimeout(function(){
+    pamUpsertSecondFemaleV8222(secondFemaleV8222.event).then(function(){
+      pamSetConnectionState(true);
+
+    }).catch(function(err){
+      console.error("Ripristino 2ª tappa femminile:",err);
+
+    });
+   },300);
+  }
+
+  if(state.currentEventId&&!state.events.some(function(e){return String(e.id)===String(state.currentEventId)}))
+   state.currentEventId=null;
+
+  if(typeof saveState==="function")saveState();
+
+  if(!pamIsUserEditing()){
+   if(forceReplace===true && initial!==true){
+    // Realtime e polling aggiornano i dati ma NON ricostruiscono la pagina visibile.
+    pamMarkBackgroundSyncV8212();
+    pamApplyRole();
+   }else{
+    // Avvio o aggiornamento manuale: un solo repaint, con posizione/focus preservati.
+    pamBackgroundDataPendingV8212=false;
+    pamStableRenderV8212();
+    pamApplyRole();
+   }
+  }
+  setTimeout(pamRefreshSyncPanel,50);
+  return pamCloudStableSnapshot;
+ })();
+
+ try{return await pamCloudLoadPromise}
+ finally{pamCloudApplyingSnapshot=false;pamCloudLoadPromise=null}
+}
+function pamSubscribeRealtime(){
+ if(pamRealtimeChannel)sb.removeChannel(pamRealtimeChannel);
+ const refreshFromCloud=function(){
+  clearTimeout(pamRemoteRefreshTimer);
+  const attempt=function(){
+   if(pamIsUserEditing()){
+    pamRemoteRefreshTimer=setTimeout(attempt,1200);
+    return;
+   }
+   if(!pamUploading&&PAM_SESSION)pamCloudLoad(false,true);
+  };
+  pamRemoteRefreshTimer=setTimeout(attempt,700);
+ };
+ pamRealtimeChannel=sb.channel("padel-arena-live-v71")
+  .on("postgres_changes",{event:"*",schema:"public",table:"tournaments"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"players"},refreshFromCloud)
+  .on("postgres_changes",{event:"*",schema:"public",table:"public_registrations"},function(){
+    refreshFromCloud();
+    const openTeam=document.querySelector('[data-admin-roster-area]');
+    if(openTeam&&openTeam.dataset.teamId) pamLoadAdminRoster(openTeam.dataset.teamId);
+  })
+  .subscribe(function(status){
+   if(status==="SUBSCRIBED"){
+    pamCloudLastOkAt=Date.now();
+    pamSyncLabel(true,"realtime");
+   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+    console.warn("Realtime Supabase:",status);
+   }
+  });
+ clearInterval(window.__pamCloudRefreshInterval);
+ window.__pamCloudRefreshInterval=setInterval(function(){
+  if(PAM_SESSION&&!pamUploading&&navigator.onLine&&!pamIsUserEditing()&&state.view!=="new")pamCloudLoad(false,true).catch(function(err){pamSetConnectionState(false);console.error(err)});
+ },30000);
+}
+function pamToast(message,type){
+ const n=document.createElement("div");
+ n.className="pam-toast "+(type||"");
+ n.textContent=message;
+ document.body.appendChild(n);
+ setTimeout(function(){n.remove()},3500);
+}
+function pamShareUrl(e){
+ if(!e.shareToken)return location.href.split("?")[0].split("#")[0];
+ return location.href.split("?")[0].split("#")[0]+"?tournament="+encodeURIComponent(e.shareToken);
+}
+function pamRegistrationUrl(e){
+ const base=pamPublicBase();
+ return base+"/public-registration.html?tournament="+encodeURIComponent(e.shareToken||"");
+}
+async function pamEnsureEventPublishedForRegistration(e){
+ if(!e)throw new Error("Evento non disponibile");
+ if(!PAM_SESSION||!pamIsAdmin())throw new Error("Accedi come amministratore per pubblicare il link");
+ if(!e.shareToken)e.shareToken=pamUuid();
+ const row=pamEventRow(e);
+ const saved=await sb.from("tournaments").upsert([row],{onConflict:"id",defaultToNull:false}).select("id,share_token").single();
+ if(saved.error)throw saved.error;
+ if(saved.data&&saved.data.share_token)e.shareToken=saved.data.share_token;
+ const check=await sb.from("tournaments").select("id,share_token").eq("id",String(e.id)).eq("share_token",String(e.shareToken)).maybeSingle();
+ if(check.error)throw check.error;
+ if(!check.data)throw new Error("Supabase non ha confermato la pubblicazione dell’evento");
+ pamPersistStateLocalV82381();
+ return e;
+}
+async function pamShareRegistration(id){
+ const e=pamFindEventById(id);if(!e){pamToast("Evento non trovato. Aggiorna i dati e riprova.","error");return}
+ try{
+  pamToast("Pubblicazione e verifica del link in corso...");
+  await pamEnsureEventPublishedForRegistration(e);
+  pamOpenRegistrationLinkDialog(e,pamRegistrationUrl(e));
+ }catch(err){
+  console.error("Pubblicazione link iscrizioni:",err);
+  pamToast("Link non pubblicato: "+(err&&err.message?err.message:String(err)),"error");
+ }
+}
+function pamOpenRegistrationLinkDialog(e,url){
+ document.getElementById("pamRegistrationLinkOverlay")?.remove();
+ const overlay=document.createElement("div");
+ overlay.id="pamRegistrationLinkOverlay";
+ overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Link unico di iscrizione</h2><div class="muted">'+esc(e.name)+'</div></div><button class="secondary" data-close-registration-link>Chiudi</button></div><div class="notice success">Questo è il link unico per Doppio Maschile, Doppio Femminile e Doppio Misto.</div><div class="field"><label>Link pronto da condividere</label><input id="pamRegistrationLinkValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-registration-link>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" href="'+esc(url)+'" target="_blank" rel="noopener">APRI MODULO</a><button class="secondary" data-native-share-registration>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);
+ const input=document.getElementById("pamRegistrationLinkValue");if(input){input.focus();input.select()}
+}
+async function pamCreatePlayerInvite(scope,eventId){
+ try{
+  if(!pamIsAdmin())throw new Error("Operazione riservata all’amministratore");
+  let e=null;
+  if(scope==="event"){
+   e=pamFindEventById(eventId);if(!e)throw new Error("Evento non trovato");
+   pamToast("Preparo l’invito giocatore per questo evento…");
+   await pamEnsureEventPublishedForRegistration(e);
+  }
+  const res=await sb.rpc("admin_create_player_invite",{p_scope:scope,p_tournament_id:scope==="event"?String(e.id):null});
+  if(res.error)throw res.error;
+  const token=res.data&&res.data.token;if(!token)throw new Error("Supabase non ha restituito l’invito");
+  pamOpenPlayerInviteDialog(scope,e,pamPublicBase()+"/player-invite.html?invite="+encodeURIComponent(token));
+ }catch(err){console.error("Invito giocatore:",err);pamToast("Invito non creato: "+(err&&err.message?err.message:String(err)),"error")}
+}
+function pamOpenPlayerInviteDialog(scope,e,url){
+ document.getElementById("pamPlayerInviteOverlay")?.remove();
+ const eventOnly=scope==="event",overlay=document.createElement("div");overlay.id="pamPlayerInviteOverlay";overlay.className="pam-modal-overlay";
+ overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+(eventOnly?'Invito giocatore · singolo evento':'Invito giocatore · piattaforma')+'</h2><div class="muted">'+(eventOnly?esc(e&&e.name||'Evento'):'Accesso generale con permessi giocatore')+'</div></div><button class="secondary" data-close-player-invite>Chiudi</button></div><div class="notice success"><b>'+(eventOnly?'SOLO QUESTO EVENTO':'ESPLORA LA PIATTAFORMA')+'</b><br>'+(eventOnly?'Il giocatore creerà la propria anagrafica e vedrà esclusivamente questo evento.':'Il giocatore creerà la propria anagrafica e potrà esplorare gli eventi pubblicati.')+'</div><div class="notice"><b>Limiti sempre attivi:</b> nessun accesso ad anagrafiche altrui, pagamenti, creazione tornei, risultati o comandi organizzativi.</div><div class="field"><label>Link pronto da inviare</label><input id="pamPlayerInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-player-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-player-invite>CONDIVIDI</button></div></div>';
+ document.body.appendChild(overlay);const input=document.getElementById("pamPlayerInviteValue");if(input){input.focus();input.select()}
+}
 async function pamCopyPlayerInvite(nativeShare){
  const input=document.getElementById("pamPlayerInviteValue");if(!input)return;
  try{if(nativeShare&&navigator.share)await navigator.share({title:"Invito giocatore Padel Arena",text:"Crea la tua anagrafica giocatore",url:input.value});else{await navigator.clipboard.writeText(input.value);pamToast("Link giocatore copiato","success")}}
