@@ -3393,11 +3393,12 @@ function pamOpenPlayerInviteDialog(scope,e,url){
  overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>'+(eventOnly?'Invito giocatore · singolo evento':'Invito giocatore · piattaforma')+'</h2><div class="muted">'+(eventOnly?esc(e&&e.name||'Evento'):'Accesso generale con permessi giocatore')+'</div></div><button class="secondary" data-close-player-invite>Chiudi</button></div><div class="notice success"><b>'+(eventOnly?'SOLO QUESTO EVENTO':'ESPLORA LA PIATTAFORMA')+'</b><br>'+(eventOnly?'Il giocatore creerà la propria anagrafica e vedrà esclusivamente questo evento.':'Il giocatore creerà la propria anagrafica e potrà esplorare gli eventi pubblicati.')+'</div><div class="notice"><b>Limiti sempre attivi:</b> nessun accesso ad anagrafiche altrui, pagamenti, creazione tornei, risultati o comandi organizzativi.</div><div class="field"><label>Link pronto da inviare</label><input id="pamPlayerInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-player-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-player-invite>CONDIVIDI</button></div></div>';
  document.body.appendChild(overlay);const input=document.getElementById("pamPlayerInviteValue");if(input){input.focus();input.select()}
 }
-async function pamCopyPlayerInvite(nativeShare){
- const input=document.getElementById("pamPlayerInviteValue");if(!input)return;
- try{if(nativeShare&&navigator.share)await navigator.share({title:"Invito giocatore Padel Arena",text:"Crea la tua anagrafica giocatore",url:input.value});else{await navigator.clipboard.writeText(input.value);pamToast("Link giocatore copiato","success")}}
- catch(err){if(err.name!=="AbortError"){input.focus();input.select();document.execCommand("copy");pamToast("Link giocatore copiato","success")}}
+async function pamCopyInviteLinkV8(inputId,title,shareText,successMessage,nativeShare){
+ const input=document.getElementById(inputId);if(!input)return;
+ try{if(nativeShare&&navigator.share)await navigator.share({title:title,text:shareText,url:input.value});else{await navigator.clipboard.writeText(input.value);pamToast(successMessage,"success")}}
+ catch(err){if(err.name!=="AbortError"){input.focus();input.select();document.execCommand("copy");pamToast(successMessage,"success")}}
 }
+function pamCopyPlayerInvite(nativeShare){return pamCopyInviteLinkV8("pamPlayerInviteValue","Invito giocatore Padel Arena","Crea la tua anagrafica giocatore","Link giocatore copiato",nativeShare)}
 async function pamCreateCollaboratorInvite(eventId){
  try{
   if(!pamIsAdmin())throw new Error("Operazione riservata all’amministratore");
@@ -3416,11 +3417,7 @@ function pamOpenCollaboratorInviteDialog(e,url){
  overlay.innerHTML='<div class="pam-modal-card"><div class="pam-modal-head"><div><h2>Collaboratore · singolo evento</h2><div class="muted">'+esc(e&&e.name||"Evento")+'</div></div><button class="secondary" data-close-collaborator-invite>Chiudi</button></div><div class="notice success"><b>ACCESSO OPERATIVO LIMITATO</b><br>Il collaboratore potrà gestire risultati, timer e funzioni sportive esclusivamente di questo torneo. Per un evento nazionale il permesso comprende automaticamente Maschile, Femminile e Misto.</div><div class="notice">Negli altri eventi manterrà soltanto la consultazione pubblica da account Free.</div><div class="field"><label>Link personale da inviare</label><input id="pamCollaboratorInviteValue" readonly value="'+esc(url)+'"></div><div class="row"><button class="primary" data-copy-collaborator-invite>COPIA LINK</button><a class="secondary" style="display:block;text-align:center;text-decoration:none" target="_blank" rel="noopener" href="'+esc(url)+'">APRI INVITO</a><button class="secondary" data-share-collaborator-invite>CONDIVIDI</button></div></div>';
  document.body.appendChild(overlay);const input=document.getElementById("pamCollaboratorInviteValue");if(input){input.focus();input.select()}
 }
-async function pamCopyCollaboratorInvite(nativeShare){
- const input=document.getElementById("pamCollaboratorInviteValue");if(!input)return;
- try{if(nativeShare&&navigator.share)await navigator.share({title:"Invito collaboratore Padel Arena",text:"Accesso operativo al torneo assegnato",url:input.value});else{await navigator.clipboard.writeText(input.value);pamToast("Link collaboratore copiato","success")}}
- catch(err){if(err.name!=="AbortError"){input.focus();input.select();document.execCommand("copy");pamToast("Link collaboratore copiato","success")}}
-}
+function pamCopyCollaboratorInvite(nativeShare){return pamCopyInviteLinkV8("pamCollaboratorInviteValue","Invito collaboratore Padel Arena","Accesso operativo al torneo assegnato","Link collaboratore copiato",nativeShare)}
 async function pamCopyRegistrationLink(){
  const input=document.getElementById("pamRegistrationLinkValue");if(!input)return;
  try{
