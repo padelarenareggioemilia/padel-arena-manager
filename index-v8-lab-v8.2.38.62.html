@@ -2766,20 +2766,14 @@ function pamRepairEventPlayerIdsFromMatches(e){
  if(e.nationalParentId||e.competitionType==="national_category")return 0;
  const before=JSON.stringify({playerIds:e.playerIds||[],ledger:e.ledger||{},payments:e.payments||{}});
  const oldIds=(e.playerIds||[]).filter(Boolean).map(String);
- const matchIds=[];const seenIds=new Set();
- (e.matches||[]).forEach(function(m){
-  (m.t1||[]).concat(m.t2||[]).forEach(function(id){
-   const key=String(id||"");if(key&&!seenIds.has(key)){seenIds.add(key);matchIds.push(key)}
-  });
- });
- // Se esistono partite, sono l'unica fonte affidabile dei partecipanti reali.
- // Non importare mai chiavi residue di vecchi ledger, pagamenti o snapshot.
- const source=matchIds.length>=4?matchIds:oldIds;
- const repaired=[];const seenNames=new Set();
- source.forEach(function(id){
-  const p=playerById(id),nameKey=p?registryTokenKey(playerName(p)):"id|"+id;
-  if(seenNames.has(nameKey))return;
-  seenNames.add(nameKey);repaired.push(String(id));
+ // e.playerIds è l'elenco ufficiale degli iscritti. Il calendario può essere
+ // incompleto o appartenere a una versione precedente: non deve mai aggiungere
+ // né eliminare partecipanti. Deduplichiamo solo ID identici, non nomi uguali.
+ const repaired=[];const seenIds=new Set();
+ oldIds.forEach(function(id){
+  const key=String(id);
+  if(!key||seenIds.has(key))return;
+  seenIds.add(key);repaired.push(key);
  });
  const oldLedger=e.ledger&&typeof e.ledger==="object"?e.ledger:{};
  const oldPayments=e.payments&&typeof e.payments==="object"?e.payments:{};
