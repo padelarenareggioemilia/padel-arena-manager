@@ -3729,6 +3729,30 @@ function pamRegenerateTournament(id){
   if(e.competitionType==="fixed_pairs"){
    const built=e.nationalParentId?pamBuildNationalFixedPairsV823825(e):buildFixedPairs(ids,e.pairsPerGroup||4,Math.max(1,Number(e.courts)||1),!!e.returnLeg);
    e.pairs=built.pairs||[];e.matches=built.matches||[];
+  }else if(/next\s*gen.*rodeo/i.test(String(e.name||e.title||""))&&String(e.category||"").trim().toLowerCase()==="misto"&&ids.length===9&&Math.max(1,Number(e.courts)||1)>=2){
+   // Percorso dedicato e deterministico: evita il motore combinatorio generale per il Next Gen.
+   const norm=function(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()};
+   const women=[],men=[];
+   ids.forEach(function(pid){
+    const p=playerById(pid),n=norm(p?playerName(p):"");
+    if(["crasti","lignola","mereu","ciancio"].some(function(s){return n.split(/\s+/).includes(s)}))women.push(pid);
+    else men.push(pid);
+   });
+   if(women.length!==4||men.length!==5)throw new Error("Il Next Gen Rodeo richiede 4 donne (Crasti, Lignola, Mereu, Ciancio) e 5 uomini. Verifica i nominativi selezionati.");
+   const shuffled=function(a){const z=a.slice();for(let i=z.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[z[i],z[j]]=[z[j],z[i]];}return z};
+   const mm=shuffled(men),ww=shuffled(women),matches=[];
+   const splits=[[0,1,2,3],[0,2,1,3],[0,3,1,2],[0,1,3,2],[0,2,3,1]];
+   for(let rr=0;rr<5;rr++){
+    const active=mm.filter(function(pid){return pid!==mm[rr]});
+    const teams=ww.map(function(w,i){return [w,active[(i+rr)%4]]});
+    const sp=splits[rr];
+    const make=function(a,b,court){return {id:uid("m"),round:rr+1,leg:1,court:court,t1:teams[a].slice(),t2:teams[b].slice(),score1:null,score2:null,note:""}};
+    matches.push(make(sp[0],sp[1],1),make(sp[2],sp[3],2));
+   }
+   if(e.returnLeg){
+    matches.slice().forEach(function(m){matches.push({id:uid("m"),round:m.round+5,leg:2,court:m.court,t1:m.t2.slice(),t2:m.t1.slice(),score1:null,score2:null,note:""})});
+   }
+   e.matches=matches;
   }else{
    e.matches=buildMatches(ids,Math.max(1,Number(e.courts)||1),!!e.returnLeg,e.category)||[];
   }
