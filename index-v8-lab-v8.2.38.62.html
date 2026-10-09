@@ -3604,6 +3604,7 @@ function pamTournamentPlayersModal(id){
    '<button class="primary" data-quick-player-existing-event="'+esc(id)+'">➕ Nuova anagrafica</button></div>'+
   '<div class="row print-hide"><button class="secondary" type="button" data-modal-toggle-selected>Mostra solo i giocatori selezionati</button>'+
    '<button class="secondary" type="button" data-modal-deselect-all>Deseleziona tutti</button></div>'+
+  (admin?'<button class="secondary" type="button" data-recover-accepted-registrations="'+esc(id)+'" style="width:100%;margin:8px 0">Recupera iscritti online accettati</button>':'')+
   '<div class="pam-player-choice-list" id="pamTournamentPlayerList"></div>'+
   '<div class="pam-modal-actions">'+(collaborator||!admin?'<button class="primary" data-save-tournament-participants="'+esc(id)+'">Salva partecipanti senza rigenerare</button>':'<button class="primary" data-regenerate-tournament="'+esc(id)+'">Salva partecipanti e rigenera partite</button>')+'</div>'+
  '</div>';
@@ -3612,6 +3613,32 @@ function pamTournamentPlayersModal(id){
  overlay.__pamSelected=selected;
  overlay.dataset.onlySelected="0";
  overlay.querySelector("#pamTournamentPlayerSearch").addEventListener("input",drawRows);
+ const recoverAccepted=overlay.querySelector("[data-recover-accepted-registrations]");
+ if(recoverAccepted)recoverAccepted.addEventListener("click",async function(){
+  const oldText=recoverAccepted.textContent;recoverAccepted.disabled=true;recoverAccepted.textContent="RECUPERO IN CORSO…";
+  try{
+   if(!PAM_SESSION||!pamCloudReady)throw new Error("Archivio online non disponibile. Accedi e riprova.");
+   const res=await sb.from("public_registrations")
+    .select("id,mode,status,primary_payload,partner_payload,primary_player_id,partner_player_id")
+    .eq("tournament_id",String(id)).in("status",["accepted","imported"]);
+   if(res.error)throw res.error;
+   const rows=res.data||[],unresolved=[],before=selected.size;
+   rows.forEach(function(r){
+    const a=pamResolveRegistrationPlayerV823860(r.primary_payload,r.primary_player_id);
+    if(a)selected.add(String(a));else unresolved.push(pamRegistrationPersonName(r.primary_payload));
+    if(r.mode==="pair"){
+     const b=pamResolveRegistrationPlayerV823860(r.partner_payload,r.partner_player_id);
+     if(b)selected.add(String(b));else unresolved.push(pamRegistrationPersonName(r.partner_payload));
+    }
+   });
+   drawRows();
+   const added=selected.size-before;
+   if(!rows.length)pamToast("Non risultano iscrizioni online accettate per questo torneo.","error");
+   else if(unresolved.length)pamToast("Recupero parziale: aggiunti "+added+" giocatori. Da verificare in anagrafica: "+unresolved.join(", ")+".","error");
+   else pamToast("Iscrizioni online recuperate: "+added+" nuovi giocatori aggiunti alla selezione. Controlla i nominativi prima di salvare.","success");
+  }catch(err){console.error("Recupero iscrizioni accettate:",err);pamToast("Recupero non riuscito: "+(err.message||err),"error")}
+  finally{if(recoverAccepted.isConnected){recoverAccepted.disabled=false;recoverAccepted.textContent=oldText}}
+ });
  overlay.querySelector("[data-modal-toggle-selected]").addEventListener("click",function(){
   overlay.dataset.onlySelected=overlay.dataset.onlySelected==="1"?"0":"1";
   drawRows();
