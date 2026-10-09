@@ -6269,7 +6269,7 @@ function buildMatches(ids,courts,returnLeg,category){
   const p=playerById(id),g=String((p&&p.gender)||"").trim().toLowerCase();
   const fullName=String(p?playerName(p):"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   // Correzione certa per il Next Gen: Crasti, Lignola, Mereu e Ciancio sono donne.
-  if(/\b(crasti|lignola|mereu|ciancio)\b/.test(fullName))return "F";
+  if(fullName.split(" ").some(function(part){return ["crasti","lignola","mereu","ciancio"].includes(part)}))return "F";
   if(g.startsWith("m")||g==="uomo")return "M";
   if(g.startsWith("f")||g==="donna")return "F";
   // Per questo Rodeo a 9 iscritti, l'organizzatore ha confermato che tutti gli altri sono uomini.
