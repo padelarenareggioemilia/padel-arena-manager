@@ -6303,6 +6303,36 @@ function buildMatches(ids,courts,returnLeg,category){
   return out;
  }
 
+ // Next Gen Rodeo: 9 giocatori (5 uomini + 4 donne), 2 campi.
+ // Ogni turno giocano tutte le donne e 4 uomini; un uomo diverso riposa.
+ // Ogni coppia uomo-donna viene usata una sola volta nei 5 turni.
+ if(mixedTournament&&playerIds.length===9&&courts>=2&&allGendersKnown&&maleCount===5&&femaleCount===4){
+  const men=shuffle(playerIds.filter(function(id){return mixedGender(id)==="M"}));
+  const women=shuffle(playerIds.filter(function(id){return mixedGender(id)==="F"}));
+  const rounds=[];
+  for(let r=0;r<5;r++){
+   const resting=men[r];
+   const playingMen=men.filter(function(id){return id!==resting});
+   // Ruota gli abbinamenti in modo che ogni donna giochi con ciascun uomo una volta.
+   const teams=women.map(function(w,i){return [w,playingMen[(i+r)%4]]});
+   const splits=[[0,1,2,3],[0,2,1,3],[0,3,1,2],[0,1,3,2],[0,2,3,1]];
+   const s=splits[r];
+   const first=makeMatch(teams[s[0]],teams[s[1]]);
+   const second=makeMatch(teams[s[2]],teams[s[3]]);
+   first.round=r+1;first.court=1;
+   second.round=r+1;second.court=2;
+   rounds.push(first,second);
+  }
+  if(returnLeg){
+   const firstLeg=rounds.slice();
+   firstLeg.forEach(function(m){
+    rounds.push({id:uid("m"),round:m.round+5,leg:2,court:m.court,
+     t1:m.t2.slice(),t2:m.t1.slice(),score1:null,score2:null,note:""});
+   });
+  }
+  return rounds;
+ }
+
  const candidates=[];
  const seen=new Set();
  for(let a=0;a<playerIds.length-3;a++){
