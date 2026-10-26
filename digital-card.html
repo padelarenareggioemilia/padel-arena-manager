@@ -72,7 +72,7 @@ async function init(){
   $('medical').textContent=new Date(cardData.medical_certificate_expiry+'T12:00:00').toLocaleDateString('it-IT');
   const st=cardData.card_status;
   $('status').innerHTML=`<span class="status ${st==='active'?'active':st==='expired'?'expired':'pending'}">${st==='active'?'ATTIVA':st==='expired'?'SCADUTA':'SOSPESA'}</span>`;
-  await QRCode.toCanvas($('qr'),cardData.verify_url,{width:210,margin:1});
+  await QRCode.toCanvas($('qr'),cardData.verify_url,{width:280,margin:4});
   $('cardWrap').classList.remove('hidden');$('cardActions').classList.remove('hidden');
   setMsg('Tessera digitale disponibile.');
 }
